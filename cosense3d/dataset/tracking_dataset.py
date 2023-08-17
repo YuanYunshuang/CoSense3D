@@ -40,11 +40,12 @@ class TrackingDataset(BaseDataset):
             'objects': [],
             'cam_intrinsics': [],
             'cam_extrinsics': [],
-            'lidar_poses': None,
+            'lidar_poses': [],
             'map_anchors': None,
             'anchor_offsets': None,
         }
         seq_len = len(batch_list[0])
+        num_cavs = []
         # extensions
         if batch_list[0][0]['bev_maps'] is not None:
             for k in batch_list[0][0]['bev_maps'].keys():
@@ -55,14 +56,18 @@ class TrackingDataset(BaseDataset):
                 # all data in the same frame have the same batch index for early fusion
                 if batch_list[i][0]['pcds'] is not None:
                     pcds = batch_list[i][j]['pcds']
-                    pcds[:, 0] = i * seq_len + j
-                    features = batch_list[i][j]['features']
-                    coords = batch_list[i][j]['coords']
-                    coords = torch.from_numpy(coords).float()
-                    coords = F.pad(coords, (1, 0, 0, 0), mode="constant", value=i * seq_len + j)
+                    pcds[:, 0] += sum(num_cavs)
                     ret['pcds'].append(torch.from_numpy(pcds).float())
-                    ret['features'].append(torch.from_numpy(features).float())
-                    ret['coords'].append(coords)
+                    if 'features' in batch_list[i][j]:
+                        features = batch_list[i][j]['features']
+                        ret['features'].append(torch.from_numpy(features).float())
+                    if 'coords' in batch_list[i][j]:
+                        coords = batch_list[i][j]['coords']
+                        coords = torch.from_numpy(coords).float()
+                        coords = F.pad(coords, (1, 0, 0, 0), mode="constant", value=i * seq_len + j)
+                        ret['coords'].append(coords)
+
+                num_cavs.append(len(batch_list[i][0]['device_ids']['lidar']))
 
                 objects = batch_list[i][j]['objects']
                 if objects is not None and len(objects) > 0:
@@ -84,11 +89,14 @@ class TrackingDataset(BaseDataset):
                         v_tensor = v if isinstance(v, torch.Tensor) else torch.from_numpy(v)
                         ret[f"map_{k}"].append(v_tensor.unsqueeze(0))
 
-
             ret['scenario'].append([x['scenario'] for x in batch_list[i]])
             ret['frame'].append([x['frame'] for x in batch_list[i]])
             ret['device_ids'].append([x['device_ids'] for x in batch_list[i]])
 
+        ret['num_cav'] = num_cavs
+        for k, v in ret.items():
+            if v == []:
+                ret[k] = None
         BaseDataset.cat_data_dict_tensors(ret)
 
         return ret
