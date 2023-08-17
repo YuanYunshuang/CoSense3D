@@ -1,0 +1,19 @@
+MODEL:
+  sparse_conv:
+    in_dim: 8
+    cache: ['p8']
+  m_compression:
+    - p8:
+        steps: [ 2 ]
+        channels: [ 128, 128 ]
+  m_ssfa:
+    feature_num: 128
+
+  h_detection:
+    # stage 1
+    - s1:
+        version: 'dense'
+        voxel_size: 0.2
+        stride: 4
+        in_dim: 64
+        sample_size: 512

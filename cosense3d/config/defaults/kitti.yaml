@@ -1,0 +1,18 @@
+DATASET:
+  fusion_stage: Early
+  DetectionBenchmark: Detection3Dpseudo4WheelVehicle
+  data_path: "/koko/kitti"
+  meta_path: "./dataset/metas/kitti"
+  visualize: false
+
+  batch_size_train: 32
+  batch_size_val: 16
+  batch_size_test: 16
+  n_workers: 4
+  shuffle: true
+
+  voxel:
+    resolution: &voxel_size [0.2, 0.2, 0.2] # name:unit [theta: deg, depth: m, zyx: m]
+    xyz_idx: &xyz_idx [0, 1, 2]
+    voxel_feature_dim: &voxel_feature_dim 8 # encoded norm features + xyz
+

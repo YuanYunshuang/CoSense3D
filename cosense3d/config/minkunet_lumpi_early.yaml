@@ -1,0 +1,73 @@
+DATASET:
+  name: lumpi
+
+TRAIN:
+#  project_name: 'auto-cosense3d'
+  wandb_account: 'opheliayuan'
+  log_every: 2
+  max_epoch: 50
+  gpus: 1
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 5
+  resume: true
+  optimizer:
+    lr: 0.001
+    weight_decay: 1e-2
+    betas: [0.95, 0.999]
+    milestones: [20, 45]
+    gamma: 0.1
+
+MODEL:
+  order: ['mink_unet', 'm_compression', 'h_detection']
+  mink_unet:
+    in_dim: 8
+    cache: ['p4']
+  m_compression:
+    - p4:
+        steps: [ 8 ]
+        channels: [ 64, 64 ]
+
+  h_detection:
+    # stage 1
+    - s1:
+        version: 'sparse'
+        det_r:
+          r: 100
+        voxel_size: [0.2, 0.2, 0.2]
+        stride: 4
+        in_dim: 128
+        # losses
+        loss_cfg:
+          cls:
+            name: sigmoid_binary_cross_entropy
+          reg:
+            name: weighted_smooth_l1_loss
+          scr:
+            name: weighted_smooth_l1_loss
+        target_assigner:
+          name: AnchorTargetAssigner
+          sample_size: 512
+          assign_method: axis_aligned  # axis_aligned
+          box_coder:
+            name: ResidualBoxCoder
+          anchor_generator:
+            name: AnchorGenerator
+            cfg:
+              car:
+                box_dim: [ [ 4.41, 1.98, 1.64 ] ]         # [l, w, h]
+                box_z: [ 1.6 ]                          # -1.78 + 3
+                box_angles: [ 0, 90 ]                 # in degree
+                iou_match: 0.4
+                iou_unmatch: 0.2
+
+TEST:
+  vis_function: false
+  metrics:
+    MetricObjDet:
+      eval_func: cal_ap_all_point
+
+
+
+
+
+

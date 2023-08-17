@@ -1,0 +1,50 @@
+DATASET:
+  name: singleton
+  dataset: singleton
+  history_len: 2
+  data_info: &data_info
+    det_r: 6.4
+    voxel_size: [ 0.1, 0.1, 0.1 ]
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 2
+  max_epoch: 30
+  gpus: 1
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 5
+  resume: true
+  optimizer:
+    lr: 0.001
+    weight_decay: 1e-2
+    betas: [0.95, 0.999]
+    milestones: [15, 25]
+    gamma: 0.1
+
+MODEL:
+  backbone_3d:
+    - mink_unet:
+        in_dim: 8
+        cache: [ 'p0' ]
+
+  submodules:
+    - formatting:
+        functions:
+          - singleton_to_refine
+    - box_feature_extractor:
+        in_channels: 64
+  heads:
+    - refine_singleton:
+        in_channels: 64
+
+TEST:
+  vis_function: false
+  metrics:
+    MetricObjDet:
+      eval_func: cal_ap_all_point
+
+
+
+
+
+

@@ -1,0 +1,39 @@
+DATASET:
+  fusion_stage: Early
+  DetectionBenchmark: Detection3Dpseudo4WheelVehicle
+  data_path: "/koko/nuScenes"
+  meta_path: "/media/hdd/yuan/CoSense3D/dataset/metas/nuscenes"
+  visualize: false
+  load_img: true
+  load_lidar: false
+  gt: ['bev_maps']
+
+  batch_size_train: 4
+  batch_size_val: 4
+  batch_size_test: 4
+  n_workers: 2
+  shuffle: true
+
+  preprocessors:
+    train:
+      - CVTTransform
+      - CropTopResizeImg
+      - NormalizeImg
+    val:
+      - CVTTransform
+      - CropTopResizeImg
+      - NormalizeImg
+
+    CVTTransform:
+      n_cls: 12
+
+    NormalizeImg:
+      mean: [ 0.485, 0.456, 0.406 ]
+      std: [ 0.229, 0.224, 0.225 ]
+
+    CropTopResizeImg:
+      h: 224
+      w: 480
+      top_crop: 46
+
+

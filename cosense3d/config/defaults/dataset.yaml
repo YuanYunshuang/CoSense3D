@@ -1,0 +1,55 @@
+DATASET:
+  DetectionBenchmark: Detection3Dpseudo4WheelVehicle
+  voxel:
+    resolution: &voxel_size [0.1, 0.1, 0.1] # name:unit [theta: deg, depth: m, zyx: m]
+    xyz_idx: &xyz_idx [0, 1, 2]
+    voxel_feature_dim: &voxel_feature_dim 8 # encoded norm features + xyz
+
+  preprocessors:
+    train:
+      - GeoAugmentation
+      - CropLidarRange
+      - RegisterCoordinates
+      - ComposePointFeatures
+      - DimensionlessCoordinates
+    val:
+      - CropLidarRange
+      - RegisterCoordinates
+      - ComposePointFeatures
+      - DimensionlessCoordinates
+
+    GeoAugmentation:
+      rotate: [0, 0, 180] # std in degree
+      flip: x # x | y | xy
+      scale: 0.05
+#      noise: 0.01
+
+    FreeSpaceAugmentation: {}
+
+    CropLidarRange: {}
+
+    RegisterCoordinates:
+      raster_resolution: 1.6 # m
+      height: 0 # register to ground height, set 0 will not shift original data in z-axis
+
+    ComposePointFeatures:
+      features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
+
+    DimensionlessCoordinates:
+      voxel_size: *voxel_size
+
+
+  postprocessors:
+    train:
+      - DetectionPostProcess
+    val:
+      - DetectionPostProcess
+
+    DetectionPostProcess:
+      visualization: true
+
+  batch_size_train: 2
+  batch_size_val: 3
+  batch_size_test: 8
+  n_workers: 2
+  shuffle: true

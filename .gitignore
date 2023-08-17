@@ -1,0 +1,9 @@
+logs
+wandb
+*__pycache__*
+*.egg-info
+.idea
+*.pyc
+dataset/metas/
+data
+*.so

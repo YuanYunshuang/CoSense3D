@@ -1,0 +1,49 @@
+DATASET:
+  data_path_train: "/koko/OPV2V/train"
+  data_path_test: "/koko/OPV2V/test"
+  meta_path: "/koko/cosense3d/opv2v"
+  visualize: false
+  load_img: false
+  load_lidar: true
+  gt: ['bbx_center_global']
+
+  batch_size_train: 2
+  batch_size_val: 4
+  batch_size_test: 4
+  n_workers: 4
+  shuffle: true
+
+  voxel:
+    features: 'x,y,z,d,c,s,i'
+    resolution: &voxel_size [0.2, 0.2, 0.2] # name:unit [theta: deg, depth: m, zyx: m]
+    xyz_idx: &xyz_idx [0, 1, 2]
+    voxel_feature_dim: &voxel_feature_dim 14 # encoded norm features + xyz
+
+  preprocessors:
+    train:
+        - ProjectPointsToEgo
+        - GeoAugmentation
+    test: &test_pp
+      - ProjectPointsToEgo
+    val: *test_pp
+
+    ProjectPointsToEgo: {}
+
+    GeoAugmentation:
+      rotate: [0, 0, 180] # std in degree
+      flip: xy # x | y | xy
+      scale: 0.05
+#      noise: 0.01
+
+    CropLidarRange:
+#        x: [-140.8, 140.8]
+#        y: [-38.4, 38.4]
+        z: [-3, 3]
+
+    RegisterCoordinates:
+#      raster_resolution: 1.6 # m
+      height: -3 # register to ground height, set 0 will not shift original data in z-axis
+
+    ComposePointFeatures:
+      features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
+

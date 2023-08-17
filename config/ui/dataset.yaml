@@ -1,0 +1,33 @@
+
+DATASET:
+  data_path: /koko/kitti360
+  cosense_meta_path: /media/hdd/yuan/CoSense3D/dataset/metas/kitti360
+  tal_meta_path: /media/hdd/projects/TAL/dl/data
+  split:
+    train: ['2013_05_28_drive_0000_sync']
+    test: ['2013_05_28_drive_0005_sync']
+
+  seq_length: 0.8 # s
+  frequency: 10  # HZ
+
+  batch_size_train: 2
+  n_workers: 4
+
+  preprocessors:
+    train:
+      - CropBySearchRange
+      - RotateToTemplateDirection
+      - ComposePointFeatures
+      - DimensionlessCoordinates
+#      - AddTimeDim
+    CropBySearchRange:
+      search_range: 12.8
+      z_range: [-3, 1]
+      center_idx: 4
+    RotateToTemplateDirection:
+      center_idx: 4
+    ComposePointFeatures:
+      features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
+    DimensionlessCoordinates:
+      voxel_size: [ 0.1, 0.1, 0.1 ]
+#    AddTimeDim: []

@@ -1,0 +1,18 @@
+data_path: /koko/LUMPI/cosense_fmt/data
+meta_input: /koko/LUMPI/cosense_fmt/meta
+meta_output: /koko/LUMPI/meta_new
+dl_log_dir:
+  tracker: /mars/projects20/logs/tracknet_tmp
+  singleton_tracker: /mars/projects20/logs/tracknet_singleton
+sensor_cfg:
+  agents:  # agent id: lidar: [sensor id]
+    0:
+      lidar: [0]
+    1:
+      lidar: [1]
+    2:
+      lidar: [2]
+    3:
+      lidar: [3]
+    4:
+      lidar: [4]
