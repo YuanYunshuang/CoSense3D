@@ -38,6 +38,7 @@ class TrackingDataset(BaseDataset):
             'frame': [],
             'device_ids': [],
             'objects': [],
+            'objects_velo': [],
             'cam_intrinsics': [],
             'cam_extrinsics': [],
             'lidar_poses': [],
@@ -70,12 +71,16 @@ class TrackingDataset(BaseDataset):
                 num_cavs.append(len(batch_list[i][0]['device_ids']['lidar']))
 
                 objects = batch_list[i][j]['objects']
+                velo = batch_list[i][j]['objects_velo']
                 if objects is not None and len(objects) > 0:
                     objects = torch.from_numpy(objects).float()
+                    velo = torch.from_numpy(velo).float()
                     objects = F.pad(objects, (1, 0, 0, 0), mode="constant", value=i * seq_len + j)
                 else:
                     objects = torch.zeros((0, 12))
+                    velo = torch.zeros((0, 2))
                 ret['objects'].append(objects)
+                ret['objects_velo'].append(velo)
 
                 if batch_list[i][j]['imgs'] is not None:
                     ret['imgs'].append(torch.from_numpy(batch_list[i][j]['imgs']).float().unsqueeze(0))

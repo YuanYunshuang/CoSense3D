@@ -13,7 +13,7 @@ from cosense3d.config import load_config, save_config
 
 
 def train(cfgs):
-    seed_everything(2022)
+    seed_everything(2023)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     train_dataloader = get_dataloader(cfgs['DATASET'])

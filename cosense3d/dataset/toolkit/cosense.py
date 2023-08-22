@@ -22,6 +22,7 @@ type_sustech2cosense = {
     'Tram': 'vehicle.tram',
     'Unknown': 'unknown',
     'BicycleRider': 'vehicle.cyclist',
+    'Bicyclerider': 'vehicle.cyclist',
     'MotorcyleRider': 'vehicle.motorcycle',
     'Pedestrian': 'human.pedestrian',
     'HumanSitting': 'human.sitting',
@@ -75,8 +76,6 @@ class CoSenseDataConverter:
     def update_from_sustech(self, sustech_path):
         for scenario, sdict in self.meta.items():
             for frame, fdict in sdict.items():
-                if int(frame) >=100:
-                    continue
                 new_label_file = os.path.join(
                     sustech_path,
                     scenario, 'label',
@@ -86,8 +85,7 @@ class CoSenseDataConverter:
                 # TODO the transformation from local to global
                 self.meta[scenario][frame]['meta']['bbx_center_global'] = objects
 
-            save_json({f"{i:06d}": self.meta[scenario][f"{i:06d}"] for i in range(100)},
-                      os.path.join(self.meta_path, f"{scenario}.json"))
+            save_json(sdict, os.path.join(self.meta_path, f"{scenario}.json"))
 
     def to_sustech(self, out_dir=None):
         # make out dirs
@@ -531,6 +529,42 @@ class CoSenseDataConverter:
                 pickle.dump(content, file)
 
     @staticmethod
+    def parse_global_bbox_velo(meta_dict, data_path, meta_path):
+        for s, sdict in meta_dict.items():
+            for f, fdict in sdict.items():
+                cur_global_boxes = fdict['meta']['bbx_center_global']
+                # cur_global_boxes = {box[0]: box[1:] for box in cur_global_boxes}
+                velos = []
+                next_frame = f'{int(f) + 1:06d}'
+                last_frame = f'{int(f) - 1:06d}'
+                next_global_boxes = {}
+                prev_global_boxes = {}
+                if next_frame in sdict:
+                    next_global_boxes = sdict[next_frame]['meta']['bbx_center_global']
+                    next_global_boxes = {box[0]: box[1:] for box in next_global_boxes}
+                if last_frame in sdict:
+                    prev_global_boxes = sdict[last_frame]['meta']['bbx_center_global']
+                    prev_global_boxes = {box[0]: box[1:] for box in prev_global_boxes}
+
+                for box_ in cur_global_boxes:
+                    box_id = box_[0]
+                    box = box_[1:]
+                    if box_id in next_global_boxes:
+                        velo = [(next_global_boxes[box_id][1] - box[1]) * 10,  # m/s
+                                (next_global_boxes[box_id][2] - box[2]) * 10,]
+                    elif box_id in prev_global_boxes:
+                        velo = [(box[1] - prev_global_boxes[box_id][1]) * 10,
+                                (box[2] - prev_global_boxes[box_id][2]) * 10]
+                    else:
+                        velo = [0., 0.]
+
+                    velos.append(velo)
+                fdict['meta']['bbx_velo_global'] = velos
+
+            save_json(sdict, os.path.join(meta_path, f'{s}.json'))
+
+
+    @staticmethod
     def draw_sample_distributions(meta_path):
         """
         Draw distribution of the number of observation points for each sample category
@@ -552,15 +586,14 @@ class CoSenseDataConverter:
             plt.savefig(os.path.join(meta_path, f'{os.path.basename(f)[:-7]}.png'))
             plt.close()
 
-def detection_to_cosense(inf_dir):
-    pass
+
 
 
 if __name__=="__main__":
     cosense = CoSenseDataConverter(
         "/koko/LUMPI/cosense_fmt/data",
-        "/koko/LUMPI/cosense_fmt/meta_labeled",
-        'train'
+        "/koko/LUMPI/cosense_fmt/tmp",
+        'all'
     )
     # cosense3d.to_kitti("/koko/LUMPI/kitti_test")
     # cosense3d.to_sustech("/koko/LUMPI/sustech_fmt")
@@ -571,4 +604,6 @@ if __name__=="__main__":
     #                                   lidar_range=[-100, -40, -3.5, 100, 40, 3],
     #                                   num_box_total=534)
     # cosense.global_boxes_to_local(cosense.meta, cosense.data_path, cosense.meta_path)
-    cosense.draw_sample_distributions(cosense.meta_path)
+    cosense.update_from_sustech('/koko/LUMPI/sustech_fmt')
+    cosense.parse_global_bbox_velo(cosense.meta, cosense.data_path, cosense.meta_path)
+    # cosense.draw_sample_distributions(cosense.meta_path)

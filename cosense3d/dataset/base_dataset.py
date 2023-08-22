@@ -141,8 +141,12 @@ class BaseDataset(Dataset):
         bbx_global = None
         if 'bbx_center_global' in self.cfgs['gt']:
             bbx_global = np.array(meta_in['meta']['bbx_center_global'])
-            # select and remap box cls
-            bbx_global = self.remap_box_cls(bbx_global)
+        bbx_velo = None
+        if 'bbx_velo_global' in self.cfgs['gt']:
+            bbx_velo = np.array(meta_in['meta']['bbx_velo_global'])
+        # select and remap box cls
+        bbx_global, bbx_velo = self.remap_box_cls(bbx_global, bbx_velo)
+
         bev_maps = None
         # TODO: currently cvt loads with PIL.Image, should be standardized
         if 'bev_maps' in self.cfgs['gt']:
@@ -204,15 +208,16 @@ class BaseDataset(Dataset):
             'tf_cav2ego': tf_matrices if self.load_lidar else None,
             'projected': False,
             'objects': bbx_global,
+            'objects_velo': bbx_velo,
             'pcds': np.concatenate(pcds, axis=0) if self.load_lidar else None,
             'imgs': imgs if self.load_img else None,
             'cam_params': cam_params if self.load_img else None,
             'bev_maps': bev_maps
         }
 
-    def remap_box_cls(self, bbx):
-        if len(bbx) == 0:
-            return None
+    def remap_box_cls(self, bbx, velo):
+        if bbx is None or len(bbx) == 0:
+            return None, None
         bm = csb.get(self.cfgs['DetectionBenchmark'])
         valid_cls = []
         for _, names in bm.items():
@@ -226,7 +231,8 @@ class BaseDataset(Dataset):
         # mask out class -1: not cared objects
         bbx[:, 1] = new_cls
         bbx = bbx[new_cls >= 0]
-        return bbx
+        velo = velo[new_cls >= 0]
+        return bbx, velo
 
     def update_vbos(self, data):
         pcds = data['pcds']
@@ -251,9 +257,10 @@ class BaseDataset(Dataset):
         self.vbo_pcd.points = o3d.utility.Vector3dVector(pcds_global)
         self.vbo_pcd.colors = o3d.utility.Vector3dVector(colors)
 
-        bbxs_corner = boxes_to_corners_3d(np.array(bbxs[:, 2:]))
-        self.vbo_lineset = update_lineset_vbo(self.vbo_lineset, bbxs_corner,
-                                              self.painter_box[bbxs[:, 1].astype(int)])
+        if bbxs is not None:
+            bbxs_corner = boxes_to_corners_3d(np.array(bbxs[:, 2:]))
+            self.vbo_lineset = update_lineset_vbo(self.vbo_lineset, bbxs_corner,
+                                                  self.painter_box[bbxs[:, 1].astype(int)])
 
         # from cosense3d.utils.vislib import draw_points_boxes_plt
         # draw_points_boxes_plt(

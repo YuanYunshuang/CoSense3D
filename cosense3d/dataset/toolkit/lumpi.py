@@ -451,7 +451,7 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
 
         # parse lidar files of current measurement
         lidar_dir = os.path.join(data_dir, f'measurement{exp}', 'lidar')
-        lidar_files = sorted(glob.glob(os.path.join(lidar_dir, '*.ply')))[:500]
+        lidar_files = sorted(glob.glob(os.path.join(lidar_dir, '*.ply')))[:1000]
 
         # for caching cam meta
         for cam_id, cam_info in cams.items():
@@ -560,18 +560,24 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
             fdict['agents'].pop(0)
             sdict[frame] = fdict
 
-        save_json(sdict, os.path.join(meta_out_dir, f'measurement{exp}_0.json'))
+        # split meta if too large
+        frames = sorted(list(sdict.keys()))
+        for i in range(0, len(frames) // 500 + 1):
+            out_dict = {k: sdict[k] for k in frames[i*500:(i+1)*500]}
+            if len(out_dict) > 0:
+                save_json(out_dict,
+                          os.path.join(meta_out_dir, f'measurement{exp}_{i}.json'))
 
 
 if __name__=="__main__":
-    # convert_to_cosense3d(
-    #     '/koko/LUMPI/lumpi-official',
-    #     '/koko/LUMPI/cosense_fmt/meta_labeled',
-    #     '/koko/LUMPI/cosense_fmt/data',
-    #     parse_img=True
-    # )
-
-    update_meta_boxes(
-        '/koko/LUMPI/cosense_fmt/meta',
-        '/mars/projects20/logs/nofusion_lumpi/test/jsons'
+    convert_to_cosense3d(
+        '/koko/LUMPI/lumpi-official',
+        '/koko/LUMPI/cosense_fmt/tmp',
+        '/koko/LUMPI/cosense_fmt/data',
+        parse_img=True
     )
+
+    # update_meta_boxes(
+    #     '/koko/LUMPI/cosense_fmt/meta',
+    #     '/mars/projects20/logs/nofusion_lumpi/test/jsons'
+    # )

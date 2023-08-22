@@ -1,7 +1,7 @@
 DATASET:
   name: lumpi
   dataset: intermediate_fusion
-  meta_path: /koko/LUMPI/cosense_fmt/meta_labeled
+  meta_path: /koko/LUMPI/cosense_fmt/tmp
   DetectionBenchmark: CenterPoints
   data_info: &data_info
     lidar_range: [-75.2, -75.2, -3, 75.2, 75.2, 3]

@@ -13,7 +13,7 @@ def main():
     parser.add_argument("--vis_option", type=str, default="frame")  # frame or seq
     parser.add_argument("--log_dir", type=str, default="../logs")
     args = parser.parse_args()
-    args.config = str(Path(__file__).parents[1] / 'config' / 'centerpoint_nofusion_lumpi.yaml')
+    args.config = str(Path(__file__).parents[1] / 'config' / 'centerpoint_naivefusion_lumpi.yaml')
     cfgs = load_config(args)
 
     cfgs['DATASET']['visualize'] = True
@@ -21,7 +21,7 @@ def main():
     cfgs['DATASET']['preprocessors']['test'] = []
     # cfgs['DATASET']['preprocessors']['train'] = ['ProjectPointsToEgo']
     cfgs['DATASET']['shuffle'] = False
-    dataloader = get_dataloader(cfgs['DATASET'], mode='train')
+    dataloader = get_dataloader(cfgs['DATASET'], mode='test')
     for data in dataloader.dataset:
         print(data['scenario'], data['frame'])
         getattr(dataloader.dataset, f"visualize_{args.vis_option}")(data)

@@ -21,11 +21,12 @@ class UnitedClsHead(nn.Module):
                  in_channel,
                  one_hot_encoding=True,
                  use_bias=False,
+                 norm='BN',
                  **kwargs):
         super().__init__()
         n_cls = sum([len(c) for c in class_names_each_head])
         out_channel = n_cls + 1 if one_hot_encoding else n_cls
-        self.head = linear_last(in_channel, in_channel, out_channel, use_bias)
+        self.head = linear_last(in_channel, in_channel, out_channel, use_bias, norm)
 
     def forward(self, x):
         return [self.head(x)]
@@ -37,6 +38,7 @@ class SeparatedClsHead(nn.Module):
                  in_channel,
                  one_hot_encoding=True,
                  use_bias=False,
+                 norm='BN',
                  **kwargs):
         super().__init__()
         self.n_head = len(class_names_each_head)
@@ -45,7 +47,7 @@ class SeparatedClsHead(nn.Module):
             if one_hot_encoding:
                 out_channel += 1
             setattr(self, f'head_{i}',
-                    linear_last(in_channel, in_channel, out_channel, use_bias))
+                    linear_last(in_channel, in_channel, out_channel, use_bias, norm))
 
     def forward(self, x):
         out = []
@@ -61,6 +63,7 @@ class UnitedRegHead(nn.Module):
                  combine_channels=True,
                  sigmoid_keys=None,
                  use_bias=False,
+                 norm='BN',
                  **kwargs):
         super().__init__()
         self.combine_channels = combine_channels
@@ -72,11 +75,11 @@ class UnitedRegHead(nn.Module):
 
         if combine_channels:
             out_channel = sum(list(self.reg_channels.values()))
-            self.head = linear_last(in_channel, in_channel, out_channel, use_bias)
+            self.head = linear_last(in_channel, in_channel, out_channel, use_bias, norm)
         else:
             for name, channel in self.reg_channels.items():
                 setattr(self, f'head_{name}',
-                        linear_last(in_channel, in_channel, int(channel), use_bias))
+                        linear_last(in_channel, in_channel, int(channel), use_bias, norm))
 
     def forward(self, x):
         out_dict = {}
@@ -122,7 +125,8 @@ class DetCenterSparse(nn.Module):
         if 'target_assigner' in cfgs:
             from cosense3d.model.utils.target_assigner import TargetAssigner
             self.tgt_assigner = TargetAssigner(cfgs['target_assigner'],
-                                               cfgs['class_names_each_head'])
+                                               class_names_each_head=cfgs['class_names_each_head'],
+                                               batch_dict_key=self.__class__.__name__)
         for k, v in self.loss_cfg.items():
             if isinstance(v['_target_'], str):
                 m_name, cls_name = v['_target_'].rsplit('.', 1)
@@ -146,7 +150,7 @@ class DetCenterSparse(nn.Module):
             'cls': self.cls_head(feat),
             'reg': self.reg_head(feat)
         }
-        batch_dict['det_center_head'] = out_dict
+        batch_dict[self.__class__.__name__] = out_dict
 
         if getattr(self, 'get_rois', False):
             batch_dict['roi'] = self.rois(batch_dict)

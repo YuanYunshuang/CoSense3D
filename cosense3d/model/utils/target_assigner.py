@@ -3,6 +3,7 @@ import importlib
 
 import torch
 from einops import rearrange
+from scipy.optimize import linear_sum_assignment
 
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
 from cosense3d.model.utils.gaussian_utils import draw_gaussian_map, gaussian_radius
@@ -11,9 +12,136 @@ from cosense3d.model.utils.me_utils import update_me_essentials
 from cosense3d.ops.utils import points_in_boxes_gpu_2d
 
 
+class Hungarian3D:
+    def __init__(self, pc_range, code_weights=None, with_velo=False, **kwargs):
+        self.pc_range = pc_range
+        self.code_weights = code_weights
+        self.with_velo = with_velo
+        if self.code_weights is not None:
+            self.code_weights = torch.nn.Parameter(torch.tensor(
+            self.code_weights).float(), requires_grad=False)
+        match_cost_modules = importlib.import_module(f'cosense3d.model.utils.match_cost')
+        for k, v in kwargs.items():
+            args = {a: b for a, b in v.items() if a!='type'}
+            cost_inst = getattr(match_cost_modules, v['type'])(**args)
+            setattr(self, k, cost_inst)
+
+    def __call__(self, bbox_pred, cls_pred, gt_boxes):
+        gt_labels = gt_boxes[:, 0].long()
+        gt_bboxes = gt_boxes[:, 1:]
+        num_gts, num_bboxes = gt_boxes.size(0), bbox_pred.size(0)
+
+        # 1. assign -1 by default
+        assigned_gt_inds = bbox_pred.new_full((num_bboxes,), -1, dtype=torch.long)
+        assigned_labels = bbox_pred.new_full((num_bboxes,), -1, dtype=torch.long)
+
+        if num_gts == 0 or num_bboxes == 0:
+            # No ground truth or boxes, return empty assignment
+            if num_gts == 0:
+                # No ground truth, assign all to background
+                assigned_gt_inds[:] = 0
+            return dict(num_gts=num_gts,
+                        assigned_gt_inds=assigned_gt_inds,
+                        assigned_labels=assigned_labels)
+
+        # 2. compute the weighted costs
+        # classification and bboxcost.
+        cls_cost = self.cls_cost(cls_pred, gt_labels)
+        # regression L1 cost
+        normalized_gt_bboxes = self.normalize_bbox(gt_bboxes, self.pc_range)
+
+        if self.code_weights is not None:
+            code_weights = self.code_weights.to(bbox_pred.device)
+            bbox_pred = bbox_pred * code_weights
+            normalized_gt_bboxes = normalized_gt_bboxes * code_weights
+
+        if self.with_velo:
+            reg_cost = self.reg_cost(bbox_pred, normalized_gt_bboxes)
+        else:
+            reg_cost = self.reg_cost(bbox_pred[:, :8], normalized_gt_bboxes[:, :8])
+
+        # weighted sum of above two costs
+        cost = cls_cost + reg_cost
+
+        # 3. do Hungarian matching on CPU using linear_sum_assignment
+        cost = cost.detach().cpu()
+        cost = torch.nan_to_num(cost, nan=100.0, posinf=100.0, neginf=-100.0)
+        matched_row_inds, matched_col_inds = linear_sum_assignment(cost)
+        matched_row_inds = torch.from_numpy(matched_row_inds).to(
+            bbox_pred.device)
+        matched_col_inds = torch.from_numpy(matched_col_inds).to(
+            bbox_pred.device)
+
+        # 4. assign backgrounds and foregrounds
+        # assign all indices to backgrounds first
+        assigned_gt_inds[:] = 0
+        # assign foregrounds based on matching results
+        assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
+        assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
+
+        return dict(num_gts=num_gts,
+                    assigned_gt_inds=assigned_gt_inds,
+                    assigned_labels=assigned_labels)
+
+    @staticmethod
+    def normalize_bbox(bboxes, pc_range):
+        cx = bboxes[..., 0:1]
+        cy = bboxes[..., 1:2]
+        cz = bboxes[..., 2:3]
+        w = bboxes[..., 3:4].log()
+        l = bboxes[..., 4:5].log()
+        h = bboxes[..., 5:6].log()
+
+        rot = bboxes[..., 6:7]
+        if bboxes.size(-1) > 7:
+            vx = bboxes[..., 7:8]
+            vy = bboxes[..., 8:9]
+            normalized_bboxes = torch.cat(
+                (cx, cy, cz, w, l, h, rot.sin(), rot.cos(), vx, vy), dim=-1
+            )
+        else:
+            normalized_bboxes = torch.cat(
+                (cx, cy, cz, w, l, h, rot.sin(), rot.cos()), dim=-1
+            )
+        return normalized_bboxes
+
+    @staticmethod
+    def denormalize_bbox(normalized_bboxes, pc_range):
+        # rotation
+        rot_sine = normalized_bboxes[..., 6:7]
+
+        rot_cosine = normalized_bboxes[..., 7:8]
+        rot = torch.atan2(rot_sine, rot_cosine)
+
+        # center in the bev
+        cx = normalized_bboxes[..., 0:1]
+        cy = normalized_bboxes[..., 1:2]
+        cz = normalized_bboxes[..., 2:3]
+
+        # size
+        w = normalized_bboxes[..., 3:4]
+        l = normalized_bboxes[..., 4:5]
+        h = normalized_bboxes[..., 5:6]
+
+        w = w.exp()
+        l = l.exp()
+        h = h.exp()
+        if normalized_bboxes.size(-1) > 8:
+            # velocity
+            vx = normalized_bboxes[:, 8:9]
+            vy = normalized_bboxes[:, 9:10]
+            denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot, vx, vy], dim=-1)
+        else:
+            denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot], dim=-1)
+        return denormalized_bboxes
+
+
 class TargetAssigner(object):
-    def __init__(self, cfg, class_names_each_head=None):
+    def __init__(self, cfg, class_names_each_head=None, batch_dict_key=None):
+        # must be set if multi-head classification used
         self.class_names_each_head = class_names_each_head
+        # key to retrieve data from batch_dict
+        self.batch_dict_key = batch_dict_key
         update_me_essentials(self, cfg['data_info'], cfg['stride'])
         self.meter_per_pixel = (self.stride * self.voxel_size[0],
                                 self.stride * self.voxel_size[1])
@@ -26,8 +154,12 @@ class TargetAssigner(object):
             k, v = list(assigner.items())[0]
             self.assigners.append(k)
             if '_target_' in v and isinstance(v['_target_'], str):
-                m_name, cls_name = v['_target_'].rsplit('.', 1)
-                v['_target_'] = getattr(importlib.import_module(f'cosense3d.{m_name}'), cls_name)()
+                if '.' in v['_target_']:
+                    m_name, cls_name = v['_target_'].rsplit('.', 1)
+                    v['_target_'] = getattr(importlib.import_module(f'cosense3d.{m_name}'),
+                                            cls_name)(**v.get('args', {}))
+                else:
+                    v['_target_'] = globals().get(v['_target_'])(**v.get('args', {}))
             setattr(self, f"{k}_args", v)
 
     def __call__(self, batch_dict):
@@ -168,25 +300,38 @@ class TargetAssigner(object):
     def points_centerness(self, batch_dict, args, tgt):
         gt_boxes, box_cls = self.get_gt_boxes(batch_dict)
         bs = batch_dict['batch_size']
-        centers = batch_dict[args['batch_dict_key']]['centers']
+        centers = batch_dict[self.batch_dict_key]['centers']
 
         center_cls = []
-        for n in range(self.n_cls):
+        if args.get('merge_all_classes', False):
             labels = torch.zeros_like(centers[:, :1])
             for b in range(bs):
                 mask = centers[:, 0] == b
                 cur_centers = centers[mask, 1:]
-                cur_boxes = gt_boxes[(gt_boxes[:, 0] == b) & (box_cls == n), 1:]
+                cur_boxes = gt_boxes[(gt_boxes[:, 0] == b), 1:]
                 if len(cur_boxes) == 0:
                     continue
                 dists = torch.norm(cur_centers.unsqueeze(1) - cur_boxes[:, :2].unsqueeze(0), dim=-1)
                 dists_min = dists.min(dim=1, keepdim=True).values
                 labels[mask] = (dists_min < args['min_radius']).float()
-
             center_cls.append(labels)
+        else:
+            for n in range(self.n_cls):
+                labels = torch.zeros_like(centers[:, :1])
+                for b in range(bs):
+                    mask = centers[:, 0] == b
+                    cur_centers = centers[mask, 1:]
+                    cur_boxes = gt_boxes[(gt_boxes[:, 0] == b) & (box_cls == n), 1:]
+                    if len(cur_boxes) == 0:
+                        continue
+                    dists = torch.norm(cur_centers.unsqueeze(1) - cur_boxes[:, :2].unsqueeze(0), dim=-1)
+                    dists_min = dists.min(dim=1, keepdim=True).values
+                    labels[mask] = (dists_min < args['min_radius']).float()
+                center_cls.append(labels)
+
         center_cls = torch.stack(center_cls, dim=1).float()
         if 'sample_mining' in args:
-            logits = torch.stack(batch_dict[args['batch_dict_key']]['cls'], dim=1)
+            logits = torch.stack(batch_dict[self.batch_dict_key]['cls'], dim=1)
             conf, _ = logit_to_edl(logits)
             center_cls = self.sample_mining(conf, center_cls, **args['sample_mining'])
         if 'pos_neg_ratio' in args:
@@ -205,7 +350,7 @@ class TargetAssigner(object):
         # from cosense3d.utils import vislib
         # mask = centers[:, 0].int() == 0
         # label = center_cls[mask].int().detach().cpu().numpy()
-        # label = label[:, 1, 0]
+        # label = label[:, 0, 0]
         # points = centers[mask, 1:].detach().cpu().numpy()
         # boxes = gt_boxes[gt_boxes[:, 0].int() == 0, 1:].cpu().numpy()
         # ax = vislib.draw_points_boxes_plt(
@@ -215,14 +360,14 @@ class TargetAssigner(object):
         # )
         # ax = vislib.draw_points_boxes_plt(
         #     pc_range=self.lidar_range,
-        #     points=points[label==0],
+        #     points=points[label == 0],
         #     points_c='k',
         #     ax=ax,
         #     return_ax=True
         # )
         # vislib.draw_points_boxes_plt(
         #     pc_range=self.lidar_range,
-        #     points=points[label==1],
+        #     points=points[label == 1],
         #     points_c='r',
         #     boxes_gt=boxes,
         #     ax=ax,
@@ -230,6 +375,19 @@ class TargetAssigner(object):
         # )
         #
         # pass
+
+    def hungarian3d(self, batch_dict, args, tgt):
+        hungarian_assigner = args['_target_']
+        tgts = []
+        for i, gt_boxes in enumerate(batch_dict['gt_boxes']):
+            tgt_dict = hungarian_assigner(batch_dict['pred_boxes'][i],
+                                     batch_dict['pred_scores'][i],
+                                     gt_boxes)
+            tgts.append(tgt_dict)
+
+        keys = tgts[0].keys()
+        tgts = {k: [tgt[k] for tgt in tgts] for k in keys}
+        tgt['hungarian3d'] = tgts
 
     def get_valid_centers(self, center_map, thresh=0.1):
         conf, _ = logit_to_edl(center_map.permute(0, 2, 3, 1))

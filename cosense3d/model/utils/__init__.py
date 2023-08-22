@@ -1,11 +1,58 @@
 import torch
 from torch import nn
-from torch.autograd import Variable
+from typing import Callable, Iterable, List, Optional
+
 import MinkowskiEngine as ME
 from MinkowskiEngine.MinkowskiKernelGenerator import KernelGenerator
 from torch.distributions.multivariate_normal import _batch_mahalanobis
 # TODO move ME relevant functions to me_utils
 pi = 3.141592653
+
+
+def topk_gather(feat, topk_indexes):
+    if topk_indexes is not None:
+        feat_shape = feat.shape
+        topk_shape = topk_indexes.shape
+
+        view_shape = [1 for _ in range(len(feat_shape))]
+        view_shape[:2] = topk_shape[:2]
+        topk_indexes = topk_indexes.view(*view_shape)
+
+        feat = torch.gather(feat, 1, topk_indexes.repeat(1, 1, *feat_shape[2:]))
+    return feat
+
+
+def inverse_sigmoid(x, eps=1e-5):
+    """Inverse function of sigmoid.
+
+    Args:
+        x (Tensor): The tensor to do the
+            inverse.
+        eps (float): EPS avoid numerical
+            overflow. Defaults 1e-5.
+    Returns:
+        Tensor: The x has passed the inverse
+            function of sigmoid, has same
+            shape with input.
+    """
+    x = x.clamp(min=0, max=1)
+    x1 = x.clamp(min=eps)
+    x2 = (1 - x).clamp(min=eps)
+    return torch.log(x1 / x2)
+
+
+def xavier_init(module: nn.Module,
+                gain: float = 1,
+                bias: float = 0,
+                distribution: str = 'normal') -> None:
+    assert distribution in ['uniform', 'normal']
+    if hasattr(module, 'weight') and module.weight is not None:
+        if distribution == 'uniform':
+            nn.init.xavier_uniform_(module.weight, gain=gain)
+        else:
+            nn.init.xavier_normal_(module.weight, gain=gain)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)
 
 
 def limit_period(val, offset=0.5, period=2 * pi):
@@ -266,16 +313,25 @@ def get_conv2d_layers(conv_name, in_channels, out_channels, n_layers, kernel_siz
         return seq
 
 
-def linear_last(in_channels, mid_channels, out_channels, bias=False):
+def get_norm_layer(channels, norm):
+    if norm == 'LN':
+        norm_layer = nn.LayerNorm(channels)
+    elif norm == 'BN':
+        norm_layer = nn.BatchNorm1d(channels)
+    else:
+        raise NotImplementedError
+    return norm_layer
+
+def linear_last(in_channels, mid_channels, out_channels, bias=False, norm='BN'):
     return nn.Sequential(
             nn.Linear(in_channels, mid_channels, bias=bias),
-            nn.BatchNorm1d(mid_channels),
+            get_norm_layer(mid_channels, norm),
             nn.ReLU(inplace=True),
             nn.Linear(mid_channels, out_channels)
         )
 
 
-def linear_layers(in_out, activations=None):
+def linear_layers(in_out, activations=None, norm='BN'):
     if activations is None:
         activations = ['ReLU'] * (len(in_out) - 1)
     elif isinstance(activations, str):
@@ -285,7 +341,7 @@ def linear_layers(in_out, activations=None):
     layers = []
     for i in range(len(in_out) - 1):
         layers.append(nn.Linear(in_out[i], in_out[i+1], bias=False))
-        layers.append(nn.BatchNorm1d(in_out[i+1]))
+        layers.append(get_norm_layer(in_out[i+1], norm))
         layers.append(getattr(nn, activations[i])())
     return nn.Sequential(*layers)
 
@@ -457,3 +513,4 @@ def draw_sample_prob(centers, reg, samples, res, distr_r, det_r, batch_size, var
     sample_evis = sample_evis.view(-1, ns, 2).sum(dim=1)
 
     return sample_evis
+
