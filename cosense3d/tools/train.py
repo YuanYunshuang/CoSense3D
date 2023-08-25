@@ -18,15 +18,22 @@ def train(cfgs):
 
     train_dataloader = get_dataloader(cfgs['DATASET'])
     model = get_model(cfgs['MODEL'], 'train').to(device)
-    optimizer, lr_scheduler = build_optimizer(model, cfgs['TRAIN']['optimizer'])
+    optimizer = build_optimizer(model, cfgs['TRAIN']['optimizer'])
+    lr_scheduler = build_lr_scheduler(optimizer, cfgs['TRAIN']['lr_scheduler'],
+                                      len(train_dataloader))
 
     # resume and log_dir
     if cfgs['TRAIN']['resume']:
         log_path = cfgs['TRAIN']['log_dir']
         ckpts = glob.glob(os.path.join(log_path, 'epoch*.pth'))
-        epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
-        max_idx = epochs.index(max(epochs))
-        ckpt = ckpts[max_idx]
+        if len(ckpts) > 0:
+            epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
+            max_idx = epochs.index(max(epochs))
+            ckpt = ckpts[max_idx]
+        elif os.path.exists(os.path.join(log_path, 'last.pth')):
+            ckpt = os.path.join(log_path, 'last.pth')
+        else:
+            raise IOError('No checkpoint found.')
         logging.info(f"Resuming the model from checkpoint: {ckpt}")
         ckpt = torch.load(ckpt)
         load_model_dict(model, ckpt['model_state_dict'])
@@ -94,7 +101,8 @@ def train_one_epoch(train_dataloader, model, optimizer, lr_scheduler, epoch, log
         loss_dict = {k: v.item() if isinstance(v, torch.Tensor) \
             else v for k, v in loss_dict.items() if v}
         if logger is not None:
-            logger.log(epoch, iteration, lr_scheduler.get_last_lr()[0], **loss_dict)
+            rec_lr = lr_scheduler.optimizer.param_groups[0]['lr']
+            logger.log(epoch, iteration, rec_lr, **loss_dict)
 
         if (iteration + 1) % 20 == 0:
             torch.save({

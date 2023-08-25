@@ -591,8 +591,8 @@ class CoSenseDataConverter:
 
 if __name__=="__main__":
     cosense = CoSenseDataConverter(
-        "/koko/LUMPI/cosense_fmt/data",
-        "/koko/LUMPI/cosense_fmt/tmp",
+        "/koko/OPV2V",
+        "/koko/cosense3d/opv2v",
         'all'
     )
     # cosense3d.to_kitti("/koko/LUMPI/kitti_test")
@@ -604,6 +604,6 @@ if __name__=="__main__":
     #                                   lidar_range=[-100, -40, -3.5, 100, 40, 3],
     #                                   num_box_total=534)
     # cosense.global_boxes_to_local(cosense.meta, cosense.data_path, cosense.meta_path)
-    cosense.update_from_sustech('/koko/LUMPI/sustech_fmt')
+    # cosense.update_from_sustech('/koko/LUMPI/sustech_fmt')
     cosense.parse_global_bbox_velo(cosense.meta, cosense.data_path, cosense.meta_path)
     # cosense.draw_sample_distributions(cosense.meta_path)

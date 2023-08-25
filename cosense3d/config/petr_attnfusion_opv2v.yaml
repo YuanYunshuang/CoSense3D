@@ -1,11 +1,12 @@
 DATASET:
-  name: lumpi
+  name: opv2v
   dataset: tracking
-  meta_path: /koko/LUMPI/cosense_fmt/meta_labeled
+  meta_path: /koko/cosense3d/opv2v_with_speed
   DetectionBenchmark: Car
-  history_len: &history_len 3
+  gt: ['bbx_center_global', 'bbx_velo_global']
+  history_len: &history_len 0
   data_info: &data_info
-    lidar_range: &lidar_range [-75.2, -75.2, -3, 75.2, 75.2, 3]
+    lidar_range: &lidar_range [-140.8, -38.4, -3, 140.8, 38.4, 3]
     voxel_size:  &voxel_size [0.2, 0.2, 0.2]
   batch_size_train: 2
   n_workers: 4
@@ -20,11 +21,17 @@ TRAIN:
   check_val_every_n_epoch: 5
   resume: true
   optimizer:
-    lr: 0.001
+    lr: 4e-4
     weight_decay: 1e-2
     betas: [0.95, 0.999]
     milestones: [25, 40]
     gamma: 0.1
+  lr_scheduler:
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-4
+    warmup_epochs: 10
+    lr_min: 2e-5
 
 MODEL:
   pre_process:
@@ -32,10 +39,14 @@ MODEL:
 #        free_space_h: -1.5 # height offset to lidar center
 #        free_space_d: 9
 #        free_space_step: 1.5
+    - geo_augmentation:
+        rotate: [ 0, 0, 180 ] # std in degree
+        flip: xy # x | y | xy
+        scale: 0.05
     -  crop_lidar_range:
-         x: [-100, 100]
-         y: [-100, 100]
-         z: [-3, 1]
+         x: [-140.8, 140.8]
+         y: [-38.4, 38.4]
+         z: [-3, 3]
     -  register_coordinates:
           height: -3
     - compose_point_features:

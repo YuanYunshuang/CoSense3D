@@ -37,11 +37,12 @@ class TrackingDataset(BaseDataset):
             'scenario': [],
             'frame': [],
             'device_ids': [],
+            'projected': batch_list[0][0]['projected'],
             'objects': [],
             'objects_velo': [],
             'cam_intrinsics': [],
             'cam_extrinsics': [],
-            'lidar_poses': [],
+            'tf_cav2ego': [],
             'map_anchors': None,
             'anchor_offsets': None,
         }
@@ -59,6 +60,8 @@ class TrackingDataset(BaseDataset):
                     pcds = batch_list[i][j]['pcds']
                     pcds[:, 0] += sum(num_cavs)
                     ret['pcds'].append(torch.from_numpy(pcds).float())
+                    tfs = torch.from_numpy(np.stack(batch_list[i][j]['tf_cav2ego'], axis=0)).float()
+                    ret['tf_cav2ego'].append(tfs)
                     if 'features' in batch_list[i][j]:
                         features = batch_list[i][j]['features']
                         ret['features'].append(torch.from_numpy(features).float())

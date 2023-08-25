@@ -5,7 +5,7 @@ DATASET:
   visualize: false
   load_img: false
   load_lidar: true
-  gt: ['bbx_center_global']
+  gt: ['bbx_center_global', 'bbx_velo_global']
 
   batch_size_train: 2
   batch_size_val: 4
@@ -22,7 +22,7 @@ DATASET:
   preprocessors:
     train:
         - ProjectPointsToEgo
-        - GeoAugmentation
+#        - GeoAugmentation
     test: &test_pp
       - ProjectPointsToEgo
     val: *test_pp

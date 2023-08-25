@@ -1,12 +1,13 @@
 DATASET:
-  name: lumpi
+  name: opv2v
   dataset: tracking
-  meta_path: /koko/LUMPI/cosense_fmt/meta_labeled
+  meta_path: /koko/cosense3d/opv2v_with_speed
   DetectionBenchmark: Car
-  history_len: &history_len 3
+  gt: ['bbx_center_global', 'bbx_velo_global']
+  history_len: &history_len 1
   data_info: &data_info
-    lidar_range: &lidar_range [-75.2, -75.2, -3, 75.2, 75.2, 3]
-    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+    det_r: &r 50
+    img_size: [&h 224, &w 480]
   batch_size_train: 2
   n_workers: 4
 
@@ -20,62 +21,27 @@ TRAIN:
   check_val_every_n_epoch: 5
   resume: true
   optimizer:
-    lr: 0.001
+    lr: 4e-4
     weight_decay: 1e-2
     betas: [0.95, 0.999]
     milestones: [25, 40]
     gamma: 0.1
+  lr_scheduler:
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-4
+    warmup_epochs: 10
+    lr_min: 2e-5
 
 MODEL:
-  pre_process:
-#    - free_space_augmentation:
-#        free_space_h: -1.5 # height offset to lidar center
-#        free_space_d: 9
-#        free_space_step: 1.5
-    -  crop_lidar_range:
-         x: [-100, 100]
-         y: [-100, 100]
-         z: [-3, 1]
-    -  register_coordinates:
-          height: -3
-    - compose_point_features:
-        features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
-    - dimensionless_coordinates:
-        voxel_size: *voxel_size
-  backbone_3d:
-    - mink_unet:
-        in_dim: 8
-        cache: ['p4']
-  submodules:
-    - compression:
-        data_info: *data_info
-        dense: false
-        planes:
-#          - p2:
-#              steps: [ 5, 3 ]
-#              channels: [ 64, 128, 128 ]
-          - p4:
-              steps: [ 4, 2 ]
-              channels: [ 64, 128, 128 ]
-    - attn_fusion:
-        data_info: *data_info
-        feature_src: compression
-        stride: 4
-        dim: 128
-    - dilation_spconv:
-        data_info: *data_info
-        feature_src: attn_fusion
-        convs:
-#          p2:
-#            kernels: [5, 5, 3] # receiptive field: 2.0m
-#            in_dim: 128
-#            out_dim: 128
-#            expand_coordinates: True
-          p4:
-            kernels: [5, 5, 3] # receiptive field: 4.0m
-            in_dim: 128
-            out_dim: 128
-            expand_coordinates: True
+  pre_process: []
+
+  backbone_2d:
+    - efficient_net:
+        model_name: efficientnet-b4
+        layer_names: ['reduction_2', 'reduction_4']
+        image_height: *h
+        image_width: *w
 
   heads:
     - roi_center_sparse:

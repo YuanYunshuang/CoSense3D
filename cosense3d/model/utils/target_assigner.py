@@ -27,6 +27,25 @@ class Hungarian3D:
             setattr(self, k, cost_inst)
 
     def __call__(self, bbox_pred, cls_pred, gt_boxes):
+        """
+        Match pred and gt boxes using Hungarian alignment in a single batch.
+        The cost for the alignment is the weighted sum of classification and normalized bbox parameters.
+
+        Parameters
+        ----------
+        bbox_pred: Tensor(N, 10), columns = (x, y, z, log(l), log(w), log(h), sin(r), cos(r), vx, vy)
+        cls_pred: Tensor(N, n_cls)
+        gt_boxes: Tensor(N, 10), columns = (cls, x, y, z, l, w, h, r, vx, vy)
+
+        Returns
+        -------
+        dict:
+            num_gts: int, number of gt boxes
+            assigned_gt_inds: LongTensor(N,), assigned gt indices of each pred sample, index 0 is background
+            aligned_tgt_labels: LongTensor(N,), assinged class labels, -1 indicates background
+            aligned_pred_boxes: FloatTensor(N, 10), weighted and aligned
+            aligned_tgt_boxes: FloatTensor(N, 10), normalized, weighted and aligned
+        """
         gt_labels = gt_boxes[:, 0].long()
         gt_bboxes = gt_boxes[:, 1:]
         num_gts, num_bboxes = gt_boxes.size(0), bbox_pred.size(0)
@@ -40,9 +59,12 @@ class Hungarian3D:
             if num_gts == 0:
                 # No ground truth, assign all to background
                 assigned_gt_inds[:] = 0
+
             return dict(num_gts=num_gts,
                         assigned_gt_inds=assigned_gt_inds,
-                        assigned_labels=assigned_labels)
+                        aligned_tgt_boxes=bbox_pred,
+                        aligned_tgt_labels=assigned_labels,
+                        aligned_pred_boxes=bbox_pred)
 
         # 2. compute the weighted costs
         # classification and bboxcost.
@@ -79,17 +101,38 @@ class Hungarian3D:
         assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
         assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
 
+        # 5. align matched pred and gt
+        aligned_tgt_boxes = torch.zeros_like(bbox_pred)
+        assign_mask = assigned_gt_inds > 0
+        aligned_tgt_boxes[assign_mask] = normalized_gt_bboxes[assigned_gt_inds[assign_mask] - 1]
+
+        # from cosense3d.utils.vislib import draw_points_boxes_plt
+        # vis_boxes_pred = self.denormalize_bbox(bbox_pred[assign_mask], self.pc_range)[:, :-2]
+        # vis_boxes_pred[:, :2] /= code_weights[:2]
+        # vis_boxes_gt = self.denormalize_bbox(aligned_tgt_boxes[assign_mask], self.pc_range)[:, :-2]
+        # vis_boxes_gt[:, :2] /= code_weights[:2]
+        # draw_points_boxes_plt(
+        #     pc_range=self.pc_range,
+        #     boxes_pred=vis_boxes_pred.detach().cpu().numpy(),
+        #     bbox_pred_label=[str(i) for i in range(vis_boxes_pred.shape[0])],
+        #     boxes_gt=vis_boxes_gt.detach().cpu().numpy(),
+        #     bbox_gt_label=[str(i) for i in range(vis_boxes_gt.shape[0])],
+        #     filename='/home/yuan/Downloads/tmp.png'
+        # )
+
         return dict(num_gts=num_gts,
                     assigned_gt_inds=assigned_gt_inds,
-                    assigned_labels=assigned_labels)
+                    aligned_tgt_boxes=aligned_tgt_boxes,
+                    aligned_tgt_labels=assigned_labels,
+                    aligned_pred_boxes=bbox_pred)
 
     @staticmethod
     def normalize_bbox(bboxes, pc_range):
         cx = bboxes[..., 0:1]
         cy = bboxes[..., 1:2]
         cz = bboxes[..., 2:3]
-        w = bboxes[..., 3:4].log()
-        l = bboxes[..., 4:5].log()
+        l = bboxes[..., 3:4].log()
+        w = bboxes[..., 4:5].log()
         h = bboxes[..., 5:6].log()
 
         rot = bboxes[..., 6:7]
@@ -97,11 +140,11 @@ class Hungarian3D:
             vx = bboxes[..., 7:8]
             vy = bboxes[..., 8:9]
             normalized_bboxes = torch.cat(
-                (cx, cy, cz, w, l, h, rot.sin(), rot.cos(), vx, vy), dim=-1
+                (cx, cy, cz, l, w, h, rot.sin(), rot.cos(), vx, vy), dim=-1
             )
         else:
             normalized_bboxes = torch.cat(
-                (cx, cy, cz, w, l, h, rot.sin(), rot.cos()), dim=-1
+                (cx, cy, cz, l, w, h, rot.sin(), rot.cos()), dim=-1
             )
         return normalized_bboxes
 
@@ -119,20 +162,20 @@ class Hungarian3D:
         cz = normalized_bboxes[..., 2:3]
 
         # size
-        w = normalized_bboxes[..., 3:4]
-        l = normalized_bboxes[..., 4:5]
+        l = normalized_bboxes[..., 3:4]
+        w = normalized_bboxes[..., 4:5]
         h = normalized_bboxes[..., 5:6]
 
-        w = w.exp()
         l = l.exp()
+        w = w.exp()
         h = h.exp()
         if normalized_bboxes.size(-1) > 8:
             # velocity
             vx = normalized_bboxes[:, 8:9]
             vy = normalized_bboxes[:, 9:10]
-            denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot, vx, vy], dim=-1)
+            denormalized_bboxes = torch.cat([cx, cy, cz, l, w, h, rot, vx, vy], dim=-1)
         else:
-            denormalized_bboxes = torch.cat([cx, cy, cz, w, l, h, rot], dim=-1)
+            denormalized_bboxes = torch.cat([cx, cy, cz, l, w, h, rot], dim=-1)
         return denormalized_bboxes
 
 
@@ -300,7 +343,7 @@ class TargetAssigner(object):
     def points_centerness(self, batch_dict, args, tgt):
         gt_boxes, box_cls = self.get_gt_boxes(batch_dict)
         bs = batch_dict['batch_size']
-        centers = batch_dict[self.batch_dict_key]['centers']
+        centers = batch_dict[self.batch_dict_key][f'p{self.stride}']['centers']
 
         center_cls = []
         if args.get('merge_all_classes', False):

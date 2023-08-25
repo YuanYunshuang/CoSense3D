@@ -1,3 +1,4 @@
+import copy
 import random
 
 import numpy as np
@@ -17,12 +18,37 @@ def build_optimizer(model, cfg):
                                   weight_decay=cfg['weight_decay'],
                                   betas=tuple(cfg['betas']))
 
-    # construct a learning rate scheduler
-    lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
-                                                        milestones=cfg['milestones'],
-                                                        gamma=cfg['gamma'])
+    return optimizer
 
-    return optimizer, lr_scheduler
+
+def build_lr_scheduler(optimizer, cfg, steps_per_epoch):
+    cfg_ = copy.copy(cfg)
+    policy = cfg_.pop('policy', 'MultiStepLR')
+    if policy == 'MultiStepLR':
+        # construct a learning rate scheduler
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
+                                                            milestones=cfg['milestones'],
+                                                            gamma=cfg['gamma'])
+    elif policy == 'CosineAnnealingWarm':
+        from timm.scheduler.cosine_lr import CosineLRScheduler
+        num_steps = cfg['epochs'] * steps_per_epoch
+        warmup_lr = cfg['warmup_lr']
+        warmup_steps = cfg['warmup_epochs'] * steps_per_epoch
+        lr_min = cfg['lr_min']
+
+        lr_scheduler = CosineLRScheduler(
+            optimizer,
+            t_initial=num_steps,
+            lr_min=lr_min,
+            warmup_lr_init=warmup_lr,
+            warmup_t=warmup_steps,
+            cycle_limit=1,
+            t_in_epochs=False,
+        )
+    else:
+        raise NotImplementedError
+
+    return lr_scheduler
 
 
 def load_tensors_to_gpu(batch_dict):

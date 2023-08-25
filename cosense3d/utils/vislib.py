@@ -95,7 +95,8 @@ def draw_box_plt(boxes_dec, ax, color=None, linewidth_scale=2.0, linestyle='soli
 
 
 def draw_points_boxes_plt(pc_range=None, points=None, boxes_pred=None, boxes_gt=None, wandb_name=None,
-                          points_c='gray', bbox_gt_c='green', bbox_pred_c='red', bbox_pred_label=None,
+                          points_c='gray', bbox_gt_c='green', bbox_pred_c='red',
+                          bbox_pred_label=None, bbox_gt_label=None,
                           return_ax=False, ax=None, marker_size=2.0, filename=None):
     if pc_range is not None:
         if isinstance(pc_range, int) or isinstance(pc_range, float):
@@ -120,9 +121,13 @@ def draw_points_boxes_plt(pc_range=None, points=None, boxes_pred=None, boxes_gt=
         if bbox_pred_label is not None:
             assert len(boxes_pred) == len(bbox_pred_label)
             for box, label in zip(boxes_pred, bbox_pred_label):
-                ax.annotate(label, (box[0], box[1]), textcoords="offset points", xytext=(0, 10), ha='center')
+                ax.annotate(label, (box[0], box[1]), textcoords="offset points", xytext=(0, 10), ha='center', color='r')
     if (boxes_gt is not None) and len(boxes_gt) > 0:
         ax = draw_box_plt(boxes_gt, ax, color=bbox_gt_c, linewidth_scale=0.75)
+        if bbox_gt_label is not None:
+            assert len(boxes_gt) == len(bbox_gt_label)
+            for box, label in zip(boxes_gt, bbox_gt_label):
+                ax.annotate(label, (box[0], box[1]), textcoords="offset points", xytext=(0, 10), ha='center', color='g')
     plt.xlabel('x')
     plt.ylabel('y')
 

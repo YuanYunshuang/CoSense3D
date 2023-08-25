@@ -245,9 +245,18 @@ def project_world_objects(object_dict,
         bbx_lidar = np.expand_dims(bbx_lidar[:, :3], 0)
         bbx_lidar = corner_to_center(bbx_lidar, order=order)
 
+        # get velocity
+        if 'speed' in object_content:
+            speed = object_content['speed']
+            theta = bbx_lidar[0, -1]
+            velo = np.array([speed * np.cos(theta), speed * np.sin(theta)])
+        else:
+            velo = None
+
         if bbx_lidar.shape[0] > 0:
             output_dict.update({object_id: {'coord': bbx_lidar,
-                                            'ass_id': ass_id}})
+                                            'ass_id': ass_id,
+                                            'velo': velo}})
 
 
 def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
@@ -274,6 +283,7 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                 fdict = cs.fdict_template()
                 ego_lidar_pose = None
                 object_id_stack = []
+                object_velo_stack = []
                 object_stack = []
                 for i, cav_id in enumerate(cavs):
                     yaml_file = os.path.join(spath, cav_id, f'{f}.yaml')
@@ -326,6 +336,7 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                             )
                         cs.update_agent_gt_boxes(fdict, cav_id, boxes_local)
 
+                    # add gt boxes in ego coordinates as global boxes of cosense3d format
                     project_world_objects(objects_dict,
                                           output_dict,
                                           ref_pose,
@@ -336,13 +347,17 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                             object_id_stack.append(object_content['ass_id'])
                         else:
                             object_id_stack.append(object_id + 100 * int(cav_id))
+                        if object_content['velo'] is not None:
+                            object_velo_stack.append(object_content['velo'])
                         object_stack.append(object_content['coord'])
 
                 # exclude all repetitive objects
                 unique_indices = \
                     [object_id_stack.index(x) for x in set(object_id_stack)]
                 object_stack = np.vstack(object_stack)
+                object_velo_stack = np.vstack(object_velo_stack)
                 object_stack = object_stack[unique_indices]
+                object_velo_stack = object_velo_stack[unique_indices]
                 if order == 'hwl':
                     object_stack = object_stack[:, [0, 1, 2, 5, 4, 3, 6]]
 
@@ -360,12 +375,14 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                     ego_lidar_pose = tl.tolist() + rot.tolist()
                 fdict['meta']['ego_id'] = ego_id
                 fdict['meta']['ego_lidar_pose'] = ego_lidar_pose
+                if len(object_velo_stack) == len(object_stack):
+                    fdict['meta']['bbx_velo_global'] = object_velo_stack.tolist()
             save_json(sdict, os.path.join(path_out, f'{s}.json'))
 
 
 if __name__=="__main__":
     opv2v_to_cosense(
-        "/koko/v2vreal",
-        "/koko/cosense3d/v2vreal",
-        isSim=False
+        "/koko/OPV2V",
+        "/koko/cosense3d/opv2v_with_speed",
+        isSim=True
     )

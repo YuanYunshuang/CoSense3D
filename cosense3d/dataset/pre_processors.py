@@ -135,7 +135,7 @@ class GeoAugmentation(PreProcessorBase):
             if hasattr(self, op):
                 aug_tf = getattr(self, f'fn_{op}')(aug_tf)
 
-        # process lidar0 data
+        # process lidar data
         if data_dict['pcds'] is not None:
             pcds = data_dict['pcds']
 

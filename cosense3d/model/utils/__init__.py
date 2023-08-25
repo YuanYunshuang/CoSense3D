@@ -1,12 +1,18 @@
 import torch
 from torch import nn
-from typing import Callable, Iterable, List, Optional
+import numpy as np
 
 import MinkowskiEngine as ME
 from MinkowskiEngine.MinkowskiKernelGenerator import KernelGenerator
 from torch.distributions.multivariate_normal import _batch_mahalanobis
 # TODO move ME relevant functions to me_utils
 pi = 3.141592653
+
+
+def bias_init_with_prob(prior_prob: float) -> float:
+    """initialize conv/fc bias value according to a given probability value."""
+    bias_init = float(-np.log((1 - prior_prob) / prior_prob))
+    return bias_init
 
 
 def topk_gather(feat, topk_indexes):

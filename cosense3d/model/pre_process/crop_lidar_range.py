@@ -47,6 +47,9 @@ class CropLidarRange(PreProcessorBase):
 
             data_dict['objects'] = data_dict['objects'][mask_obj]
 
+            if 'objects_velo' in data_dict:
+                data_dict['objects_velo'] = data_dict['objects_velo'][mask_obj]
+
             # crop according distance range
             if hasattr(self, 'r'):
                 dist = torch.norm(data_dict['objects'][:, 3:5], dim=1)

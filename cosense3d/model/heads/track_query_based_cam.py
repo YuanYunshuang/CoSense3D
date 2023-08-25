@@ -17,7 +17,7 @@ from cosense3d.model.utils import bias_init_with_prob
 from cosense3d.model.submodules.mln import MLN
 
 
-class TrackQueryBased(nn.Module):
+class TrackQueryBasedCam(nn.Module):
     def __init__(self, cfgs):
         super().__init__()
         for name, value in cfgs.items():
