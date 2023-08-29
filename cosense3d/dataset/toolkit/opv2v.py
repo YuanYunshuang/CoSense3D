@@ -259,6 +259,21 @@ def project_world_objects(object_dict,
                                             'velo': velo}})
 
 
+def update_cam_params(opv2v_params, cosense_fdict, agent_id, scenario, frame):
+    for k, v in opv2v_params.items():
+        if 'camera' in k:
+            cam_id = int(k[-1:])
+            cs.add_cam_to_fdict(
+                cosense_fdict,
+                agent_id,
+                cam_id,
+                [os.path.join(scenario, agent_id, f'{frame}_{k}.png')],
+                v['intrinsic'],
+                v['extrinsic'],
+                pose=v['cords']
+            )
+
+
 def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
     if isSim:
         order = 'lwh'
@@ -288,6 +303,8 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                 for i, cav_id in enumerate(cavs):
                     yaml_file = os.path.join(spath, cav_id, f'{f}.yaml')
                     params = load_yaml(yaml_file)
+                    cs.update_agent(fdict, cav_id, agent_type='cav', agent_pose=params['true_ego_pos'])
+                    update_cam_params(params, fdict, cav_id, s, f)
                     if cav_id == ego_id:
                         ego_lidar_pose = params['lidar_pose']
 
@@ -383,6 +400,6 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
 if __name__=="__main__":
     opv2v_to_cosense(
         "/koko/OPV2V",
-        "/koko/cosense3d/opv2v_with_speed",
+        "/koko/cosense3d/opv2v",
         isSim=True
     )

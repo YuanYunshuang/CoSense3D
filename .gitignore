@@ -7,3 +7,4 @@ wandb
 dataset/metas/
 data
 *.so
+mmdetection3d

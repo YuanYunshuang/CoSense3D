@@ -1,3 +1,5 @@
+from importlib import import_module
+
 import torch
 from torch import nn
 import numpy as np
@@ -7,6 +9,34 @@ from MinkowskiEngine.MinkowskiKernelGenerator import KernelGenerator
 from torch.distributions.multivariate_normal import _batch_mahalanobis
 # TODO move ME relevant functions to me_utils
 pi = 3.141592653
+
+
+def cat_name_str(module_name):
+    """
+
+    Parameters
+    ----------
+    module_name: str, format in xxx_yyy_zzz
+
+    Returns
+    -------
+    class_name: str, format in XxxYyyZzz
+    """
+    cls_name = ''
+    for word in module_name.split('_'):
+        cls_name += word[:1].upper() + word[1:]
+    return cls_name
+
+
+def instantiate(module_name, cls_name=None, module_cfg=None, **kwargs):
+    package = import_module(f"cosense3d.model.{module_name}")
+    cls_name = cat_name_str(module_name) if cls_name is None else cls_name
+    obj_cls = getattr(package, cls_name)
+    if module_cfg is None:
+        obj_inst = obj_cls(**kwargs)
+    else:
+        obj_inst = obj_cls(module_cfg)
+    return obj_inst
 
 
 def bias_init_with_prob(prior_prob: float) -> float:

@@ -2,6 +2,10 @@ import logging
 import torch
 import importlib
 
+# from .custom_nuscenes_dataset import CustomNuscenesDataset
+# register mmdet plugin pipelines
+# import cosense3d.dataset.pipelines
+
 
 def get_dataloader(cfgs, mode='train'):
     name = cfgs['dataset']

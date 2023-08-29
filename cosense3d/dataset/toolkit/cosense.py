@@ -365,7 +365,7 @@ class CoSenseDataConverter:
 
     @staticmethod
     def add_cam_to_fdict(fdict, agent_id, cam_id, filenames, intrinsic, extrinsic, **kwargs):
-        if int(agent_id) not in fdict['agents']:
+        if agent_id not in fdict['agents']:
             adict = CoSenseDataConverter.fdict_template()['agents'][0]
             fdict['agents'][agent_id] = adict
         kwargs.update({

@@ -67,7 +67,7 @@ def train(cfgs):
     if not cfgs['TRAIN']['resume']:
         save_config(cfgs, log_path)
 
-    with torch.autograd.set_detect_anomaly(True):
+    with torch.autograd.set_detect_anomaly(False):
         logging.info('Start training.')
         for epoch in range(epoch_start, cfgs['TRAIN']['max_epoch']):
             train_one_epoch(train_dataloader, model, optimizer, lr_scheduler, epoch, logger=logger)
@@ -84,6 +84,7 @@ def train_one_epoch(train_dataloader, model, optimizer, lr_scheduler, epoch, log
         load_tensors_to_gpu(batch_data)
         batch_data['epoch'] = epoch
         optimizer.zero_grad()
+        # model.zero_grad()
 
         # Forward pass
         batch_data = model(batch_data)
@@ -91,15 +92,18 @@ def train_one_epoch(train_dataloader, model, optimizer, lr_scheduler, epoch, log
         loss, loss_dict = model.loss(batch_data)
         # Gradients
         loss.backward()
+        grad_norm = clip_grads(model.parameters())
         # Updating parameters
         optimizer.step()
 
+        del batch_data
         torch.cuda.empty_cache()
         iteration += 1
 
         # Log training
         loss_dict = {k: v.item() if isinstance(v, torch.Tensor) \
             else v for k, v in loss_dict.items() if v}
+        loss_dict['grad_norm'] = grad_norm
         if logger is not None:
             rec_lr = lr_scheduler.optimizer.param_groups[0]['lr']
             logger.log(epoch, iteration, rec_lr, **loss_dict)

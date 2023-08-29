@@ -27,15 +27,25 @@ class Model(nn.Module):
 
     def set_module(self, name, cfgs):
         modules = []
-        for module_dict in cfgs:
-            for module_name, module_values in module_dict.items():
-                m = self.get_object_instance(name, module_name, module_values)
-                setattr(self, module_name.lower(), m)
-                modules.append(module_name.lower())
+        if isinstance(cfgs, dict):
+            m = self.get_object_instance(name, '', cfgs)
+            setattr(self, name.lower(), m)
+            modules.append(name.lower())
+        else:
+            for module_dict in cfgs:
+                for module_name, module_values in module_dict.items():
+                    m = self.get_object_instance(name, module_name, module_values)
+                    setattr(self, module_name.lower(), m)
+                    modules.append(module_name.lower())
         return modules
 
     def get_object_instance(self, package, module_name, cfgs):
-        module = importlib.import_module(f'cosense3d.model.{package}.{module_name}')
+        if module_name == '':
+            module_path = f'cosense3d.model.{package}'
+            module_name = package
+        else:
+            module_path = f'cosense3d.model.{package}.{module_name}'
+        module = importlib.import_module(module_path)
 
         cls_name = ''
         for word in module_name.split('_'):

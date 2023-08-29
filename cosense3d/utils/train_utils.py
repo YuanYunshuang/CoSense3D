@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 import torch
+from torch.nn.utils.clip_grad import clip_grad_norm_
 
 
 def seed_everything(seed):
@@ -51,15 +52,29 @@ def build_lr_scheduler(optimizer, cfg, steps_per_epoch):
     return lr_scheduler
 
 
+def is_tensor_to_cuda(data):
+    if isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = is_tensor_to_cuda(v)
+        return data
+    elif isinstance(data, torch.Tensor):
+        return data.cuda()
+    elif isinstance(data, list) or isinstance(data, tuple):
+        data_t = []
+        for i in range(len(data)):
+            data_t.append(is_tensor_to_cuda(data[i]))
+        return tuple(data_t)
+    else:
+        return data
+
+
 def load_tensors_to_gpu(batch_dict):
     """
     Load all tensors in batch_dict to gpu
-    :param batch_dict: batched data dict
-    :return:
     """
+
     for k, v in batch_dict.items():
-        if isinstance(v, torch.Tensor):
-            batch_dict[k] = v.cuda()
+        batch_dict[k] = is_tensor_to_cuda(v)
 
 
 def load_model_dict(model, pretrained_dict):
@@ -75,4 +90,10 @@ def load_model_dict(model, pretrained_dict):
     model.load_state_dict(model_dict)
     return model
 
+
+def clip_grads(params, max_norm=35, norm_type=2):
+    params = list(
+        filter(lambda p: p.requires_grad and p.grad is not None, params))
+    if len(params) > 0:
+        return clip_grad_norm_(params, max_norm=35, norm_type=2)
 

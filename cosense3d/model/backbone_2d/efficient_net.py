@@ -2,9 +2,10 @@
 # /cross_view_transformer/model/backbones/efficientnet.py
 import torch
 import torch.nn as nn
-
-from efficientnet_pytorch import EfficientNet as ENet
 import torch.utils.checkpoint
+from efficientnet_pytorch import EfficientNet as ENet
+
+from cosense3d.model.utils.grid_mask import GridMask
 
 
 # Precomputed aliases
@@ -30,7 +31,7 @@ MODELS = {
 }
 
 
-class EfficientNetExtractor(torch.nn.Module):
+class EfficientNet(torch.nn.Module):
     """
     Helper wrapper that uses torch.utils.checkpoint.checkpoint to save memory while training.
 
@@ -81,11 +82,11 @@ class EfficientNetExtractor(torch.nn.Module):
 
         # Pass a dummy tensor to precompute intermediate shapes
         dummy = torch.rand(1, 3, image_height, image_width)
-        output_shapes = [x.shape for x in self.forward_pass(dummy)]
+        output_shapes = [x.shape for x in self.forward(dummy)]
 
         self.output_shapes = output_shapes
 
-    def forward_pass(self, x):
+    def forward(self, x):
         if self.training:
             x = x.requires_grad_(True)
 
@@ -117,14 +118,6 @@ class SequentialWithArgs(nn.Sequential):
 
         return x
 
-
-class EfficientNet(EfficientNetExtractor):
-    def __init__(self, cfgs):
-        super().__init__(**cfgs)
-
-    def forward(self, batch_dict):
-        x = batch_dict['imgs'].permute(0, 1, 4, 2, 3).contiguous().flatten(0, 1)
-        batch_dict['backbone_2d'] = self.forward_pass(x)
 
 
 if __name__ == '__main__':

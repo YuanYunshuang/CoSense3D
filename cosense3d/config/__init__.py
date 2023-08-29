@@ -28,8 +28,10 @@ def load_config(args):
         # modules_default = load_yaml("./config/defaults/modules.yaml")
         # update_dict(cfg, modules_default)
         main_cfg = load_yaml(args.config)
-    dataset_default = load_yaml(f"{path}/defaults/{main_cfg['DATASET']['name']}.yaml")
-    update_dict(cfg, dataset_default)
+    default_file = f"{path}/defaults/{main_cfg['DATASET']['name']}.yaml"
+    if os.path.exists(default_file):
+        dataset_default = load_yaml(default_file)
+        update_dict(cfg, dataset_default)
     update_dict(cfg, main_cfg)
 
     if isinstance(args, str):
