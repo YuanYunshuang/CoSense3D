@@ -25,6 +25,23 @@ def header(points):
             DATA ascii
             """
 
+
+def pose_to_transformation(pose):
+    """
+
+    Args:
+        pose: list, [x, y, z, roll, pitch, yaw]
+
+    Returns:
+        transformation: np.ndarray, (4, 4)
+    """
+    transformation = np.eye(4)
+    r = R.from_euler('xyz', pose[3:]).as_matrix()
+    transformation[:3, :3] = r
+    transformation[:3, 3] = np.array(pose[:3])
+    return transformation
+
+
 def read_ply(filename):
     ply = PlyData.read(filename)
     data = ply['vertex']

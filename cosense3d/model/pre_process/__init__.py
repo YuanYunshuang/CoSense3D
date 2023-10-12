@@ -11,10 +11,13 @@ class Compose(object):
         self.processes = []
         for module_cfg in cfg:
             for k, v in module_cfg.items():
+                if '.' in k:
+                    k, cls_name = k.split('.')
+                else:
+                    cls_name = ''
+                    for word in k.split('_'):
+                        cls_name += word[:1].upper() + word[1:]
                 module = import_module(f"{globals()['__name__']}.{k}")
-                cls_name = ''
-                for word in k.split('_'):
-                    cls_name += word[:1].upper() + word[1:]
                 cls_obj = getattr(module, cls_name, None)
                 assert cls_obj is not None, f'Class \'{cls_name}\' not found.'
                 cls_inst = cls_obj(**v)

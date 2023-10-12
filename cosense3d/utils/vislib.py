@@ -9,6 +9,7 @@ import open3d as o3d
 
 from cosense3d.utils import pclib
 from cosense3d.utils.box_utils import corners_to_boxes_3d, boxes_to_corners_3d
+from matplotlib.patches import Polygon
 
 
 COLOR_PALETTES = {
@@ -387,5 +388,105 @@ def plt_draw_frame_data(frame_dict, data_path):
             
             ax.plot(points[:, 0], points[:, 1], '.', markersize=.5)
             ax = draw_box_plt(bbx, ax)
+    plt.show()
+    plt.close()
+
+
+def draw_3d_points_boxes_on_img(img, lidar2cam, I, points=None, boxes=None):
+    """
+        4 -------- 5             ^ z
+       /|         /|             |
+      7 -------- 6 .             |
+      | |        | |             | . x
+      . 0 -------- 1             |/
+      |/         |/              +-------> y
+      3 -------- 2
+    Parameters
+    ----------
+    img: np.ndarray
+    lidar2cam: np.ndarray, (4, 4), transformation matrix from lidar to camera coordinates
+    I: np.ndarray, (3, 3), intrinsic parameters
+    points: np.ndarray, (N, 3+C)
+    boxes: np.ndarray, (N, 8, 3), corners are in lidar coordinates
+    """
+    assert lidar2cam.shape == (4, 4)
+    assert I.shape == (3, 3)
+    # Create a figure and axis
+    fig, ax = plt.subplots(1)
+
+    if points is not None:
+        points_homo = np.concatenate([points[:, :3], np.ones_like(points[:, :1])], axis=1).T
+        points_homo = lidar2cam @ points_homo
+        pixels = I @ points_homo[:3]
+        pixels[:2] = pixels[:2] / pixels[2:]
+        px = pixels[0].astype(int)
+        py = pixels[1].astype(int)
+        mask = (px >= 0) & (px<800) & (py >= 0) & (py < 600) & (pixels[2] > 0)
+        px, py = px[mask], py[mask]
+        dist = np.linalg.norm(points_homo[:2].T[mask], axis=1)
+        dist_norm = np.clip(dist, a_min=0, a_max=100) / 100.
+        # Create a colormap based on the numbers
+        cmap = plt.get_cmap('jet')
+
+        # Convert the numbers to colors using the colormap
+        colors = np.array([cmap(num) for num in dist_norm])[:, :3] * 255
+        img[py, px] = colors
+
+    ax.imshow(img)
+    # Loop through the boxes and draw them on the image
+    if boxes is not None:
+        n_box = len(boxes)
+        box_points = boxes.reshape(-1, 3)
+        box_points_homo = np.concatenate([box_points[:, :3], np.ones_like(box_points[:, :1])], axis=1).T
+        box_points_homo = lidar2cam @ box_points_homo
+        box_pixels = I @ box_points_homo[:3]
+        box_pixels[:2] = box_pixels[:2] / box_pixels[2:]
+        box_pixels = box_pixels.T.reshape(n_box, 8, 3)
+        box_pixels = box_pixels[(box_pixels[:, :, 2] > 0).all(axis=1)]
+        for box in box_pixels:
+            faces = [
+                [0, 1, 2, 3, 0],
+                [4, 5, 6, 7, 4],
+                [0, 1, 5, 4, 0],
+                [2, 3, 7, 6, 2]
+            ]
+            for face in faces:
+                vertices = [(box[i][0], box[i][1]) for i in face]
+                polygon = Polygon(vertices, fill=None, edgecolor='g')
+                ax.add_patch(polygon)
+
+    plt.show()
+    plt.close()
+
+
+def draw_2d_bboxes_on_img(img, boxes2d):
+    """
+
+    Parameters
+    ----------
+    img: np.ndarray
+    boxes2d: np.ndarray, (N, 4, 2) for 4 corners or (N, 2, 2) for left top and right bottom corners inn pixel metric
+    -------
+    """
+    assert len(boxes2d.shape) == 3
+    if boxes2d.shape[1] == 2:
+        box_4corners = []
+        for box in boxes2d:
+            box_4corners.append([
+                box[0],                  # left top
+                [box[1, 0], box[0, 1]],  # right top
+                box[1],                  # right bottom
+                [box[0, 0], box[1, 1]],  # left bottom
+            ])
+    else:
+        box_4corners = boxes2d
+
+    fig, ax = plt.subplots(1)
+    ax.imshow(img)
+    for box in box_4corners:
+        vertices = [(box[i][0], box[i][1]) for i in [0, 1, 2, 3, 0]]
+        polygon = Polygon(vertices, fill=None, edgecolor='r')
+        ax.add_patch(polygon)
+
     plt.show()
     plt.close()

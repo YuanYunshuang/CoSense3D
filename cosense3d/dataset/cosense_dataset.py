@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import random
 
 import open3d as o3d
 import cv2
@@ -28,21 +29,30 @@ from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 class CosenseDataset(Dataset):
     LABEL_COLORS = {}
     VALID_CLS = []
+    COM_RANGE = 45
 
     def __init__(self, cfgs, mode):
         self.cfgs = cfgs
         self.mode = mode
+        self.data_path = os.path.join(self.cfgs['data_path'], self.mode)
+        self.max_num_cavs = cfgs['max_num_cavs']
 
         self.init_dataset()
 
-        self.pipeline = Pipeline(cfgs['pipeline'].get(mode, []))
+        self.pipeline = Pipeline(cfgs[f'{mode}_pipeline'])
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, item):
-        sample_info = self.load_sample_info(item)
-        return self.pipeline(sample_info)
+        return self.load_frame_data(item)
+
+    def load_frame_data(self, item, prev_agents=None, prev_item=None):
+        sample_info = self.load_sample_info(item, prev_agents, prev_item)
+        data_dict = self.pipeline(sample_info)
+        data_dict.pop('sample_info')
+        data_dict.pop('data_path')
+        return data_dict
 
     def init_dataset(self):
         """Load all necessary meta information"""
@@ -76,7 +86,7 @@ class CosenseDataset(Dataset):
             # scenario_dict = {s: scenario_dict[s] for s in list(scenario_dict.keys())[:1]}
             self.meta_dict[scenario] = scenario_dict
 
-    def load_sample_info(self, item):
+    def load_sample_info(self, item, prev_agents=None, prev_item=None):
         """
         Load data of the ```item```'th sample.
         Parameters
@@ -95,12 +105,80 @@ class CosenseDataset(Dataset):
         scenario, frame = self.samples[item]
         sample_info = self.meta_dict[scenario][frame]
 
+        if prev_item is None:
+            prev_item = max(item - 1, 0)
+        prev_scenario, prev_frame = self.samples[prev_item]
+        prev_idx = f'{prev_scenario}.{prev_frame}'
+        next_item = min(item + 1, self.__len__() - 1)
+        next_scenario, next_frame = self.samples[next_item]
+        next_idx = f'{next_scenario}.{next_frame}'
+
+        if prev_scenario != scenario:
+            prev_agents = None
+        valid_agent_ids = self.get_valid_agents(sample_info, prev_agents)
+
         return {
             'scenario': scenario,
             'frame': frame,
-            'sample_info': sample_info
+            'data_path': self.data_path,
+            'sample_info': sample_info,
+            'valid_agent_ids': valid_agent_ids
         }
 
+    def get_valid_agents(self, sample_info, prev_agents):
+        agents = sample_info['agents']
+        ego_id = sample_info['meta']['ego_id']
+        agents_ids = [ego_id]
+        # filter cavs in communication range
+        ego_pose_vec = agents[ego_id]['pose']
+        in_range_cavs = []
+        for ai, adict in agents.items():
+            if ai == ego_id:
+                continue
+            if ((adict['pose'][0] - ego_pose_vec[0])**2 + (adict['pose'][1] - ego_pose_vec[1])**2
+                    < self.COM_RANGE**2):
+                in_range_cavs.append(ai)
+        if prev_agents is not None:
+            agents_ids = prev_agents
+        elif self.max_num_cavs > 1:
+            agents_ids += random.sample(in_range_cavs, k=min(self.max_num_cavs - 1, len(in_range_cavs)))
+        return agents_ids
+
     @staticmethod
-    def collate_batch(batch_dict):
+    def collate_batch(batch_list):
+        keys = batch_list[0].keys()
+        batch_dict = {k:[] for k in keys}
+
+        def list_np_to_tensor(ls):
+            ls_tensor = []
+            for i, l in enumerate(ls):
+                if isinstance(l, list):
+                    l_tensor = list_np_to_tensor(l)
+                    ls_tensor.append(l_tensor)
+                elif isinstance(l, np.ndarray):
+                    tensor = torch.from_numpy(l)
+                    if l.dtype == np.float64:
+                        tensor = tensor.float()
+                    ls_tensor.append(tensor)
+                else:
+                    ls_tensor.append(l)
+            return ls_tensor
+
+        for k in keys:
+            if isinstance(batch_list[0][k], np.ndarray):
+                batch_dict[k] = [torch.from_numpy(batch[k]) for batch in batch_list]
+            elif isinstance(batch_list[0][k], list):
+                batch_dict[k] = [list_np_to_tensor(batch[k]) for batch in batch_list]
+            else:
+                batch_dict[k] = [batch[k] for batch in batch_list]
         return batch_dict
+
+
+if __name__=="__main__":
+    from cosense3d.utils.misc import load_yaml
+    from torch.utils.data import DataLoader
+    cfgs = load_yaml("/mars/projects20/CoSense3D/cosense3d/config/petr.yaml")
+    cosense_dataset = CosenseDataset(cfgs['DATASET'], 'train')
+    cosense_dataloader = DataLoader(dataset=cosense_dataset, collate_fn=cosense_dataset.collate_batch)
+    for data in cosense_dataloader:
+        print(data.keys())

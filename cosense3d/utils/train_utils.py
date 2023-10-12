@@ -63,7 +63,7 @@ def is_tensor_to_cuda(data):
         data_t = []
         for i in range(len(data)):
             data_t.append(is_tensor_to_cuda(data[i]))
-        return tuple(data_t)
+        return data_t
     else:
         return data
 

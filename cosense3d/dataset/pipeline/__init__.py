@@ -2,9 +2,9 @@ import os
 import logging
 import pickle
 
-from cosense3d.dataset.pipeline.img import *
-from cosense3d.dataset.pipeline.lidar import *
-from cosense3d.dataset.pipeline.gt import *
+from cosense3d.dataset.pipeline.loading import *
+from cosense3d.dataset.pipeline.transform import *
+from cosense3d.dataset.pipeline.formatting import *
 from cosense3d.dataset.pipeline.random import *
 
 

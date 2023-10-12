@@ -384,7 +384,8 @@ class CoSenseDataConverter:
                      agent_id,
                      agent_type=None,
                      agent_pose=None,
-                     agent_time=None):
+                     agent_time=None,
+                     **kwargs):
         if agent_id not in fdict['agents']:
             fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents'][0]
         if agent_type is not None:
@@ -393,6 +394,8 @@ class CoSenseDataConverter:
             fdict['agents'][agent_id]['pose'] = agent_pose
         if agent_time is not None:
             fdict['agents'][agent_id]['time'] = agent_time
+        for k, v in kwargs.items():
+            fdict['agents'][agent_id][k] = v
 
     @staticmethod
     def update_agent_lidar(fdict,

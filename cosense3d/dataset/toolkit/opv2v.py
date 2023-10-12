@@ -1,7 +1,10 @@
 import copy
+import json
 import math
 import os
 from glob import glob
+
+import matplotlib.pyplot as plt
 import numpy as np
 import tqdm
 import open3d as o3d
@@ -16,6 +19,10 @@ from scipy.spatial.transform import Rotation as R
 from cosense3d.utils.misc import load_yaml, save_json
 from cosense3d.dataset.toolkit import register_pcds
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
+from cosense3d.utils.box_utils import boxes_to_corners_3d
+from cosense3d.utils.pclib import load_pcd
+from cosense3d.utils.vislib import draw_points_boxes_plt, draw_2d_bboxes_on_img
+from cosense3d.ops.utils import points_in_boxes_cpu
 
 
 def x_to_world(pose):
@@ -259,6 +266,56 @@ def project_world_objects(object_dict,
                                             'velo': velo}})
 
 
+def update_local_boxes3d(fdict, objects_dict, ref_pose, order, data_dir, cav_id):
+    output_dict = {}
+    # add ground truth boxes at cav local coordinate
+    project_world_objects(objects_dict,
+                          output_dict,
+                          ref_pose,
+                          order)
+    boxes_local = []
+    velos = []
+    for object_id, object_content in output_dict.items():
+        if object_content['ass_id'] != -1:
+            object_id = object_content['ass_id']
+        else:
+            object_id = object_id
+        object_bbx = object_content['coord']
+        if order == 'hwl':
+            object_bbx = object_bbx[:, [0, 1, 2, 5, 4, 3, 6]]
+        boxes_local.append(
+            [object_id, 0, ] +
+            object_bbx[0, :6].tolist() +
+            [0, 0, object_bbx[0, 6]]
+        )
+        if 'velo' in object_content:
+            velos.append(object_content['velo'].tolist())
+    cs.update_agent(fdict, cav_id, gt_boxes=boxes_local)
+    if len(velos) == len(boxes_local):
+        cs.update_agent(fdict, cav_id, velos=velos)
+
+    # get visibility of local boxes
+    lidar = load_pcd(os.path.join(data_dir, fdict['agents'][cav_id]['lidar'][0]['filename']))['xyz']
+    if len(boxes_local) > 0:
+        boxes = np.array(boxes_local)[:, [2, 3, 4, 5, 6, 7, 10]]
+        res = points_in_boxes_cpu(lidar, boxes)
+        num_pts = res.sum(axis=1)
+        cs.update_agent(fdict, cav_id, num_pts=num_pts.tolist())
+    else:
+        cs.update_agent(fdict, cav_id, num_pts=[])
+
+
+def opv2v_pose_to_cosense(pose):
+    if len(pose) == 6:
+        transformation = x_to_world(pose)
+    else:
+        transformation = pose
+    rot = R.from_matrix(transformation[:3, :3]).as_euler('xyz', degrees=False)
+    tl = transformation[:3, 3]
+    pose = tl.tolist() + rot.tolist()
+    return pose
+
+
 def update_cam_params(opv2v_params, cosense_fdict, agent_id, scenario, frame):
     for k, v in opv2v_params.items():
         if 'camera' in k:
@@ -270,8 +327,77 @@ def update_cam_params(opv2v_params, cosense_fdict, agent_id, scenario, frame):
                 [os.path.join(scenario, agent_id, f'{frame}_{k}.png')],
                 v['intrinsic'],
                 v['extrinsic'],
-                pose=v['cords']
+                pose=v['cords'],
             )
+            
+
+def project_points(points, lidar2cam, I):
+    """Project 3d points to image planes"""
+    points_homo = np.concatenate([points[:, :3], np.ones_like(points[:, :1])], axis=1).T
+    points_homo = lidar2cam @ points_homo
+    pixels = I @ points_homo[:3]
+    pixels[:2] = pixels[:2] / pixels[2:]
+    depths = points_homo[2]
+    return pixels, depths
+
+
+def boxes_3d_to_2d(boxes3d, num_pts, lidar2cam, I, img_size):
+    n_box = len(boxes3d)
+    box_center = boxes3d.mean(axis=1)
+    box_points = boxes3d.reshape(-1, 3)
+    
+    box_pixels, _ = project_points(box_points, lidar2cam, I)
+    center_pixels, depths = project_points(box_center, lidar2cam, I)
+
+    box_pixels = box_pixels.T.reshape(n_box, 8, 3)
+    mask = (box_pixels[:, :, 2] > 0).all(axis=1)
+    box_pixels = box_pixels[mask]
+    center_pixels = center_pixels[:2].T[mask]
+    depths = depths[mask]
+    num_pts = num_pts[mask]
+    x_min = np.clip(box_pixels[..., 0].min(axis=1), a_min=0, a_max=img_size[1])
+    y_min = np.clip(box_pixels[..., 1].min(axis=1), a_min=0, a_max=img_size[0])
+    x_max = np.clip(box_pixels[..., 0].max(axis=1), a_min=0, a_max=img_size[1])
+    y_max = np.clip(box_pixels[..., 1].max(axis=1), a_min=0, a_max=img_size[0])
+    mask = (x_min < img_size[1]) & (x_max > 0) & (y_min < img_size[0]) & (y_max > 0)
+    bbox_2d = np.stack([x_min[mask], y_min[mask], x_max[mask], y_max[mask]], axis=-1)
+    return bbox_2d, center_pixels[mask], depths[mask], num_pts[mask]
+
+
+def update_2d_bboxes(fdict, cav_id, lidar_pose, data_dir):
+    local_boxes = np.array(fdict['agents'][cav_id]['gt_boxes'])
+    if len(local_boxes) > 0:
+        local_boxes = local_boxes[:, 2:]
+        num_pts = np.array(fdict['agents'][cav_id]['num_pts'])
+        boxes_corners = boxes_to_corners_3d(local_boxes)
+        # lidar = load_pcd(os.path.join(data_dir, fdict['agents'][cav_id]['lidar'][0]['filename']))
+        # lidar = np.concatenate([lidar['xyz'], np.ones_like(lidar['intensity'])], axis=1)
+        # draw_points_boxes_plt(pc_range=100, points=lidar, filename="/home/yuan/Downloads/tmp.png")
+        cam_UE2pinhole = np.array([[0, 1, 0, 0], [0, 0, -1, 0], [1, 0, 0, 0], [0, 0, 0, 1]])
+        for cam_id, cam_params in fdict['agents'][cav_id]['camera'].items():
+            img = cv2.imread(os.path.join(data_dir, cam_params['filenames'][0]))[..., ::-1]
+            lidar2cam_UE = x1_to_x2(lidar_pose, cam_params['pose'])
+            lidar2cam_pinhole = cam_UE2pinhole @ lidar2cam_UE
+            I = np.array(cam_params['intrinsic'])
+            # draw_3d_points_boxes_on_img(img, lidar2cam_pinhole, I, lidar, boxes_corners)
+            bboxes2d, centers2d, depths, num_pts_2d = boxes_3d_to_2d(
+                boxes_corners, num_pts, lidar2cam_pinhole, I, img_size=img.shape)
+            # draw_2d_bboxes_on_img(img, bboxes2d)
+            cam_params['bboxes2d'] = bboxes2d.tolist()
+            cam_params['centers2d'] = centers2d.tolist()
+            cam_params['depths'] = depths.tolist()
+            cam_params['num_pts'] = num_pts_2d.tolist()
+            cam_params['lidar2cam'] = lidar2cam_pinhole.tolist()
+    else:
+        cam_UE2pinhole = np.array([[0, 1, 0, 0], [0, 0, -1, 0], [1, 0, 0, 0], [0, 0, 0, 1]])
+        for cam_id, cam_params in fdict['agents'][cav_id]['camera'].items():
+            lidar2cam_UE = x1_to_x2(lidar_pose, cam_params['pose'])
+            lidar2cam_pinhole = cam_UE2pinhole @ lidar2cam_UE
+            cam_params['lidar2cam'] = lidar2cam_pinhole.tolist()
+            cam_params['bboxes2d'] = []
+            cam_params['centers2d'] = []
+            cam_params['depths'] = []
+            cam_params['num_pts'] = []
 
 
 def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
@@ -279,17 +405,21 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
         order = 'lwh'
     else:
         order = 'hwl'
+    flag = False
     for split in ['train', 'test']:
         scenarios = sorted(os.listdir(os.path.join(path_in, split)))
         with open(os.path.join(path_out, f'{split}.txt'), 'w') as fh:
             fh.write('\n'.join(scenarios))
         for s in scenarios:
             print(s)
+            # if s == "2021_08_22_09_43_53":
+            #     flag = True
+            # if not flag:
+            #     continue
             visualize = False
             sdict = {}
             spath = os.path.join(path_in, split, s)
             cavs = sorted([x for x in os.listdir(spath) if os.path.isdir(os.path.join(spath, x))])
-            ego_lidar_pose = None
             ego_id = cavs[0]
             frames = sorted([x[:-5]
                             for x in os.listdir(os.path.join(spath, ego_id)) if
@@ -305,58 +435,44 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                     params = load_yaml(yaml_file)
                     cs.update_agent(fdict, cav_id, agent_type='cav', agent_pose=params['true_ego_pos'])
                     update_cam_params(params, fdict, cav_id, s, f)
+                    
                     if cav_id == ego_id:
                         ego_lidar_pose = params['lidar_pose']
 
+                    # get transformation from ego to cav, correct transformation if necessary
                     transformation = x1_to_x2(params['lidar_pose'], ego_lidar_pose)
-                    # correct transformation
                     if not isSim and correct_transf and cav_id != ego_id:
                         ego_lidar_file = os.path.join(path_in, split, s, ego_id, f'{f}.pcd')
                         cav_lidar_file = os.path.join(path_in, split, s, cav_id, f'{f}.pcd')
                         transformation = register_pcds(cav_lidar_file, ego_lidar_file, transformation, visualize)
                         visualize = False
+                    # cav_lidar_pose2ego = opv2v_pose_to_cosense(transformation)
 
-                    rot = R.from_matrix(transformation[:3, :3]).as_euler('xyz', degrees=False)
-                    tl = transformation[:3, 3]
-                    cav_lidar_pose2ego = tl.tolist() + rot.tolist()
+                    # get cav lidar pose in cosense format
                     cs.update_agent(fdict, cav_id, 'cav')
                     cs.update_agent_lidar(fdict, cav_id, 0,
-                                          lidar_pose=cav_lidar_pose2ego,
+                                          lidar_pose=opv2v_pose_to_cosense(params['lidar_pose']),
                                           lidar_file=os.path.join(s, cav_id, f'{f}.pcd'))
 
                     objects_dict = params['vehicles']
                     output_dict = {}
                     if isSim:
-                        ref_pose = ego_lidar_pose
+                        glob_ref_pose = ego_lidar_pose
+                        local_ref_pose = params['lidar_pose']
                     else:
-                        ref_pose = transformation
+                        glob_ref_pose = transformation
+                        local_ref_pose = [0,] * 6
 
-                    if not isSim:
-                        # add ground truth boxes at cav local coordinate
-                        # only for v2vreal
-                        project_world_objects(objects_dict,
-                                              output_dict,
-                                              [0] * 6,
-                                              order)
-                        boxes_local = []
-                        for object_id, object_content in output_dict.items():
-                            if object_content['ass_id'] != -1:
-                                object_id = object_content['ass_id']
-                            else:
-                                object_id = object_id
-                            if order == 'hwl':
-                                object_bbx = object_content['coord'][:, [0, 1, 2, 5, 4, 3, 6]]
-                            boxes_local.append(
-                                [object_id, 0,] +
-                                object_bbx[0, :6].tolist() +
-                                [0, 0, object_bbx[0, 6]]
-                            )
-                        cs.update_agent_gt_boxes(fdict, cav_id, boxes_local)
+                    data_dir = os.path.join(path_in, split)
+                    update_local_boxes3d(fdict, objects_dict, local_ref_pose, order, data_dir, cav_id)
+                    if isSim:
+                        # v2vreal has no camera data
+                        update_2d_bboxes(fdict, cav_id, params['lidar_pose'], data_dir)
 
                     # add gt boxes in ego coordinates as global boxes of cosense3d format
                     project_world_objects(objects_dict,
                                           output_dict,
-                                          ref_pose,
+                                          glob_ref_pose,
                                           order)
 
                     for object_id, object_content in output_dict.items():
@@ -379,27 +495,86 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                     object_stack = object_stack[:, [0, 1, 2, 5, 4, 3, 6]]
 
                 cosense_bbx_center = np.zeros((len(object_stack), 11))
-                cosense_bbx_center[:, 0] = np.array(unique_indices)
+                cosense_bbx_center[:, 0] = np.array(object_id_stack)[unique_indices]
                 cosense_bbx_center[:, 2:8] = object_stack[:, :6]
                 cosense_bbx_center[:, 10] = object_stack[:, 6]
                 cs.update_frame_bbx(fdict, cosense_bbx_center.tolist())
                 fdict['agents'].pop(0)  # remove template agent
-                sdict[f] = fdict
 
-                if isinstance(ego_lidar_pose, np.ndarray):
-                    rot = R.from_matrix(ego_lidar_pose[:3, :3]).as_euler('xyz', degrees=False)
-                    tl = ego_lidar_pose[:3, 3]
-                    ego_lidar_pose = tl.tolist() + rot.tolist()
                 fdict['meta']['ego_id'] = ego_id
-                fdict['meta']['ego_lidar_pose'] = ego_lidar_pose
+                fdict['meta']['ego_lidar_pose'] = opv2v_pose_to_cosense(ego_lidar_pose)
                 if len(object_velo_stack) == len(object_stack):
                     fdict['meta']['bbx_velo_global'] = object_velo_stack.tolist()
+
+                sdict[f] = fdict
+
+                # plot
+                # ego_pose = pose_to_transformation(fdict['meta']['ego_lidar_pose'])
+                # ax = None
+                # for ai, adict in fdict['agents'].items():
+                #     cav_pose = pose_to_transformation(adict['lidar'][0]['pose'])
+                #     T_cav2ego = np.linalg.inv(ego_pose) @ cav_pose
+                #     lidar_file = os.path.join(path_in, split, adict['lidar'][0]['filename'])
+                #     points = load_pcd(lidar_file)['xyz']
+                #     points = np.concatenate([points, np.ones_like(points[:, :1])], axis=-1)
+                #     points = (T_cav2ego @ points.T).T
+                #     color = 'g' if ai == ego_id else 'r'
+                #     ax = draw_points_boxes_plt(
+                #         pc_range=100,
+                #         points=points[:, :3],
+                #         points_c=color,
+                #         ax=ax,
+                #         return_ax=True
+                #     )
+                # plt.show()
+                # plt.close()
+                # pass
             save_json(sdict, os.path.join(path_out, f'{s}.json'))
 
 
+def pose_to_transformation(pose):
+    """
+
+    Args:
+        pose: list, [x, y, z, roll, pitch, yaw]
+
+    Returns:
+        transformation: np.ndarray, (4, 4)
+    """
+    transformation = np.eye(4)
+    r = R.from_euler('xyz', pose[3:]).as_matrix()
+    transformation[:3, :3] = r
+    transformation[:3, 3] = np.array(pose[:3])
+    return transformation
+
+
+def update_global_bboxes_num_pts(data_dir, meta_path):
+    json_files = glob(meta_path + '/*.json')
+    for jf in tqdm.tqdm(json_files):
+        # tmp = os.path.join(data_dir, 'train', os.path.basename(jf)[:-5])
+        # data_dir_split = os.path.join(data_dir, 'train') if os.path.exists(tmp) else os.path.join(data_dir, 'test')
+        with open(jf, 'r') as fh:
+            meta = json.load(fh)
+        for f, fdict in meta.items():
+            # lidar_files = [ldict['filename'] for adict in fdict['agents'].values() for ldict in adict['lidar'].values()]
+            # lidar_files = [os.path.join(data_dir_split, lf) for lf in lidar_files]
+            # pcds = [load_pcd(lf)['xyz'] for lf in lidar_files]
+            # pcds = np.concatenate(pcds, axis=0)
+            boxes = np.array(fdict['meta']['bbx_center_global'])
+            boxes_num_pts = {int(i): 0 for i in boxes[:, 0]}
+            for adict in fdict['agents'].values():
+                for box, num_pts in zip(adict['gt_boxes'], adict['num_pts']):
+                    boxes_num_pts[int(box[0])] += num_pts
+            fdict['meta']['num_pts'] = [boxes_num_pts[int(i)] for i in boxes[:, 0]]
+
+        save_json(meta, jf.replace('opv2v', 'opv2v_full_'))
+
+
+
 if __name__=="__main__":
-    opv2v_to_cosense(
-        "/koko/OPV2V",
-        "/koko/cosense3d/opv2v",
-        isSim=True
-    )
+    # opv2v_to_cosense(
+    #     "/koko/OPV2V",
+    #     "/koko/cosense3d/tmp",
+    #     isSim=True
+    # )
+    update_global_bboxes_num_pts("/koko/OPV2V", "/koko/cosense3d/opv2v")
