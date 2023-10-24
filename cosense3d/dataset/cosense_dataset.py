@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import random
+from typing import List, Optional
 
 import open3d as o3d
 import cv2
@@ -47,7 +48,20 @@ class CosenseDataset(Dataset):
     def __getitem__(self, item):
         return self.load_frame_data(item)
 
-    def load_frame_data(self, item, prev_agents=None, prev_item=None):
+    def load_frame_data(self, item: int, prev_agents: Optional[List] = None, prev_item: Optional[int] = None) -> dict:
+        """
+        Load all data and annotations from one frame to standard CoSense format.
+
+        Parameters
+        ----------
+        item: sample index.
+        prev_agents: only load data the previous agents if given, this is used for temporal data loading.
+        prev_item: the index of the previous loaded sample.
+
+        Returns
+        -------
+        data_dict:
+        """
         sample_info = self.load_sample_info(item, prev_agents, prev_item)
         data_dict = self.pipeline(sample_info)
         data_dict.pop('sample_info')
@@ -60,6 +74,7 @@ class CosenseDataset(Dataset):
         self.parse_samples()
 
     def parse_samples(self):
+        """List all frame-wise instances"""
         # list all frames, each frame as a sample
         self.samples = []
         for scenario, scontent in self.meta_dict.items():
@@ -69,6 +84,7 @@ class CosenseDataset(Dataset):
         print(f"{self.mode} : {len(self.samples)} samples.")
 
     def load_meta(self):
+        """Load meta data from CoSense json files"""
         self.meta_dict = {}
         meta_dir = self.cfgs['meta_path']
         if meta_dir == '':
@@ -86,14 +102,15 @@ class CosenseDataset(Dataset):
             # scenario_dict = {s: scenario_dict[s] for s in list(scenario_dict.keys())[:1]}
             self.meta_dict[scenario] = scenario_dict
 
-    def load_sample_info(self, item, prev_agents=None, prev_item=None):
+    def load_sample_info(self, item: int, prev_agents: Optional[List] = None, prev_item: Optional[int] = None) -> dict:
         """
-        Load data of the ```item```'th sample.
+        Load meta info of the ```item```'th sample.
+
         Parameters
         ----------
-        item : int
-            sample index
-
+        item: sample index.
+        prev_agents: only load data the previous agents if given, this is used for temporal data loading.
+        prev_item: the index of the previous loaded sample.
         Returns
         -------
         batch_dict: dict
@@ -125,23 +142,37 @@ class CosenseDataset(Dataset):
             'valid_agent_ids': valid_agent_ids
         }
 
-    def get_valid_agents(self, sample_info, prev_agents):
-        agents = sample_info['agents']
-        ego_id = sample_info['meta']['ego_id']
-        agents_ids = [ego_id]
-        # filter cavs in communication range
-        ego_pose_vec = agents[ego_id]['pose']
-        in_range_cavs = []
-        for ai, adict in agents.items():
-            if ai == ego_id:
-                continue
-            if ((adict['pose'][0] - ego_pose_vec[0])**2 + (adict['pose'][1] - ego_pose_vec[1])**2
-                    < self.COM_RANGE**2):
-                in_range_cavs.append(ai)
+    def get_valid_agents(self, sample_info: dict, prev_agents: Optional[List] = None) -> List:
+        """
+        Return prev_agents if given else select the given number of agents in the communication range
+         which includes the ego agent.
+
+        Parameters
+        ----------
+        sample_info: meta info the one sample.
+        prev_agents: list of the agent ids loader last time.
+
+        Returns
+        -------
+        agents_ids: list of valid agent for the current sample
+        """
         if prev_agents is not None:
-            agents_ids = prev_agents
-        elif self.max_num_cavs > 1:
-            agents_ids += random.sample(in_range_cavs, k=min(self.max_num_cavs - 1, len(in_range_cavs)))
+            return prev_agents
+        else:
+            agents = sample_info['agents']
+            ego_id = sample_info['meta']['ego_id']
+            agents_ids = [ego_id]
+            # filter cavs in communication range
+            ego_pose_vec = agents[ego_id]['pose']
+            in_range_cavs = []
+            for ai, adict in agents.items():
+                if ai == ego_id:
+                    continue
+                if ((adict['pose'][0] - ego_pose_vec[0])**2 + (adict['pose'][1] - ego_pose_vec[1])**2
+                        < self.COM_RANGE**2):
+                    in_range_cavs.append(ai)
+            if self.max_num_cavs > 1:
+                agents_ids += random.sample(in_range_cavs, k=min(self.max_num_cavs - 1, len(in_range_cavs)))
         return agents_ids
 
     @staticmethod
