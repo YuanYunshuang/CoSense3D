@@ -4,11 +4,11 @@
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}[INFO] Create conda environment...${NC}"
-conda create -n cosense3d python=3.8
-conda activate cosense3d
-conda install openblas-devel -c anaconda
-sudo apt install build-essential python3-dev libopenblas-dev
+#echo -e "${GREEN}[INFO] Create conda environment...${NC}"
+#conda create -n cosense3d python=3.8
+#conda activate cosense3d
+conda install openblas-devel -c anaconda -y
+sudo apt install build-essential python3-dev libopenblas-dev -y
 
 echo -e "${GREEN}[INFO] Installing pytorch essentials...${NC}"
 #conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c pytorch
