@@ -8,4 +8,5 @@ dataset/metas/
 data
 *.so
 mmdetection3d
-*/build
+*/build/
+cosense3d/ops/build
