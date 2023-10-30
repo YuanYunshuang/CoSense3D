@@ -1,0 +1,201 @@
+DATASET:
+  name: opv2v
+  dataset: tracking
+  meta_path: /koko/cosense3d/opv2v_with_speed
+  DetectionBenchmark: Car
+  gt: ['bbx_center_global', 'bbx_velo_global']
+  history_len: &history_len 0
+  data_info: &data_info
+    lidar_range: &lidar_range [-140.8, -38.4, -3, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+  batch_size_train: 2
+  n_workers: 4
+
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 2
+  max_epoch: 50
+  gpus: 1
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 5
+  resume: true
+  optimizer:
+    lr: 4e-4
+    weight_decay: 1e-2
+    betas: [0.95, 0.999]
+    milestones: [25, 40]
+    gamma: 0.1
+  lr_scheduler:
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-4
+    warmup_epochs: 10
+    lr_min: 2e-5
+
+MODEL:
+  pre_process:
+#    - free_space_augmentation:
+#        free_space_h: -1.5 # height offset to lidar center
+#        free_space_d: 9
+#        free_space_step: 1.5
+    - geo_augmentation:
+        rotate: [ 0, 0, 180 ] # std in degree
+        flip: xy # x | y | xy
+        scale: 0.05
+    -  crop_lidar_range:
+         x: [-140.8, 140.8]
+         y: [-38.4, 38.4]
+         z: [-3, 3]
+    -  register_coordinates:
+          height: -3
+    - compose_point_features:
+        features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
+    - dimensionless_coordinates:
+        voxel_size: *voxel_size
+  backbone_3d:
+    - mink_unet:
+        in_dim: 8
+        cache: ['p4']
+  submodules:
+    - compression:
+        data_info: *data_info
+        dense: false
+        planes:
+#          - p2:
+#              steps: [ 5, 3 ]
+#              channels: [ 64, 128, 128 ]
+          - p4:
+              steps: [ 4, 2 ]
+              channels: [ 64, 128, 128 ]
+    - attn_fusion:
+        data_info: *data_info
+        feature_src: compression
+        stride: 4
+        dim: 128
+    - dilation_spconv:
+        data_info: *data_info
+        feature_src: attn_fusion
+        convs:
+#          p2:
+#            kernels: [5, 5, 3] # receiptive field: 2.0m
+#            in_dim: 128
+#            out_dim: 128
+#            expand_coordinates: True
+          p4:
+            kernels: [5, 5, 3] # receiptive field: 4.0m
+            in_dim: 128
+            out_dim: 128
+            expand_coordinates: True
+
+  heads:
+    - roi_center_sparse:
+        data_info: *data_info
+        input_channels: 128
+        feature_src: dilation_spconv
+        stride: 4
+
+        target_assigner:
+          data_info: *data_info
+          meter_per_pixel: 0.8  # m
+          stride: 4
+          detection_benchmark: Car
+          assigners:
+            - points_centerness: # a center point from sparse conv is the box center point
+                min_radius: 0.8  #m
+                pos_neg_ratio: 4
+                merge_all_classes: true
+
+        loss_cfg:
+          center:
+            weight: 2.0
+            _target_: edl.edl_mse_loss
+            args:
+              annealing_step: 50000
+              model_label: 'roi'
+
+    - track_query_based:
+        data_info: *data_info
+        input_channels: 128
+        feature_src: RoiCenterSparse
+        stride: 4
+        history_len: *history_len
+        topk: 100
+        num_frame_grad: 2  # number of frames in the sliding window that requires grads
+        num_frame_loss: 2  # number of frames in the sliding window that requires losses
+
+        embed_dims: &embed_dims 128
+
+        transformer:
+          _target_: cosense3d.model.submodules.petr_transformer.PETRTemporalTransformer
+          args:
+            decoder:
+              _target_: cosense3d.model.submodules.petr_transformer.PETRTransformerDecoder
+              args:
+                return_intermediate: true
+                num_layers: 6
+                feedforward_channels: 2048
+                ffn_dropout: 0.1
+                with_cp: true
+                operation_order: ['self_attn', 'norm', 'cross_attn', 'norm', 'ffn', 'norm']
+                attn_dropout: 0.1
+                num_heads: 8
+                embed_dims: *embed_dims
+
+        target_assigner:
+          data_info: *data_info
+          meter_per_pixel: 0.8  # m
+          stride: 4
+          detection_benchmark: Car
+          assigners:
+            - hungarian3d: # a center point from sparse conv is the box center point
+                pos_neg_ratio: 2
+                _target_: Hungarian3D
+                args:
+                  pc_range: *lidar_range
+                  code_weights: [2, 2, 1, 1, 1, 1, 1, 1, 1, 1]
+                  cls_cost:
+                    type: FocalLossCost
+                    weight: 2.0
+
+                  reg_cost:
+                    type: BBox3DL1Cost
+                    weight: 0.25
+
+                  iou_cost:
+                    type: IoUCost
+                    weight: 0.0
+
+
+        loss_cfg:
+          cls:
+            _target_: common.focal_loss
+            weight: 2.0
+            args:
+              use_sigmoid: true
+              gamma: 2.0
+              alpha: 0.25
+          box:
+            weight: 0.25
+            _target_: common.weighted_smooth_l1_loss
+
+#          iou:
+#            _target_: model.losses.giou_loss.GIoULoss
+#            args:
+#              loss_weight: 0.1
+
+  post_process:
+    - detection_post_process:
+        data_info: *data_info
+        stride: 2
+        visualization: true
+
+TEST:
+  metrics:
+    MetricBev: []
+
+
+
+
+
+

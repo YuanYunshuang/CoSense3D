@@ -1,0 +1,13 @@
+# ninja log v5
+1	2241	1698694075689287806	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/iou_nms/iou3d_nms_kernel.o	260c4049757d0599
+0	4845	1698694078285255314	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/dot_product/dot_product.o	f01c69f831be8c38
+1	4970	1698694078413253720	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/index_pooling/index_pooling.o	b070bc0d153991ea
+2	7433	1698694080873223169	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/scalar_attention/scalar_attention.o	5a48342ba9a75819
+1	9246	1698694082685200814	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/iou_nms/iou3d_cpu.o	f6afaa199695f09e
+1	10486	1698694083925185581	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/iou_nms/iou3d_nms.o	c28d36397ce51bba
+2	10684	1698694084125183130	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/utils/boxes.o	d0f624fe23c8e67e
+0	12498	1698694085933161034	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/cuda_ops_api.o	1d4c10d4de9072ee
+1	12627	1698694086073159327	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/index_pooling/index_pooling_kernel.o	cef7fc5c322e05d7
+2	13620	1698694087065147260	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/utils/boxes_kernel.o	7ac4c410bf28f4f5
+2	13627	1698694087073147163	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/scalar_attention/scalar_attention_kernel.o	459d0b54fb22dcff
+0	15696	1698694089141122121	/home/projects/CoSense3d/cosense3d/ops/build/temp.linux-x86_64-3.8/src/dot_product/dot_product_kernel.o	248d78ad7b1e8e7b

@@ -572,9 +572,9 @@ def update_global_bboxes_num_pts(data_dir, meta_path):
 
 
 if __name__=="__main__":
-    # opv2v_to_cosense(
-    #     "/koko/OPV2V",
-    #     "/koko/cosense3d/tmp",
-    #     isSim=True
-    # )
+    opv2v_to_cosense(
+        "/koko/OPV2V",
+        "/koko/cosense3d/tmp",
+        isSim=True
+    )
     update_global_bboxes_num_pts("/koko/OPV2V", "/koko/cosense3d/opv2v")

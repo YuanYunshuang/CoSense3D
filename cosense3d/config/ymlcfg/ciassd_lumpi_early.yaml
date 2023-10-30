@@ -1,0 +1,60 @@
+TRAIN:
+#  project_name: 'auto-cosense3d'
+  wandb_account: 'opheliayuan'
+  log_every: 2
+  max_epoch: 50
+  gpus: 1
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 5
+  resume: true
+  optimizer:
+    lr: 0.001
+    weight_decay: 1e-2
+    betas: [0.95, 0.999]
+    milestones: [20, 45]
+    gamma: 0.1
+
+
+DATASET:
+  name: lumpi
+  fusion_stage: Early
+  data_path: "/media/hdd/yuan/koko/data/LUMPI/cosense_fmt"
+  meta_path: "./dataset/metas/lumpi"
+  visualize: false
+
+  preprocessors:
+    CropLidarRange:
+      lidar_z_lim: [ -3, 1 ]
+
+    RegisterCoordinates:
+      height: -3 # register to ground height
+
+MODEL:
+  name: 'cia_ssd'
+  order: ['sparse_conv', 'm_compression', 'm_ssfa', 'h_detection']
+
+  h_detection:
+    # stage 1
+    - s1:
+        version: 'dense'
+        det_r: 102.4
+        voxel_size: 0.2
+        stride: 8
+        in_dim: 128
+        box_dim: [ 4.41, 1.98, 1.64 ]         # [l, w, h]
+        box_z: 1.6                          # z of box center
+        box_angles: [ 0, 90 ]                 # in degree
+        iou_match: 0.4
+        iou_unmatch: 0.2
+        sample_size: 512
+
+TEST:
+  vis_function: false
+  metrics:
+    MetricObjDet: []
+
+
+
+
+
+

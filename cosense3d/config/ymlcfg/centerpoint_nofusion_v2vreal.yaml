@@ -1,0 +1,155 @@
+DATASET:
+  name: v2vreal
+  dataset: no_fusion
+  meta_path: /koko/cosense3d/v2vreal
+  DetectionBenchmark: Car
+  data_info: &data_info
+    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+  batch_size_train: 4
+  n_workers: 4
+
+  preprocessors:
+    train:
+      - GeoAugmentation
+    test: []
+    val: []
+
+  postprocessors:
+    BevPostProcess:
+      data_info: *data_info
+
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 2
+  max_epoch: 50
+  gpus: 1
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 5
+  resume: true
+  optimizer:
+    lr: 0.001
+    weight_decay: 1e-2
+    betas: [0.95, 0.999]
+    milestones: [25, 40]
+    gamma: 0.1
+
+MODEL:
+  pre_process:
+    - free_space_augmentation:
+        free_space_h: -1.5 # height offset to lidar center
+        free_space_d: 9
+        free_space_step: 1.5
+    -  crop_lidar_range:
+         x: [-140.8, 140.8]
+         y: [-38.4, 38.4]
+         z: [-3, 3]
+    -  register_coordinates:
+          height: -3
+    - compose_point_features:
+        features: 'x,y,z,i' # t:theta, d:depth, z:height, y:euclidean centers., x:euclidean centers., c:class, i:intensity
+    - dimensionless_coordinates:
+        voxel_size: *voxel_size
+  backbone_3d:
+    - mink_unet:
+        in_dim: 8
+        cache: ['p2']
+
+  submodules:
+    - compression:
+        data_info: *data_info
+        dense: false
+        planes:
+          - p2:
+              steps: [ 5, 3 ]
+              channels: [ 64, 128, 128 ]
+#          - p4:
+#              steps: [ 4, 2 ]
+#              channels: [ 64, 128, 128 ]
+    - dilation_spconv:
+        data_info: *data_info
+        feature_src: compression
+        convs:
+          p2:
+            kernels: [5, 5, 3] # receiptive field: 2.0m
+            in_dim: 128
+            out_dim: 128
+            expand_coordinates: True
+#          p4:
+#            kernels: [5, 5, 3] # receiptive field: 4.0m
+#            in_dim: 128
+#            out_dim: 128
+#            expand_coordinates: True
+
+  heads:
+    - bev:
+#        visualize_training: /home/yuan/Downloads/tmp1.png
+        data_info: *data_info
+        stride: 2
+        annealing_step: 50
+        feature_src: dilation_spconv
+        in_dim: 128
+        sampling:
+          annealing: false
+          topk: false
+
+    # stage 1
+    - det_center_sparse:
+        data_info: *data_info
+        input_channels: 128
+        feature_src: dilation_spconv
+        shared_conv_channel: 128
+        get_predictions: false
+        stride: 2
+        cls_head_cfg:
+          name: UnitedClsHead
+        reg_head_cfg:
+          name: UnitedRegHead
+          combine_channels: true
+          sigmoid_keys: ['scr']  # named tensors in the dict to sigmoid outout
+
+        class_names_each_head: [
+             ['vehicle.car']
+        ]
+        reg_channels:
+          - 'box:6'
+          - 'dir:8'
+          - 'scr:4'
+
+        target_assigner:
+          data_info: *data_info
+          meter_per_pixel: 0.4  # m
+          stride: 2
+          detection_benchmark: Car
+          assigners:
+            - points_centerness: # a center point from sparse conv is the box center point
+                min_radius: 1.6  #m
+                batch_dict_key: 'det_center_head'
+                pos_neg_ratio: 2
+            - encode_box:
+                _target_: model.utils.box_coder.CenterBoxCoder
+                center_thresh: 0.5
+
+        loss_cfg:
+          center:
+            _target_: model.losses.edl.edl_mse_loss
+            args:
+              annealing_step: 5000
+          reg:
+            _target_: model.losses.common.weighted_smooth_l1_loss
+
+        post_processing:
+          nms_thr: 0.1
+          nms_premaxsize: 500
+
+TEST:
+  metrics:
+    MetricObjDet:
+      eval_func: cal_ap_all_point
+
+
+
+
+
+
