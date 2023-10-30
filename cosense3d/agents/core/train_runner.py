@@ -24,7 +24,7 @@ class TrainRunner:
                  ):
         self.dataloader = dataloader
         self.model = model
-        self.optimizer = build_optimizer(model.modules, optimizer)
+        self.optimizer = build_optimizer(model.modules(), optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
                                                len(dataloader))
         self.total_epochs = max_epoch

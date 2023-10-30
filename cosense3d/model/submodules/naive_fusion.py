@@ -1,23 +1,25 @@
 import torch
-import numpy as np
 from torch import nn
-import torch.nn.functional as F
-from torch_scatter import scatter_mean
-from cosense3d.model.submodules.attention import CrossAttention
 from cosense3d.model.utils.me_utils import update_me_essentials
 
 
 class NaiveFusion(nn.Module):
-    def __init__(self, cfgs):
+    def __init__(self, cfgs=None, **kwargs):
         super(NaiveFusion, self).__init__()
         # self.voxel_size = cfgs['data_info']['voxel_size']
         # self.det_r = cfgs['data_info']['det_r']
+        if cfgs is None:
+            cfgs = kwargs  # for old version
         update_me_essentials(self, cfgs['data_info'], stride=cfgs['stride'])
         self.d = len(self.voxel_size)
-        self.feature_scr = cfgs['feature_src']
+        self.feature_scr = cfgs.get('feature_src', None)  # for old version
 
-    def forward(self, batch_dict):
-        stensor = batch_dict[self.feature_scr][f'p{self.stride}']
+    def forward(self, batch_dict, stensor=None):
+        if stensor is None:
+            # for old version
+            assert self.feature_scr is not None
+            stensor = batch_dict[self.feature_scr][f'p{self.stride}']
+
         coor = stensor['coor'][:, :3]
         feat = stensor['feat']
 
@@ -60,3 +62,5 @@ class NaiveFusion(nn.Module):
              dim=1)
 
         return mask, indices
+
+

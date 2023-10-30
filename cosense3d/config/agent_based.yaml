@@ -27,11 +27,17 @@ TRAIN:
     betas: [0.95, 0.999]
     milestones: [25, 40]
     gamma: 0.1
+  lr_scheduler:
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-5
+    warmup_epochs: 1
+    lr_min: 2e-4
 
 CONTROLLER:
   pre_process_train: 'pycfg.data_pipeline.train_pipeline_gpu'
   pre_process_test: 'pycfg.data_pipeline.test_pipeline_gpu'
-  shared_modules: []
+  shared_modules: 'pycfg.mink2d_stride2_vox2_naive_lidar.shared_modules'
   cav_manager: {}
   forward_runner: {}
 

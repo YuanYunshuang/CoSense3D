@@ -8,7 +8,9 @@ from cosense3d.model.losses.edl import edl_mse_loss, evidence_to_conf_unc
 
 
 class Bev(nn.Module):
-    def __init__(self, cfgs):
+    def __init__(self, cfgs=None, **kwargs):
+        if cfgs is None:
+            cfgs = kwargs
         super(Bev, self).__init__()
         for k, v in cfgs.items():
             setattr(self, k, v)

@@ -193,17 +193,28 @@ class TargetAssigner(object):
 
         # import modules if exist
         self.assigners = []
-        for assigner in cfg['assigners']:
-            k, v = list(assigner.items())[0]
-            self.assigners.append(k)
-            if '_target_' in v and isinstance(v['_target_'], str):
-                if '.' in v['_target_']:
-                    m_name, cls_name = v['_target_'].rsplit('.', 1)
-                    v['_target_'] = getattr(importlib.import_module(f'cosense3d.{m_name}'),
-                                            cls_name)(**v.get('args', {}))
-                else:
-                    v['_target_'] = globals().get(v['_target_'])(**v.get('args', {}))
-            setattr(self, f"{k}_args", v)
+        if isinstance(cfg['assigners'], list):
+            # cfg from yaml
+            for assigner in cfg['assigners']:
+                k, v = list(assigner.items())[0]
+                self.get_assigner(k, v)
+        elif isinstance(cfg['assigners'], dict):
+            # cfg from pycfg
+            for k, v in cfg['assigners'].items():
+                self.get_assigner(k, v)
+        else:
+            raise NotImplementedError
+
+    def get_assigner(self, k, v):
+        self.assigners.append(k)
+        if '_target_' in v and isinstance(v['_target_'], str):
+            if '.' in v['_target_']:
+                m_name, cls_name = v['_target_'].rsplit('.', 1)
+                v['_target_'] = getattr(importlib.import_module(f'cosense3d.{m_name}'),
+                                        cls_name)(**v.get('args', {}))
+            else:
+                v['_target_'] = globals().get(v['_target_'])(**v.get('args', {}))
+        setattr(self, f"{k}_args", v)
 
     def __call__(self, batch_dict):
         tgt = {}

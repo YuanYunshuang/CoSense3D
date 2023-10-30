@@ -21,3 +21,6 @@ class DataManager:
         else:
             return self.postP(batch_dict)
 
+    def distribute_data(self, batch_dict):
+        pass
+

@@ -99,8 +99,10 @@ class UnitedRegHead(nn.Module):
 
 
 class DetCenterSparse(nn.Module):
-    def __init__(self, cfgs):
+    def __init__(self, cfgs=None, **kwargs):
         super(DetCenterSparse, self).__init__()
+        if cfgs is None:
+            cfgs = kwargs
         for k, v in cfgs.items():
             setattr(self, k, v)
         # self.det_r = cfgs['data_info']['det_r']

@@ -5,8 +5,10 @@ from cosense3d.model.utils.me_utils import mink_coor_limit
 
 
 class DilationSpconv(nn.Module):
-    def __init__(self, cfgs):
+    def __init__(self, cfgs=None, **kwargs):
         super(DilationSpconv, self).__init__()
+        if cfgs is None:
+            cfgs = kwargs  # compitable with old version
         self.cfgs = cfgs
         self.det_r = cfgs['data_info'].get('det_r', False)
         self.lidar_range = cfgs['data_info'].get('lidar_range', False)
@@ -25,18 +27,24 @@ class DilationSpconv(nn.Module):
                 raise NotImplementedError
             setattr(self, f'mink_xylim_{k}', mink_coor_limit(lr, self.voxel_size, stride))  # relevant to ME
 
-    def forward(self, batch_dict):
+    def forward(self, batch_dict, stensor_dict=None):
         out_dict = {}
         for k in self.convs:
-            stride = int(k[1])
-            stensor3d = batch_dict[self.cfgs['feature_src']][k]
-            coor = stensor3d['coor'][:, :3]
-            feat = stensor3d['feat']
-            stensor2d = ME.SparseTensor(
-                coordinates=coor.contiguous(),
-                features=feat,
-                tensor_stride=[stride] * 2
-            )
+            stride = int(k[1]);
+            if stensor_dict is None:
+                stensor = batch_dict[self.cfgs['feature_src']][k]
+            else:
+                stensor = stensor_dict[k]
+            if isinstance(stensor, dict):
+                coor = stensor['coor'][:, :3]
+                feat = stensor['feat']
+                stensor2d = ME.SparseTensor(
+                    coordinates=coor.contiguous(),
+                    features=feat,
+                    tensor_stride=[stride] * 2
+                )
+            else:
+                stensor2d = stensor
             stensor2d = getattr(self, f'convs_{k}')(stensor2d)
             # after coordinate expansion, some coordinates will exceed the maximum detection
             # range, therefore they are removed here.
@@ -60,8 +68,8 @@ class DilationSpconv(nn.Module):
         in_dim = args['in_dim']
         out_dim = args['out_dim']
         layers = [minkconv_layer(in_dim, out_dim, args['kernels'][0], 1,
-                                 expand_coordinates=args['expand_coordinates'])]
+                                 expand_coordinates=True)]
         for ks in args['kernels'][1:]:
             layers.append(minkconv_layer(out_dim, out_dim, ks, 1,
-                                         expand_coordinates=args['expand_coordinates']))
+                                         expand_coordinates=True))
         return nn.Sequential(*layers)
