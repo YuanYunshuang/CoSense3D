@@ -1,10 +1,7 @@
-import torch
-from torch import nn
-
 from cosense3d.model.heads.sequence_runner import SequenceRunner
 from mmdet3d_plugin.models.dense_heads.focal_head import FocalHead
 from mmdet3d_plugin.models.utils.misc import locations
-from cosense3d.py_cfg.stream_petr import img_roi_head
+from cosense3d.config.pycfg.stream_petr import img_roi_head
 
 
 class RoiCenterImg(SequenceRunner):

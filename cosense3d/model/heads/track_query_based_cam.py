@@ -1,6 +1,5 @@
-from torch import nn
 from mmdet3d_plugin.models.dense_heads.streampetr_head import StreamPETRHead
-from cosense3d.py_cfg.stream_petr import pts_bbox_head
+from cosense3d.config.pycfg.stream_petr import pts_bbox_head
 from cosense3d.model.heads.sequence_runner import SequenceRunner
 
 

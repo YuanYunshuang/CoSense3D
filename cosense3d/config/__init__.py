@@ -1,6 +1,8 @@
 import os
+from importlib import import_module
 
 from cosense3d.utils.misc import load_yaml, save_yaml, update_dict
+from cosense3d.config import pycfg
 
 
 def load_config(args):
@@ -33,6 +35,7 @@ def load_config(args):
         dataset_default = load_yaml(default_file)
         update_dict(cfg, dataset_default)
     update_dict(cfg, main_cfg)
+    parse_pycfg(cfg)
 
     if isinstance(args, str):
         cfg['TRAIN']['log_dir'] = os.path.dirname(args)
@@ -63,6 +66,17 @@ def save_config(config_dict, filename):
     config_dict['TRAIN']['save_path'] = filename
     filename = os.path.join(filename, "config.yaml")
     save_yaml(config_dict, filename)
+
+
+def parse_pycfg(cfg_dict):
+    for k, v in cfg_dict.items():
+        if isinstance(v, str) and 'pycfg' in v:
+            m, n = v.rsplit('.', 1)
+            module = import_module(f'cosense3d.config.{m}')
+            cfg_dict[k] = getattr(module, n)
+        elif isinstance(v, dict):
+            parse_pycfg(v)
+
 
 
 

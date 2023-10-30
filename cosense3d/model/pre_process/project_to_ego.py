@@ -6,9 +6,6 @@ class ProjectToEgo:
         self.apply_transform = apply_transform
 
     def __call__(self, batch_dict):
-        if 'point_transforms' not in batch_dict:
-            batch_dict['point_transforms'] = {}
-
         Ts_cav2ego = []
         for i, lidar_pose in enumerate(batch_dict['lidar_poses']):
             inds = batch_dict['points_inds'][i]
