@@ -15,7 +15,14 @@ train_pipeline_cpu = OrderedDict(
             W=800,
             rand_flip=True,
         )
-    )
+    ),
+    Format2D=dict(),
+)
+
+train_data_manager = dict(
+    aug=dict(
+        rot_range=[-1.57, 1.57],
+        scale_ratio_range=[0.95, 1.05],)
 )
 
 train_pipeline_gpu = OrderedDict(

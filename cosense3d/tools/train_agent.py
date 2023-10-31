@@ -17,7 +17,7 @@ def train(cfgs):
     seed_everything(2023)
 
     train_dataloader = get_dataloader(cfgs['DATASET'])
-    center_controller = get_controller(cfgs['CONTROLLER'], 'train')
+    center_controller = get_controller(cfgs['CONTROLLER'], train_dataloader)
     train_runner = TrainRunner(train_dataloader, center_controller, **cfgs['TRAIN'])
     train_runner.run()
 

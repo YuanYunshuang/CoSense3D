@@ -9,7 +9,7 @@ from cosense3d.utils.misc import ensure_dir, setup_logger
 class TrainRunner:
     def __init__(self,
                  dataloader,
-                 model,
+                 controller,
                  max_epoch,
                  optimizer,
                  lr_scheduler,
@@ -23,8 +23,9 @@ class TrainRunner:
                  **kwargs
                  ):
         self.dataloader = dataloader
-        self.model = model
-        self.optimizer = build_optimizer(model.modules(), optimizer)
+        self.controller = controller
+        self.forward_runner = controller.forward_runner
+        self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
                                                len(dataloader))
         self.total_epochs = max_epoch
@@ -34,6 +35,11 @@ class TrainRunner:
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.log_every = log_every
         self.setup_logger(logger, run_name, log_dir, use_wandb)
+
+        self.init()
+
+    def init(self):
+        self.forward_runner.to(self.device)
 
     def setup_logger(self, logger, run_name, log_dir, use_wandb):
         if logger is None:
@@ -50,7 +56,8 @@ class TrainRunner:
 
     def run(self):
         for i in range(self.start_epoch, self.total_epochs + 1):
-            self.model.train()
+            self.forward_runner.train()
+            self.run_epoch()
 
     def run_epoch(self):
         for data in self.dataloader:
@@ -61,11 +68,11 @@ class TrainRunner:
         load_tensors_to_gpu(data)
         self.optimizer.zero_grad()
 
-        out = self.model.forward(data)
+        out = self.controller.run_seq(data)
 
-        total_loss, loss_dict = self.model.loss(out)
+        total_loss, loss_dict = self.controller.loss(out)
         total_loss.backward()
-        grad_norm = clip_grads(self.model.parameters())
+        grad_norm = clip_grads(self.controller.parameters)
         # Updating parameters
         self.optimizer.step()
 

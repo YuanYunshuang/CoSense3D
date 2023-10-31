@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from cosense3d.model.utils.common import *
 from cosense3d.model.utils.me_utils import *
@@ -44,7 +45,10 @@ class MinkUnet(nn.Module):
             self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
                                                  'ReLU', norm_before=True)
 
-    def forward(self, points_list):
+    def forward(self, points_list, pad_idx=False):
+        if pad_idx:
+            points_list = [torch.cat([torch.ones_like(points[:, :1]) * i,
+                                      points], dim=-1) for i, points in enumerate(points_list)]
         x = prepare_input_data(points_list, self.voxel_size, self.QMODE, self.floor_height, self.d)
         x1, norm_points_p1, points_p1, count_p1, pos_embs = voxelize_with_centroids(x, self.enc_mlp)
 

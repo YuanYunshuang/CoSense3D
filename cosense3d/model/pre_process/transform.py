@@ -39,3 +39,4 @@ class GlobalRotScaleTrans:
                 # batch_dict['lidar_poses'][i] = batch_dict['ego_pose']
         batch_dict['point_transforms']['proj2ego'] = Ts_cav2ego
         return batch_dict
+

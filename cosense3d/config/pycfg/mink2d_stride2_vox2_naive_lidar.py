@@ -13,7 +13,7 @@ shared_modules = OrderedDict(
         voxel_size=voxel_size,
         d=2,
         cache_strides=[4],
-        in_dim=3,
+        in_dim=4,
         stride=4,
         floor_height=point_cloud_range[2]
     ),

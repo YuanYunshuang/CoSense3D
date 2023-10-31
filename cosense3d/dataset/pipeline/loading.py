@@ -1,4 +1,5 @@
 import os, random, copy
+from collections import OrderedDict
 
 import numpy as np
 from plyfile import PlyData
@@ -112,7 +113,7 @@ class LoadMultiViewImg:
     def __call__(self, data_dict):
         agents = data_dict['sample_info']['agents']
         scenario = data_dict['scenario']
-        chosen_cams = {}
+        chosen_cams = OrderedDict()
         scenario_tokens = []
         img = []
         for ai in data_dict['valid_agent_ids']:
@@ -143,6 +144,7 @@ class LoadMultiViewImg:
         img = np.stack(img, axis=0)
         if self.to_float32:
             img = img.astype(np.float32)
+
         data_dict['img'] = img
         data_dict['chosen_cams'] = chosen_cams
         data_dict['scene_tokens'] = scenario_tokens
