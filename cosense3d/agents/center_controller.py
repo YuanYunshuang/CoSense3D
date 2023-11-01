@@ -16,14 +16,14 @@ class CenterController:
         self.global_data = {}
 
     def setup_core(self, cfg):
-        self.cav_manager = core.CAVManager()
+        self.cav_manager = core.CAVManager(**self.data_info)
         self.data_manager = core.DataManager(self.cav_manager, self.data_info, **cfg['data_manager'])
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
 
     @property
     def modules(self):
-        return self.shared_modules
+        return self.forward_runner.shared_modules
 
     @property
     def model(self):
@@ -50,8 +50,11 @@ class CenterController:
             batched_tasks = self.task_manager.summary(tasks)
             self.forward_runner.eval()
             self.forward_runner(batched_tasks['no_grad'])
+            response = self.cav_manager.send_response()
+            self.cav_manager.receive_response(response)
             self.forward_runner.train()
             self.forward_runner(batched_tasks['with_grad'])
+            self.cav_manager.reset_cpm_memory()
 
         # send and receive cpms
 

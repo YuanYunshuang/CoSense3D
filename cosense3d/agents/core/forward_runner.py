@@ -19,10 +19,16 @@ class ForwardRunner(nn.Module):
 
         self.shared_modules = nn.ModuleDict(module_dict)
 
+    def gather_cav_ids(self, tasks):
+        return [t[0] for t in tasks]
+
     def forward(self, tasks):
         for task_name, task_list in tasks.items():
-            func = getattr(self, task_name)
-            func(task_list)
+            module = getattr(self.shared_modules, task_name)
+            cav_ids = self.gather_cav_ids(task_list)
+            data = self.data_manager.gather(cav_ids, module.gather_keys)
+            res = module(**data)
+            self.data_manager.scatter(cav_ids, res)
 
     def filter_range(self, tasks):
         for task in tasks:
@@ -33,17 +39,34 @@ class ForwardRunner(nn.Module):
             self.data_manager.update(cav_id, 'points', points[mask.all(dim=-1)])
 
     def pts_backbone(self, tasks):
-        cav_ids = [t[0] for t in tasks]
+        cav_ids = self.gather_cav_ids(tasks)
         point_list = self.data_manager.gather(cav_ids, 'points')
-        res = self.shared_modules.pts_backbone(point_list, pad_idx=True)
+        res = self.shared_modules.pts_backbone(point_list, pad_idx=True, to_list=True)
+        self.data_manager.scatter(cav_ids, 'pts_feat', res)
 
-        for i, cav_id in enumerate(cav_ids):
-            cur_res = {}
-            for k, v in res.items():
-                mask = v.C[:, 0] == i
-                cur_res[k] = {
-                        'coor': v.C[mask, 1:],
-                        'feat': v.F[mask]
-                    }
-            self.data_manager.update(cav_id, 'pts_feat', cur_res)
+    def fusion(self, tasks):
+        cav_ids = self.gather_cav_ids(tasks)
+        ego_feat = self.data_manager.gather(cav_ids, 'pts_feat')
+        coop_feat = self.data_manager.gather(cav_ids, 'received_response')
+        res = self.shared_modules.fusion(ego_feat, coop_feat)
+        self.data_manager.scatter(cav_ids, 'fused_feat', res)
+
+    def fusion_neck(self, tasks):
+        cav_ids = self.gather_cav_ids(tasks)
+        fused_feat = self.data_manager.gather(cav_ids, 'fused_feat')
+        res = self.shared_modules.fusion_neck(fused_feat)
+        self.data_manager.scatter(cav_ids, 'fused_neck_feat', res)
+
+    def bev_head(self, tasks):
+        cav_ids = self.gather_cav_ids(tasks)
+        fused_neck_feat = self.data_manager.gather(cav_ids, 'fused_neck_feat')
+        res = self.shared_modules.bev_head(fused_neck_feat)
+        self.data_manager.scatter(cav_ids, 'bev_out', res)
+
+    def detection_head(self, tasks):
+        cav_ids = self.gather_cav_ids(tasks)
+        fused_neck_feat = self.data_manager.gather(cav_ids, 'fused_neck_feat')
+        res = self.shared_modules.detection_head(fused_neck_feat)
+        self.data_manager.scatter(cav_ids, 'detection_out', res)
+
 

@@ -2,7 +2,8 @@ import torch
 
 
 class CAVManager:
-    def __init__(self, max_num_cavs=10):
+    def __init__(self, lidar_range, max_num_cavs=10, **kwargs):
+        self.lidar_range = torch.tensor(lidar_range)
         self.cavs = []
         self.cav_dict = {}
 
@@ -11,7 +12,7 @@ class CAVManager:
         repr_str += f'(cavs={self.cav_dict.keys()})'
         return repr_str
 
-    def update_cav_info(self, valid_agent_ids=None, lidar_poses=None, intrinsics=None, extrinsics=None, **data):
+    def update_cav_info(self, valid_agent_ids=None, lidar_poses=None, **data):
         B = len(valid_agent_ids)  # batch_size
         del self.cavs
         self.cavs = []
@@ -19,10 +20,7 @@ class CAVManager:
             batch_cavs = []
             for i, cav_id in enumerate(valid_agent_ids[b]):
                 is_ego = True if i==0 else False  # assume the first car is ego car
-                batch_cavs.append(CAV(cav_id, i, is_ego,
-                                      lidar_pose=lidar_poses[b][i],
-                                      cam_intrinsic=intrinsics[b][i] if intrinsics is not None else None,
-                                      cam_extrinsic=extrinsics[b][i] if extrinsics is not None else None,))
+                batch_cavs.append(CAV(cav_id, i, is_ego, lidar_poses[b][i], self.lidar_range))
                 self.cav_dict[cav_id] = (b, i)
             self.cavs.append(batch_cavs)
 
@@ -36,7 +34,7 @@ class CAVManager:
             req = {}
             for cav in cavs:
                 if cav.is_ego:
-                    req[cav.id] = {'lidar_pose': cav.lidar_pose}
+                    req[cav.id] = cav.get_request_cpm()
             request.append(req)
         return request
 
@@ -45,17 +43,28 @@ class CAVManager:
             for ai, req_cpm in req.items():
                 for cav in self.cavs[b]:
                     if ai != cav.id:
-                        cav.received_request = req_cpm
+                        cav.receive_request(req_cpm)
 
     def send_response(self):
         response = []
         for b, cavs in enumerate(self.cavs):
             ans = {}
             for cav in cavs:
-                if cav.answer is not None:
-                    ans[cav.id] = cav.answer
+                if cav.has_request():
+                    ans[cav.id] = cav.get_response_cpm()
             response.append(ans)
         return response
+
+    def receive_response(self, response):
+        for cavs, resp in zip(self.cavs, response):
+            for cav in cavs:
+                if cav.is_ego:
+                    cav.receive_response(resp)
+
+    def reset_cpm_memory(self):
+        for b, cavs in enumerate(self.cavs):
+            for cav in cavs:
+                cav.reset_cpm_memory()
 
     def forward(self):
         tasks = {'with_grad': [], 'no_grad': []}
@@ -66,21 +75,15 @@ class CAVManager:
                 cav.forward_head(tasks)
         return tasks
 
+
 class CAV:
-    def __init__(self, id=None, mapped_id=None, is_ego=False,
-                 pose=None, lidar_pose=None, cam_extrinsic=None, cam_intrinsic=None):
+    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range):
         self.id = id
         self.mapped_id = mapped_id
         self.is_ego = is_ego
-        self.pose = pose
         self.lidar_pose = lidar_pose
-        self.cam_extrinsic = cam_extrinsic
-        self.cam_intrinsic = cam_intrinsic
+        self.lidar_range = lidar_range
         self.data = {}
-        self.received_request = None
-        self.received_cpm = None
-        self.local_features = None
-        self.fused_features = None
 
     def reset(self, id, is_ego, mapped_id):
         self.id = id
@@ -99,7 +102,8 @@ class CAV:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
             # cav to ego
-            transform = self.received_request['lidar_pose'].inverse() @ self.lidar_pose
+            request = self.data['received_request']
+            transform = request['lidar_pose'].inverse() @ self.lidar_pose
         # augmentation
         if 'rot' in self.data['augment_params']:
             transform = self.data['augment_params']['rot'].to(transform.device) @ transform
@@ -118,9 +122,37 @@ class CAV:
         else:
             self.data['points'] = points_homo[:3].T
 
+    def filter_data_range(self):
+        points = self.data['points']
+        lr = self.lidar_range.to(points.device)
+        mask = (points[:, :3] > lr[:3].view(1, 3)) & (points[:, :3] < lr[3:].view(1, 3))
+        self.data['points'] = points[mask.all(dim=-1)]
+
+    def has_request(self):
+        if 'received_request' in self.data and self.data['received_request'] is not None:
+            return True
+        else:
+            return False
+
+    def get_request_cpm(self):
+        return {'lidar_pose': self.lidar_pose}
+
+    def get_response_cpm(self):
+        cpm = {}
+        for k in ['pts_feat']:
+            if k in self.data:
+                cpm[k] = self.data[k]
+        return cpm
+
+    def receive_request(self, request):
+        self.data['received_request'] = request
+
+    def receive_response(self, response):
+        self.data['received_response'] = response
+
     def forward_local(self, tasks):
-        self.apply_data_transform()
-        tasks['no_grad'].append((self.id, '2:filter_range', {}))
+        self.apply_data_transform()  # 1
+        self.filter_data_range()  # 2
         if self.is_ego:
             tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
         else:
@@ -128,9 +160,8 @@ class CAV:
 
     def forward_fusion(self, tasks):
         if self.is_ego:
-            data = {'ego': self.local_features, 'cpm': self.received_cpm}
-            tasks['with_grad'].append((self.id, '4:fusion', data))
-            tasks['with_grad'].append((self.id, '5:coor_dilation', {}))
+            tasks['with_grad'].append((self.id, '4:fusion', {}))
+            tasks['with_grad'].append((self.id, '5:fusion_neck', {}))
         return tasks
 
     def forward_head(self, tasks):
@@ -138,5 +169,9 @@ class CAV:
             tasks['with_grad'].append((self.id, '6:bev_head', {}))
             tasks['with_grad'].append((self.id, '7:detection_head', {}))
         return tasks
+
+    def reset_cpm_memory(self):
+        self.data.pop('received_request')
+        self.data.pop('received_response')
 
 

@@ -74,15 +74,19 @@ class DataManager:
                 rand_aug.append([cur_aug for _ in range(seq_len)])
         batch_dict['augment_params'] = rand_aug
 
-    def gather(self, cav_list, data_key):
-        data = []
-        for cav_id in cav_list:
-            data.append(self.cav_manager.get_cav_with_id(cav_id).data[data_key])
-        return data
+    def gather(self, cav_list, data_keys):
+        data_dict = {}
+        for k in data_keys:
+            data = []
+            for cav_id in cav_list:
+                data.append(self.cav_manager.get_cav_with_id(cav_id).data[k])
+            data_dict[k] = data
+        return data_dict
 
-    def scatter(self, cav_list, data_key, data_list):
-        for cav_id, data in zip(cav_list, data_list):
-            self.update(cav_id, data_key, data)
+    def scatter(self, cav_list, data_dict):
+        for k, data_list in data_dict.items():
+            for cav_id, data in zip(cav_list, data_list):
+                self.update(cav_id, k, data)
 
     def update(self, cav_id, data_key, data):
         self.cav_manager.get_cav_with_id(cav_id).data[data_key] = data

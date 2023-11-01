@@ -1,3 +1,4 @@
+import warnings
 import torch
 from torch import nn
 from cosense3d.model.utils.me_utils import update_me_essentials
@@ -14,7 +15,31 @@ class NaiveFusion(nn.Module):
         self.d = len(self.voxel_size)
         self.feature_scr = cfgs.get('feature_src', None)  # for old version
 
-    def forward(self, batch_dict, stensor=None):
+    def forward(self, ego_feats, coop_feats=None):
+        if isinstance(ego_feats, dict):
+            warnings.filterwarnings("default", category=DeprecationWarning)
+            self.forward_deprecated(ego_feats)
+            return None
+        else:
+            fused_feat = []
+            for ego_feat, coop_feat in zip(ego_feats, coop_feats):
+                coor = [ego_feat[f'p{self.stride}']['coor']]
+                feat = [ego_feat[f'p{self.stride}']['feat']]
+                # fuse coop to ego
+                for cpfeat in coop_feat.values():
+                    coor.append(cpfeat['pts_feat'][f'p{self.stride}']['coor'])
+                    feat.append(cpfeat['pts_feat'][f'p{self.stride}']['feat'])
+                coor = torch.cat(coor, dim=0)
+                feat = torch.cat(feat, dim=0)
+                fused_feat.append({
+                    f'p{self.stride}': {
+                        'coor': coor,
+                        'feat': feat
+                    }
+                })
+            return {'fused_feat': fused_feat}
+
+    def forward_deprecated(self, batch_dict, stensor=None):
         if stensor is None:
             # for old version
             assert self.feature_scr is not None

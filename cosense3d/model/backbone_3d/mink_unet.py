@@ -45,7 +45,8 @@ class MinkUnet(nn.Module):
             self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
                                                  'ReLU', norm_before=True)
 
-    def forward(self, points_list, pad_idx=False):
+    def forward(self, points_list, pad_idx=True, to_list=True):
+        N = len(points_list)
         if pad_idx:
             points_list = [torch.cat([torch.ones_like(points[:, :1]) * i,
                                       points], dim=-1) for i, points in enumerate(points_list)]
@@ -70,7 +71,23 @@ class MinkUnet(nn.Module):
             p0 = {'coor': torch.cat(points_list, dim=0), 'feat': devoxelize_with_centroids(p1, x, pos_embs)}
 
         vars = locals()
-        return {f'p{k}': vars[f'p{k}'] for k in self.cache_strides}
+        res = {f'p{k}': vars[f'p{k}'] for k in self.cache_strides}
+        if to_list:
+            res = self.result_to_list(res, N)
+        return {'pts_feat': res}
+
+    def result_to_list(self, res, N):
+        res_list = []
+        for i in range(N):
+            cur_res = {}
+            for k, v in res.items():
+                mask = v.C[:, 0] == i
+                cur_res[k] = {
+                        'coor': v.C[mask, 1:],
+                        'feat': v.F[mask]
+                    }
+            res_list.append(cur_res)
+        return res_list
 
 
 

@@ -21,14 +21,15 @@ shared_modules = OrderedDict(
     fusion = dict(
         type='submodules.naive_fusion.NaiveFusion',
         data_info=data_info,
-        stride=2,
+        stride=4,
         dim=128
     ),
 
-    coor_dilation = dict(
+    fusion_neck = dict(
         type='submodules.dilation_spconv.DilationSpconv',
         data_info=data_info,
-        convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
+        d=2,
+        convs=dict(p4=dict(kernels=[3, 3, 3], in_dim=128, out_dim=128))
     ),
 
 

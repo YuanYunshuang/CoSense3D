@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 train_pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(),
-    LoadAnnotations=dict(load2d=False, with_velocity=True),
+    LoadAnnotations=dict(load2d=False, with_velocity=False),
 )
 
 train_data_manager = dict(
