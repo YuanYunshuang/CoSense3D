@@ -75,13 +75,13 @@ class DataManager:
         batch_dict['augment_params'] = rand_aug
 
     def gather(self, cav_list, data_keys):
-        data_dict = {}
+        data_list = []
         for k in data_keys:
             data = []
             for cav_id in cav_list:
                 data.append(self.cav_manager.get_cav_with_id(cav_id).data[k])
-            data_dict[k] = data
-        return data_dict
+            data_list.append(data)
+        return data_list
 
     def scatter(self, cav_list, data_dict):
         for k, data_list in data_dict.items():

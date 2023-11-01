@@ -27,7 +27,7 @@ class ForwardRunner(nn.Module):
             module = getattr(self.shared_modules, task_name)
             cav_ids = self.gather_cav_ids(task_list)
             data = self.data_manager.gather(cav_ids, module.gather_keys)
-            res = module(**data)
+            res = module(*data)
             self.data_manager.scatter(cav_ids, res)
 
     def filter_range(self, tasks):

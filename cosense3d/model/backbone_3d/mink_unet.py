@@ -1,34 +1,19 @@
-import torch
-from torch import nn
-from cosense3d.model.utils.common import *
-from cosense3d.model.utils.me_utils import *
+import functools
+from cosense3d.model.utils import *
+from cosense3d.model.losses.edl import edl_mse_loss
 
 
 class MinkUnet(nn.Module):
     QMODE = ME.SparseTensorQuantizationMode.UNWEIGHTED_AVERAGE
-    def __init__(self,
-                 voxel_size,
-                 stride,
-                 d=3,
-                 cache_strides=None,
-                 floor_height=0,
-                 **kwargs):
+    def __init__(self, cfgs):
         super(MinkUnet, self).__init__()
-        for name, value in kwargs.items():
+        for name, value in cfgs.items():
             if name not in ["model", "__class__"]:
                 setattr(self, name, value)
-        self.voxel_size = voxel_size
-        self.stride = stride
-        self.floor_height = floor_height
-        self.d = d
-        if cache_strides is None:
-            self.cache_strides = [stride]
-            self.max_resolution = stride
-        else:
-            self.max_resolution = min(cache_strides)
-            self.cache_strides = cache_strides
-        self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32])
-        kernel = [3,] * min(self.d, 3)
+        self.d = getattr(self, 'd', 3)
+        self.max_resolution = min([int(p[1:]) for p in self.cache])
+        self.enc_mlp = linear_layers([self.in_dim, 16, 32])
+        kernel = [3, 3, 3]
         if self.d == 4:
             kernel = kernel + [1,]
         self.conv1 = minkconv_conv_block(32, 32, kernel, 1, self.d, 0.1)
@@ -42,15 +27,25 @@ class MinkUnet(nn.Module):
             self.trconv3 = get_conv_block([128, 64, 64], kernel, d=self.d, tr=True)
         if self.max_resolution <= 1:
             self.trconv2 = get_conv_block([96, 64, 32], kernel, d=self.d, tr=True)
-            self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
+            self.out_layer = minkconv_conv_block(64, 32, kernel, 1, 3, 0.1,
                                                  'ReLU', norm_before=True)
 
-    def forward(self, points_list, pad_idx=True, to_list=True):
-        N = len(points_list)
-        if pad_idx:
-            points_list = [torch.cat([torch.ones_like(points[:, :1]) * i,
-                                      points], dim=-1) for i, points in enumerate(points_list)]
-        x = prepare_input_data(points_list, self.voxel_size, self.QMODE, self.floor_height, self.d)
+    def forward(self, batch_dict):
+        # from cosense3d.utils.vislib import draw_points_boxes_plt
+        # points = batch_dict['pcds']
+        # points = points[points[:, 0] < batch_dict['num_cav'][0]][:, 1:4].cpu().numpy()
+        # objects = batch_dict['objects']
+        # objects = objects[objects[:, 0] == 0][:, [3, 4, 5, 6, 7, 8, 11]].cpu().numpy()
+        #
+        # draw_points_boxes_plt(
+        #     pc_range=[-140.8, -38.4, -5, 140.8, 38.4, 3],
+        #     points=points,
+        #     boxes_gt=objects,
+        #     filename='/home/yuan/Downloads/tmp.png'
+        # )
+
+        batch_dict = prepare_input_data(batch_dict, self.QMODE)
+        x = batch_dict['in_data']
         x1, norm_points_p1, points_p1, count_p1, pos_embs = voxelize_with_centroids(x, self.enc_mlp)
 
         # convs
@@ -68,26 +63,10 @@ class MinkUnet(nn.Module):
             p1 = self.trconv2(ME.cat(x2, p2))
             p1 = self.out_layer(ME.cat(x1, p1))
         if self.max_resolution == 0:
-            p0 = {'coor': torch.cat(points_list, dim=0), 'feat': devoxelize_with_centroids(p1, x, pos_embs)}
+            p0 = devoxelize_with_centroids(p1, x, pos_embs)
 
         vars = locals()
-        res = {f'p{k}': vars[f'p{k}'] for k in self.cache_strides}
-        if to_list:
-            res = self.result_to_list(res, N)
-        return {'pts_feat': res}
-
-    def result_to_list(self, res, N):
-        res_list = []
-        for i in range(N):
-            cur_res = {}
-            for k, v in res.items():
-                mask = v.C[:, 0] == i
-                cur_res[k] = {
-                        'coor': v.C[mask, 1:],
-                        'feat': v.F[mask]
-                    }
-            res_list.append(cur_res)
-        return res_list
+        batch_dict['backbone'] = {k: vars[k] for k in self.cache}
 
 
 
