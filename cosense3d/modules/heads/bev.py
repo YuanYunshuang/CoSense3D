@@ -99,13 +99,13 @@ class BEV(BaseModule):
         tgt_pts, tgt_label, valid = self.get_tgt(batch_list, gt_boxes, gt_labels, **kwargs)
         epoch_num = kwargs.get('epoch', 0)
         reg = self.data_from_list(batch_list, 'reg')
-        loss, loss_dict = edl_mse_loss(preds=reg[valid],
+        loss_dict = edl_mse_loss(preds=reg[valid],
                                        tgt=tgt_label,
                                        n_cls=2,
                                        temp=epoch_num,
                                        annealing_step=self.annealing_step,
                                        model_label='bev')
-        return loss, loss_dict
+        return loss_dict
 
     @torch.no_grad()
     def get_tgt(self, batch_list, gt_boxes, gt_labels, **kwargs):

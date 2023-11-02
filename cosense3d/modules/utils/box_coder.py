@@ -80,7 +80,7 @@ class CenterBoxCoder(object):
 
         Args:
             centers: (N, 3)
-            gt_boxes: (N, 9)
+            gt_boxes: (N, 8) [batch_idx, x, y, z, l, w, h, r]
             meter_per_pixel: tuple with 2 elements
 
         Returns:

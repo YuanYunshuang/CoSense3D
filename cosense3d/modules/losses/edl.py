@@ -87,7 +87,7 @@ def edl_mse_loss(preds, tgt, n_cls, temp, annealing_step, model_label='edl'):
     tt = tgt_onehot.detach()
     acc = (torch.argmax(ss, dim=1) == torch.argmax(tt, dim=1)).sum() / len(tt) * 100
     loss_dict = {
-        f'{model_label}': loss,
+        f'{model_label}_loss': loss,
         f'{model_label}_ac': acc,
     }
 
@@ -97,7 +97,7 @@ def edl_mse_loss(preds, tgt, n_cls, temp, annealing_step, model_label='edl'):
     #         torch.argmax(ss, dim=1) == cls, tt == cls).sum() \
     #                              / max((tt == cls).sum(), 1) * 100
 
-    return loss, loss_dict
+    return loss_dict
 
 
 def evidence_to_conf_unc(evidence, edl=True):

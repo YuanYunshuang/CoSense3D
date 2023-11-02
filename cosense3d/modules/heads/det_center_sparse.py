@@ -176,9 +176,8 @@ class DetCenterSparse(BaseModule):
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
-    def loss(self, batch_dict):
-        tgt = self.tgt_assigner(batch_dict)
-        src = batch_dict['det_center_head']
+    def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        tgt = self.tgt_assigner(batch_list, gt_boxes, gt_labels)
         n_classes = [len(n) for n in self.class_names_each_head]
 
         # peudo_src = copy.copy(src)
@@ -195,13 +194,12 @@ class DetCenterSparse(BaseModule):
         # batch['det_center_head'] = peudo_src
         # self.predictions(batch)
 
-        center_loss = 0
-        reg_loss = 0
         ptr = 0
         for h in range(self.n_heads):
             # center loss
-            cur_cls_src = rearrange(src['cls'][h], 'n d ... -> n ... d').contiguous()
-            cur_cls_tgt = rearrange(tgt['center_cls'][:, ptr:ptr+n_classes[h]
+            pred_cls = torch.cat([x['cls'][h] for x in batch_list], dim=0)
+            cur_cls_src = rearrange(pred_cls, 'n d ... -> n ... d').contiguous()
+            cur_cls_tgt = rearrange(tgt['centerness'][:, ptr:ptr+n_classes[h]
                                     ], 'n d ... -> n ... d').contiguous().float().squeeze(-2)
             cared = (cur_cls_tgt >= 0).any(dim=-1)
             cur_cls_src = cur_cls_src[cared]
@@ -227,7 +225,7 @@ class DetCenterSparse(BaseModule):
                                             cur_cls_tgt_onehot],
                                            dim=-1).contiguous()  # b, h, w, n_cls+1
 
-            lcenter, _ = self.loss_cfg['center']['_target_'](
+            lcenter = self.loss_cfg['center']['_target_'](
                 cur_cls_src.view(-1, n_classes[h] + 1),
                 cur_cls_tgt_onehot,
                 n_classes[h] + 1,
@@ -235,13 +233,14 @@ class DetCenterSparse(BaseModule):
                 self.loss_cfg['center']['args']['annealing_step'] // 250,
                 f"cls_h{h}"
             )
-            center_loss = center_loss + lcenter
 
             # reg loss
+            reg_loss = 0
             ind = tgt['reg']['idx'][h]
             if ind.shape[1] > 0:
                 for reg_name in self.reg_head.reg_channels.keys():
-                    cur_reg_src = rearrange(src['reg'][reg_name][h], 'n d ... -> n ... d').contiguous()
+                    pred_reg = torch.cat([x['reg'][reg_name][h] for x in batch_list], dim=0)
+                    cur_reg_src = rearrange(pred_reg, 'n d ... -> n ... d').contiguous()
                     if cur_reg_src.ndim > 2:
                         cur_reg_src = cur_reg_src[ind[0], ind[1], ind[2]]  # N, C
                     else:
@@ -251,12 +250,9 @@ class DetCenterSparse(BaseModule):
 
                     reg_loss = reg_loss + cur_loss
 
-        loss_dict = {
-            'center': center_loss,
-            'reg': reg_loss
-        }
-        loss = center_loss + reg_loss
-        return loss, loss_dict
+        loss_dict = {'reg_loss': reg_loss}
+        loss_dict.update(lcenter)
+        return loss_dict
 
     def rois(self, batch_dict):
         return self.tgt_assigner.decode_box(batch_dict)

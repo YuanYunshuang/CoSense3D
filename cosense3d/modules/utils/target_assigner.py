@@ -10,6 +10,7 @@ from cosense3d.modules.utils.gaussian_utils import draw_gaussian_map, gaussian_r
 from cosense3d.modules.utils.edl_utils import logit_to_edl
 from cosense3d.modules.utils.me_utils import update_me_essentials
 from cosense3d.ops.utils import points_in_boxes_gpu_2d
+from cosense3d.modules.utils.common import cat_coor_with_idx
 
 
 class Hungarian3D:
@@ -216,12 +217,13 @@ class TargetAssigner(object):
                 v['_target_'] = globals().get(v['_target_'])(**v.get('args', {}))
         setattr(self, f"{k}_args", v)
 
-    def __call__(self, batch_dict):
-        tgt = {}
+    def __call__(self, batch_list, *args, **kwargs):
+        tgt_dict = {}
         for assigner in self.assigners:
-            args = getattr(self, f"{assigner}_args")
-            getattr(self, assigner)(batch_dict, args, tgt)
-        return tgt
+            kwargs.update(getattr(self, f"{assigner}_args"))
+            tgt = getattr(self, assigner)(batch_list, *args, **kwargs)
+            tgt_dict.update(tgt)
+        return tgt_dict
 
     def get_gt_boxes(self, batch_dict):
         gt_boxes = batch_dict['objects'][:, [0, 3, 4, 5, 6, 7, 8, 11, 2]]
@@ -351,47 +353,30 @@ class TargetAssigner(object):
 
         tgt['bev'] = bev_maps
 
-    def points_centerness(self, batch_dict, args, tgt):
-        gt_boxes, box_cls = self.get_gt_boxes(batch_dict)
-        bs = batch_dict['batch_size']
-        centers = batch_dict[self.batch_dict_key][f'p{self.stride}']['centers']
-
+    def points_centerness(self, batch_list, gt_boxes, gt_cls, **kwargs):
+        B = len(batch_list)
         center_cls = []
-        if args.get('merge_all_classes', False):
-            labels = torch.zeros_like(centers[:, :1])
-            for b in range(bs):
-                mask = centers[:, 0] == b
-                cur_centers = centers[mask, 1:]
-                cur_boxes = gt_boxes[(gt_boxes[:, 0] == b), 1:]
+        n_cls = 1 if kwargs.get('merge_all_classes', False) else self.n_cls
+        for n in range(n_cls):
+            labels = []
+            for b in range(B):
+                cur_centers = batch_list[b]['center']
+                cur_boxes = gt_boxes[b]
                 if len(cur_boxes) == 0:
                     continue
                 dists = torch.norm(cur_centers.unsqueeze(1) - cur_boxes[:, :2].unsqueeze(0), dim=-1)
                 dists_min = dists.min(dim=1, keepdim=True).values
-                labels[mask] = (dists_min < args['min_radius']).float()
+                labels.append((dists_min < kwargs['min_radius']).float())
             center_cls.append(labels)
-        else:
-            for n in range(self.n_cls):
-                labels = torch.zeros_like(centers[:, :1])
-                for b in range(bs):
-                    mask = centers[:, 0] == b
-                    cur_centers = centers[mask, 1:]
-                    cur_boxes = gt_boxes[(gt_boxes[:, 0] == b) & (box_cls == n), 1:]
-                    if len(cur_boxes) == 0:
-                        continue
-                    dists = torch.norm(cur_centers.unsqueeze(1) - cur_boxes[:, :2].unsqueeze(0), dim=-1)
-                    dists_min = dists.min(dim=1, keepdim=True).values
-                    labels[mask] = (dists_min < args['min_radius']).float()
-                center_cls.append(labels)
 
+        # cat batch list
+        center_cls = [torch.cat(x, dim=0).float() for x in center_cls]
+        # stack classes
         center_cls = torch.stack(center_cls, dim=1).float()
-        if 'sample_mining' in args:
-            logits = torch.stack(batch_dict[self.batch_dict_key]['cls'], dim=1)
-            conf, _ = logit_to_edl(logits)
-            center_cls = self.sample_mining(conf, center_cls, **args['sample_mining'])
-        if 'pos_neg_ratio' in args:
-            center_cls = self.pos_neg_sampling(center_cls, args['pos_neg_ratio'])
+        if 'pos_neg_ratio' in kwargs:
+            center_cls = self.pos_neg_sampling(center_cls, kwargs['pos_neg_ratio'])
 
-        tgt['center_cls'] = center_cls
+        tgt = {'centerness': center_cls}
 
         # mask = centers[:, 0] == 0
         # label = labels[mask].squeeze()
@@ -429,6 +414,7 @@ class TargetAssigner(object):
         # )
         #
         # pass
+        return tgt
 
     def hungarian3d(self, batch_dict, args, tgt):
         hungarian_assigner = args['_target_']
@@ -451,16 +437,18 @@ class TargetAssigner(object):
         centers = torch.cat([center_indices[0].unsqueeze(-1), centers], dim=-1)
         return centers, center_indices
 
-    def encode_box(self, batch_dict, args, tgt):
-        gt_boxes, box_cls = self.get_gt_boxes(batch_dict)
-        box_names = [self.csb[c.item()][0] for c in box_cls]
-        centers_cls = batch_dict['det_center_head']['cls']
+    def encode_box(self, batch_list, gt_boxes, gt_cls,
+                   center_thresh, **kwargs):
+        box_names = [self.csb[c.item()][0] for x in gt_cls for c in x]
+        gt_boxes = cat_coor_with_idx(gt_boxes)
 
         # consider unified head as multi-head with one head
-        if not isinstance(centers_cls, list):
-            centers_cls = [centers_cls]
+        if not isinstance(batch_list[0]['cls'], list):
+            centers_cls = [torch.cat([x['cls'] for x in batch_list], dim=0)]
             cls_names = [[n for cn in self.class_names_each_head for n in cn]]
         else:
+            n_head = len(batch_list[0]['cls'])
+            centers_cls = [torch.cat([x['cls'][n] for x in batch_list], dim=0) for n in range(n_head)]
             cls_names = self.class_names_each_head
 
         is_dense = True if centers_cls[0].ndim > 2 else False
@@ -469,21 +457,21 @@ class TargetAssigner(object):
         for h, center_map in enumerate(centers_cls):
             if is_dense:
                 centers, center_indices = self.get_valid_centers(centers_cls,
-                                                                 args['center_thresh'])
+                                                                 center_thresh)
             else:
-                centers = batch_dict['det_center_head']['centers']
+                centers = cat_coor_with_idx([x['center'] for x in batch_list])
                 center_indices = self.pts_to_indices(centers).T
             cur_cls_names = cls_names[h]
             box_mask = [n in cur_cls_names for n in box_names]
             cur_boxes = gt_boxes[box_mask]
-            reg_box, reg_dir, dir_score, valid = args['_target_'].encode(
+            reg_box, reg_dir, dir_score, valid = kwargs['_target_'].encode(
                 centers, cur_boxes, self.meter_per_pixel)
             reg_tgt['idx'].append(center_indices[:, valid])
             reg_tgt['valid_mask'].append(valid)
             reg_tgt['box'].append(reg_box)
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
-        tgt['reg'] = reg_tgt
+        return {'reg': reg_tgt}
 
     def decode_box(self, batch_dict):
         """

@@ -57,12 +57,12 @@ class TrainRunner:
     def run(self):
         for i in range(self.start_epoch, self.total_epochs + 1):
             self.forward_runner.train()
-            self.run_epoch()
+            self.run_epoch(i)
 
-    def run_epoch(self):
+    def run_epoch(self, epoch):
         for data in self.dataloader:
             self.run_itr(data)
-            self.lr_scheduler.step()
+            self.lr_scheduler.step(epoch)
 
     def run_itr(self, data):
         load_tensors_to_gpu(data)
@@ -76,4 +76,6 @@ class TrainRunner:
 
         del data
         torch.cuda.empty_cache()
+
+        print(total_loss)
 

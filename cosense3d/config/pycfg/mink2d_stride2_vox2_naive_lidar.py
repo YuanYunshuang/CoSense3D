@@ -78,7 +78,7 @@ shared_modules = OrderedDict(
             stride=4,
             detection_benchmark='Car',
             assigners=OrderedDict(
-                points_centerness=dict(min_radius=1.6, batch_dict_key='det_center_head', pos_neg_ratio=2),
+                points_centerness=dict(min_radius=1.6, pos_neg_ratio=2),
                 encode_box=dict(_target_='modules.utils.box_coder.CenterBoxCoder', center_thresh=0.5)),
         ),
         loss_cfg=dict(center=dict(_target_='modules.losses.edl.edl_mse_loss', args=dict(annealing_step=5000)),
