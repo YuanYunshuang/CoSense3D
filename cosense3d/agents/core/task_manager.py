@@ -4,10 +4,13 @@ class TaskManager:
     def __init__(self):
         pass
 
-    def summary(self, tasks):
+    def summarize_forward_tasks(self, tasks):
         tasks['no_grad'] = self.reformat_tasks(tasks['no_grad'])
         tasks['with_grad'] = self.reformat_tasks(tasks['with_grad'])
         return tasks
+
+    def summarize_loss_tasks(self, tasks):
+        return self.reformat_tasks(tasks)
 
     def reformat_tasks(self, task_list):
         task_out = {}

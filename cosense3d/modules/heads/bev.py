@@ -57,7 +57,7 @@ class BEV(BaseModule):
         conf, unc = evidence_to_conf_unc(reg.relu())
 
         out = {
-            'centers': centers,
+            'center': centers,
             'reg': reg,
             'conf': conf,
             'unc': unc
@@ -70,14 +70,23 @@ class BEV(BaseModule):
             plt.imshow(img.T[::-1], vmin=0, vmax=1)
             plt.savefig(self.visualize_training)
 
-        return {self.scatter_keys[0]: out}
+        return self.format_output(out, len(stensor_list))
 
     def format_input(self, stensor_list):
-        coor = [stensor[f'p{self.stride}']['coor'] for stensor in stensor_list]
-        coor = cat_coor_with_idx(coor)
-        feat = [stensor[f'p{self.stride}']['feat'] for stensor in stensor_list]
-        feat = torch.cat(feat, dim=0)
-        return coor, feat
+        return self.compose_stensor(stensor_list, self.stride)
+
+    def format_output(self, output, B=None):
+        # decompose batch
+        output_new = {k: [] for k in output.keys()}
+        for i in range(B):
+            mask = output['center'][:, 0] == i
+            output_new['center'].append(output['center'][mask, 1:])
+            output_new['reg'].append(output['reg'][mask])
+            output_new['conf'].append(output['conf'][mask])
+            output_new['unc'].append(output['unc'][mask])
+        output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
+        return output
+
 
     def down_sample(self, coor, feat):
         keep = torch.rand_like(feat[:, 0]) > 0.5

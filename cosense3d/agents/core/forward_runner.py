@@ -1,14 +1,13 @@
 import torch
 from torch import nn
 
-from cosense3d.model import build_module
+from cosense3d.modules import build_module
 
 
 class ForwardRunner(nn.Module):
     def __init__(self, cfg, data_manager):
         super().__init__()
-        self.data_info = data_manager.data_info
-        self.lidar_range = torch.tensor(self.data_info['lidar_range'])
+        self.lidar_range = torch.tensor(data_manager.lidar_range)
         self.data_manager = data_manager
 
         module_dict = {}
@@ -28,6 +27,14 @@ class ForwardRunner(nn.Module):
             cav_ids = self.gather_cav_ids(task_list)
             data = self.data_manager.gather(cav_ids, module.gather_keys)
             res = module(*data)
+            self.data_manager.scatter(cav_ids, res)
+
+    def loss(self, tasks):
+        for task_name, task_list in tasks.items():
+            module = getattr(self.shared_modules, task_name)
+            cav_ids = self.gather_cav_ids(task_list)
+            data = self.data_manager.gather(cav_ids, module.scatter_keys)
+            res = module.loss(*data)
             self.data_manager.scatter(cav_ids, res)
 
     def filter_range(self, tasks):

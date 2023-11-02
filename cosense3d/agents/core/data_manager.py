@@ -5,9 +5,10 @@ from cosense3d.model.post_process import PostProcess
 
 
 class DataManager:
-    def __init__(self, cav_manager, data_info, aug=None, post_process=None):
+    def __init__(self, cav_manager, lidar_range, voxel_size=None, aug=None, post_process=None):
         self.cav_manager = cav_manager
-        self.data_info = data_info
+        self.lidar_range = lidar_range
+        self.voxel_size = voxel_size
         self.aug = aug
         if post_process is not None:
             self.postP = PostProcess(post_process)

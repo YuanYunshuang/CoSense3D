@@ -140,29 +140,41 @@ class DetCenterSparse(BaseModule):
 
         self.temp = 1
 
-    def forward(self, batch_dict):
+    def forward(self, stensor_list):
         self.temp += 1
-        stensor = batch_dict[self.feature_src][f'p{self.stride}']
-        coor = stensor['coor']
-        feat = stensor['feat']
+        coor, feat = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
 
         out_dict = {
-            'centers': centers,
+            'center': centers,
             'cls': self.cls_head(feat),
             'reg': self.reg_head(feat)
         }
-        batch_dict[self.__class__.__name__] = out_dict
 
         if getattr(self, 'get_rois', False):
-            batch_dict['roi'] = self.rois(batch_dict)
+            out_dict['roi'] = self.rois(out_dict)
 
         elif getattr(self, 'vis_training', False) or not self.training:
-            batch_dict['det_s1'] = self.predictions(batch_dict)
+            out_dict['det_s1'] = self.predictions(out_dict)
 
         # from tools.vis_tools import draw_boxes
         # draw_boxes(batch_dict, self.det_r)
         # pass
+        return self.format_output(out_dict, len(stensor_list))
+
+    def format_input(self, stensor_list):
+        return self.compose_stensor(stensor_list, self.stride)
+
+    def format_output(self, output, B=None):
+        # decompose batch
+        output_new = {k: [] for k in output.keys()}
+        for i in range(B):
+            mask = output['center'][:, 0] == i
+            output_new['center'].append(output['center'][mask, 1:])
+            output_new['cls'].append([h_cls[mask] for h_cls in output['cls']])
+            output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
+        output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
+        return output
 
     def loss(self, batch_dict):
         tgt = self.tgt_assigner(batch_dict)

@@ -1,10 +1,11 @@
 import torch
 from torch import nn
+from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.common import *
 from cosense3d.modules.utils.me_utils import *
 
 
-class MinkUnet(nn.Module):
+class MinkUnet(BaseModule):
     QMODE = ME.SparseTensorQuantizationMode.UNWEIGHTED_AVERAGE
     def __init__(self,
                  voxel_size,
@@ -13,7 +14,7 @@ class MinkUnet(nn.Module):
                  cache_strides=None,
                  floor_height=0,
                  **kwargs):
-        super(MinkUnet, self).__init__()
+        super(MinkUnet, self).__init__(**kwargs)
         for name, value in kwargs.items():
             if name not in ["model", "__class__"]:
                 setattr(self, name, value)
@@ -75,20 +76,11 @@ class MinkUnet(nn.Module):
         vars = locals()
         res = {f'p{k}': vars[f'p{k}_cat'] for k in self.cache_strides}
         res = self.format_output(res, N)
-        return {self.scatter_keys[0]: res}
+        return res
 
     def format_output(self, res, N):
-        res_list = []
-        for i in range(N):
-            cur_res = {}
-            for k, v in res.items():
-                mask = v.C[:, 0] == i
-                cur_res[k] = {
-                        'coor': v.C[mask, 1:],
-                        'feat': v.F[mask]
-                    }
-            res_list.append(cur_res)
-        return res_list
+        out_dict = {self.scatter_keys[0]: self.decompose_stensor(res, N)}
+        return out_dict
 
 
 

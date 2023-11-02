@@ -1,6 +1,6 @@
 from torch import nn
 
-from cosense3d.model import build_module
+from cosense3d.modules import build_module
 
 
 

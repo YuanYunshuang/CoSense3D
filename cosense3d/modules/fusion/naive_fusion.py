@@ -1,4 +1,6 @@
 import warnings
+from typing import Dict
+
 import torch
 
 from cosense3d.modules import BaseModule
@@ -28,7 +30,11 @@ class NaiveFusion(BaseModule):
                     'feat': feat
                 }
             })
-        return {self.scatter_keys[0]: fused_feat}
+        return self.format_output(fused_feat)
+
+    def format_output(self, output):
+        return {self.scatter_keys[0]: output}
+
 
 
 

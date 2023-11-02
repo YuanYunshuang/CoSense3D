@@ -60,21 +60,11 @@ class DilationSpconv(BaseModule):
                 'coor': coor,
                 'feat': feat
             }
-        out_list = self.to_batch_list(out_dict, len(stensor_list))
-        return {self.scatter_keys[0]: out_list}
+        return self.format_output(out_dict, len(stensor_list))
 
-    def to_batch_list(self, out_dict, B):
-        out_list = []
-        for b in range(B):
-            tmp = {}
-            for k, out in out_dict.items():
-                mask = out['coor'][:, 0] == b
-                tmp[k] = {
-                    'coor': out['coor'][mask, 1:],
-                    'feat': out['feat'][mask]
-                }
-            out_list.append(tmp)
-        return out_list
+    def format_output(self, out_dict, B):
+        out_list = self.decompose_stensor(out_dict, B)
+        return {self.scatter_keys[0]: out_list}
 
     def get_conv_layer(self, args):
         minkconv_layer = functools.partial(
