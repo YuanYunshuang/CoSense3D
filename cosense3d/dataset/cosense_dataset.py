@@ -134,12 +134,16 @@ class CosenseDataset(Dataset):
             prev_agents = None
         valid_agent_ids = self.get_valid_agents(sample_info, prev_agents)
 
+        # previous agents might not in current frame when load sequential data
+        scenario_tokens = [f'{scenario}.{ai}' for ai in valid_agent_ids if ai in sample_info['agents']]
+
         return {
             'scenario': scenario,
             'frame': frame,
             'data_path': self.data_path,
             'sample_info': sample_info,
-            'valid_agent_ids': valid_agent_ids
+            'valid_agent_ids': valid_agent_ids,
+            'scene_tokens': scenario_tokens,
         }
 
     def get_valid_agents(self, sample_info: dict, prev_agents: Optional[List] = None) -> List:

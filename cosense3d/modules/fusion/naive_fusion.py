@@ -13,7 +13,7 @@ class NaiveFusion(BaseModule):
         update_me_essentials(self, data_info, stride=stride)
         self.d = len(self.voxel_size)
 
-    def forward(self, ego_feats, coop_feats=None):
+    def forward(self, ego_feats, coop_feats=None, **kwargs):
         fused_feat = []
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             coor = [ego_feat[f'p{self.stride}']['coor']]

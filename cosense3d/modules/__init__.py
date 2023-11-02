@@ -18,10 +18,17 @@ def build_module(module_cfg):
 
 
 class BaseModule(nn.Module):
-    def __init__(self, gather_keys, scatter_keys, **kwargs):
+    def __init__(self, gather_keys, scatter_keys, gt_keys=[], **kwargs):
         super(BaseModule, self).__init__()
         self.gather_keys = gather_keys
         self.scatter_keys = scatter_keys
+        self.gt_keys = gt_keys
+
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def loss(self, *args, **kwargs):
+        pass
 
     def format_input(self, input: List):
         pass
@@ -29,8 +36,11 @@ class BaseModule(nn.Module):
     def format_output(self, output, B=None):
         pass
 
-    def data_from_list_by_key(self, input, key=None, pad_idx=False):
-        data = [x[key] for x in input]
+    def data_from_list(self, input, key=None, pad_idx=False):
+        if key is not None:
+            data = [x[key] for x in input]
+        else:
+            data = input
         if pad_idx:
             return cat_coor_with_idx(data)
         else:
@@ -87,8 +97,7 @@ class BaseModule(nn.Module):
         return res_list
 
     def __repr__(self):
-        def __repr__(self):
-            repr_str = self.__class__.__name__
-            repr_str += f'(gather_keys={self.gather_keys}, '
-            repr_str += f'scatter_keys={self.scatter_keys})'
-            return repr_str
+        repr_str = self.__class__.__name__
+        repr_str += f'(gather_keys={self.gather_keys}, '
+        repr_str += f'scatter_keys={self.scatter_keys})'
+        return repr_str

@@ -1,5 +1,5 @@
 import torch
-from queue import Queue
+from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 
 
 class BaseCAV:
@@ -23,36 +23,21 @@ class BaseCAV:
         repr_str += f'data={self.data.keys()})'
         return repr_str
 
-    def apply_data_transform(self):
+    def apply_transform(self, apply_to=['points', 'annos_global']):
         if self.is_ego:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
             # cav to ego
             request = self.data['received_request']
             transform = request['lidar_pose'].inverse() @ self.lidar_pose
-        # augmentation
-        if 'rot' in self.data['augment_params']:
-            transform = self.data['augment_params']['rot'].to(transform.device) @ transform
+        DOP.cav_aug_transform(self.data, transform, self.data['augment_params'], apply_to=apply_to)
 
-        C = self.data['points'].shape[-1]
-        points = self.data['points'][:, :3]
-        points_homo = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
-        points_homo = transform @ points_homo
+    def filter_range(self, apply_to=['points', 'annos_global']):
+        DOP.filter_range(self.data, self.lidar_range, apply_to=apply_to)
 
-        if 'scale' in self.data['augment_params']:
-            points_homo[:2] *= self.data['augment_params']['scale'].item()
-
-        if C > 3:
-            self.data['points'] = torch.cat([points_homo[:3].T,
-                                             self.data['points'][:, 3:]], dim=-1)
-        else:
-            self.data['points'] = points_homo[:3].T
-
-    def filter_data_range(self):
-        points = self.data['points']
-        lr = self.lidar_range.to(points.device)
-        mask = (points[:, :3] > lr[:3].view(1, 3)) & (points[:, :3] < lr[3:].view(1, 3))
-        self.data['points'] = points[mask.all(dim=-1)]
+    def prepare_data(self, keys=['points', 'annos_global']):
+        self.apply_transform(keys)  # 1
+        self.filter_range(keys)  # 2
 
     def has_request(self):
         if 'received_request' in self.data and self.data['received_request'] is not None:
@@ -77,8 +62,7 @@ class BaseCAV:
         self.data['received_response'] = response
 
     def forward_local(self, tasks):
-        self.apply_data_transform()  # 1
-        self.filter_data_range()  # 2
+        self.prepare_data(keys=['points', 'annos_global'])
         if self.is_ego:
             tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
         else:
@@ -96,11 +80,10 @@ class BaseCAV:
             tasks['with_grad'].append((self.id, '7:detection_head', {}))
         return tasks
 
-    def loss(self):
-        tasks = []
+    def loss(self, tasks):
         if self.is_ego:
-            tasks.append((self.id, '1: bev_head', {}))
-            tasks.append((self.id, '2: detection_head', {}))
+            tasks['loss'].append((self.id, '1:bev_head', {}))
+            tasks['loss'].append((self.id, '2:detection_head', {}))
         return tasks
 
     def reset_data(self):
@@ -113,7 +96,9 @@ class BaseCAV:
 
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
-        update_keys = ['bev_out', 'detection_out']
-        self.memory.append({self.data[k] for k in update_keys})
-        if len(self.memory) > self.memory_len:
-            self.memory = self.memory[1:]
+        if self.is_ego:
+            update_keys = ['bev_out', 'detection_out']
+            self.memory.append({k: self.data[k] for k in update_keys})
+            if len(self.memory) > self.memory_len:
+                self.memory = self.memory[1:]
+

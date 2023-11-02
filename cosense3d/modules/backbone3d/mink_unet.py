@@ -10,16 +10,15 @@ class MinkUnet(BaseModule):
     def __init__(self,
                  voxel_size,
                  stride,
+                 in_dim,
                  d=3,
                  cache_strides=None,
                  floor_height=0,
                  **kwargs):
         super(MinkUnet, self).__init__(**kwargs)
-        for name, value in kwargs.items():
-            if name not in ["model", "__class__"]:
-                setattr(self, name, value)
         self.voxel_size = voxel_size
         self.stride = stride
+        self.in_dim = in_dim
         self.floor_height = floor_height
         self.d = d
         if cache_strides is None:
@@ -46,7 +45,7 @@ class MinkUnet(BaseModule):
             self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
                                                  'ReLU', norm_before=True)
 
-    def forward(self, points: list):
+    def forward(self, points: list, **kwargs):
         N = len(points)
         points = [torch.cat([torch.ones_like(pts[:, :1]) * i, pts], dim=-1
                             ) for i, pts in enumerate(points)]

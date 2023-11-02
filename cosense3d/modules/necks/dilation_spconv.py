@@ -26,7 +26,7 @@ class DilationSpconv(BaseModule):
                 raise NotImplementedError
             setattr(self, f'mink_xylim_{k}', mink_coor_limit(lr, self.voxel_size, stride))  # relevant to ME
 
-    def forward(self, stensor_list):
+    def forward(self, stensor_list, **kwargs):
         out_dict = {}
         for k in self.convs:
             stride = int(k[1])

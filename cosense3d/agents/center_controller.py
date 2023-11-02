@@ -39,33 +39,32 @@ class CenterController:
     def parameters(self):
         return self.forward_runner.parameters()
 
-    def train_forward(self, batch_dict):
+    def train_forward(self, batch_dict, **kwargs):
         self.data_manager.generate_augment_params(batch_dict, self.seq_len)
         seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
         loss = 0
         loss_dict = {}
         for i in range(self.seq_len):
-            self.run_frame(seq_data[i])
-            if i > self.seq_len - self.num_loss_frame:
-                frame_loss_dict = self.frame_loss()
-                for k, v in frame_loss_dict.items():
-                    if 'loss' in k:
-                        loss = loss + v
-                    loss_dict[f'f{i}.{k}'] = v
+            with_loss = i >= self.seq_len - self.num_loss_frame
+            frame_loss_dict = self.run_frame(seq_data[i], with_loss, **kwargs)
+            for k, v in frame_loss_dict.items():
+                if 'loss' in k:
+                    loss = loss + v
+                loss_dict[f'f{i}.{k}'] = v
         return loss, loss_dict
 
-    def run_frame(self, frame_data):
+    def run_frame(self, frame_data, with_loss, **kwargs):
         self.cav_manager.update_cav_info(**frame_data)
-        self.global_data = self.data_manager.distribute_to_cav(**frame_data)
+        self.data_manager.distribute_to_cav(**frame_data)
         self.cav_manager.apply_cav_function('pre_update_memory')
         # send and receive request
         request = self.cav_manager.send_request()
         self.cav_manager.receive_request(request)
         # pseudo forward
-        tasks = self.cav_manager.forward()
+        tasks = self.cav_manager.forward(with_loss)
 
         # pseudo fusion
-        batched_tasks = self.task_manager.summary(tasks)
+        batched_tasks = self.task_manager.summarize_tasks(tasks)
         self.forward_runner.eval()
         self.forward_runner(batched_tasks['no_grad'])
         response = self.cav_manager.send_response()
@@ -74,10 +73,11 @@ class CenterController:
         self.forward_runner(batched_tasks['with_grad'])
         self.cav_manager.apply_cav_function('post_update_memory')
 
-    def frame_loss(self):
-        loss_tasks = self.cav_manager.apply_cav_function('loss')
-        batched_tasks = self.task_manager.summary(loss_tasks)
-        frame_loss_dict = self.forward_runner.loss(batched_tasks)
+        frame_loss_dict = {}
+        if with_loss:
+            frame_loss_dict = self.forward_runner.loss(batched_tasks['loss'], **kwargs)
         return frame_loss_dict
+
+
 
 

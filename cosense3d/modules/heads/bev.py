@@ -46,7 +46,7 @@ class BEV(BaseModule):
             self.tgt_assigner = TargetAssigner(target_assigner,
                                                class_names_each_head)
 
-    def forward(self, stensor_list):
+    def forward(self, stensor_list, **kwargs):
         coor, feat = self.format_input(stensor_list)
 
         if self.training:
@@ -95,11 +95,11 @@ class BEV(BaseModule):
 
         return coor, feat
 
-    def loss(self, batch_dict):
-        tgt_pts, tgt_label, valid = self.get_tgt(batch_dict)
-        preds = batch_dict['bev']
-        epoch_num = batch_dict.get('epoch', 0)
-        loss, loss_dict = edl_mse_loss(preds=preds['reg'][valid],
+    def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        tgt_pts, tgt_label, valid = self.get_tgt(batch_list, gt_boxes, gt_labels, **kwargs)
+        epoch_num = kwargs.get('epoch', 0)
+        reg = self.data_from_list(batch_list, 'reg')
+        loss, loss_dict = edl_mse_loss(preds=reg[valid],
                                        tgt=tgt_label,
                                        n_cls=2,
                                        temp=epoch_num,
@@ -108,20 +108,20 @@ class BEV(BaseModule):
         return loss, loss_dict
 
     @torch.no_grad()
-    def get_tgt(self, batch_dict):
-        epoch_num = batch_dict.get('epoch', 0)
-        preds = batch_dict['bev']
-        tgt_pts = preds['centers'].clone()
-        boxes = batch_dict['objects'][:, [0, 3, 4, 5, 6, 7, 8, 11]].clone()
+    def get_tgt(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        epoch_num = kwargs.get('epoch', 0)
+        B = len(batch_list)
+        tgt_pts = self.data_from_list(batch_list, 'center', pad_idx=True)
+        boxes = self.data_from_list(gt_boxes, pad_idx=True).clone()
         boxes[:, 3] = 0
         pts = pad_r(tgt_pts)
         try:
             _, box_idx_of_pts = points_in_boxes_gpu(
-                pts, boxes, batch_size=batch_dict['batch_size']
+                pts, boxes, batch_size=B
             )
             boxes[:, 4:6] *= 2
             _, box_idx_of_pts2 = points_in_boxes_gpu(
-                pts, boxes, batch_size=batch_dict['batch_size']
+                pts, boxes, batch_size=B
             )
         except:
             print(boxes.shape)
@@ -139,7 +139,7 @@ class BEV(BaseModule):
             tgt_label[tgt_label == -1] = 0  # set area B to 0
 
             # positive sample annealing
-            conf = preds['conf']
+            conf = self.data_from_list(batch_list, 'conf')
             labeled_pos = tgt_label == 1
             potential_pos = (conf[..., 1] > (1 - annealing_ratio * 0.5))
             unlabeled_potential_pos = torch.logical_and(potential_pos,

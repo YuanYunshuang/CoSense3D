@@ -21,20 +21,20 @@ class ForwardRunner(nn.Module):
     def gather_cav_ids(self, tasks):
         return [t[0] for t in tasks]
 
-    def forward(self, tasks):
+    def forward(self, tasks, **kwargs):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             cav_ids = self.gather_cav_ids(task_list)
             data = self.data_manager.gather(cav_ids, module.gather_keys)
-            res = module(*data)
+            res = module(*data, **kwargs)
             self.data_manager.scatter(cav_ids, res)
 
-    def loss(self, tasks):
+    def loss(self, tasks, **kwargs):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             cav_ids = self.gather_cav_ids(task_list)
-            data = self.data_manager.gather(cav_ids, module.scatter_keys)
-            res = module.loss(*data)
+            data = self.data_manager.gather(cav_ids, module.scatter_keys + module.gt_keys)
+            res = module.loss(*data, **kwargs)
             self.data_manager.scatter(cav_ids, res)
 
     def filter_range(self, tasks):

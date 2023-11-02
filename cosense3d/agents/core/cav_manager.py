@@ -80,13 +80,15 @@ class CAVManager:
                 if cav.is_ego:
                     cav.receive_response(resp)
 
-    def forward(self):
-        tasks = {'with_grad': [], 'no_grad': []}
+    def forward(self, with_loss):
+        tasks = {'with_grad': [], 'no_grad': [], 'loss': []}
         for i, cavs in enumerate(self.cavs):
             for cav in cavs:
                 cav.forward_local(tasks)
                 cav.forward_fusion(tasks)
                 cav.forward_head(tasks)
+                if with_loss:
+                    cav.loss(tasks)
         return tasks
 
     def apply_cav_function(self, func_name):

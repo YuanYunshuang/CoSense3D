@@ -112,9 +112,8 @@ class LoadMultiViewImg:
 
     def __call__(self, data_dict):
         agents = data_dict['sample_info']['agents']
-        scenario = data_dict['scenario']
         chosen_cams = OrderedDict()
-        scenario_tokens = []
+
         img = []
         for ai in data_dict['valid_agent_ids']:
             if ai not in agents:
@@ -122,7 +121,6 @@ class LoadMultiViewImg:
                 continue
             adict = agents[ai]
             chosen_cams[ai] = []
-            scenario_tokens.append(f'{scenario}.{ai}')
             # get image info
             num_cam = 0
             if self.max_num_img is not None and self.max_num_img < len(adict['camera']):
@@ -147,7 +145,6 @@ class LoadMultiViewImg:
 
         data_dict['img'] = img
         data_dict['chosen_cams'] = chosen_cams
-        data_dict['scene_tokens'] = scenario_tokens
         return data_dict
 
 
@@ -160,12 +157,33 @@ class LoadAnnotations:
         self.with_velocity = with_velocity
 
     def __call__(self, data_dict):
+        self._load_essential(data_dict)
         if self.load2d:
             data_dict = self._load_anno2d(data_dict)
         if self.load3d_local:
             data_dict = self._load_anno3d_local(data_dict)
         if self.load3d_global:
             data_dict = self._load_anno3d_global(data_dict)
+
+        return data_dict
+
+    def _load_essential(self, data_dict):
+        lidar_poses = []
+        agents = data_dict['sample_info']['agents']
+        ego_pose = agents[data_dict['sample_info']['meta']['ego_id']]['lidar']['0']['pose']
+        ego_pose = pose_to_transformation(ego_pose)
+        for ai in data_dict['valid_agent_ids']:
+            if ai not in agents:
+                # previous agents might not in current frame when load sequential data
+                continue
+            adict = agents[ai]
+            lidar_pose = pose_to_transformation(adict['lidar']['0']['pose'])
+            lidar_poses.append(lidar_pose)
+
+        data_dict.update({
+            'lidar_poses': lidar_poses,
+            'ego_poses': ego_pose,
+        })
 
         return data_dict
 
@@ -218,10 +236,7 @@ class LoadAnnotations:
         local_bboxes_3d = []
         local_labels_3d = []
         local_names = []
-        lidar_poses = []
         agents = data_dict['sample_info']['agents']
-        ego_pose = agents[data_dict['sample_info']['meta']['ego_id']]['lidar']['0']['pose']
-        ego_pose = pose_to_transformation(ego_pose)
         for ai in data_dict['valid_agent_ids']:
             if ai not in agents:
                 # previous agents might not in current frame when load sequential data
@@ -239,15 +254,10 @@ class LoadAnnotations:
             local_labels_3d.append(local_labels)
             local_names.append(['car' for _ in local_labels])
 
-            lidar_pose = pose_to_transformation(adict['lidar']['0']['pose'])
-            lidar_poses.append(lidar_pose)
-
         data_dict.update({
             'local_bboxes_3d': local_bboxes_3d,
             'local_labels_3d': local_labels_3d,
             'local_names': local_names,
-            'lidar_poses': lidar_poses,
-            'ego_poses': ego_pose,
         })
 
         return data_dict

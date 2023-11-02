@@ -34,7 +34,7 @@ class DataManager:
         for b, agent_ids in enumerate(valid_agent_ids):
             global_data = {}
             for j, ai in enumerate(agent_ids):
-                assert cavs[b][j].id == ai
+                assert cavs[b][j].id == f'{b}.{ai}'
                 for k, v in data.items():
                     if isinstance(v[b], list) and len(v[b]) == len(agent_ids):
                         cavs[b][j].data[k] = v[b][j]
@@ -43,8 +43,8 @@ class DataManager:
                     elif k == 'augment_params':
                         cavs[b][j].data[k] = v[b]
                         global_data[k] = v[b]
-                    else:
-                        global_data[k] = v[b]
+                    elif cavs[b][j].is_ego:
+                        cavs[b][j].data[k] = v[b]
             global_data_list.append(global_data)
         return global_data_list
 
