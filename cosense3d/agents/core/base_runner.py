@@ -11,8 +11,7 @@ class BaseRunner:
                  dataloader,
                  controller,
                  gpus=1,
-                 log_every=2,
-                 logger=None,
+                 log_every=10,
                  run_name='default',
                  log_dir='work_dir',
                  use_wandb=False,
@@ -30,33 +29,27 @@ class BaseRunner:
         self.gpus = gpus
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.log_every = log_every
-        self.setup_logger(logger, run_name, log_dir, use_wandb)
+        self.setup_logger(run_name, log_dir, use_wandb)
 
         self.init()
 
     def init(self):
         self.forward_runner.to(self.device)
 
-    def setup_logger(self, logger, run_name, log_dir, use_wandb):
-        if logger is None:
-            self.logger = None
-            self.wandb_logger = None
-        else:
-            now = datetime.now().strftime('%m-%d-%H-%M-%S')
-            run_name = run_name + '_' + now
-            log_path = os.path.join(log_dir, run_name)
-            ensure_dir(log_path)
-            wandb_project_name = run_name if use_wandb else None
-            self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
-                                   wandb_project=wandb_project_name)
+    def setup_logger(self, run_name, log_dir, use_wandb):
+        now = datetime.now().strftime('%m-%d-%H-%M-%S')
+        run_name = run_name + '_' + now
+        log_path = os.path.join(log_dir, run_name)
+        ensure_dir(log_path)
+        wandb_project_name = run_name if use_wandb else None
+        self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
+                               wandb_project=wandb_project_name)
 
     def run(self):
         raise NotImplementedError
 
     def next_batch(self):
-        if self.iter < self.total_iter:
-            self.iter += 0
-        else:
+        if self.iter >= self.total_iter:
             self.iter = 0
             self.data_iter = iter(self.dataloader)
         batch = next(self.data_iter)

@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 import numpy as np
 from plyfile import PlyData
-import pypcd
 import cv2
 
 from cosense3d.utils.pclib import pose_to_transformation

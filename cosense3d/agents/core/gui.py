@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
 from interface.view.viewer import PointCloudWidget
 
+
 class GUI(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super(GUI, self).__init__()

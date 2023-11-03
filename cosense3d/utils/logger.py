@@ -127,7 +127,7 @@ class LogMeter(object):
 
     def log(self, epoch, iteration, lr, **kwargs):
         self.update(kwargs)
-        if iteration % self.log_every==0:
+        if iteration % self.log_every == 0:
             msg = self.log_msg.format(
                 epoch=epoch,
                 itr=iteration,

@@ -23,8 +23,11 @@ class TrainRunner(BaseRunner):
         self.start_epoch = 1
 
     def run(self):
-        for i in range(self.start_epoch, self.total_epochs + 1):
-            self.run_epoch(i)
+        with torch.autograd.set_detect_anomaly(True):
+            for i in range(self.start_epoch, self.total_epochs + 1):
+                self.run_epoch(i)
+                self.epoch = i
+                self.iter = 0
 
     def step(self):
         data = self.next_batch()
@@ -45,9 +48,15 @@ class TrainRunner(BaseRunner):
         # Updating parameters
         self.optimizer.step()
 
+        if self.logger is not None:
+            rec_lr = self.lr_scheduler.optimizer.param_groups[0]['lr']
+            self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
+
         del data
         torch.cuda.empty_cache()
 
-        print(total_loss)
+        self.iter += 1
+
+
 
 

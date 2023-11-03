@@ -17,7 +17,7 @@ DATASET:
 TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
-  log_every: 2
+  log_every: 10
   max_epoch: 50
   gpus: 1
   resume: true

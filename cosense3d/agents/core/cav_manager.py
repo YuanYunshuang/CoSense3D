@@ -31,7 +31,7 @@ class CAVManager:
                     cav = self.prototype(cav_id, i, is_ego, lidar_poses[b][i],
                                          self.lidar_range, self.memory_len)
                 else:
-                    cav = cav.update(lidar_poses[b][i])
+                    cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)
                 cav_dict[cav_id] = (b, i)
             cavs.append(batch_cavs)
