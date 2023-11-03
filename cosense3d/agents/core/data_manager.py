@@ -92,6 +92,18 @@ class DataManager:
     def update(self, cav_id, data_key, data):
         self.cav_manager.get_cav_with_id(cav_id).data[data_key] = data
 
+    def gather_batch(self, batch_idx, data_keys, to_numpy=False):
+        data_list = []
+        for k in data_keys:
+            data = []
+            for cav in self.cav_manager.cavs[batch_idx]:
+                d = cav.data[k]
+                if isinstance(d, torch.Tensor):
+                    d = d.cpu().numpy()
+                data.append(d)
+            data_list.append(data)
+        return data_list
+
 
 
 

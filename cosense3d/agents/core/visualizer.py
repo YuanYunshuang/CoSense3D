@@ -1,10 +1,13 @@
 import sys
+import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
+from interface.view.viewer import PointCloudWidget
 
 class Visualizer(object):
-    def __init__(self, args):
+    def __init__(self, data_manager, args):
+        self.data_manager = data_manager
         self.app = QApplication(args)
         self.main_window = MainWindow()
 
@@ -21,6 +24,11 @@ class Visualizer(object):
 
         sys.exit(self.app.exec_())
 
+    def refresh(self, batch_idx=0):
+        pcds = self.data_manager.gather_batch(batch_idx, 'points', to_numpy=True)
+        # pcds = np.concatenate(pcds, axis=0)
+        self.main_window.updatePCD(pcds)
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
@@ -34,5 +42,14 @@ class MainWindow(QtWidgets.QMainWindow):
         width, height = screen.width(), screen.height()
         self.setGeometry(0, 0, width, height)
 
+    def setupUI(self):
+        # OpenGL mainview
+        # self.glWidgetcontainer = QtWidgets.QWidget(self)
+        # self.glWidgetcontainer.setGeometry(QtCore.QRect(0, 0, 800, 600 - self.header_height))
+        self.glWidget0 = PointCloudWidget('MAINVIEW', self)
+        self.setCentralWidget(self.glWidget0)
+
+    def updatePCD(self, pcds):
+        self.glWidget0.updatePCDs(pcds)
 
 

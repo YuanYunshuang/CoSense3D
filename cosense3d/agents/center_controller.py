@@ -81,6 +81,8 @@ class CenterController:
         frame_loss_dict = {}
         if with_loss:
             frame_loss_dict = self.forward_runner.loss(batched_tasks['loss'], **kwargs)
+        if hasattr(self, 'visualizer'):
+            self.visualizer.refresh(self.data_manager)
         return frame_loss_dict
 
 
