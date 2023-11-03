@@ -1,0 +1,173 @@
+import copy
+import math
+import torch
+
+from cosense3d.ops.utils import points_in_boxes_gpu
+
+
+class ResidualBoxCoder(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def encode(anchors, boxes):
+        xa, ya, za, la, wa, ha, ra = torch.split(anchors, 1, dim=-1)
+        xg, yg, zg, lg, wg, hg, rg = torch.split(boxes, 1, dim=-1)
+
+        diagonal = torch.sqrt(la ** 2 + wa ** 2)
+        xt = (xg - xa) / diagonal
+        yt = (yg - ya) / diagonal
+        zt = (zg - za) / ha
+
+        lt = torch.log(lg / la)
+        wt = torch.log(wg / wa)
+        ht = torch.log(hg / ha)
+
+        # encode box directions
+        rgx = torch.cos(rg).view(-1, 1)  # N 1
+        rgy = torch.sin(rg).view(-1, 1)  # N 1
+        ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
+        rax = torch.cos(ra_ext)  # N 2
+        ray = torch.sin(ra_ext)  # N 2
+        # cos(a - b) = cos(a)cos(b) + sin(a)sin(b)
+        # we use arccos instead of a-b to control the difference in 0-pi
+        diff_angle = torch.arccos(rax * rgx + ray * rgy)  # N 2
+        dir_score = 1 - diff_angle / math.pi  # N 2
+        rtx = rgx - rax  # N 2
+        rty = rgy - ray  # N 2
+
+        dir_score = dir_score  # N 2
+        ret = [xt, yt, zt, lt, wt, ht, rtx, rty]
+        reg = torch.cat(ret, dim=1)  # N 6+4
+
+        return reg, dir_score
+
+    @staticmethod
+    def decode(anchors, boxes_enc, dir_scores):
+        xa, ya, za, la, wa, ha, ra = torch.split(anchors, 1, dim=-1)
+        xt, yt, zt, lt, wt, ht = torch.split(boxes_enc[..., :6], 1, dim=-1)
+        vt = boxes_enc[..., 6:]
+
+        diagonal = torch.sqrt(la ** 2 + wa ** 2)
+        xg = xt * diagonal + xa
+        yg = yt * diagonal + ya
+        zg = zt * ha + za
+
+        lg = torch.exp(lt) * la
+        wg = torch.exp(wt) * wa
+        hg = torch.exp(ht) * ha
+
+        ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
+        rax = torch.cos(ra_ext)  # N 2
+        ray = torch.sin(ra_ext)  # N 2
+        va = torch.cat([rax, ray], dim=-1)
+        vg = vt + va
+        rg = torch.atan2(vg[..., 2:], vg[..., :2]).view(-1, 2)
+
+        dirs = torch.argmax(dir_scores, dim=-1).view(-1)
+        rg = rg[torch.arange(len(rg)), dirs].view(len(xg), -1, 1)
+
+        return torch.cat([xg, yg, zg, lg, wg, hg, rg], dim=-1)
+
+
+class CenterBoxCoder(object):
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def encode(centers, gt_boxes, meter_per_pixel):
+        """
+
+        Args:
+            centers: (N, 3)
+            gt_boxes: (N, 8) [batch_idx, x, y, z, l, w, h, r]
+            meter_per_pixel: tuple with 2 elements
+
+        Returns:
+
+        """
+        if isinstance(meter_per_pixel, list):
+            assert meter_per_pixel[0] == meter_per_pixel[1], 'only support unified pixel size for x and y'
+            # TODO: adapt meter per pixel
+            meter_per_pixel = meter_per_pixel[0]
+        if len(gt_boxes) == 0:
+            valid = torch.zeros_like(centers[:, 0]).bool()
+            return None, None, None, valid
+        # match centers and gt_boxes
+        dist_ctr_to_box = torch.norm(centers[:, 1:].unsqueeze(1)
+                                     - gt_boxes[:, 1:3].unsqueeze(0), dim=-1)
+        cc, bb = torch.meshgrid(centers[:, 0], gt_boxes[:, 0], indexing='ij')
+        dist_ctr_to_box[cc != bb] = 1000
+        min_dists, box_idx_of_pts = dist_ctr_to_box.min(dim=1)
+        diagnal = torch.norm(gt_boxes[:, 4:6].mean(dim=0) / 2)
+        valid = min_dists < max(diagnal, meter_per_pixel[0])
+        valid_center, valid_box = centers[valid], gt_boxes[box_idx_of_pts[valid]]
+
+        xc, yc = torch.split(valid_center[:, 1:3], 1, dim=-1)
+        xg, yg, zg, lg, wg, hg, rg = torch.split(valid_box[:, 1:8], 1, dim=-1)
+
+        xt = xg - xc
+        yt = yg - yc
+        zt = zg
+
+        lt = torch.log(lg)
+        wt = torch.log(wg)
+        ht = torch.log(hg)
+
+        # encode box directions
+        rgx = torch.cos(rg).view(-1, 1)  # N 1
+        rgy = torch.sin(rg).view(-1, 1)  # N 1
+        ra = torch.arange(0, 2, 0.5).to(xc.device) * math.pi
+        ra_ext = torch.ones_like(valid_box[:, :4]) * ra.view(-1, 4)  # N 4
+        rax = torch.cos(ra_ext)  # N 4
+        ray = torch.sin(ra_ext)  # N 4
+        # cos(a - b) = cos(a)cos(b) + sin(a)sin(b)
+        # we use arccos instead of a-b to control the difference in 0-pi
+        diff_angle = torch.arccos(rax * rgx + ray * rgy)  # N 4
+        dir_score = 1 - diff_angle / math.pi  # N 4
+        rtx = rgx - rax  # N 4
+        rty = rgy - ray  # N 4
+
+        reg_box = torch.cat([xt, yt, zt, lt, wt, ht], dim=1)  # N 6
+        reg_dir = torch.cat([rtx, rty], dim=1)  # N 8
+        return reg_box, reg_dir, dir_score, valid
+
+    @staticmethod
+    def decode(centers, reg):
+        """
+
+        Parameters
+        ----------
+        centers: Tensor (N, 3),
+        reg: dict,
+            box - (N, 6)
+            dir - (N, 8)
+            scr - (N, 4)
+        meter_per_pixel: float
+
+        Returns
+        -------
+
+        """
+        xc, yc = torch.split(centers[:, 1:3], 1, dim=-1)
+        xt, yt, zt, lt, wt, ht = torch.split(reg['box'], 1, dim=-1)
+
+        xo = xt + xc
+        yo = yt + yc
+        zo = zt
+
+        lo = torch.exp(lt)
+        wo = torch.exp(wt)
+        ho = torch.exp(ht)
+
+        # decode box directions
+        scr_max, max_idx = reg['scr'].max(dim=-1)
+        ii = torch.arange(len(max_idx))
+        ra = max_idx.float() * 0.5 * math.pi
+        ct = reg['dir'][:, :4][ii, max_idx] + torch.cos(ra)
+        st = reg['dir'][:, 4:][ii, max_idx] + torch.sin(ra)
+        ro = torch.atan2(st, ct).unsqueeze(-1)
+
+        ret = torch.cat([centers[:, :1], xo, yo, zo, lo, wo, ho, ro], dim=-1)
+
+        return ret

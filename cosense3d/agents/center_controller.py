@@ -14,17 +14,23 @@ class CenterController:
         self.mode = data_loader.dataset.mode
         self.seq_len = data_loader.dataset.seq_len
         self.data_info = data_loader.dataset.cfgs['data_info']
+        self.num_loss_frame = cfg['num_loss_frame']
         self.setup_core(cfg)
         self.global_data = {}
 
     def setup_core(self, cfg):
-        self.cav_manager = core.CAVManager(**self.data_info)
-        self.data_manager = core.DataManager(self.cav_manager, self.data_info, **cfg['data_manager'])
+        self.cav_manager = core.CAVManager(**self.update_cfg(cfg['cav_manager'], self.data_info))
+        self.data_manager = core.DataManager(self.cav_manager, **self.update_cfg(cfg['data_manager'], self.data_info))
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
         if 'visualizer' in cfg:
             self.visualizer = core.Visualizer(sys.argv)
             self.visualizer.run()
+
+    def update_cfg(self, cfg, *args):
+        for arg in args:
+            cfg.update(arg)
+        return cfg
 
     @property
     def modules(self):
@@ -38,34 +44,45 @@ class CenterController:
     def parameters(self):
         return self.forward_runner.parameters()
 
-    def run_seq(self, batch_dict):
+    def train_forward(self, batch_dict, **kwargs):
         self.data_manager.generate_augment_params(batch_dict, self.seq_len)
         seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
-
+        loss = 0
+        loss_dict = {}
         for i in range(self.seq_len):
-            self.cav_manager.update_cav_info(**seq_data[i])
-            self.global_data = self.data_manager.distribute_to_cav(**seq_data[i])
-            # send and receive request
-            request = self.cav_manager.send_request()
-            self.cav_manager.receive_request(request)
-            # pseudo forward
-            tasks = self.cav_manager.forward()
+            with_loss = i >= self.seq_len - self.num_loss_frame
+            frame_loss_dict = self.run_frame(seq_data[i], with_loss, **kwargs)
+            for k, v in frame_loss_dict.items():
+                if 'loss' in k:
+                    loss = loss + v
+                loss_dict[f'f{i}.{k}'] = v
+        return loss, loss_dict
 
-            # pseudo fusion
-            batched_tasks = self.task_manager.summary(tasks)
-            self.forward_runner.eval()
-            self.forward_runner(batched_tasks['no_grad'])
-            response = self.cav_manager.send_response()
-            self.cav_manager.receive_response(response)
-            self.forward_runner.train()
-            self.forward_runner(batched_tasks['with_grad'])
-            self.cav_manager.reset_cpm_memory()
+    def run_frame(self, frame_data, with_loss, **kwargs):
+        self.cav_manager.update_cav_info(**frame_data)
+        self.data_manager.distribute_to_cav(**frame_data)
+        self.cav_manager.apply_cav_function('pre_update_memory')
+        # send and receive request
+        request = self.cav_manager.send_request()
+        self.cav_manager.receive_request(request)
+        # pseudo forward
+        tasks = self.cav_manager.forward(with_loss)
 
-        # send and receive cpms
+        # pseudo fusion
+        batched_tasks = self.task_manager.summarize_tasks(tasks)
+        self.forward_runner.eval()
+        self.forward_runner(batched_tasks['no_grad'])
+        response = self.cav_manager.send_response()
+        self.cav_manager.receive_response(response)
+        self.forward_runner.train()
+        self.forward_runner(batched_tasks['with_grad'])
+        self.cav_manager.apply_cav_function('post_update_memory')
+
+        frame_loss_dict = {}
+        if with_loss:
+            frame_loss_dict = self.forward_runner.loss(batched_tasks['loss'], **kwargs)
+        return frame_loss_dict
 
 
-        return batch_dict
 
-    def loss(self):
-        pass
 

@@ -11,8 +11,8 @@ DATASET:
   n_workers: 4
 
   max_num_cavs: 7
-  seq_len: &seq_len 2
-  train_pipeline: 'pycfg.data_pipeline.train_pipeline_cpu'
+  seq_len: &seq_len 1
+  train_pipeline: 'pycfg.data_pipeline_lidar.train_pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
@@ -35,9 +35,12 @@ TRAIN:
     lr_min: 2e-4
 
 CONTROLLER:
+  num_loss_frame: 1
   data_manager: 'pycfg.data_pipeline_lidar.train_data_manager'
   shared_modules: 'pycfg.mink2d_stride2_vox2_naive_lidar.shared_modules'
-  cav_manager: {}
+  cav_manager:
+    prototype: base_cav.BaseCAV
+    memory_len: *seq_len
   forward_runner: {}
 
 TEST:

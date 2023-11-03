@@ -4,17 +4,24 @@ class TaskManager:
     def __init__(self):
         pass
 
-    def summary(self, tasks):
+    def summarize_tasks(self, tasks):
         tasks['no_grad'] = self.reformat_tasks(tasks['no_grad'])
         tasks['with_grad'] = self.reformat_tasks(tasks['with_grad'])
+        tasks['loss'] = self.reformat_tasks(tasks['loss'])
         return tasks
+
+    def summarize_loss_tasks(self, tasks):
+        return self.reformat_tasks(tasks)
 
     def reformat_tasks(self, task_list):
         task_out = {}
+        if len(task_list) == 0:
+            return task_out
         for task in task_list:
             cav_id, task_label, args = task
             order, task_name = task_label.split(':')
             order = int(order)
+            task_name = task_name.strip()
             if order not in task_out:
                 task_out[order] = {}
             if task_name not in task_out[order]:

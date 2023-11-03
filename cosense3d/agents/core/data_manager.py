@@ -5,9 +5,10 @@ from cosense3d.model.post_process import PostProcess
 
 
 class DataManager:
-    def __init__(self, cav_manager, data_info, aug=None, post_process=None):
+    def __init__(self, cav_manager, lidar_range, voxel_size=None, aug=None, post_process=None):
         self.cav_manager = cav_manager
-        self.data_info = data_info
+        self.lidar_range = lidar_range
+        self.voxel_size = voxel_size
         self.aug = aug
         if post_process is not None:
             self.postP = PostProcess(post_process)
@@ -33,7 +34,7 @@ class DataManager:
         for b, agent_ids in enumerate(valid_agent_ids):
             global_data = {}
             for j, ai in enumerate(agent_ids):
-                assert cavs[b][j].id == ai
+                assert cavs[b][j].id == f'{b}.{ai}'
                 for k, v in data.items():
                     if isinstance(v[b], list) and len(v[b]) == len(agent_ids):
                         cavs[b][j].data[k] = v[b][j]
@@ -42,8 +43,8 @@ class DataManager:
                     elif k == 'augment_params':
                         cavs[b][j].data[k] = v[b]
                         global_data[k] = v[b]
-                    else:
-                        global_data[k] = v[b]
+                    elif cavs[b][j].is_ego:
+                        cavs[b][j].data[k] = v[b]
             global_data_list.append(global_data)
         return global_data_list
 
@@ -75,13 +76,13 @@ class DataManager:
         batch_dict['augment_params'] = rand_aug
 
     def gather(self, cav_list, data_keys):
-        data_dict = {}
+        data_list = []
         for k in data_keys:
             data = []
             for cav_id in cav_list:
                 data.append(self.cav_manager.get_cav_with_id(cav_id).data[k])
-            data_dict[k] = data
-        return data_dict
+            data_list.append(data)
+        return data_list
 
     def scatter(self, cav_list, data_dict):
         for k, data_list in data_dict.items():
