@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import numpy as np
 from plyfile import PlyData
-import open3d as o3d
+import pypcd
 import cv2
 
 from cosense3d.utils.pclib import pose_to_transformation
@@ -16,6 +16,23 @@ class LoadLidarPoints:
                  use_intensity=True):
         self.coop_mode = coop_mode
         self.use_instensity = use_intensity
+
+    def read_pcd(self, pts_filename):
+        with open(pts_filename, "r") as pcd_file:
+            flag = False
+            points = []
+            for line in pcd_file.readlines():
+                if flag:
+                    points.append([float(l.strip()) for l in line.split(' ')])
+                else:
+                    if 'DATA' in line:
+                        flag = True
+            points = np.array(points)
+        lidar_dict = {'xyz': points[:, :3]}
+        if points.shape[-1] == 4:
+            lidar_dict['intensity'] = points[:, 3:4]
+        return lidar_dict
+
 
     def _load_points(self, pts_filename):
         """
@@ -41,13 +58,16 @@ class LoadLidarPoints:
         lidar_dict = {}
         ext = os.path.splitext(pts_filename)[-1]
         if ext == '.pcd':
-            pcd = o3d.io.read_point_cloud(pts_filename)
-            xyz = np.asarray(pcd.points, dtype=np.float32)
-            lidar_dict['xyz'] = xyz
-            # we save the intensity in the first channel
-            intensity = np.expand_dims(np.asarray(pcd.colors)[:, 0], -1)
-            if len(intensity) == len(xyz):
-                lidar_dict['intensity'] = intensity
+            # we do not use to avoid conflict with PyQt5
+            lidar_dict = self.read_pcd(pts_filename)
+
+            # pcd = o3d.io.read_point_cloud(pts_filename)
+            # xyz = np.asarray(pcd.points, dtype=np.float32)
+            # lidar_dict['xyz'] = xyz
+            # # we save the intensity in the first channel
+            # intensity = np.expand_dims(np.asarray(pcd.colors)[:, 0], -1)
+            # if len(intensity) == len(xyz):
+            #     lidar_dict['intensity'] = intensity
 
         elif ext == '.bin':
             pcd_np = np.fromfile(pts_filename, dtype=np.float32).reshape(-1, 4)

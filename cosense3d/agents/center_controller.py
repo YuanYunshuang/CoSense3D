@@ -23,9 +23,6 @@ class CenterController:
         self.data_manager = core.DataManager(self.cav_manager, **self.update_cfg(cfg['data_manager'], self.data_info))
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
-        if 'visualizer' in cfg:
-            self.visualizer = core.Visualizer(sys.argv)
-            self.visualizer.run()
 
     def update_cfg(self, cfg, *args):
         for arg in args:
@@ -81,9 +78,10 @@ class CenterController:
         frame_loss_dict = {}
         if with_loss:
             frame_loss_dict = self.forward_runner.loss(batched_tasks['loss'], **kwargs)
-        if hasattr(self, 'visualizer'):
-            self.visualizer.refresh(self.data_manager)
         return frame_loss_dict
+
+    def vis_data(self):
+        return self.data_manager.get_vis_data()
 
 
 

@@ -92,18 +92,27 @@ class DataManager:
     def update(self, cav_id, data_key, data):
         self.cav_manager.get_cav_with_id(cav_id).data[data_key] = data
 
-    def gather_batch(self, batch_idx, data_keys, to_numpy=False):
-        data_list = []
-        for k in data_keys:
-            data = []
-            for cav in self.cav_manager.cavs[batch_idx]:
-                d = cav.data[k]
-                if isinstance(d, torch.Tensor):
-                    d = d.cpu().numpy()
-                data.append(d)
-            data_list.append(data)
-        return data_list
+    def gather_batch(self, batch_idx, key, to_numpy=False):
+        data = {}
+        for cav in self.cav_manager.cavs[batch_idx]:
+            if key not in cav.data:
+                continue
+            d = cav.data[key]
+            if isinstance(d, torch.Tensor) and to_numpy:
+                d = d.cpu().numpy()
+            data[cav.id] = d
+        return data
 
+    def get_vis_data(self, batch_idx=0):
+        pcds = self.gather_batch(batch_idx, 'points', True)
+        gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d', True)
+        gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d', True)
+        labels = {}
+        for k, v in gt_boxes_global.items():
+            gt_labels = gt_labels_global[k].tolist()
+            for i, box in enumerate(v.tolist()):
+                labels[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
 
+        return pcds, None, labels
 
 

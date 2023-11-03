@@ -42,6 +42,7 @@ CONTROLLER:
     prototype: base_cav.BaseCAV
     memory_len: *seq_len
   forward_runner: {}
+  visualizer: {}
 
 TEST:
   metrics:

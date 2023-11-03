@@ -3,4 +3,4 @@ from .shared_modules import SharedModules
 from .forward_runner import ForwardRunner
 from .data_manager import DataManager
 from .task_manager import TaskManager
-from .visualizer import Visualizer
+from .gui import GUI
