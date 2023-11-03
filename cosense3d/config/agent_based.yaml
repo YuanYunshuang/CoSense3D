@@ -21,6 +21,7 @@ TRAIN:
   max_epoch: 50
   gpus: 1
   resume: true
+  hooks: 'pycfg.train.train_hooks'
   optimizer:
     lr: 0.001
     weight_decay: 1e-2

@@ -20,7 +20,7 @@ class BaseRunner:
         self.dataloader = dataloader
         self.data_iter = iter(dataloader)
         self.total_iter = len(dataloader)
-        self.iter = 0
+        self.iter = 1
         self.epoch = 1
 
         self.controller = controller
