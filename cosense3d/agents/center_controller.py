@@ -1,3 +1,5 @@
+import sys
+
 import torch
 
 from cosense3d.agents import core
@@ -20,6 +22,9 @@ class CenterController:
         self.data_manager = core.DataManager(self.cav_manager, self.data_info, **cfg['data_manager'])
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
+        if 'visualizer' in cfg:
+            self.visualizer = core.Visualizer(sys.argv)
+            self.visualizer.run()
 
     @property
     def modules(self):
