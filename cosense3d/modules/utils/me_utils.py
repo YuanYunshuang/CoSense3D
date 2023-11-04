@@ -197,6 +197,8 @@ def voxelize_with_centroids(x: ME.TensorField, enc_mlp):
     tensor_map, field_map = cm.field_to_sparse_map(x.coordinate_key, out.coordinate_key)
     coords_p1, count_p1 = downsample_points(coords, tensor_map, field_map, size)
     features_p1, _ = downsample_points(features, tensor_map, field_map, size)
+    if len(features) != len(tensor_map):
+        print('d')
     norm_features = normalize_points(features, features_p1, tensor_map)
 
     voxel_embs = enc_mlp(torch.cat([features, norm_features], dim=1))

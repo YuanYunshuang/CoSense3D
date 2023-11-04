@@ -68,11 +68,11 @@ class CenterController:
         # pseudo fusion
         batched_tasks = self.task_manager.summarize_tasks(tasks)
         self.forward_runner.eval()
-        self.forward_runner(batched_tasks['no_grad'])
+        self.forward_runner(batched_tasks['no_grad'], **kwargs)
         response = self.cav_manager.send_response()
         self.cav_manager.receive_response(response)
         self.forward_runner.train()
-        self.forward_runner(batched_tasks['with_grad'])
+        self.forward_runner(batched_tasks['with_grad'], **kwargs)
         self.cav_manager.apply_cav_function('post_update_memory')
 
         frame_loss_dict = {}
@@ -81,7 +81,7 @@ class CenterController:
         return frame_loss_dict
 
     def vis_data(self):
-        return self.data_manager.get_vis_data()
+        return self.data_manager.get_vis_data_input()
 
 
 

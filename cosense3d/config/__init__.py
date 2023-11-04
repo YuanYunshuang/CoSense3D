@@ -45,8 +45,8 @@ def load_config(args):
             cfg['TRAIN']['run_name'] = args.run_name
         if hasattr(args, 'log_dir'):
             cfg['TRAIN']['log_dir'] = args.log_dir
-        if hasattr(args, 'resume'):
-            cfg['TRAIN']['resume'] = args.resume
+        if hasattr(args, 'resume_from'):
+            cfg['TRAIN']['resume_from'] = args.resume_from
 
     return cfg
 

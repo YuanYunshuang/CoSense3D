@@ -3,5 +3,5 @@ from .shared_modules import SharedModules
 from .forward_runner import ForwardRunner
 from .data_manager import DataManager
 from .task_manager import TaskManager
-from .hooks import *
+from .train_hooks import *
 from .gui import GUI

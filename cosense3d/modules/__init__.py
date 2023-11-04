@@ -28,6 +28,11 @@ class BaseModule(nn.Module):
         raise NotImplementedError
 
     def loss(self, *args, **kwargs):
+        """This must be implemented in head module."""
+        # TODO: Create Head base module.
+        pass
+
+    def prepare_vis_data(self):
         pass
 
     def format_input(self, input: List):

@@ -1,11 +1,11 @@
-import os
+import os, glob, logging
 from datetime import datetime
 
 from cosense3d.utils.train_utils import *
 from cosense3d.utils.logger import LogMeter
 from cosense3d.utils.misc import ensure_dir, setup_logger
 from cosense3d.agents.core.base_runner import BaseRunner
-from cosense3d.agents.core.hooks import Hooks
+from cosense3d.agents.core.train_hooks import TrainHooks
 
 
 class TrainRunner(BaseRunner):
@@ -14,16 +14,37 @@ class TrainRunner(BaseRunner):
                  optimizer,
                  lr_scheduler,
                  hooks=None,
-                 resume=False,
+                 resume_from=None,
                  **kwargs
                  ):
         super().__init__(**kwargs)
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
                                                len(self.dataloader))
-        self.hooks = Hooks(hooks)
+        self.hooks = TrainHooks(hooks)
         self.total_epochs = max_epoch
         self.start_epoch = 1
+        self.resume(resume_from)
+
+    def resume(self, resume_from):
+        if resume_from is None:
+            return
+        assert os.path.exists(resume_from), f'resume path does not exist: {resume_from}.'
+        ckpts = glob.glob(os.path.join(resume_from, 'epoch*.pth'))
+        if len(ckpts) > 0:
+            epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
+            max_idx = epochs.index(max(epochs))
+            ckpt = ckpts[max_idx]
+        elif os.path.exists(os.path.join(resume_from, 'last.pth')):
+            ckpt = os.path.join(resume_from, 'last.pth')
+        else:
+            raise IOError('No checkpoint found.')
+        logging.info(f"Resuming the model from checkpoint: {ckpt}")
+        ckpt = torch.load(ckpt)
+        load_model_dict(self.forward_runner, ckpt['model'])
+        self.start_epoch = ckpt['epoch']
+        self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
+        self.optimizer.load_state_dict(ckpt['optimizer'])
 
     def run(self):
         with torch.autograd.set_detect_anomaly(True):

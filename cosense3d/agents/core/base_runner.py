@@ -45,6 +45,9 @@ class BaseRunner:
         self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
                                wandb_project=wandb_project_name)
 
+    def set_logdir(self, logdir):
+        self.logger.log_path = logdir
+
     def run(self):
         raise NotImplementedError
 

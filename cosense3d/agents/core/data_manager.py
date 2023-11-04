@@ -103,7 +103,7 @@ class DataManager:
             data[cav.id] = d
         return data
 
-    def get_vis_data(self, batch_idx=0):
+    def get_vis_data_input(self, batch_idx=0):
         pcds = self.gather_batch(batch_idx, 'points', True)
         gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d', True)
         gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d', True)
@@ -114,5 +114,8 @@ class DataManager:
                 labels[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
 
         return pcds, None, labels
+
+    def get_vis_data_module_output(self, head_out_key, batch_idx=0):
+        pass
 
 

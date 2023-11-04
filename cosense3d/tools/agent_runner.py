@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="./config/config.yaml")
     parser.add_argument("--mode", type=str, default="train")
     parser.add_argument("--visualize", action="store_true")
-    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--resume-from", type=str)
     parser.add_argument("--log_dir", type=str, default="../logs")
     parser.add_argument("--run_name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)

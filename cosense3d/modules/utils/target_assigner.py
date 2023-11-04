@@ -378,6 +378,12 @@ class TargetAssigner(object):
 
         tgt = {'centerness': center_cls}
 
+        pred_cls = torch.cat([x['cls'][0] for x in batch_list], dim=0)
+        cur_cls_src = rearrange(pred_cls, 'n d ... -> n ... d').contiguous()
+        cur_cls_tgt = rearrange(tgt['centerness'], 'n d ... -> n ... d').contiguous().float().squeeze(-2)
+        if len(cur_cls_src) != len(cur_cls_tgt):
+            print('d')
+
         # mask = centers[:, 0] == 0
         # label = labels[mask].squeeze()
         # ctrs = centers[centers[:, 0] == 0, 1:]

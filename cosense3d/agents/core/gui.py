@@ -7,8 +7,9 @@ from interface.view.viewer import PointCloudWidget
 
 
 class GUI(QtWidgets.QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, tabs=[dict(type='data')]) -> None:
         super(GUI, self).__init__()
+        self.tabs = tabs
         self.header_height = 30
         self.setupUI()
         self.setWindowTitle("Cosense3D")
@@ -19,9 +20,7 @@ class GUI(QtWidgets.QMainWindow):
         self.setGeometry(0, 0, width, height)
 
     def setupUI(self):
-        # OpenGL mainview
-        # self.glWidgetcontainer = QtWidgets.QWidget(self)
-        # self.glWidgetcontainer.setGeometry(QtCore.QRect(0, 0, 800, 600 - self.header_height))
+
         self.glWidget0 = PointCloudWidget('MAINVIEW', self)
         self.setCentralWidget(self.glWidget0)
         self.get_toolbar()
