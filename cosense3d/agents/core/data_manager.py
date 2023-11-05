@@ -115,15 +115,19 @@ class DataManager:
 
     def get_vis_data_input(self, batch_idx=0):
         pcds = self.gather_batch(batch_idx, 'points', True)
-        gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d', True)
-        gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d', True)
+        gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d' )
+        gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d')
         labels = {}
         for k, v in gt_boxes_global.items():
             gt_labels = gt_labels_global[k].tolist()
             for i, box in enumerate(v.tolist()):
                 labels[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
 
-        return pcds, None, labels
+        return {
+            'pcds': pcds,
+            'global_bboxes_3d': gt_boxes_global,
+            'global_labels': labels
+        }
 
     def get_vis_data_detection(self, batch_idx=0):
         return self.gather_batch(batch_idx, 'detection')

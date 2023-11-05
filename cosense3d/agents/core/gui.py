@@ -8,13 +8,13 @@ from cosense3d.agents.viewer.canvas_viewer import CanvasViewer
 
 
 class GUI(QtWidgets.QMainWindow):
-    def __init__(self, mode) -> None:
+    def __init__(self, mode, cfg) -> None:
         super(GUI, self).__init__()
         self.mode = mode
         self.header_height = 30
         path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.css_dir = os.path.join(path, 'viewer', 'css')
-        self.setupUI()
+        self.setupUI(cfg)
         self.setWindowTitle("Cosense3D")
 
         # Set window size to screen size
@@ -22,13 +22,13 @@ class GUI(QtWidgets.QMainWindow):
         width, height = screen.width(), screen.height()
         self.setGeometry(0, 0, width, height)
 
-    def setupUI(self):
-        # self.tabs = QtWidgets.QTabWidget()
+    def setupUI(self, cfg):
+        self.tabs = QtWidgets.QTabWidget()
         self.glViewer0 = GLViewer('MAINVIEW', self)
-        # self.tabs.addTab(self.glViewer0, 'GLViewer')
-        # self.canvas = CanvasViewer()
-        # self.tabs.addTab(self.canvas, 'Canvas')
-        self.setCentralWidget(self.glViewer0)
+        self.tabs.addTab(self.glViewer0, 'GLViewer')
+        self.canvas = CanvasViewer(**cfg['canvas_viewer'])
+        self.tabs.addTab(self.canvas, 'Canvas')
+        self.setCentralWidget(self.tabs)
         self.get_toolbar()
 
     def setRunner(self, runner):
@@ -79,7 +79,8 @@ class GUI(QtWidgets.QMainWindow):
     def step(self):
         self.runner.step()
         data = self.runner.vis_data()
-        self.glWidget0.updateFrameData(*data)
+        self.glViewer0.refresh(data)
+        self.canvas.refresh(data)
 
 
 

@@ -132,11 +132,17 @@ class GLViewer(gl.GLViewWidget):
                 self.boxes.append(item)
                 self.addItem(item)
 
-    def redraw(self, pcds, local_label, label, predecessor=None):
+    def updateFrameData(self, pcds, local_label=None, label=None, predecessor=None):
         self.clear()
         self.updatePCDs(pcds)
         self.updateLabel(local_label, label, predecessor)
         self.update()
+
+    def refresh(self, data_dict):
+        pcds = data_dict['input']['pcds']
+        labels = data_dict['input'].get('global_labels', None)
+        local_labels = data_dict['input'].get('local_labels', None)
+        self.updateFrameData(pcds, local_labels, labels)
 
     def addBox(self):
         if self.rectangle is not None:

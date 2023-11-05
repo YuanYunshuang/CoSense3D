@@ -99,7 +99,7 @@ class BaseCAV:
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
         if self.is_ego:
-            update_keys = ['bev_out', 'detection_out']
+            update_keys = ['bev', 'detection']
             self.memory.append({k: self.data[k] for k in update_keys})
             if len(self.memory) > self.memory_len:
                 self.memory = self.memory[1:]

@@ -1,4 +1,5 @@
 import matplotlib
+import numpy as np
 
 matplotlib.use('Qt5Agg')
 
@@ -7,20 +8,69 @@ from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
+from cosense3d.utils.vislib import draw_points_boxes_plt
+
 
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, parent=None, width=5, height=4, dpi=100, title='plot'):
+    def __init__(self, width=5, height=4, dpi=100, title='plot', nrows=1, ncols=1):
         fig = Figure(figsize=(width, height), dpi=dpi)
-        fig.suptitle('Plot', fontsize=16)
-        self.axes = fig.add_subplot(111)
+        fig.suptitle(title, fontsize=16)
+        self.axes = fig.subplots(nrows, ncols)
+        self.data = {}
         super(MplCanvas, self).__init__(fig)
 
 
+class BEVSparseCanvas(MplCanvas):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # self.scatter = self.axes.scatter([0], [0], cmap='hot', c=[0], s=1, vmin=0, vmax=1)
+
+    def refresh(self, data):
+        for cav_id, data_dict in data['bev'].items():
+            centers = data_dict['center'].cpu().numpy()
+            conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
+            self.axes.clear()
+            self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
+                                             cmap='jet', c=conf, s=3, vmin=0, vmax=1)
+            # self.scatter.set_array(conf)
+            # self.scatter.set_offsets(centers)
+            self.draw()
+            break
+
+
+class DetectionCanvas(MplCanvas):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def refresh(self, data):
+        for cav_id, det_dict in data['detection'].items():
+            self.axes.clear()
+            points = data['input']['pcds'][cav_id]
+            gt_boxes = data['input']['global_bboxes_3d'][cav_id].cpu().numpy()
+            pred_boxes = det_dict['box'].detach().cpu().numpy()
+            draw_points_boxes_plt(
+                points=points,
+                boxes_pred=pred_boxes,
+                boxes_gt=gt_boxes,
+                ax=self.axes,
+                # return_ax=True
+            )
+            self.draw()
+            break
+
+
+
 class CanvasViewer(QtWidgets.QWidget):
-    def __init__(self, plots=['plot1', 'plot2'], parent=None):
+    def __init__(self, plots, parent=None):
         super(CanvasViewer, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
+        self.plots = []
         for p in plots:
-            plot = MplCanvas(title=p)
+            plot = globals()[p['title']](**p)
             layout.addWidget(plot)
+            self.plots.append(plot)
+
+    def refresh(self, data):
+        for plot in self.plots:
+            plot.refresh(data)

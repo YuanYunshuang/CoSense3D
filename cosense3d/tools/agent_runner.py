@@ -23,7 +23,7 @@ class AgentRunner:
         self.mode = args.mode
         if args.visualize:
             self.app = QApplication(sys.argv)
-            self.gui = GUI(args.mode)
+            self.gui = GUI(args.mode, cfgs['VISUALIZATION'])
 
         self.build_runner(args, cfgs)
 

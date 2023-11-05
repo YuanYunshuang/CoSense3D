@@ -48,7 +48,7 @@ shared_modules = OrderedDict(
     bev_head = dict(
         type='heads.bev.BEV',
         gather_keys=['fused_neck_feat'],
-        scatter_keys=['bev_out'],
+        scatter_keys=['bev'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
         data_info=data_info,
         stride=4,
@@ -61,7 +61,7 @@ shared_modules = OrderedDict(
     detection_head = dict(
         type='heads.det_center_sparse.DetCenterSparse',
         gather_keys=['fused_neck_feat'],
-        scatter_keys=['detection_out'],
+        scatter_keys=['detection'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
         data_info=data_info,
         input_channels=128,
@@ -99,3 +99,8 @@ test_hooks = dict(
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 )
+
+plots = [
+    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
+    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+]

@@ -50,6 +50,10 @@ CONTROLLER:
   forward_runner: {}
   visualizer: {}
 
+VISUALIZATION:
+  canvas_viewer:
+    plots: 'pycfg.mink2d_stride2_vox2_naive_lidar.plots'
+
 
 
 

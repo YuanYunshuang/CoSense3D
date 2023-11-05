@@ -30,6 +30,7 @@ class BaseHook:
 
 class CheckPointsHook(BaseHook):
     def __init__(self, max_ckpt=3, epoch_every=None, iter_every=None, **kwargs):
+        super().__init__(**kwargs)
         self.max_ckpt = max_ckpt
         self.epoch_every = epoch_every
         self.iter_every = iter_every
@@ -56,6 +57,7 @@ class CheckPointsHook(BaseHook):
 
 class BEVSparseToDenseHook(BaseHook):
     def __init__(self, lidar_range, voxel_size, stride, **kwargs):
+        super().__init__(**kwargs)
         self.stride = stride
         self.lidar_range = lidar_range
         self.voxel_size = voxel_size
@@ -66,6 +68,7 @@ class BEVSparseToDenseHook(BaseHook):
 
 class EvalDenseBEVHook(BaseHook):
     def __init__(self, thr, **kwargs):
+        super().__init__(**kwargs)
         self.thr = thr
 
     def __call__(self, runner, **kwargs):
@@ -74,12 +77,13 @@ class EvalDenseBEVHook(BaseHook):
 
 class DetectionNMSHook(BaseHook):
     def __init__(self, nms_thr, pre_max_size, **kwargs):
+        super().__init__(**kwargs)
         self.nms_thr = nms_thr
         self.pre_max_size = pre_max_size
         self.nms = import_module('cosense3d.ops.iou3d_nms_utils').nms_gpu
 
     def __call__(self, runner, **kwargs):
-        detection_out = runner.controller.data_manager.gather_ego_data('detection_out')
+        detection_out = runner.controller.data_manager.gather_ego_data('detection')
         preds = []
         cav_ids = []
         for cav_id, values in detection_out.items():
