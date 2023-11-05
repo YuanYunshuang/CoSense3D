@@ -5,6 +5,9 @@ from interface.view.draggable_dialog import DraggableDialog
 
 
 class FrameViewer(DraggableDialog):
+    """
+    A draggable dialog displays meta info for the current frame.
+    """
     def __init__(self, parent=None):
         super().__init__(parent, 'Frame Info')
         self.add_label('Id:', 1, 0)

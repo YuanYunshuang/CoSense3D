@@ -132,10 +132,10 @@ class PointCloudWidget(gl.GLViewWidget):
                 self.boxes.append(item)
                 self.addItem(item)
 
-    def updateFrameData(self, pcds, local_label, label, predecessor=None):
+    def updateFrameData(self, pcds, local_label, global_label, predecessor=None):
         self.clear()
         self.updatePCDs(pcds)
-        self.updateLabel(local_label, label, predecessor)
+        self.updateLabel(local_label, global_label, predecessor)
         self.update()
 
     def addBox(self):
