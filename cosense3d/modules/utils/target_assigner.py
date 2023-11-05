@@ -363,6 +363,7 @@ class TargetAssigner(object):
                 cur_centers = batch_list[b]['center']
                 cur_boxes = gt_boxes[b]
                 if len(cur_boxes) == 0:
+                    labels.append(torch.zeros_like(cur_centers[:, :1]))
                     continue
                 dists = torch.norm(cur_centers.unsqueeze(1) - cur_boxes[:, :2].unsqueeze(0), dim=-1)
                 dists_min = dists.min(dim=1, keepdim=True).values
@@ -381,8 +382,6 @@ class TargetAssigner(object):
         pred_cls = torch.cat([x['cls'][0] for x in batch_list], dim=0)
         cur_cls_src = rearrange(pred_cls, 'n d ... -> n ... d').contiguous()
         cur_cls_tgt = rearrange(tgt['centerness'], 'n d ... -> n ... d').contiguous().float().squeeze(-2)
-        if len(cur_cls_src) != len(cur_cls_tgt):
-            print('d')
 
         # mask = centers[:, 0] == 0
         # label = labels[mask].squeeze()

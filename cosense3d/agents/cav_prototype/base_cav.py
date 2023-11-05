@@ -28,6 +28,8 @@ class BaseCAV:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
             # cav to ego
+            if 'received_request' not in self.data:
+                print('d')
             request = self.data['received_request']
             transform = request['lidar_pose'].inverse() @ self.lidar_pose
         DOP.cav_aug_transform(self.data, transform, self.data['augment_params'], apply_to=apply_to)

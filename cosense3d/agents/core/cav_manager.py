@@ -16,6 +16,10 @@ class CAVManager:
         repr_str += f'(cavs={self.cav_dict.keys()})'
         return repr_str
 
+    def reset(self):
+        self.cavs = []
+        self.cav_dict = {}
+
     def update_cav_info(self, valid_agent_ids=None, lidar_poses=None, **data):
         B = len(valid_agent_ids)  # batch_size
         cavs = []
@@ -34,6 +38,8 @@ class CAVManager:
                     cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)
                 cav_dict[cav_id] = (b, i)
+            if sum([int(cav.is_ego) for cav in batch_cavs]) > 1:
+                print('d')
             cavs.append(batch_cavs)
         self.cavs = cavs
         self.cav_dict = cav_dict

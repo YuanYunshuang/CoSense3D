@@ -21,7 +21,7 @@ class NaiveFusion(BaseModule):
             # fuse coop to ego
             for cpfeat in coop_feat.values():
                 if 'pts_feat' not in cpfeat:
-                    print('d')
+                    continue
                 coor.append(cpfeat['pts_feat'][f'p{self.stride}']['coor'])
                 feat.append(cpfeat['pts_feat'][f'p{self.stride}']['feat'])
             coor = torch.cat(coor, dim=0)
