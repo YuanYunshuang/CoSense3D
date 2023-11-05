@@ -7,6 +7,8 @@ import torch
 from functools import partial
 from rich.logging import RichHandler
 
+from cosense3d.utils.misc import ensure_dir
+
 
 def setup_logger(exp_name, debug):
     from imp import reload
@@ -75,7 +77,7 @@ class SmoothedValue(object):
 class LogMeter(object):
     def __init__(self, total_iter, log_path, delimiter="\t", log_every=20, wandb_project=None):
         self.meters = defaultdict(partial(SmoothedValue, fmt="{avg:.4f}"))
-        file_name = datetime.now().strftime("%d_%m_%Y_%H_%M_%S") + ".txt"
+        file_name = datetime.now().strftime("%d_%m_%H_%M_%S") + ".log"
         self.log_path = log_path
         if not isinstance(log_path, pathlib.Path):
             log_path = pathlib.Path(log_path)
@@ -140,3 +142,15 @@ class LogMeter(object):
                 self.wandb.log({('avg/' + name): meter.avg for name, meter in self.meters.items()})
                 self.wandb.log({('global_avg/' + name): meter.global_avg for name, meter in self.meters.items()})
 
+
+class TestLogger(object):
+    def __init__(self, logdir):
+        self.logdir = logdir
+        ensure_dir(self.logdir)
+        self.log_fh = (pathlib.Path(self.logdir) / "test.log").open('a')
+
+    def log(self, runner):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.log_fh.close()

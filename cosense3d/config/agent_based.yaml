@@ -12,7 +12,8 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 1
-  train_pipeline: 'pycfg.data_pipeline_lidar.train_pipeline_cpu'
+  train_pipeline: 'pycfg.data_pipeline_lidar.pipeline_cpu'
+  test_pipeline: 'pycfg.data_pipeline_lidar.pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
@@ -21,7 +22,7 @@ TRAIN:
   max_epoch: 50
   gpus: 1
   resume: true
-  hooks: 'pycfg.train.train_hooks'
+  hooks: 'pycfg.mink2d_stride2_vox2_naive_lidar.train_hooks'
   optimizer:
     lr: 0.001
     weight_decay: 1e-2
@@ -35,9 +36,13 @@ TRAIN:
     warmup_epochs: 1
     lr_min: 2e-4
 
+TEST:
+  hooks: 'pycfg.mink2d_stride2_vox2_naive_lidar.test_hooks'
+
+
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.data_pipeline_lidar.train_data_manager'
+  data_manager: 'pycfg.data_pipeline_lidar.data_manager'
   shared_modules: 'pycfg.mink2d_stride2_vox2_naive_lidar.shared_modules'
   cav_manager:
     prototype: base_cav.BaseCAV
@@ -45,9 +50,6 @@ CONTROLLER:
   forward_runner: {}
   visualizer: {}
 
-TEST:
-  metrics:
-    MetricBev: []
 
 
 

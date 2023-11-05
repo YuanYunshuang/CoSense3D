@@ -85,3 +85,17 @@ shared_modules = OrderedDict(
                       reg=dict(_target_='modules.losses.common.weighted_smooth_l1_loss')),
     ),
 )
+
+train_hooks = dict(
+    post_epoch=[
+        dict(type="CheckPointsHook", epoch_every=10)
+    ]
+)
+
+test_hooks = dict(
+    post_iter=[
+        dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
+        dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
+        dict(type="EvalDenseBEVHook", thr=0.5)
+    ]
+)

@@ -21,7 +21,7 @@ SIZE_OF_FLOAT = ctypes.sizeof(ctypes.c_float)
 TRANSLATION_FACTOR = 0.03
 
 
-# Main widget for presenting the point cloud
+# Main widget for presenting the point cloud and bounding boxes
 class GLViewer(gl.GLViewWidget):
 
     def __init__(self, name: str, parent=None) -> None:

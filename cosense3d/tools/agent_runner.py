@@ -12,6 +12,7 @@ from cosense3d.config import load_config, save_config
 from cosense3d.utils.train_utils import seed_everything
 from cosense3d.agents.center_controller import get_controller
 from cosense3d.agents.core.train_runner import TrainRunner
+from cosense3d.agents.core.test_runner import TestRunner
 from cosense3d.agents.core.gui import GUI
 from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
@@ -19,17 +20,28 @@ from PyQt5.QtWidgets import QDesktopWidget, QApplication
 class AgentRunner:
     def __init__(self, args, cfgs):
         self.visualize = args.visualize
+        self.mode = args.mode
         if args.visualize:
             self.app = QApplication(sys.argv)
-            self.gui = GUI()
+            self.gui = GUI(args.mode)
 
+        self.build_runner(args, cfgs)
+
+    def build_runner(self, args, cfgs):
         dataloader = get_dataloader(cfgs['DATASET'], args.mode)
         center_controller = get_controller(cfgs['CONTROLLER'], dataloader)
-        self.runner = TrainRunner(dataloader=dataloader,
-                                  controller=center_controller,
-                                  **cfgs['TRAIN'])
+        if args.mode == 'train':
+            self.runner = TrainRunner(dataloader=dataloader,
+                                      controller=center_controller,
+                                      **cfgs['TRAIN'])
+        elif args.mode == 'test':
+            self.runner = TestRunner(dataloader=dataloader,
+                                     controller=center_controller,
+                                     **cfgs['TEST'])
+        else:
+            raise NotImplementedError
 
-    def visible_train_demo(self):
+    def visible_run(self):
         self.gui.setRunner(self.runner)
         self.app.installEventFilter(self.gui)
 
@@ -46,9 +58,13 @@ class AgentRunner:
         logging.info("Showing GUI...")
         sys.exit(self.app.exec_())
 
+    def visible_test(self):
+        # TODO
+        pass
+
     def run(self):
         if self.visualize:
-            self.visible_train_demo()
+            self.visible_run()
         else:
             self.runner.run()
 
@@ -56,9 +72,10 @@ class AgentRunner:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="./config/config.yaml")
-    parser.add_argument("--mode", type=str, default="train")
+    parser.add_argument("--mode", type=str, default="test")
     parser.add_argument("--visualize", action="store_true")
     parser.add_argument("--resume-from", type=str)
+    parser.add_argument("--load-from", type=str)
     parser.add_argument("--log_dir", type=str, default="../logs")
     parser.add_argument("--run_name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
@@ -68,6 +85,7 @@ if __name__ == "__main__":
     setup_logger(args.run_name, args.debug)
     # for ME
     os.environ['OMP_NUM_THREADS'] = "16"
+
     seed_everything(2023)
     cfgs = load_config(args)
     agent_runner = AgentRunner(args, cfgs)

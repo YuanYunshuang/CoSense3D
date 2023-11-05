@@ -61,20 +61,20 @@ class BaseCAV:
     def receive_response(self, response):
         self.data['received_response'] = response
 
-    def forward_local(self, tasks):
+    def forward_local(self, tasks, training_mode):
         self.prepare_data(keys=['points', 'annos_global'])
-        if self.is_ego:
+        if self.is_ego and training_mode:
             tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
         else:
             tasks['no_grad'].append((self.id, '3:pts_backbone', {}))
 
-    def forward_fusion(self, tasks):
+    def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
             tasks['with_grad'].append((self.id, '4:fusion', {}))
             tasks['with_grad'].append((self.id, '5:fusion_neck', {}))
         return tasks
 
-    def forward_head(self, tasks):
+    def forward_head(self, tasks, training_mode):
         if self.is_ego:
             tasks['with_grad'].append((self.id, '6:bev_head', {}))
             tasks['with_grad'].append((self.id, '7:detection_head', {}))

@@ -49,10 +49,10 @@ class DataManager:
         return global_data_list
 
     def generate_augment_params(self, batch_dict, seq_len):
+        B = len(batch_dict['scenario'])
         if self.aug is None:
-            rand_aug = None
+            rand_aug = [[None] * seq_len] * B
         else:
-            B = len(batch_dict['scenario'])
             rand_aug = []
             def rand_from_range(r):
                 return torch.rand(1) * (r[1] - r[0]) + r[0]
@@ -103,6 +103,16 @@ class DataManager:
             data[cav.id] = d
         return data
 
+    def gather_ego_data(self, key):
+        data = {}
+        for cavs in self.cav_manager.cavs:
+            assert cavs[0].is_ego
+            if key not in cavs[0].data:
+                continue
+            d = cavs[0].data[key]
+            data[cavs[0].id] = d
+        return data
+
     def get_vis_data_input(self, batch_idx=0):
         pcds = self.gather_batch(batch_idx, 'points', True)
         gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d', True)
@@ -115,7 +125,11 @@ class DataManager:
 
         return pcds, None, labels
 
-    def get_vis_data_module_output(self, head_out_key, batch_idx=0):
-        pass
+    def get_vis_data_detection(self, batch_idx=0):
+        return self.gather_batch(batch_idx, 'detection')
+
+    def get_vis_data_bev(self, batch_idx=0):
+        return self.gather_batch(batch_idx, 'bev')
+
 
 

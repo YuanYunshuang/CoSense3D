@@ -5,7 +5,6 @@ from cosense3d.utils.train_utils import *
 from cosense3d.utils.logger import LogMeter
 from cosense3d.utils.misc import ensure_dir, setup_logger
 from cosense3d.agents.core.base_runner import BaseRunner
-from cosense3d.agents.core.train_hooks import TrainHooks
 
 
 class TrainRunner(BaseRunner):
@@ -13,18 +12,29 @@ class TrainRunner(BaseRunner):
                  max_epoch,
                  optimizer,
                  lr_scheduler,
-                 hooks=None,
                  resume_from=None,
+                 run_name='default',
+                 log_dir='work_dir',
+                 use_wandb=False,
                  **kwargs
                  ):
         super().__init__(**kwargs)
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
                                                len(self.dataloader))
-        self.hooks = TrainHooks(hooks)
         self.total_epochs = max_epoch
         self.start_epoch = 1
         self.resume(resume_from)
+        self.setup_logger(run_name, log_dir, use_wandb)
+
+    def setup_logger(self, run_name, log_dir, use_wandb):
+        now = datetime.now().strftime('%m-%d-%H-%M-%S')
+        run_name = run_name + '_' + now
+        log_path = os.path.join(log_dir, run_name)
+        ensure_dir(log_path)
+        wandb_project_name = run_name if use_wandb else None
+        self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
+                               wandb_project=wandb_project_name)
 
     def resume(self, resume_from):
         if resume_from is None:

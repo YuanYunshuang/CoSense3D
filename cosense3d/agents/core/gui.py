@@ -1,16 +1,19 @@
-import sys
+import os
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
-from interface.view.viewer import PointCloudWidget
+from cosense3d.agents.viewer.gl_viewer import GLViewer
+from cosense3d.agents.viewer.canvas_viewer import CanvasViewer
 
 
 class GUI(QtWidgets.QMainWindow):
-    def __init__(self, tabs=[dict(type='data')]) -> None:
+    def __init__(self, mode) -> None:
         super(GUI, self).__init__()
-        self.tabs = tabs
+        self.mode = mode
         self.header_height = 30
+        path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.css_dir = os.path.join(path, 'viewer', 'css')
         self.setupUI()
         self.setWindowTitle("Cosense3D")
 
@@ -20,9 +23,12 @@ class GUI(QtWidgets.QMainWindow):
         self.setGeometry(0, 0, width, height)
 
     def setupUI(self):
-
-        self.glWidget0 = PointCloudWidget('MAINVIEW', self)
-        self.setCentralWidget(self.glWidget0)
+        # self.tabs = QtWidgets.QTabWidget()
+        self.glViewer0 = GLViewer('MAINVIEW', self)
+        # self.tabs.addTab(self.glViewer0, 'GLViewer')
+        # self.canvas = CanvasViewer()
+        # self.tabs.addTab(self.canvas, 'Canvas')
+        self.setCentralWidget(self.glViewer0)
         self.get_toolbar()
 
     def setRunner(self, runner):
@@ -47,8 +53,9 @@ class GUI(QtWidgets.QMainWindow):
             w2 = qcombo.sizeHint().width()
             qcombo.setMinimumWidth(w2 + 25)
             qcombo.setMaximumWidth(w2 + 50)
-            if not name=='type':
-                qcombo.setStyleSheet(open("../../interface/ui/css/combobox.css", "r").read())
+            # if not name=='type':
+            #     css_file = f"{self.css_dir}/combobox.css"
+            #     qcombo.setStyleSheet(open(css_file, "r").read())
             setattr(self, f'label_{name}', qlabel)
             setattr(self, f'combo_{name}', qcombo)
             setattr(self, f'cur_{name}', None)
@@ -71,7 +78,7 @@ class GUI(QtWidgets.QMainWindow):
 
     def step(self):
         self.runner.step()
-        data = self.runner.controller.vis_data()
+        data = self.runner.vis_data()
         self.glWidget0.updateFrameData(*data)
 
 

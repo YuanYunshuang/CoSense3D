@@ -1,27 +1,31 @@
 import torch
+import numpy as np
 from scipy.spatial.transform.rotation import Rotation as R
 
 
 def transform_points(data, transform, scale):
     C = data['points'].shape[-1]
     points = data['points'][:, :3]
-    points_homo = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
-    points_homo = transform @ points_homo
+    if (transform.cpu() != torch.eye(4)).any():
+        points = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
+        points = (transform @ points).T
 
     if scale is not None:
-        points_homo[:2] *= scale
+        points[:, 2] *= scale
 
     if C > 3:
-        data['points'] = torch.cat([points_homo[:3].T,
+        data['points'] = torch.cat([points[:, :3],
                                            data['points'][:, 3:]], dim=-1)
     else:
-        data['points'] = points_homo[:3].T
+        data['points'] = points[:, 3]
 
 
 def transform_bboxes_3d(boxes, transform, scale):
-    yaw = R.from_matrix(transform[:3, :3].cpu().numpy()).as_euler('xyz')[-1]
-    boxes[:, :3] = (transform[:3, :3] @ boxes[:, :3].T + transform[:3, 3].view(3, 1)).T
-    boxes[:, 6] += yaw
+    tf_np = transform.cpu().numpy()
+    if (tf_np != np.eye(4)).any():
+        yaw = R.from_matrix(tf_np[:3, :3]).as_euler('xyz')[-1]
+        boxes[:, :3] = (transform[:3, :3] @ boxes[:, :3].T + transform[:3, 3].view(3, 1)).T
+        boxes[:, 6] += yaw
     if scale is not None:
         boxes[:, :6] *= scale
         if boxes.shape[-1] == 9:
@@ -77,9 +81,11 @@ class DataOnlineProcessor:
     def cav_aug_transform(data, transform, aug_params,
                           apply_to=['points', 'imgs', 'annos_global']):
         # augmentation
-        if 'rot' in aug_params:
-            transform = aug_params['rot'].to(transform.device) @ transform
-        scale = aug_params['scale'].item() if 'scale' in aug_params else None
+        scale = None
+        if aug_params is not None:
+            if 'rot' in aug_params:
+                transform = aug_params['rot'].to(transform.device) @ transform
+            scale = aug_params['scale'].item() if 'scale' in aug_params else None
         for k in apply_to:
             func = globals().get(f'transform_{k}', False)
             if not func:

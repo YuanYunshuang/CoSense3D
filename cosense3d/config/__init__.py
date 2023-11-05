@@ -37,16 +37,14 @@ def load_config(args):
     update_dict(cfg, main_cfg)
     parse_pycfg(cfg)
 
-    if isinstance(args, str):
-        cfg['TRAIN']['log_dir'] = os.path.dirname(args)
-    else:
-        # update params
-        if hasattr(args, 'run_name'):
-            cfg['TRAIN']['run_name'] = args.run_name
-        if hasattr(args, 'log_dir'):
-            cfg['TRAIN']['log_dir'] = args.log_dir
-        if hasattr(args, 'resume_from'):
-            cfg['TRAIN']['resume_from'] = args.resume_from
+    # update params
+    if args.mode == 'train':
+        cfg['TRAIN']['resume_from'] = args.resume_from
+        cfg['TRAIN']['log_dir'] = args.log_dir
+        cfg['TRAIN']['run_name'] = args.run_name
+    elif args.mode == 'test':
+        cfg['TEST']['load_from'] = args.load_from
+        cfg['TEST']['log_dir'] = args.log_dir
 
     return cfg
 

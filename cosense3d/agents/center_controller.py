@@ -20,7 +20,8 @@ class CenterController:
 
     def setup_core(self, cfg):
         self.cav_manager = core.CAVManager(**self.update_cfg(cfg['cav_manager'], self.data_info))
-        self.data_manager = core.DataManager(self.cav_manager, **self.update_cfg(cfg['data_manager'], self.data_info))
+        self.data_manager = core.DataManager(
+            self.cav_manager, **self.update_cfg(cfg['data_manager'][self.mode], self.data_info))
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
 
@@ -48,30 +49,38 @@ class CenterController:
         loss_dict = {}
         for i in range(self.seq_len):
             with_loss = i >= self.seq_len - self.num_loss_frame
-            frame_loss_dict = self.run_frame(seq_data[i], with_loss, **kwargs)
+            frame_loss_dict = self.run_frame(seq_data[i], with_loss, training_mode=False, **kwargs)
             for k, v in frame_loss_dict.items():
                 if 'loss' in k:
                     loss = loss + v
                 loss_dict[f'f{i}.{k}'] = v
         return loss, loss_dict
 
-    def run_frame(self, frame_data, with_loss, **kwargs):
+    def test_forward(self, batch_dict, **kwargs):
+        self.data_manager.generate_augment_params(batch_dict, self.seq_len)
+        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
+        for i in range(self.seq_len):
+            self.run_frame(seq_data[i], with_loss=False, training_mode=False, **kwargs)
+
+    def run_frame(self, frame_data, with_loss, training_mode, **kwargs):
         self.cav_manager.update_cav_info(**frame_data)
         self.data_manager.distribute_to_cav(**frame_data)
         self.cav_manager.apply_cav_function('pre_update_memory')
         # send and receive request
         request = self.cav_manager.send_request()
         self.cav_manager.receive_request(request)
-        # pseudo forward
-        tasks = self.cav_manager.forward(with_loss)
-
-        # pseudo fusion
+        # get pseudo forward tasks
+        tasks = self.cav_manager.forward(with_loss, training_mode)
         batched_tasks = self.task_manager.summarize_tasks(tasks)
+        # process coop cav data in no grad mode
         self.forward_runner.eval()
         self.forward_runner(batched_tasks['no_grad'], **kwargs)
+        # send coop cav feature-level cpm to ego cav
         response = self.cav_manager.send_response()
         self.cav_manager.receive_response(response)
-        self.forward_runner.train()
+        # process ego cav data and fuse data from coop cav with grad if training
+        if training_mode:
+            self.forward_runner.train()
         self.forward_runner(batched_tasks['with_grad'], **kwargs)
         self.cav_manager.apply_cav_function('post_update_memory')
 
@@ -80,8 +89,6 @@ class CenterController:
             frame_loss_dict = self.forward_runner.loss(batched_tasks['loss'], **kwargs)
         return frame_loss_dict
 
-    def vis_data(self):
-        return self.data_manager.get_vis_data_input()
 
 
 

@@ -5,7 +5,6 @@ from einops import rearrange
 from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.common import linear_last
 from cosense3d.modules.losses.common import weighted_smooth_l1_loss
-from cosense3d.ops.iou3d_nms_utils import nms_gpu
 from cosense3d.modules.utils.me_utils import *
 
 
@@ -142,6 +141,7 @@ class DetCenterSparse(BaseModule):
 
     def forward(self, stensor_list, **kwargs):
         self.temp += 1
+        B = len(stensor_list)
         coor, feat = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
 
@@ -151,16 +151,10 @@ class DetCenterSparse(BaseModule):
             'reg': self.reg_head(feat)
         }
 
-        if getattr(self, 'get_rois', False):
-            out_dict['roi'] = self.rois(out_dict)
+        if not self.training:
+            out_dict['preds'] = self.predictions(out_dict, B)
 
-        elif getattr(self, 'vis_training', False) or not self.training:
-            out_dict['det_s1'] = self.predictions(out_dict)
-
-        # from tools.vis_tools import draw_boxes
-        # draw_boxes(batch_dict, self.det_r)
-        # pass
-        return self.format_output(out_dict, len(stensor_list))
+        return self.format_output(out_dict, B)
 
     def format_input(self, stensor_list):
         return self.compose_stensor(stensor_list, self.stride)
@@ -173,6 +167,16 @@ class DetCenterSparse(BaseModule):
             output_new['center'].append(output['center'][mask, 1:])
             output_new['cls'].append([h_cls[mask] for h_cls in output['cls']])
             output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
+            preds = {k: [] for k in output['preds'].keys()}
+            for h, inds in enumerate(output['preds']['idx']):
+                mask = inds[:, 0] == i
+                for k, v in output['preds'].items():
+                    if k in ['idx', 'box']:
+                        preds[k].append(v[h][mask][:, 1:])
+                    else:
+                        preds[k].append(v[h][mask])
+            output_new['preds'].append(preds)
+
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
@@ -254,49 +258,6 @@ class DetCenterSparse(BaseModule):
         loss_dict.update(lcenter)
         return loss_dict
 
-    def rois(self, batch_dict):
-        return self.tgt_assigner.decode_box(batch_dict)
+    def predictions(self, out_dict, B):
+        return self.tgt_assigner.decode_box(out_dict)
 
-    def predictions(self, batch_dict):
-        roi = self.rois(batch_dict)
-        batch_dict['roi'] = roi
-        boxes = torch.cat(roi['box'])
-        scores = torch.cat(roi['scr'])
-        labels = torch.cat(roi['lbl'])
-        indices = torch.cat(roi['idx'])  # map index for retrieving features
-
-        # nms
-        preds = []
-        l = batch_dict['batch_size'] * batch_dict.get('seq_len', 1)
-        for b in range(l):
-            mask = boxes[:, 0] == b
-            if mask.sum() == 0:
-                preds.append({
-                    'box': torch.zeros((0, 7), device=boxes.device),
-                    'scr': torch.zeros((0,), device=scores.device),
-                    'lbl': torch.zeros((0,), device=labels.device),
-                    'idx': torch.zeros((3, 0), device=indices.device),
-                })
-            else:
-                keep = nms_gpu(
-                    boxes[mask][:, 1:],
-                    scores[mask],
-                    thresh=self.post_processing['nms_thr'],
-                    pre_maxsize=self.post_processing['nms_premaxsize']
-                )
-                preds.append({
-                    'box': boxes[mask][keep][:, 1:],
-                    'scr': scores[mask][keep],
-                    'lbl': labels[mask][keep],
-                    'idx': indices.T[mask][keep].T,
-                })
-
-        if getattr(self, 'vis_training', False):
-            from cosense3d.tools.vis_tools import vis_detection
-            pcds = batch_dict['pcds'][batch_dict['pcds'][:, 0] < batch_dict['num_cav'][0], 1:]
-            gt_boxes = batch_dict['objects']
-            gt_boxes = gt_boxes[gt_boxes[:, 0] == 0][:, [3, 4, 5, 6, 7, 8, 11]]
-            vis_detection(preds[0], pcds,
-                          pc_range=self.lidar_range,
-                          gt_boxes=gt_boxes)
-        return preds

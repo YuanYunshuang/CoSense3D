@@ -479,17 +479,16 @@ class TargetAssigner(object):
             reg_tgt['scr'].append(dir_score)
         return {'reg': reg_tgt}
 
-    def decode_box(self, batch_dict):
+    def decode_box(self, preds):
         """
         Decode the center and regression maps into BBoxes.
         Args:
-            batch_dict:
-                det_center_head:
-                    cls: list[Tensor], each tensor is the result from a cls head with shape (B or N, Ncls, ...).
-                    reg:
-                        box: list[Tensor], one tensor per reg head with shape (B or N, 6, ...).
-                        dir: list[Tensor], one tensor per reg head with shape (B or N, 8, ...).
-                        scr: list[Tensor], one tensor per reg head with shape (B or N, 4, ...).
+            preds:
+                cls: list[Tensor], each tensor is the result from a cls head with shape (B or N, Ncls, ...).
+                reg:
+                    box: list[Tensor], one tensor per reg head with shape (B or N, 6, ...).
+                    dir: list[Tensor], one tensor per reg head with shape (B or N, 8, ...).
+                    scr: list[Tensor], one tensor per reg head with shape (B or N, 4, ...).
 
         Returns:
             roi:
@@ -499,7 +498,6 @@ class TargetAssigner(object):
                 idx: list[Tensor], one tensor per head with shape (3, N), center map indices of the boxes.
 
         """
-        preds = batch_dict['det_center_head']
         box_coder = self.encode_box_args['_target_']
         roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
         lbl_cnt = torch.cumsum(torch.Tensor([0] + [m.shape[1] for m in preds['cls']]), dim=0)
@@ -514,10 +512,10 @@ class TargetAssigner(object):
                            for k in ['box', 'dir', 'scr']}
             else:
                 conf, _ = logit_to_edl(center_cls)
-                centers = preds['centers']
+                centers = preds['center']
                 center_mask = conf[..., 1:].max(dim=-1).values > self.encode_box_args['center_thresh']  # b, h, w
                 cur_centers = centers[center_mask]
-                center_indices = self.pts_to_indices(cur_centers).T
+                center_indices = self.pts_to_indices(cur_centers)
                 cur_reg = {k: preds['reg'][k][h][center_mask]
                            for k in ['box', 'dir', 'scr']}
 
