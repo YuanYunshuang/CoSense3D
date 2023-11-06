@@ -9,7 +9,7 @@ DATASET:
 
   batch_size_train: 2
   batch_size_val: 4
-  batch_size_test: 4
+  batch_size_test: 1
   n_workers: 4
   shuffle: true
 

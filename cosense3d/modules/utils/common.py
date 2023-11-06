@@ -311,3 +311,7 @@ def draw_sample_prob(centers, reg, samples, res, distr_r, det_r, batch_size, var
 
     return sample_evis
 
+
+
+
+

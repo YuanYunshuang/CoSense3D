@@ -1,4 +1,5 @@
 import os, glob, logging
+from tqdm import tqdm
 from datetime import datetime
 
 from cosense3d.utils.train_utils import *
@@ -15,6 +16,7 @@ class TestRunner(BaseRunner):
                  ):
         super().__init__(**kwargs)
         ckpt = self.load(load_from)
+        self.progress_bar = tqdm(total=self.total_iter)
         self.setup_logger(ckpt, logdir)
 
     def setup_logger(self, ckpt, logdir):
@@ -45,8 +47,11 @@ class TestRunner(BaseRunner):
         return ckpt
 
     def run(self):
+        self.hooks(self, 'pre_epoch')
         for data in self.dataloader:
             self.run_itr(data)
+        self.progress_bar.close()
+        self.hooks(self, 'post_epoch')
 
     def step(self):
         data = self.next_batch()
@@ -61,6 +66,7 @@ class TestRunner(BaseRunner):
 
         self.hooks(self, 'post_iter')
         self.iter += 1
+        self.progress_bar.update(1)
 
 
 

@@ -29,7 +29,7 @@ class GLViewer(gl.GLViewWidget):
         self.setObjectName(name)
         self.controller = None
 
-        self.setCameraPosition(distance=20, elevation=30, azimuth=45)
+        self.setCameraPosition(distance=200, elevation=30, azimuth=-90)
         self.pan(0, 0, 0)
         self.draw_axes()
 
@@ -140,9 +140,11 @@ class GLViewer(gl.GLViewWidget):
 
     def refresh(self, data_dict):
         pcds = data_dict['input']['pcds']
-        labels = data_dict['input'].get('global_labels', None)
-        local_labels = data_dict['input'].get('local_labels', None)
-        self.updateFrameData(pcds, local_labels, labels)
+        global_labels = data_dict['input'].get('global_labels', None)
+        # local_labels = data_dict['input'].get('local_labels', None)
+        ego_id = list(global_labels.keys())[0]
+        detections = {k: v['labels'] for k, v in data_dict['detection'].items()}
+        self.updateFrameData(pcds, detections, global_labels[ego_id])
 
     def addBox(self):
         if self.rectangle is not None:

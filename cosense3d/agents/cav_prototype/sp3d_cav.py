@@ -7,6 +7,11 @@ class Sp3DCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def prepare_data(self, keys=['points', 'annos_global']):
+        DOP.free_space_augmentation(self.data)
+        self.apply_transform(keys)
+        DOP.filter_range(self.data, self.lidar_range, apply_to=keys)
+
     def forward_local(self, tasks, training_mode):
         self.prepare_data(keys=['points', 'annos_global'])
         if self.is_ego and training_mode:

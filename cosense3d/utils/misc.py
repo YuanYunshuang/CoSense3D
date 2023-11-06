@@ -168,3 +168,17 @@ def multi_apply(func, *args, **kwargs):
     return tuple(map(list, zip(*map_results)))
 
 
+def torch_tensor_to_numpy(torch_tensor):
+    """
+    Convert a torch tensor to numpy.
+
+    Parameters
+    ----------
+    torch_tensor : torch.Tensor
+
+    Returns
+    -------
+    A numpy array.
+    """
+    return torch_tensor.numpy() if not torch_tensor.is_cuda else \
+        torch_tensor.cpu().detach().numpy()

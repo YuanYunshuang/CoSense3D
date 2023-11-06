@@ -1,9 +1,12 @@
 import numpy as np
 import torch
 
+from shapely.geometry import Polygon
+
 from cosense3d.utils.misc import check_numpy_to_torch
 from cosense3d.ops.utils import points_in_boxes_cpu
 from cosense3d.utils.pclib import rotate_points_batch, rotation_mat2euler_torch
+
 
 
 def limit_period(val, offset=0.5, period=2 * np.pi):
@@ -254,6 +257,47 @@ def enlarge_box3d(boxes3d, extra_width=(0, 0, 0)):
 
     large_boxes3d[:, 3:6] += boxes3d.new_tensor(extra_width)[None, :]
     return large_boxes3d
+
+
+def convert_box_to_polygon(boxes_array):
+    """
+    Convert boxes array to shapely.geometry.Polygon format.
+    Parameters
+    ----------
+    boxes_array : np.ndarray
+        (N, 4, 2) or (N, 8, 3).
+
+    Returns
+    -------
+        list of converted shapely.geometry.Polygon object.
+
+    """
+    polygons = [Polygon([(box[i, 0], box[i, 1]) for i in range(4)]) for box in
+                boxes_array]
+    return np.array(polygons)
+
+
+def compute_iou(box, boxes):
+    """
+    Compute iou between box and boxes list
+    Parameters
+    ----------
+    box : shapely.geometry.Polygon
+        Bounding box Polygon.
+
+    boxes : list
+        List of shapely.geometry.Polygon.
+
+    Returns
+    -------
+    iou : np.ndarray
+        Array of iou between box and boxes.
+
+    """
+    # Calculate intersection areas
+    iou = [box.intersection(b).area / box.union(b).area for b in boxes]
+
+    return np.array(iou, dtype=np.float32)
 
 
 if __name__=="__main__":

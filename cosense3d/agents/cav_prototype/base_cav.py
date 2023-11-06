@@ -33,7 +33,6 @@ class BaseCAV:
         DOP.cav_aug_transform(self.data, transform, self.data['augment_params'], apply_to=apply_to)
 
     def prepare_data(self, keys=['points', 'annos_global']):
-        DOP.free_space_augmentation(self.data)
         self.apply_transform(keys)
         DOP.filter_range(self.data, self.lidar_range, apply_to=keys)
 

@@ -5,9 +5,9 @@ DATASET:
   data_path: /koko/OPV2V
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
-    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
-  batch_size_train: 4
+    lidar_range: [-140.8, -38.4, -5, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 8]
+  batch_size_train: 1
   n_workers: 4
 
   max_num_cavs: 7
@@ -22,7 +22,7 @@ TRAIN:
   max_epoch: 50
   gpus: 1
   resume: true
-  hooks: 'pycfg.mink3d_stride2_vox2_naive_lidar.train_hooks'
+  hooks: 'pycfg.mink2d_stride4_vox2_naive_lidar.train_hooks'
   optimizer:
     lr: 0.001
     weight_decay: 1e-2
@@ -37,21 +37,21 @@ TRAIN:
     lr_min: 2e-4
 
 TEST:
-  hooks: 'pycfg.mink3d_stride2_vox2_naive_lidar.test_hooks'
+  hooks: 'pycfg.mink2d_stride4_vox2_naive_lidar.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
   data_manager: 'pycfg.data_pipeline_lidar.data_manager'
-  shared_modules: 'pycfg.mink3d_stride2_vox2_naive_lidar.shared_modules'
+  shared_modules: 'pycfg.mink2d_stride4_vox2_naive_lidar.shared_modules'
   cav_manager:
-    prototype: sp3d_cav.Sp3DCAV
+    prototype: base_cav.BaseCAV
     memory_len: *seq_len
   forward_runner: {}
 
 VISUALIZATION:
   canvas_viewer:
-    plots: 'pycfg.mink3d_stride2_vox2_naive_lidar.plots'
+    plots: 'pycfg.mink2d_stride4_vox2_naive_lidar.plots'
 
 
 

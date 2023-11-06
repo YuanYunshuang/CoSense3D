@@ -98,7 +98,7 @@ class LogMeter(object):
             wandb_project = wandb
         self.wandb = wandb_project
 
-    def update(self, kwargs):
+    def update(self, **kwargs):
         for k, v in kwargs.items():
             if isinstance(v, torch.Tensor):
                 v = v.item()
@@ -128,7 +128,7 @@ class LogMeter(object):
         self.meters[name] = meter
 
     def log(self, epoch, iteration, lr, **kwargs):
-        self.update(kwargs)
+        self.update(**kwargs)
         if iteration % self.log_every == 0:
             msg = self.log_msg.format(
                 epoch=epoch,

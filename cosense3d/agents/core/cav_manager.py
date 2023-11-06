@@ -93,7 +93,7 @@ class CAVManager:
                 cav.forward_local(tasks, training_mode)
                 cav.forward_fusion(tasks, training_mode)
                 cav.forward_head(tasks, training_mode)
-                if with_loss:
+                if with_loss and training_mode:
                     cav.loss(tasks)
         return tasks
 

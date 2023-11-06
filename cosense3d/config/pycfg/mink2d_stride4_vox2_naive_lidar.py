@@ -18,7 +18,7 @@ shared_modules = OrderedDict(
         type='backbone3d.mink_unet.MinkUnet',
         gather_keys=['points'],
         scatter_keys=['pts_feat'],
-        voxel_size=voxel_size,
+        data_info=data_info,
         d=2,
         cache_strides=[4],
         in_dim=4,
@@ -86,21 +86,21 @@ shared_modules = OrderedDict(
     ),
 )
 
-train_hooks = dict(
-    post_epoch=[
+train_hooks = [
+        dict(type='TrainTimerHook'),
         dict(type="CheckPointsHook", epoch_every=10)
     ]
-)
 
-test_hooks = dict(
-    post_iter=[
+
+test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
+        dict(type="EvalOPV2VDetectionHook"),
         dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
-)
+
 
 plots = [
-    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+    # dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
+    # dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
 ]

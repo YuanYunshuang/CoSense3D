@@ -1,4 +1,6 @@
 import os
+import time
+
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDesktopWidget, QApplication
@@ -22,6 +24,9 @@ class GUI(QtWidgets.QMainWindow):
         width, height = screen.width(), screen.height()
         self.setGeometry(0, 0, width, height)
 
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.step)
+
     def setupUI(self, cfg):
         self.tabs = QtWidgets.QTabWidget()
         self.glViewer0 = GLViewer('MAINVIEW', self)
@@ -41,7 +46,7 @@ class GUI(QtWidgets.QMainWindow):
     def get_toolbar(self):
         self.toolbar = self.addToolBar("Toolbar")
         self.infos = ['scene', 'frame']
-        self.tools = ['step']
+        self.tools = ['start', 'stop', 'step']
         # add label combo pairs
         for name in self.infos:
             qlabel = QtWidgets.QLabel(f' {name[0].upper()}{name[1:]}:')
@@ -75,12 +80,23 @@ class GUI(QtWidgets.QMainWindow):
 
     def connect_events_to_funcs(self):
         self.button_step.clicked.connect(self.step)
+        self.button_start.clicked.connect(self.start)
+        self.button_stop.clicked.connect(self.stop)
 
     def step(self):
         self.runner.step()
         data = self.runner.vis_data()
         self.glViewer0.refresh(data)
         self.canvas.refresh(data)
+        if self.runner.iter == self.runner.total_iter:
+            self.timer.stop()
+
+    def start(self):
+        self.timer.start(100)  # Trigger the animate method every 100ms
+
+    def stop(self):
+        self.timer.stop()
+
 
 
 

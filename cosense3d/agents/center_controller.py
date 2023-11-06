@@ -50,7 +50,7 @@ class CenterController:
         loss_dict = {}
         for i in range(self.seq_len):
             with_loss = i >= self.seq_len - self.num_loss_frame
-            frame_loss_dict = self.run_frame(seq_data[i], with_loss, training_mode=False, **kwargs)
+            frame_loss_dict = self.run_frame(seq_data[i], with_loss, training_mode=True, **kwargs)
             for k, v in frame_loss_dict.items():
                 if 'loss' in k:
                     loss = loss + v

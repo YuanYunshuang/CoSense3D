@@ -78,92 +78,10 @@ def filter_range(data, lidar_range, key):
         data[f'{coor}_names'] = [data[f'{coor}_names'][i] for i, m in enumerate(mask) if m]
 
 
-def transform_points(data, transform, key):
-    C = data['points'].shape[-1]
-    points = data['points'][:, :3]
-    if (transform.cpu() != torch.eye(4)).any():
-        points = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
-        points = (transform @ points).T
-
-    # if scale is not None:
-    #     points[:, 2] *= scale
-    # if flip is not None:
-    #     if flip == 1:
-    #         points[:, 0] *= -1
-    #     elif flip == 2:
-    #         points[:, 1] *= -1
-    #     elif flip == 3:
-    #         points[:, :2] *= -1
-
-    if C > 3:
-        data['points'] = torch.cat([points[:, :3],
-                                           data['points'][:, 3:]], dim=-1)
-    else:
-        data['points'] = points[:, 3]
-
-
-def transform_bboxes_3d(boxes, transform):
-    if (transform.cpu() != torch.eye(4)).any():
-        boxes_corner = box_utils.boxes_to_corners_3d(boxes)  # (N, 8, 3)
-        # rotate bbx to augmented coords
-        boxes_corner = (transform[:3, :3] @ boxes_corner.reshape(-1, 3).T
-                        ).T.reshape(len(boxes_corner), 8, 3)
-        boxes = box_utils.corners_to_boxes_3d(boxes_corner)
-    # if scale is not None:
-    #     boxes[:, :6] *= scale
-    #     if boxes.shape[-1] == 9:
-    #         # scale velocity
-    #         boxes[:, 7:] *= scale
-    # if flip is not None:
-    #     if flip == 1:
-    #         boxes[:, 0] *= -1
-    #     elif flip == 2:
-    #         boxes[:, 1] *= -1
-    #     elif flip == 3:
-    #         boxes[:, :2] *= -1
-
-    return boxes
-
-
-def transform_annos_global(data, transform, scale):
-    if 'global_bboxes_3d' not in data:
-        return
-    data['global_bboxes_3d'] = transform_bboxes_3d(data['global_bboxes_3d'], transform, scale)
-
-
-def transform_annos_local(data, transform, scale):
-    if 'local_bboxes_3d' not in data:
-        return
-    data['local_bboxes_3d'] = transform_bboxes_3d(data['local_bboxes_3d'], transform, scale)
-
-
-def filter_range_mask(points, lidar_range):
+def filter_range_mask(points, lidar_range, eps=1e-4):
     lr = lidar_range.to(points.device)
-    mask = (points[:, :3] > lr[:3].view(1, 3)) & (points[:, :3] < lr[3:].view(1, 3))
+    mask = (points[:, :3] > lr[:3].view(1, 3) + eps) & (points[:, :3] < lr[3:].view(1, 3) - eps)
     return mask.all(dim=-1)
-
-
-def filter_range_points(data, lidar_range):
-    mask = filter_range_mask(data['points'], lidar_range)
-    data['points'] = data['points'][mask]
-
-
-def filter_range_annos_global(data, lidar_range):
-    if 'global_bboxes_3d' not in data:
-        return
-    mask = filter_range_mask(data['global_bboxes_3d'][:, :3], lidar_range)
-    data['global_bboxes_3d'] = data['global_bboxes_3d'][mask]
-    data['global_labels_3d'] = data['global_labels_3d'][mask]
-    data['global_names'] = [data['global_names'][i] for i, m in enumerate(mask) if m]
-
-
-def filter_range_annos_local(data, lidar_range):
-    if 'local_bboxes_3d' not in data:
-        return
-    mask = filter_range_mask(data['local_bboxes_3d'][:, :3], lidar_range)
-    data['local_bboxes_3d'] = data['local_bboxes_3d'][mask]
-    data['local_labels_3d'] = data['local_labels_3d'][mask]
-    data['local_names'] = [data['local_names'][i] for i, m in enumerate(mask) if m]
 
 
 class DataOnlineProcessor:

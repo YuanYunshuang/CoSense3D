@@ -117,15 +117,20 @@ class DataManager:
             data[cavs[0].id] = d
         return data
 
+    def boxes_to_vis_format(self, boxes, labels):
+        boxes_vis = {}
+        gt_labels = labels.tolist()
+        for i, box in enumerate(boxes.tolist()):
+            boxes_vis[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
+        return boxes_vis
+
     def get_vis_data_input(self, batch_idx=0):
         pcds = self.gather_batch(batch_idx, 'points', True)
         gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d' )
         gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d')
         labels = {}
-        for k, v in gt_boxes_global.items():
-            gt_labels = gt_labels_global[k].tolist()
-            for i, box in enumerate(v.tolist()):
-                labels[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
+        for k in gt_boxes_global.keys():
+            labels[k] = self.boxes_to_vis_format(gt_boxes_global[k], gt_labels_global[k])
 
         return {
             'pcds': pcds,
@@ -134,7 +139,10 @@ class DataManager:
         }
 
     def get_vis_data_detection(self, batch_idx=0):
-        return self.gather_batch(batch_idx, 'detection')
+        detection = self.gather_batch(batch_idx, 'detection')
+        for cav_id, det in detection.items():
+            detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+        return detection
 
     def get_vis_data_bev(self, batch_idx=0):
         return self.gather_batch(batch_idx, 'bev')

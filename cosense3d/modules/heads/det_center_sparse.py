@@ -167,15 +167,16 @@ class DetCenterSparse(BaseModule):
             output_new['center'].append(output['center'][mask, 1:])
             output_new['cls'].append([h_cls[mask] for h_cls in output['cls']])
             output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
-            preds = {k: [] for k in output['preds'].keys()}
-            for h, inds in enumerate(output['preds']['idx']):
-                mask = inds[:, 0] == i
-                for k, v in output['preds'].items():
-                    if k in ['idx', 'box']:
-                        preds[k].append(v[h][mask][:, 1:])
-                    else:
-                        preds[k].append(v[h][mask])
-            output_new['preds'].append(preds)
+            if 'preds' in output:
+                preds = {k: [] for k in output['preds'].keys()}
+                for h, inds in enumerate(output['preds']['idx']):
+                    mask = inds[:, 0] == i
+                    for k, v in output['preds'].items():
+                        if k in ['idx', 'box']:
+                            preds[k].append(v[h][mask][:, 1:])
+                        else:
+                            preds[k].append(v[h][mask])
+                output_new['preds'].append(preds)
 
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output

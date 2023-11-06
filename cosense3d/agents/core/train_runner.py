@@ -59,7 +59,10 @@ class TrainRunner(BaseRunner):
     def run(self):
         with torch.autograd.set_detect_anomaly(True):
             for i in range(self.start_epoch, self.total_epochs + 1):
-                self.run_epoch(i)
+                self.hooks(self, 'pre_epoch')
+                self.run_epoch()
+                self.hooks(self, 'post_epoch')
+                self.lr_scheduler.step(i)
                 self.epoch = i
                 self.iter = 1
 
@@ -67,15 +70,13 @@ class TrainRunner(BaseRunner):
         data = self.next_batch()
         self.run_itr(data)
 
-    def run_epoch(self, epoch):
-        self.hooks(self, 'pre_epoch')
+    def run_epoch(self):
         for data in self.dataloader:
+            self.hooks(self, 'pre_iter')
             self.run_itr(data)
-            self.lr_scheduler.step(epoch)
-        self.hooks(self, 'post_epoch')
+            self.hooks(self, 'post_iter')
 
     def run_itr(self, data):
-        self.hooks(self, 'pre_iter')
         load_tensors_to_gpu(data)
         self.optimizer.zero_grad()
 
