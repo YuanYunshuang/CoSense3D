@@ -30,19 +30,10 @@ class DilationSpconv(BaseModule):
         out_dict = {}
         for k in self.convs:
             stride = int(k[1])
-            coor_cat = []
-            feat_cat = []
-            for i, stensor_dict in enumerate(stensor_list):
-                stensor = stensor_dict[k]
-                coor = stensor['coor'][:, :self.d]
-                coor_cat.append(torch.cat([torch.ones_like(coor[:, :1]) * i, coor], dim=-1))
-                feat_cat.append(stensor['feat'])
-
-            coor_cat = torch.cat(coor_cat, dim=0)
-            feat_cat = torch.cat(feat_cat, dim=0)
+            coor, feat = self.compose_stensor(stensor_list, stride)
             stensor2d = ME.SparseTensor(
-                coordinates=coor_cat.contiguous(),
-                features=feat_cat,
+                coordinates=coor[:, :3].contiguous(),
+                features=feat,
                 tensor_stride=[stride] * 2
             )
 

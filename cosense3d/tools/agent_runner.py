@@ -1,20 +1,14 @@
-import glob
 import os, sys
-import torch
 import argparse
 import logging
-from datetime import datetime
 
-from cosense3d.model import get_model
 from cosense3d.dataset import get_dataloader
-from cosense3d.utils.misc import ensure_dir, setup_logger
+from cosense3d.utils.misc import setup_logger
 from cosense3d.config import load_config, save_config
 from cosense3d.utils.train_utils import seed_everything
 from cosense3d.agents.center_controller import get_controller
 from cosense3d.agents.core.train_runner import TrainRunner
 from cosense3d.agents.core.test_runner import TestRunner
-from cosense3d.agents.core.gui import GUI
-from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
 
 class AgentRunner:
@@ -22,6 +16,8 @@ class AgentRunner:
         self.visualize = args.visualize
         self.mode = args.mode
         if args.visualize:
+            from cosense3d.agents.core.gui import GUI
+            from PyQt5.QtWidgets import QApplication
             self.app = QApplication(sys.argv)
             self.gui = GUI(args.mode, cfgs['VISUALIZATION'])
 
@@ -46,6 +42,7 @@ class AgentRunner:
         self.app.installEventFilter(self.gui)
 
         # self.app.setStyle("Fusion")
+        from PyQt5.QtWidgets import QDesktopWidget
         desktop = QDesktopWidget().availableGeometry()
         width = (desktop.width() - self.gui.width()) / 2
         height = (desktop.height() - self.gui.height()) / 2

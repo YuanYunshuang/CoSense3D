@@ -1,3 +1,5 @@
+import random
+
 import torch
 
 from cosense3d.model.pre_process import PreProcess
@@ -55,23 +57,25 @@ class DataManager:
         else:
             rand_aug = []
             def rand_from_range(r):
-                return torch.rand(1) * (r[1] - r[0]) + r[0]
+                return random.random() * (r[1] - r[0]) + r[0]
             for i in range(B):
                 cur_aug = {}
                 if 'rot_range' in self.aug:
                     theta = rand_from_range(self.aug['rot_range'])
-                    ct = torch.cos(theta)
-                    st = torch.sin(theta)
-                    transform = torch.eye(4)
-                    transform[0, 0] = ct
-                    transform[0, 1] = -st
-                    transform[1, 0] = st
-                    transform[1, 1] = ct
-                    cur_aug['rot'] = transform
+                    # ct = torch.cos(theta)
+                    # st = torch.sin(theta)
+                    # transform = torch.eye(4)
+                    # transform[0, 0] = ct
+                    # transform[0, 1] = -st
+                    # transform[1, 0] = st
+                    # transform[1, 1] = ct
+                    cur_aug['rot'] = [0, 0, theta]
                 if 'trans_std' in self.aug:
                     cur_aug['trans'] = torch.randn(len(self.aug['trans_std'])) * torch.tensor(self.aug['trans_std'])
                 if 'scale_ratio_range' in self.aug:
                     cur_aug['scale'] = rand_from_range(self.aug['scale_ratio_range'])
+                if 'flip' in self.aug:
+                    cur_aug['flip'] = {'flip_idx': random.randint(0, 3), 'flip_axis': self.aug['flip']}
                 rand_aug.append([cur_aug for _ in range(seq_len)])
         batch_dict['augment_params'] = rand_aug
 

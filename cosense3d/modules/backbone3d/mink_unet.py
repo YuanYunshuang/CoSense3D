@@ -8,18 +8,22 @@ from cosense3d.modules.utils.me_utils import *
 class MinkUnet(BaseModule):
     QMODE = ME.SparseTensorQuantizationMode.UNWEIGHTED_AVERAGE
     def __init__(self,
-                 voxel_size,
+                 data_info,
                  stride,
                  in_dim,
                  d=3,
                  cache_strides=None,
                  floor_height=0,
+                 height_compression=None,
+                 to_dense=False,
                  **kwargs):
         super(MinkUnet, self).__init__(**kwargs)
-        self.voxel_size = voxel_size
+        update_me_essentials(self, data_info)
         self.stride = stride
         self.in_dim = in_dim
         self.floor_height = floor_height
+        self.to_dense = to_dense
+        self.height_compression = height_compression
         self.d = d
         if cache_strides is None:
             self.cache_strides = [stride]
@@ -27,6 +31,11 @@ class MinkUnet(BaseModule):
         else:
             self.max_resolution = min(cache_strides)
             self.cache_strides = cache_strides
+        self._init_unet_layers()
+        if height_compression is not None:
+            self._init_height_compression_layers(height_compression)
+
+    def _init_unet_layers(self):
         self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32])
         kernel = [3,] * min(self.d, 3)
         if self.d == 4:
@@ -44,6 +53,23 @@ class MinkUnet(BaseModule):
             self.trconv2 = get_conv_block([96, 64, 32], kernel, d=self.d, tr=True)
             self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
                                                  'ReLU', norm_before=True)
+
+    def _init_height_compression_layers(self, planes):
+        self.stride_size_dict = {}
+        for k, v in planes.items():
+            self.stride_size_dict[int(k[1])] = self.grid_size(int(k[1]))
+            layers = []
+            steps = v['steps']
+            channels = v['channels']
+            for i, s in enumerate(steps):
+                step = [1] * self.d
+                step[2] = s
+                layers.append(
+                    minkconv_conv_block(channels[i], channels[i+1],
+                                        step, step, self.d, 0.1)
+                )
+            layers = nn.Sequential(*layers)
+            setattr(self, f'{k}_compression', layers)
 
     def forward(self, points: list, **kwargs):
         N = len(points)
@@ -74,12 +100,58 @@ class MinkUnet(BaseModule):
 
         vars = locals()
         res = {f'p{k}': vars[f'p{k}_cat'] for k in self.cache_strides}
+
+        if self.height_compression is not None:
+            for stride in self.stride_size_dict.keys():
+                out_tensor = getattr(self, f'p{stride}_compression')(res[f'p{stride}'])
+                assert len(out_tensor.C[:, 3].unique()) == 1, \
+                    (f"height is not fully compressed. "
+                     f"Current z coords: {','.join([str(x.item()) for x in out_tensor.C[:, 3].unique()])}")
+                if self.to_dense:
+                    out_tensor = self.stensor_to_dense(out_tensor).permute(0, 3, 1, 2)
+                res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F}
         res = self.format_output(res, N)
         return res
 
     def format_output(self, res, N):
         out_dict = {self.scatter_keys[0]: self.decompose_stensor(res, N)}
         return out_dict
+
+    def stensor_to_dense(self, stensor):
+        mask, indices = self.valid_coords(stensor)
+        b = int(stensor.C[:, 0].max()) + 1
+        d = stensor.F.shape[1]
+        features = stensor.F[mask].view(-1, d)
+        s = self.stride_size_dict[stensor.tensor_stride[0]]
+        dtensor = features.new_zeros((b, s[0], s[1], d))
+        dtensor[indices[0], indices[1], indices[2]] = features
+        return dtensor
+
+    def valid_coords(self, stensor):
+        stride = stensor.tensor_stride
+        s = self.stride_size_dict[stride[0]]
+        # remove voxels that are outside range
+        xi = torch.div(stensor.C[:, 1], stride[0], rounding_mode='floor') + s[0] / 2
+        yi = torch.div(stensor.C[:, 2], stride[1], rounding_mode='floor') + s[1] / 2
+
+        mask = (xi >= 0) * (xi < s[0]) * (yi >= 0) * (yi < s[1])
+        indices = (stensor.C[:, 0][mask].long(),
+                   xi[mask].long(),
+                   yi[mask].long()
+                   )
+        # if the backbone uses 4d convs, last dim is time
+        if stensor.C.shape[1] == 5:
+            ti = stensor.C[:, 4]
+            mask = mask * (ti >= 0) * (ti < self.seq_len)
+            indices = indices + ti[mask].long()
+        return mask, indices
+
+    def grid_size(self, stride):
+        x_range = self.lidar_range[3] - self.lidar_range[0]
+        y_range = self.lidar_range[4] - self.lidar_range[1]
+        x_size = int(x_range / self.voxel_size[0]) // stride
+        y_size = int(y_range / self.voxel_size[1]) // stride
+        return (x_size, y_size)
 
 
 

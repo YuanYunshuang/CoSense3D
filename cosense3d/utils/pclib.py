@@ -190,7 +190,7 @@ def pose2tf(pose):
     return tf_matrix
 
 
-def rotation_matrix(euler):
+def rotation_matrix(euler, degrees=True):
     """
     Construct rotation matrix with the given pose.
 
@@ -204,7 +204,7 @@ def rotation_matrix(euler):
     rot: np.ndarray, 3x3
         rotation matrix
     """
-    return R.from_euler('xyz', euler).as_matrix()
+    return R.from_euler('xyz', euler, degrees=degrees).as_matrix()
 
 
 def rotate3d(points, euler):

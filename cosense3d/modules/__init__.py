@@ -38,7 +38,7 @@ class BaseModule(nn.Module):
     def format_input(self, input: List):
         pass
 
-    def format_output(self, output, B=None):
+    def format_output(self, output, B):
         pass
 
     def data_from_list(self, input, key=None, pad_idx=False):

@@ -28,18 +28,14 @@ class BaseCAV:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
             # cav to ego
-            if 'received_request' not in self.data:
-                print('d')
             request = self.data['received_request']
             transform = request['lidar_pose'].inverse() @ self.lidar_pose
         DOP.cav_aug_transform(self.data, transform, self.data['augment_params'], apply_to=apply_to)
 
-    def filter_range(self, apply_to=['points', 'annos_global']):
-        DOP.filter_range(self.data, self.lidar_range, apply_to=apply_to)
-
     def prepare_data(self, keys=['points', 'annos_global']):
-        self.apply_transform(keys)  # 1
-        self.filter_range(keys)  # 2
+        DOP.free_space_augmentation(self.data)
+        self.apply_transform(keys)
+        DOP.filter_range(self.data, self.lidar_range, apply_to=keys)
 
     def has_request(self):
         if 'received_request' in self.data and self.data['received_request'] is not None:
