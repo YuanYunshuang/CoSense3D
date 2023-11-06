@@ -1,11 +1,14 @@
+import torch
+
 from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.me_utils import *
 from cosense3d.modules.utils.common import pad_r, linear_last, cat_coor_with_idx
 from cosense3d.ops.utils import points_in_boxes_gpu
 from cosense3d.modules.losses.edl import edl_mse_loss, evidence_to_conf_unc
+from cosense3d.modules.utils.nbr_attn import NeighborhoodAttention
 
 
-class BEV(BaseModule):
+class NbrAttentionBEV(BaseModule):
     def __init__(self,
                  data_info,
                  in_dim,
@@ -15,7 +18,7 @@ class BEV(BaseModule):
                  target_assigner=None,
                  class_names_each_head=None,
                  **kwargs):
-        super(BEV, self).__init__(**kwargs)
+        super(NbrAttentionBEV, self).__init__(**kwargs)
         self.in_dim = in_dim
         self.class_names_each_head = class_names_each_head
         self.stride = stride
@@ -25,6 +28,7 @@ class BEV(BaseModule):
             setattr(self, k, v)
         update_me_essentials(self, data_info, self.stride)
 
+        self.nbr_attn = NeighborhoodAttention(emb_dim=in_dim)
         self.reg_layer = linear_last(in_dim, 32, 2, bias=True)
 
         if class_names_each_head is not None:
@@ -34,22 +38,20 @@ class BEV(BaseModule):
 
     def forward(self, stensor_list, **kwargs):
         coor, feat = self.format_input(stensor_list)
-
-        if self.training:
-            coor, feat = self.down_sample(coor, feat)
-
         centers = indices2metric(coor, self.voxel_size)
-        reg = self.reg_layer(feat)
+        reference_points = self.generate_reference_points(centers)
+        out = self.nbr_attn(feat, coor, reference_points, len(stensor_list))
+        reg = self.reg_layer(out)
         conf, unc = evidence_to_conf_unc(reg.relu())
 
-        out = {
+        out_dict = {
             'center': centers,
             'reg': reg,
             'conf': conf,
             'unc': unc
         }
 
-        return self.format_output(out, len(stensor_list))
+        return self.format_output(out_dict, len(stensor_list))
 
     def format_input(self, stensor_list):
         return self.compose_stensor(stensor_list, self.stride)
@@ -66,13 +68,14 @@ class BEV(BaseModule):
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
-
-    def down_sample(self, coor, feat):
-        keep = torch.rand_like(feat[:, 0]) > 0.5
-        coor = coor[keep]
-        feat = feat[keep]
-
-        return coor, feat
+    def generate_reference_points(self, centers):
+        if self.training:
+            reference_points = centers[torch.rand_like(centers[:, 0]) > 0.5]
+        else:
+            reference_points = centers
+        noise = torch.rand_like(reference_points[:, 1:]) * self.voxel_size[0] * self.stride
+        reference_points[:, 1:] = reference_points[:, 1:] + noise
+        return reference_points
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         tgt_pts, tgt_label, valid = self.get_tgt(batch_list, gt_boxes, gt_labels, **kwargs)

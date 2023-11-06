@@ -48,7 +48,7 @@ shared_modules = OrderedDict(
 
 
     bev_head = dict(
-        type='heads.bev.BEV',
+        type='heads.nbr_attn_bev.NbrAttentionBEV',
         gather_keys=['fused_neck_feat'],
         scatter_keys=['bev'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],

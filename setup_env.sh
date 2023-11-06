@@ -42,4 +42,8 @@ echo "[INFO] MinkowskiEngine version: $ME"
 echo -e "[INFO] ====================================${NC}"
 
 
+#### CONDA ENV error
+
+
+#  conda install -c conda-forge libffi
 
