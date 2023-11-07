@@ -12,21 +12,21 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 1
-  train_pipeline: 'pycfg.data_pipeline_lidar.pipeline_cpu'
-  test_pipeline: 'pycfg.data_pipeline_lidar.pipeline_cpu'
+  train_pipeline: 'pycfg.data_pipeline.train_pipeline_cpu'
+  test_pipeline: 'pycfg.data_pipeline.test_pipeline_cpu'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.data_pipeline_lidar.data_manager'
+  data_manager: 'pycfg.data_pipeline.data_manager'
   shared_modules: {}
   cav_manager:
     prototype: base_cav.BaseCAV
     memory_len: *seq_len
 
 VISUALIZATION:
-  canvas_viewer:
-    plots: 'pycfg.mink3d_stride2_vox2_naive_lidar.plots'
+  output_viewer:
+    plots: 'pycfg.data_pipeline.output_viewer'
 
 
 

@@ -95,7 +95,6 @@ class TrainRunner(BaseRunner):
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
 
         del data
-        self.hooks(self, 'post_iter')
         self.iter += 1
 
 

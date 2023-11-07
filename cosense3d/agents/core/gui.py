@@ -6,7 +6,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
 from cosense3d.agents.viewer.gl_viewer import GLViewer
-from cosense3d.agents.viewer.canvas_viewer import CanvasViewer
+from cosense3d.agents.viewer.output_viewer import OutputViewer
+from cosense3d.agents.viewer.img_viewer import ImgViewer
 
 
 class GUI(QtWidgets.QMainWindow):
@@ -29,10 +30,16 @@ class GUI(QtWidgets.QMainWindow):
 
     def setupUI(self, cfg):
         self.tabs = QtWidgets.QTabWidget()
+
         self.glViewer0 = GLViewer('MAINVIEW', self)
         self.tabs.addTab(self.glViewer0, 'GLViewer')
-        self.canvas = CanvasViewer(**cfg['canvas_viewer'])
-        self.tabs.addTab(self.canvas, 'Canvas')
+
+        self.img_viewer = ImgViewer()
+        self.tabs.addTab(self.img_viewer, 'ImgViewer')
+
+        self.output_viewer = OutputViewer(**cfg['output_viewer'])
+        self.tabs.addTab(self.output_viewer, 'OutputViewer')
+
         self.setCentralWidget(self.tabs)
         self.get_toolbar()
 
@@ -87,7 +94,8 @@ class GUI(QtWidgets.QMainWindow):
         self.runner.step()
         data = self.runner.vis_data()
         self.glViewer0.refresh(data)
-        self.canvas.refresh(data)
+        self.img_viewer.refresh(data)
+        self.output_viewer.refresh(data)
         if self.runner.iter == self.runner.total_iter:
             self.timer.stop()
 

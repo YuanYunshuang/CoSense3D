@@ -27,6 +27,8 @@ class BEVSparseCanvas(MplCanvas):
         # self.scatter = self.axes.scatter([0], [0], cmap='hot', c=[0], s=1, vmin=0, vmax=1)
 
     def refresh(self, data):
+        if 'bev' not in data:
+            return
         for cav_id, data_dict in data['bev'].items():
             centers = data_dict['center'].cpu().numpy()
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
@@ -44,6 +46,8 @@ class DetectionCanvas(MplCanvas):
         super().__init__(**kwargs)
 
     def refresh(self, data):
+        if 'detection' not in data:
+            return
         for cav_id, det_dict in data['detection'].items():
             self.axes.clear()
             points = data['input']['pcds'][cav_id]
@@ -61,9 +65,9 @@ class DetectionCanvas(MplCanvas):
 
 
 
-class CanvasViewer(QtWidgets.QWidget):
+class OutputViewer(QtWidgets.QWidget):
     def __init__(self, plots, parent=None):
-        super(CanvasViewer, self).__init__(parent)
+        super(OutputViewer, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         self.plots = []
         for p in plots:
@@ -74,3 +78,5 @@ class CanvasViewer(QtWidgets.QWidget):
     def refresh(self, data):
         for plot in self.plots:
             plot.refresh(data)
+
+

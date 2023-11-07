@@ -29,7 +29,7 @@ class GLViewer(gl.GLViewWidget):
         self.setObjectName(name)
         self.controller = None
 
-        self.setCameraPosition(distance=200, elevation=30, azimuth=-90)
+        self.setCameraPosition(distance=300, elevation=30, azimuth=-90)
         self.pan(0, 0, 0)
         self.draw_axes()
 
@@ -73,7 +73,7 @@ class GLViewer(gl.GLViewWidget):
         # print("paintGL", depth_enabled)
 
     def draw_axes(self):
-        axis = gl.GLAxisItem()
+        axis = gl.GLAxisItem(size=QtGui.QVector3D(5, 5, 5))
         self.addItem(axis)
         # # create the lines for unit vetors
         # x_axis_pos = np.array([[0, 0, 0], [1, 0, 0]])
@@ -134,6 +134,7 @@ class GLViewer(gl.GLViewWidget):
 
     def updateFrameData(self, pcds, local_label=None, label=None, predecessor=None):
         self.clear()
+        self.draw_axes()
         self.updatePCDs(pcds)
         self.updateLabel(local_label, label, predecessor)
         self.update()
@@ -143,7 +144,10 @@ class GLViewer(gl.GLViewWidget):
         global_labels = data_dict['input'].get('global_labels', None)
         # local_labels = data_dict['input'].get('local_labels', None)
         ego_id = list(global_labels.keys())[0]
-        detections = {k: v['labels'] for k, v in data_dict['detection'].items()}
+        if 'detection' in data_dict:
+            detections = {k: v['labels'] for k, v in data_dict['detection'].items()}
+        else:
+            detections = None
         self.updateFrameData(pcds, detections, global_labels[ego_id])
 
     def addBox(self):

@@ -81,8 +81,8 @@ if __name__ == "__main__":
     setup_logger(args.run_name, args.debug)
     # for ME
     os.environ['OMP_NUM_THREADS'] = "16"
-    if 'vis' in args.mode:
-        args.config = "../config/defaults/base_cav.yaml"
+    # if 'vis' in args.mode:
+    #     args.config = "./config/defaults/base_cav.yaml"
 
     seed_everything(2023)
     cfgs = load_config(args)

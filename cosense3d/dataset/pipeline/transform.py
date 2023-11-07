@@ -36,7 +36,7 @@ class ResizeCropFlipRotImage:
                 flip=flip,
                 rotate=rotate,
             )
-            if self.training and self.with_2d: # sync_2d bbox labels
+            if self.with_2d: # sync_2d bbox labels
                 gt_bboxes = data_dict['bboxes2d'][i]
                 centers2d = data_dict['centers2d'][i]
                 gt_labels = data_dict['labels2d'][i]

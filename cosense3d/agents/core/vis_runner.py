@@ -36,11 +36,9 @@ class VisRunner(BaseRunner):
         return ckpt
 
     def run(self):
-        self.hooks(self, 'pre_epoch')
         for data in self.dataloader:
             self.run_itr(data)
         self.progress_bar.close()
-        self.hooks(self, 'post_epoch')
 
     def step(self):
         data = self.next_batch()
@@ -49,7 +47,7 @@ class VisRunner(BaseRunner):
     def run_itr(self, data):
         self.hooks(self, 'pre_iter')
         load_tensors_to_gpu(data)
-        self.controller.test_forward(data)
+        self.controller.vis_forward(data)
 
         self.hooks(self, 'post_iter')
         self.iter += 1

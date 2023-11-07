@@ -59,6 +59,18 @@ class CenterController:
         for i in range(self.seq_len):
             self.run_frame(seq_data[i], with_loss=False, training_mode=False, **kwargs)
 
+    def vis_forward(self, batch_dict, **kwargs):
+        self.data_manager.generate_augment_params(batch_dict, self.seq_len)
+        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
+        frame_data = seq_data[0]
+        self.cav_manager.update_cav_info(**frame_data)
+        self.data_manager.distribute_to_cav(**frame_data)
+        # send and receive request
+        request = self.cav_manager.send_request()
+        self.cav_manager.receive_request(request)
+        # apply data online transform
+        self.cav_manager.forward(False, False)
+
     def run_frame(self, frame_data, with_loss, training_mode, **kwargs):
         self.cav_manager.update_cav_info(**frame_data)
         self.data_manager.distribute_to_cav(**frame_data)

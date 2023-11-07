@@ -6,11 +6,17 @@ from torch_scatter import scatter_mean
 from cosense3d.utils import pclib, box_utils
 
 
-def add_rotate(tf, angles):
-    # param: [roll, pitch, yaw] in radian
-    rot = pclib.rotation_matrix(angles, degrees=False)
-    rot = torch.from_numpy(rot).to(tf)
-    tf[:3, :3] = rot @ tf[:3, :3]
+def add_rotate(tf, rot):
+    if isinstance(rot, list) and len(rot) == 3:
+        # param: [roll, pitch, yaw] in radian
+        rot = pclib.rotation_matrix(rot, degrees=False)
+        rot = torch.from_numpy(rot).to(tf.device)
+        tf[:3, :3] = rot @ tf[:3, :3]
+    elif isinstance(rot, torch.Tensor):
+        assert rot.shape[0] == 4
+        tf = rot.to(tf.device) @ tf
+    else:
+        raise NotImplementedError
     return tf
 
 
@@ -18,22 +24,21 @@ def add_flip(tf, flip_idx, flip_axis='xy'):
     # flip_idx =1 : flip x
     # flip_idx =2 : flip y
     # flip_idx =3 : flip x & y
-
-    rot = torch.eye(3).to(tf.device)
+    rot = torch.eye(4).to(tf.device)
     # flip x
     if 'x' in flip_axis and (flip_idx == 1 or flip_idx == 3):
         rot[0, 0] *= -1
     # flip y
     if 'y' in flip_axis and (flip_idx == 2 or flip_idx == 3):
         rot[1, 1] *= -1
-    tf[:3, :3] = rot @ tf[:3, :3]
+    tf = rot @ tf
     return tf
 
 
 def add_scale(tf, scale_ratio):
-    scale = torch.eye(3).to(tf.device)
+    scale = torch.eye(4).to(tf.device)
     scale[[0, 1, 2], [0, 1, 2]] = scale_ratio
-    tf[:3, :3] = scale @ tf[:3, :3]
+    tf = scale @ tf
     return tf
 
 
@@ -50,18 +55,18 @@ def apply_transform(data, transform, key):
             data['points'] = torch.cat([points[:, :3],
                                         data['points'][:, 3:]], dim=-1)
         else:
-            data['points'] = points[:, 3]
+            data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         box_key = f"{key.split('_')[1]}_bboxes_3d"
         if box_key not in data:
             return
         boxes = data[box_key]
-        boxes_corner = box_utils.boxes_to_corners_3d(boxes)  # (N, 8, 3)
+        boxes_corner = box_utils.boxes_to_corners_3d(boxes[:, :7])  # (N, 8, 3)
         boxes_corner = boxes_corner.reshape(-1, 3).T  # (N*8, 3)
         boxes_corner = torch.cat([boxes_corner, torch.ones_like(boxes_corner[:1])], dim=0)
         # rotate bbx to augmented coords
         boxes_corner = (transform @ boxes_corner)[:3].T.reshape(len(boxes), 8, 3)
-        data[box_key] = box_utils.corners_to_boxes_3d(boxes_corner, mode=7)
+        data[box_key][:, :7] = box_utils.corners_to_boxes_3d(boxes_corner, mode=7)
 
 
 def filter_range(data, lidar_range, key):

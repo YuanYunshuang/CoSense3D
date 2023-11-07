@@ -53,8 +53,8 @@ class BaseRunner:
 
     def vis_data(self,
                  with_input=True,
-                 with_detection=True,
-                 with_bev=True):
+                 with_detection=False,
+                 with_bev=False):
         data = {}
         if with_input:
             data['input'] = self.controller.data_manager.get_vis_data_input()

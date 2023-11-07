@@ -66,7 +66,6 @@ class BEV(BaseModule):
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
-
     def down_sample(self, coor, feat):
         keep = torch.rand_like(feat[:, 0]) > 0.5
         coor = coor[keep]

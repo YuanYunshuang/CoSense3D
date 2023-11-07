@@ -459,7 +459,7 @@ def draw_3d_points_boxes_on_img(img, lidar2cam, I, points=None, boxes=None):
     plt.close()
 
 
-def draw_2d_bboxes_on_img(img, boxes2d):
+def draw_2d_bboxes_on_img(img, boxes2d, ax_in=None):
     """
 
     Parameters
@@ -468,25 +468,33 @@ def draw_2d_bboxes_on_img(img, boxes2d):
     boxes2d: np.ndarray, (N, 4, 2) for 4 corners or (N, 2, 2) for left top and right bottom corners inn pixel metric
     -------
     """
-    assert len(boxes2d.shape) == 3
-    if boxes2d.shape[1] == 2:
-        box_4corners = []
-        for box in boxes2d:
-            box_4corners.append([
-                box[0],                  # left top
-                [box[1, 0], box[0, 1]],  # right top
-                box[1],                  # right bottom
-                [box[0, 0], box[1, 1]],  # left bottom
-            ])
+    if ax_in is None:
+        fig, ax = plt.subplots(1)
     else:
-        box_4corners = boxes2d
-
-    fig, ax = plt.subplots(1)
+        ax = ax_in
     ax.imshow(img)
-    for box in box_4corners:
-        vertices = [(box[i][0], box[i][1]) for i in [0, 1, 2, 3, 0]]
-        polygon = Polygon(vertices, fill=None, edgecolor='r')
-        ax.add_patch(polygon)
 
-    plt.show()
-    plt.close()
+    if len(boxes2d) > 0:
+        assert len(boxes2d.shape) == 3
+        if boxes2d.shape[1] == 2:
+            box_4corners = []
+            for box in boxes2d:
+                box_4corners.append([
+                    box[0],                  # left top
+                    [box[1, 0], box[0, 1]],  # right top
+                    box[1],                  # right bottom
+                    [box[0, 0], box[1, 1]],  # left bottom
+                ])
+        else:
+            box_4corners = boxes2d
+
+        for box in box_4corners:
+            vertices = [(box[i][0], box[i][1]) for i in [0, 1, 2, 3, 0]]
+            polygon = Polygon(vertices, fill=None, edgecolor='r')
+            ax.add_patch(polygon)
+
+    if ax_in is None:
+        plt.show()
+        plt.close()
+    else:
+        return ax

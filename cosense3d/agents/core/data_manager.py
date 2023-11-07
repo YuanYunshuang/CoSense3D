@@ -57,19 +57,19 @@ class DataManager:
         else:
             rand_aug = []
             def rand_from_range(r):
-                return random.random() * (r[1] - r[0]) + r[0]
+                return torch.rand(1) * (r[1] - r[0]) + r[0]
             for i in range(B):
                 cur_aug = {}
                 if 'rot_range' in self.aug:
                     theta = rand_from_range(self.aug['rot_range'])
-                    # ct = torch.cos(theta)
-                    # st = torch.sin(theta)
-                    # transform = torch.eye(4)
-                    # transform[0, 0] = ct
-                    # transform[0, 1] = -st
-                    # transform[1, 0] = st
-                    # transform[1, 1] = ct
-                    cur_aug['rot'] = [0, 0, theta]
+                    ct = torch.cos(theta)
+                    st = torch.sin(theta)
+                    transform = torch.eye(4)
+                    transform[0, 0] = ct
+                    transform[0, 1] = -st
+                    transform[1, 0] = st
+                    transform[1, 1] = ct
+                    cur_aug['rot'] = transform
                 if 'trans_std' in self.aug:
                     cur_aug['trans'] = torch.randn(len(self.aug['trans_std'])) * torch.tensor(self.aug['trans_std'])
                 if 'scale_ratio_range' in self.aug:
@@ -104,6 +104,8 @@ class DataManager:
             d = cav.data[key]
             if isinstance(d, torch.Tensor) and to_numpy:
                 d = d.cpu().numpy()
+            elif isinstance(d, list) and len(d) > 0 and isinstance(d[0], torch.Tensor):
+                d = [x.cpu().numpy() for x in d]
             data[cav.id] = d
         return data
 
@@ -124,18 +126,28 @@ class DataManager:
             boxes_vis[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
         return boxes_vis
 
+    def get_gt_boxes_as_vis_format(self, batch_idx, coor='global'):
+        gt_boxes = self.gather_batch(batch_idx, f'{coor}_bboxes_3d' )
+        gt_labels = self.gather_batch(batch_idx, f'{coor}_labels_3d')
+        labels = {}
+        for k in gt_boxes.keys():
+            labels[k] = self.boxes_to_vis_format(gt_boxes[k], gt_labels[k])
+        return labels
+
     def get_vis_data_input(self, batch_idx=0):
         pcds = self.gather_batch(batch_idx, 'points', True)
-        gt_boxes_global = self.gather_batch(batch_idx, 'global_bboxes_3d' )
-        gt_labels_global = self.gather_batch(batch_idx, 'global_labels_3d')
-        labels = {}
-        for k in gt_boxes_global.keys():
-            labels[k] = self.boxes_to_vis_format(gt_boxes_global[k], gt_labels_global[k])
-
+        imgs = self.gather_batch(batch_idx, 'img', True)
+        global_labels = self.get_gt_boxes_as_vis_format(batch_idx, 'global')
+        local_labels = self.get_gt_boxes_as_vis_format(batch_idx, 'local')
+        bboxes2d = self.gather_batch(batch_idx, 'bboxes2d', True)
+        lidar2img = self.gather_batch(batch_idx, 'lidar2img', True)
         return {
             'pcds': pcds,
-            'global_bboxes_3d': gt_boxes_global,
-            'global_labels': labels
+            'imgs': imgs,
+            'bboxes2d': bboxes2d,
+            'lidar2img': lidar2img,
+            'global_labels': global_labels,
+            'local_labels': local_labels
         }
 
     def get_vis_data_detection(self, batch_idx=0):
