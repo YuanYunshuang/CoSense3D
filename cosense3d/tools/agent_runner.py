@@ -16,7 +16,7 @@ class AgentRunner:
     def __init__(self, args, cfgs):
         self.visualize = args.visualize or 'vis' in args.mode
         self.mode = args.mode
-        if args.visualize:
+        if self.visualize:
             from cosense3d.agents.core.gui import GUI
             from PyQt5.QtWidgets import QApplication
             self.app = QApplication(sys.argv)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     # for ME
     os.environ['OMP_NUM_THREADS'] = "16"
     if 'vis' in args.mode:
-        args.config = "cosense3d/config/defaults/base_cav.yaml"
+        args.config = "../config/defaults/base_cav.yaml"
 
     seed_everything(2023)
     cfgs = load_config(args)
