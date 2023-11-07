@@ -49,13 +49,15 @@ class VisRunner(BaseRunner):
     def run_itr(self, data):
         self.hooks(self, 'pre_iter')
         load_tensors_to_gpu(data)
-
         self.controller.test_forward(data)
-        self.logger.log(self)
 
         self.hooks(self, 'post_iter')
         self.iter += 1
         self.progress_bar.update(1)
+
+    def vis_data(self):
+        data = super().vis_data(with_input=True)
+        return data
 
 
 
