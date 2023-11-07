@@ -12,6 +12,7 @@ class BaseCAV:
         self.memory_len = memery_len
         self.data = {}
         self.memory = []  # FIFO
+        self.prepare_data_keys = ['points', 'annos_global', 'annos_local']
 
     def update(self, lidar_pose):
         self.lidar_pose = lidar_pose
@@ -23,18 +24,19 @@ class BaseCAV:
         repr_str += f'data={self.data.keys()})'
         return repr_str
 
-    def apply_transform(self, apply_to=['points', 'annos_global']):
+    def apply_transform(self):
         if self.is_ego:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
             # cav to ego
             request = self.data['received_request']
             transform = request['lidar_pose'].inverse() @ self.lidar_pose
-        DOP.cav_aug_transform(self.data, transform, self.data['augment_params'], apply_to=apply_to)
+        DOP.cav_aug_transform(self.data, transform, self.data['augment_params'],
+                              apply_to=self.prepare_data_keys)
 
-    def prepare_data(self, keys=['points', 'annos_global']):
-        self.apply_transform(keys)
-        DOP.filter_range(self.data, self.lidar_range, apply_to=keys)
+    def prepare_data(self):
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
     def has_request(self):
         if 'received_request' in self.data and self.data['received_request'] is not None:
@@ -47,7 +49,7 @@ class BaseCAV:
 
     def get_response_cpm(self):
         cpm = {}
-        for k in ['pts_feat']:
+        for k in ['points']:
             if k in self.data:
                 cpm[k] = self.data[k]
         return cpm
@@ -58,29 +60,27 @@ class BaseCAV:
     def receive_response(self, response):
         self.data['received_response'] = response
 
+    def forward(self, tasks, training_mode):
+        self.prepare_data()
+        self.forward_local(tasks, training_mode)
+        self.forward_fusion(tasks, training_mode)
+        self.forward_head(tasks, training_mode)
+        return tasks
+
     def forward_local(self, tasks, training_mode):
-        self.prepare_data(keys=['points', 'annos_global'])
-        if self.is_ego and training_mode:
-            tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
-        else:
-            tasks['no_grad'].append((self.id, '3:pts_backbone', {}))
+        """To be overloaded."""
+        return tasks
 
     def forward_fusion(self, tasks, training_mode):
-        if self.is_ego:
-            tasks['with_grad'].append((self.id, '4:fusion', {}))
-            tasks['with_grad'].append((self.id, '5:fusion_neck', {}))
+        """To be overloaded."""
         return tasks
 
     def forward_head(self, tasks, training_mode):
-        if self.is_ego:
-            tasks['with_grad'].append((self.id, '6:bev_head', {}))
-            tasks['with_grad'].append((self.id, '7:detection_head', {}))
+        """To be overloaded."""
         return tasks
 
     def loss(self, tasks):
-        if self.is_ego:
-            tasks['loss'].append((self.id, '1:bev_head', {}))
-            tasks['loss'].append((self.id, '2:detection_head', {}))
+        """To be overloaded."""
         return tasks
 
     def reset_data(self):
@@ -93,9 +93,5 @@ class BaseCAV:
 
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
-        if self.is_ego:
-            update_keys = ['bev', 'detection']
-            self.memory.append({k: self.data[k] for k in update_keys})
-            if len(self.memory) > self.memory_len:
-                self.memory = self.memory[1:]
+        pass
 

@@ -37,6 +37,17 @@ class BaseHook:
         pass
 
 
+class MemoryUsageHook(BaseHook):
+    def __init__(self, device='cuda:0', **kwargs):
+        super().__init__(**kwargs)
+        self.device = device
+
+    def post_iter(self, runner, **kwargs):
+        memory = torch.cuda.max_memory_allocated(self.device) / 1024 / 1024
+        torch.cuda.empty_cache()
+        runner.logger.update(memory=memory)
+
+
 class TrainTimerHook(BaseHook):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -52,8 +63,8 @@ class TrainTimerHook(BaseHook):
         total_run_iter = (runner.total_iter * (runner.epoch - 1)) + runner.iter
         time_per_iter = self.elapsed_time / total_run_iter
         estimated_time = time_per_iter * runner.total_iter * runner.total_epochs
-        estimated_time = estimated_time / 3600
-        runner.logger.update(est_time=estimated_time)
+        time_remain = (estimated_time - self.elapsed_time) / 3600
+        runner.logger.update(time_remain=time_remain)
 
 
 class CheckPointsHook(BaseHook):
@@ -65,7 +76,7 @@ class CheckPointsHook(BaseHook):
 
     def post_epoch(self, runner, **kwargs):
         if self.epoch_every is not None and runner.epoch % self.epoch_every == 0:
-            self.save(runner)
+            self.save(runner, f'epoch{runner.epoch}.pth')
         else:
             if runner.epoch > self.max_ckpt:
                 os.remove(os.path.join(

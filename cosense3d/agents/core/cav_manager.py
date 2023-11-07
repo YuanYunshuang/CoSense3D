@@ -38,8 +38,6 @@ class CAVManager:
                     cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)
                 cav_dict[cav_id] = (b, i)
-            if sum([int(cav.is_ego) for cav in batch_cavs]) > 1:
-                print('d')
             cavs.append(batch_cavs)
         self.cavs = cavs
         self.cav_dict = cav_dict
@@ -90,9 +88,7 @@ class CAVManager:
         tasks = {'with_grad': [], 'no_grad': [], 'loss': []}
         for i, cavs in enumerate(self.cavs):
             for cav in cavs:
-                cav.forward_local(tasks, training_mode)
-                cav.forward_fusion(tasks, training_mode)
-                cav.forward_head(tasks, training_mode)
+                cav.forward(tasks, training_mode)
                 if with_loss and training_mode:
                     cav.loss(tasks)
         return tasks

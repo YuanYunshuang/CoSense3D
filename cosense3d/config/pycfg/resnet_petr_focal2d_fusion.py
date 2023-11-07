@@ -2,11 +2,10 @@ from collections import OrderedDict
 
 # point_cloud_range = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 # point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
-point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
+point_cloud_range = [-144, -41.6, -5.0, 144, 41.6, 3.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
-voxel_size = [0.2, 0.2, 0.2]
+voxel_size = [0.2, 0.2, 8]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
-out_stride = 2
 
 """
 gather_keys: 
@@ -19,13 +18,12 @@ shared_modules = OrderedDict(
         type='backbone3d.mink_unet.MinkUnet',
         gather_keys=['points'],
         scatter_keys=['pts_feat'],
-        d=3,
-        cache_strides=[2],
-        in_dim=4,
-        stride=out_stride,
-        floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 128, 128], steps=[5, 3]))
+        d=2,
+        cache_strides=[4],
+        in_dim=4,
+        stride=4,
+        floor_height=point_cloud_range[2]
     ),
 
     fusion = dict(
@@ -33,7 +31,7 @@ shared_modules = OrderedDict(
         gather_keys=['pts_feat', 'received_response'],
         scatter_keys=['fused_feat'],
         data_info=data_info,
-        stride=out_stride,
+        stride=4,
         dim=128
     ),
 
@@ -43,7 +41,7 @@ shared_modules = OrderedDict(
         scatter_keys=['fused_neck_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
+        convs=dict(p4=dict(kernels=[3, 3, 3], in_dim=128, out_dim=128))
     ),
 
 
@@ -53,7 +51,7 @@ shared_modules = OrderedDict(
         scatter_keys=['bev'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
         data_info=data_info,
-        stride=out_stride,
+        stride=4,
         annealing_step=50,
         in_dim=128,
         sampling=dict(annealing=False, topk=False),
@@ -69,15 +67,15 @@ shared_modules = OrderedDict(
         input_channels=128,
         shared_conv_channel=128,
         get_predictions=True,
-        stride=out_stride,
+        stride=4,
         cls_head_cfg=dict(name='UnitedClsHead'),
         reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
         class_names_each_head=[['vehicle.car']],
         reg_channels=['box:6', 'dir:8', 'scr:4'],
         target_assigner=dict(
             data_info=data_info,
-            meter_per_pixel=out_stride * voxel_size[0],
-            stride=out_stride,
+            meter_per_pixel=0.8,
+            stride=4,
             detection_benchmark='Car',
             assigners=OrderedDict(
                 points_centerness=dict(min_radius=1.6, pos_neg_ratio=2),
@@ -89,9 +87,8 @@ shared_modules = OrderedDict(
 )
 
 train_hooks = [
-        dict(type='MemoryUsageHook'),
         dict(type='TrainTimerHook'),
-        dict(type="CheckPointsHook")
+        dict(type="CheckPointsHook", epoch_every=10)
     ]
 
 
@@ -102,7 +99,8 @@ test_hooks = [
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 
+
 plots = [
-    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+    # dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
+    # dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
 ]

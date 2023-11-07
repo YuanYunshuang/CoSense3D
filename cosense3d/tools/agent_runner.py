@@ -6,14 +6,15 @@ from cosense3d.dataset import get_dataloader
 from cosense3d.utils.misc import setup_logger
 from cosense3d.config import load_config, save_config
 from cosense3d.utils.train_utils import seed_everything
-from cosense3d.agents.center_controller import get_controller
+from cosense3d.agents.center_controller import CenterController
 from cosense3d.agents.core.train_runner import TrainRunner
 from cosense3d.agents.core.test_runner import TestRunner
+from cosense3d.agents.core.vis_runner import VisRunner
 
 
 class AgentRunner:
     def __init__(self, args, cfgs):
-        self.visualize = args.visualize
+        self.visualize = args.visualize or 'vis' in args.mode
         self.mode = args.mode
         if args.visualize:
             from cosense3d.agents.core.gui import GUI
@@ -24,8 +25,8 @@ class AgentRunner:
         self.build_runner(args, cfgs)
 
     def build_runner(self, args, cfgs):
-        dataloader = get_dataloader(cfgs['DATASET'], args.mode)
-        center_controller = get_controller(cfgs['CONTROLLER'], dataloader)
+        dataloader = get_dataloader(cfgs['DATASET'], args.mode.replace('vis_', ''))
+        center_controller = CenterController(cfgs['CONTROLLER'], dataloader)
         if args.mode == 'train':
             self.runner = TrainRunner(dataloader=dataloader,
                                       controller=center_controller,
@@ -35,7 +36,8 @@ class AgentRunner:
                                      controller=center_controller,
                                      **cfgs['TEST'])
         else:
-            raise NotImplementedError
+            self.runner = VisRunner(dataloader=dataloader,
+                                    controller=center_controller,)
 
     def visible_run(self):
         self.gui.setRunner(self.runner)
@@ -55,10 +57,6 @@ class AgentRunner:
         logging.info("Showing GUI...")
         sys.exit(self.app.exec_())
 
-    def visible_test(self):
-        # TODO
-        pass
-
     def run(self):
         if self.visualize:
             self.visible_run()
@@ -69,7 +67,8 @@ class AgentRunner:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="./config/config.yaml")
-    parser.add_argument("--mode", type=str, default="test")
+    parser.add_argument("--mode", type=str, default="test",
+                        help="train | test | vis_train | vis_test")
     parser.add_argument("--visualize", action="store_true")
     parser.add_argument("--resume-from", type=str)
     parser.add_argument("--load-from", type=str)
@@ -82,6 +81,8 @@ if __name__ == "__main__":
     setup_logger(args.run_name, args.debug)
     # for ME
     os.environ['OMP_NUM_THREADS'] = "16"
+    if 'vis' in args.mode:
+        args.config = "cosense3d/config/defaults/base_cav.yaml"
 
     seed_everything(2023)
     cfgs = load_config(args)

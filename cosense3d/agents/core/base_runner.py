@@ -31,10 +31,11 @@ class BaseRunner:
         self.init()
 
     def init(self):
-        self.forward_runner.to(self.device)
+        if self.forward_runner is not None:
+            self.forward_runner.to(self.device)
 
     def setup_logger(self, *args, **kwargs):
-        raise NotImplementedError
+        pass
 
     def set_logdir(self, logdir):
         self.logger.log_path = logdir

@@ -24,14 +24,18 @@ class TrainRunner(BaseRunner):
                                                len(self.dataloader))
         self.total_epochs = max_epoch
         self.start_epoch = 1
-        self.resume(resume_from)
-        self.setup_logger(run_name, log_dir, use_wandb)
 
-    def setup_logger(self, run_name, log_dir, use_wandb):
-        now = datetime.now().strftime('%m-%d-%H-%M-%S')
-        run_name = run_name + '_' + now
-        log_path = os.path.join(log_dir, run_name)
-        ensure_dir(log_path)
+        self.resume(resume_from)
+        self.setup_logger(resume_from, run_name, log_dir, use_wandb)
+
+    def setup_logger(self, resume_from, run_name, log_dir, use_wandb):
+        if resume_from is not None:
+            log_path = resume_from
+        else:
+            now = datetime.now().strftime('%m-%d-%H-%M-%S')
+            run_name = run_name + '_' + now
+            log_path = os.path.join(log_dir, run_name)
+            ensure_dir(log_path)
         wandb_project_name = run_name if use_wandb else None
         self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
                                wandb_project=wandb_project_name)
@@ -91,8 +95,6 @@ class TrainRunner(BaseRunner):
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
 
         del data
-        torch.cuda.empty_cache()
-
         self.hooks(self, 'post_iter')
         self.iter += 1
 

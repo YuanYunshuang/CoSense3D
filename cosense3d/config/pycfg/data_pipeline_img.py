@@ -1,9 +1,8 @@
 from collections import OrderedDict
 
-train_pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(),
+pipeline_cpu = OrderedDict(
     LoadMultiViewImg=dict(),
-    LoadAnnotations=dict(with_velocity=True),
+    LoadAnnotations=dict(with_velocity=True, load3d_local=False),
     ResizeCropFlipRotImage=dict(
         training=True,
         data_aug_conf=dict(
@@ -17,6 +16,10 @@ train_pipeline_cpu = OrderedDict(
         )
     ),
     Format2D=dict(),
+)
+
+inference_pipeline_cpu = OrderedDict(
+    LoadMultiViewImg=dict(),
 )
 
 data_manager = dict(
