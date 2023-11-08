@@ -5,7 +5,7 @@ from torch import nn
 import torch.utils.checkpoint as cp
 
 from cosense3d.modules.utils import build_torch_module
-
+from cosense3d.modules.utils.norm import build_norm_layer
 
 def build_module(cfg):
     cfg_ = copy.deepcopy(cfg)
@@ -216,12 +216,12 @@ class MultiheadAttention(nn.Module):
         return identity + self.dropout_layer(self.proj_drop(out))
 
 
-class TransformerDecoderlayer(nn.Module):
+class TransformerDecoderLayer(nn.Module):
     def __init__(self,
                  attn_cfgs=None,
                  ffn_cfgs=None,
                  operation_order=None,
-                 norm_cfg=dict(type='LayerNorm'),
+                 norm_cfg=dict(type='LN'),
                  batch_first=False,
                  with_cp=True,
                  **kwargs):
@@ -283,7 +283,7 @@ class TransformerDecoderlayer(nn.Module):
         self.norms = nn.ModuleList()
         num_norms = operation_order.count('norm')
         for _ in range(num_norms):
-            self.norms.append(build_torch_module(norm_cfg))
+            self.norms.append(build_norm_layer(norm_cfg, self.embed_dims)[1])
 
     def _forward(self,
                 query,
@@ -459,8 +459,8 @@ class TransformerLayerSequence(nn.Module):
             Default: None.
     """
 
-    def __init__(self, transformerlayers=None, num_layers=None, init_cfg=None):
-        super().__init__(init_cfg)
+    def __init__(self, transformerlayers=None, num_layers=None):
+        super().__init__()
         if isinstance(transformerlayers, dict):
             transformerlayers = [
                 copy.deepcopy(transformerlayers) for _ in range(num_layers)
@@ -534,14 +534,14 @@ class TransformerDecoder(TransformerLayerSequence):
 
     def __init__(self,
                  *args,
-                 post_norm_cfg=dict(type='LayerNorm'),
+                 post_norm_cfg=dict(type='LN'),
                  return_intermediate=False,
                  **kwargs):
 
         super(TransformerDecoder, self).__init__(*args, **kwargs)
         self.return_intermediate = return_intermediate
         if post_norm_cfg is not None:
-            self.post_norm = build_torch_module(post_norm_cfg)
+            self.post_norm = build_norm_layer(post_norm_cfg, self.embed_dims)[1]
         else:
             self.post_norm = None
 

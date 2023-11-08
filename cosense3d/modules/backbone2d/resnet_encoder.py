@@ -15,39 +15,23 @@ class ResnetEncoder(BaseModule):
         self.num_layers = num_layers
         self.pretrained = pretrained
 
-        resnets = {18: models.resnet18,
-                   34: models.resnet34,
-                   50: models.resnet50,
-                   101: models.resnet101,
-                   152: models.resnet152}
+        resnet = getattr(models, f'resnet{self.num_layers}', None)
 
-        if self.num_layers not in resnets:
-            raise ValueError(
-                "{} is not a valid number of resnet "
-                "layers".format(self.num_layers))
+        if resnet is None:
+            raise ValueError(f"{self.num_layers} is not a valid number of resnet ""layers")
 
-        self.encoder = resnets[self.num_layers](self.pretrained)
+        resnet_weights = getattr(models, f"ResNet{self.num_layers}_Weights")
+        self.encoder = resnet(weights=resnet_weights.DEFAULT)
 
     def forward(self, input_images, **kwargs):
-        """
-        Compute deep features from input images.
+        num_imgs = [len(x) for x in input_images]
+        imgs = self.compose_imgs(input_images)
+        b, h, w, c = imgs.shape
 
-        Parameters
-        ----------
-        input_images : List[torch.Tensor]
-            The input list has length L, and each image has the shape of (H,W,3)
-
-        Returns
-        -------
-        features: torch.Tensor
-            The deep features for each image
-        """
-        b, l, m, h, w, c = input_images.shape
-        input_images = input_images.view(b*l*m, h, w, c)
         # b, h, w, c -> b, c, h, w
-        input_images = input_images.permute(0, 3, 1, 2).contiguous()
+        imgs = imgs.permute(0, 3, 1, 2).contiguous()
 
-        x = self.encoder.conv1(input_images)
+        x = self.encoder.conv1(imgs)
         x = self.encoder.bn1(x)
         x = self.encoder.relu(x)
 
@@ -56,7 +40,12 @@ class ResnetEncoder(BaseModule):
         x = self.encoder.layer3(x)
         x = self.encoder.layer4(x)
 
-        x = rearrange(x, '(b l m) c h w -> b l m c h w',
-                      b=b, l=l, m=m)
+        return self.format_output(x, num_imgs)
 
-        return x
+    def format_output(self, output, num_imgs):
+        ptr = 0
+        output_list = []
+        for n in num_imgs:
+            output_list.append(output[ptr:ptr+n])
+            ptr += n
+        return {self.scatter_keys[0]: output_list}

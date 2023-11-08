@@ -51,6 +51,10 @@ class BaseModule(nn.Module):
         else:
             return torch.cat(data, dim=0)
 
+    def compose_imgs(self, img_list):
+        imgs = [img for x in img_list for img in x]
+        return torch.stack(imgs, dim=0)
+
     def compose_stensor(self, stensor_list, stride):
         coor = [stensor[f'p{stride}']['coor'] for stensor in stensor_list]
         coor = cat_coor_with_idx(coor)

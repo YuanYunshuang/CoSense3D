@@ -6,8 +6,8 @@ pipeline_cpu = OrderedDict(
     ResizeCropFlipRotImage=dict(
         training=True,
         data_aug_conf=dict(
-            resize_lim=[0.55, 0.7],
-            final_dim=[256, 512],
+            resize_lim=[0.8, 1.0],
+            final_dim=[384, 768],
             bot_pct_lim=[0.0, 0.0],
             rot_lim=[0.0, 0.0],
             H=600,
@@ -33,12 +33,3 @@ data_manager = dict(
     test=dict()
 )
 
-train_pipeline_gpu = OrderedDict(
-    FormatSequenceData=dict(),
-    ProjectToEgo=dict(),
-    GlobalRotScaleTrans=dict(),
-)
-
-test_pipeline_gpu = OrderedDict(
-
-)

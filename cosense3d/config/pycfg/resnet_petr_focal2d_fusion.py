@@ -14,16 +14,20 @@ scatter_keys:
     1st key in the list is used as the key for scattering and storing module output data to cav.
 """
 shared_modules = OrderedDict(
-    pts_backbone = dict(
-        type='backbone3d.mink_unet.MinkUnet',
-        gather_keys=['points'],
-        scatter_keys=['pts_feat'],
-        data_info=data_info,
-        d=2,
-        cache_strides=[4],
-        in_dim=4,
-        stride=4,
-        floor_height=point_cloud_range[2]
+    img_backbone = dict(
+        type='backbone2d.resnet_encoder.ResnetEncoder',
+        gather_keys=['img'],
+        scatter_keys=['img_feat'],
+        num_layers=18,
+    ),
+
+    projection = dict(
+        type='projection.petr_decoder.PETRDecoder',
+        gather_keys=['img_feat'],
+        scatter_keys=['bev_feat'],
+        decoder=dict(
+            type=''
+        )
     ),
 
     fusion = dict(
