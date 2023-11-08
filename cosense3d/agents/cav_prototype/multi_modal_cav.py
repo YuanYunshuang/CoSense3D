@@ -1,28 +1,42 @@
 import torch
 from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
-from .multi_modal_cav import BaseCAV
+from cosense3d.agents.cav_prototype.base_cav import BaseCAV
 
 
-class Sp3DCAV(BaseCAV):
+class MultiModalCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prepare_data_keys = ['points', 'annos_global']
+        self.prepare_data_keys = ['img', 'points', 'annos_global']
+        self.img_norm_mean = torch.tensor([123.675, 116.28, 103.53])
+        self.img_norm_std_inv = 1 / torch.tensor([58.395, 57.12, 57.375])
+
+    def normalize_imgs(self):
+        for i in range(len(self.data['img'])):
+            # inplace operation
+            self.data['img'][i] -= self.img_norm_mean
+            self.data['img'][i] *= self.img_norm_std_inv
 
     def prepare_data(self):
-        DOP.adaptive_free_space_augmentation(self.data)
+        self.normalize_imgs()
+        DOP.adaptive_free_space_augmentation(self.data, min_h=-1.5)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
     def forward_local(self, tasks, training_mode):
         if self.is_ego and training_mode:
+            tasks['with_grad'].append((self.id, '1:img_backbone', {}))
+            tasks['with_grad'].append((self.id, '2:img_roi', {}))
             tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
+            tasks['with_grad'].append((self.id, '4:pts_roi', {}))
         else:
+            tasks['no_grad'].append((self.id, '1:img_backbone', {}))
+            tasks['no_grad'].append((self.id, '2:img_roi', {}))
             tasks['no_grad'].append((self.id, '3:pts_backbone', {}))
+            tasks['no_grad'].append((self.id, '4:pts_roi', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '4:fusion', {}))
-            tasks['with_grad'].append((self.id, '5:fusion_neck', {}))
+            tasks['with_grad'].append((self.id, '5:fusion', {}))
         return tasks
 
     def forward_head(self, tasks, training_mode):

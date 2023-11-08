@@ -7,8 +7,8 @@ train_pipeline_cpu = OrderedDict(
     ResizeCropFlipRotImage=dict(
         training=True,
         data_aug_conf=dict(
-            resize_lim=[0.55, 0.7],
-            final_dim=[256, 512],
+            resize_lim=[0.8, 1.0],
+            final_dim=[384, 768],
             bot_pct_lim=[0.0, 0.0],
             rot_lim=[0.0, 0.0],
             H=600,
@@ -46,7 +46,7 @@ data_manager = dict(
             rot_range=[-1.57, 1.57],
             flip='xy',
             scale_ratio_range=[0.95, 1.05],
-        )
+        ),
     ),
     test=dict()
 )

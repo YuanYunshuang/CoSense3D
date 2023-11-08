@@ -67,6 +67,10 @@ def apply_transform(data, transform, key):
         # rotate bbx to augmented coords
         boxes_corner = (transform @ boxes_corner)[:3].T.reshape(len(boxes), 8, 3)
         data[box_key][:, :7] = box_utils.corners_to_boxes_3d(boxes_corner, mode=7)
+    elif key == 'img':
+        for i in range(len(data['img'])):
+            data['extrinsics'][i] = data['extrinsics'][i] @ transform.inverse()
+            data['lidar2img'][i] = data['intrinsics'][i] @ data['extrinsics'][i]
 
 
 def filter_range(data, lidar_range, key):
@@ -131,6 +135,65 @@ class DataOnlineProcessor:
         # 3.remove duplicated points with resolution 1m
         xyz_new = xyz_new[tmp > 0]
         xyz_new = xyz_new[(xyz_new[..., 2] < h)]
+        xyz_new = xyz_new[torch.randperm(len(xyz_new))]
+        selected = torch.unique(torch.floor(xyz_new / 2).long(), return_inverse=True, dim=0)[1]
+        xyz_new = scatter_mean(src=xyz_new, index=selected, dim=0)
+
+        # pad free space point intensity as -1
+        xyz_new = torch.cat([xyz_new, - torch.ones_like(xyz_new[:, :1])], dim=-1)
+        data['points'] = torch.cat([lidar, xyz_new], dim=0)
+
+    @staticmethod
+    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=16, alpha=0.05):
+        """
+        Add free space points according to the distance of points to the origin.
+
+        lidar origin ->  *
+                      *  *
+                   *     * h
+                *  ele   *
+              ************
+                     d
+
+        Assume the theta = pi / 2 - ele (elevation angle),
+        alpha = average angle between two lidar rings,
+        d_k is the ground distance of the n_th lidar ring to lidar origin, k=1,...,n,
+        delta_d is the distance between two neighboring lidar rings,
+        then
+        d = h*tan(theta)
+        delta_d = d_n - d_{n-1} = dn - h*tan(arctan(h / d_n) - alpha)
+        we sample free space points in the ground distance of delta_d relative to each ring
+        with the given 'step' distance.
+
+        Parameters
+        ----------
+        data: input data dict containing 'points'
+        min_h: mininum sample height relative to lidar origin
+        steps: number of points to be sampled for each lidar ray
+        alpha: average angle offset between two neighboring lidar casting rays
+
+        Returns
+        -------
+
+        """
+        lidar = data['points']
+        # get point lower than z_min=1.5m
+        m = lidar[:, 2] < min_h
+        points = lidar[m][:, :3]
+
+        # generate free space points based on points
+        dn = torch.norm(points[:, :2], dim=1).view(-1, 1)
+        dn1 = - points[:, 2:3] * torch.tan(torch.atan2(dn, -points[:, 2:3]) - alpha)
+        delta_d = dn - dn1
+        steps = torch.linspace(0, 1, steps + 1)[:-1].view(1, steps).to(delta_d.device)
+        tmp = (dn - steps * delta_d) / dn  # Nxsteps
+        xyz_new = points[:, None, :] * tmp[:, :, None]  # Nxstepsx3
+
+        # 1.remove free space points with negative distances to lidar center
+        # 2.remove free space points higher than z_min
+        # 3.remove duplicated points with resolution 1m
+        xyz_new = xyz_new[tmp > 0]
+        # xyz_new = xyz_new[(xyz_new[..., 2] < min_h)]
         xyz_new = xyz_new[torch.randperm(len(xyz_new))]
         selected = torch.unique(torch.floor(xyz_new / 2).long(), return_inverse=True, dim=0)[1]
         xyz_new = scatter_mean(src=xyz_new, index=selected, dim=0)

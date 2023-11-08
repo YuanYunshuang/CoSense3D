@@ -13,6 +13,7 @@ class TrainRunner(BaseRunner):
                  optimizer,
                  lr_scheduler,
                  resume_from=None,
+                 load_from=None,
                  run_name='default',
                  log_dir='work_dir',
                  use_wandb=False,
@@ -25,7 +26,7 @@ class TrainRunner(BaseRunner):
         self.total_epochs = max_epoch
         self.start_epoch = 1
 
-        self.resume(resume_from)
+        self.resume(resume_from, load_from)
         self.setup_logger(resume_from, run_name, log_dir, use_wandb)
 
     def setup_logger(self, resume_from, run_name, log_dir, use_wandb):
@@ -40,25 +41,26 @@ class TrainRunner(BaseRunner):
         self.logger = LogMeter(self.total_iter, log_path, log_every=self.log_every,
                                wandb_project=wandb_project_name)
 
-    def resume(self, resume_from):
-        if resume_from is None:
-            return
-        assert os.path.exists(resume_from), f'resume path does not exist: {resume_from}.'
-        ckpts = glob.glob(os.path.join(resume_from, 'epoch*.pth'))
-        if len(ckpts) > 0:
-            epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
-            max_idx = epochs.index(max(epochs))
-            ckpt = ckpts[max_idx]
-        elif os.path.exists(os.path.join(resume_from, 'last.pth')):
-            ckpt = os.path.join(resume_from, 'last.pth')
-        else:
-            raise IOError('No checkpoint found.')
-        logging.info(f"Resuming the model from checkpoint: {ckpt}")
-        ckpt = torch.load(ckpt)
-        load_model_dict(self.forward_runner, ckpt['model'])
-        self.start_epoch = ckpt['epoch']
-        self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
-        self.optimizer.load_state_dict(ckpt['optimizer'])
+    def resume(self, resume_from, load_from):
+        if resume_from is not None or load_from is not None:
+            load_path = resume_from if resume_from is not None else load_from
+            assert os.path.exists(load_path), f'resume/load path does not exist: {resume_from}.'
+            ckpts = glob.glob(os.path.join(load_path, 'epoch*.pth'))
+            if len(ckpts) > 0:
+                epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
+                max_idx = epochs.index(max(epochs))
+                ckpt = ckpts[max_idx]
+            elif os.path.exists(os.path.join(load_path, 'last.pth')):
+                ckpt = os.path.join(load_path, 'last.pth')
+            else:
+                raise IOError('No checkpoint found.')
+            logging.info(f"Resuming the model from checkpoint: {ckpt}")
+            ckpt = torch.load(ckpt)
+            load_model_dict(self.forward_runner, ckpt['model'])
+            if resume_from is not None:
+                self.start_epoch = ckpt['epoch']
+                self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
+                self.optimizer.load_state_dict(ckpt['optimizer'])
 
     def run(self):
         with torch.autograd.set_detect_anomaly(True):
@@ -66,8 +68,8 @@ class TrainRunner(BaseRunner):
                 self.hooks(self, 'pre_epoch')
                 self.run_epoch()
                 self.hooks(self, 'post_epoch')
-                self.lr_scheduler.step(i)
-                self.epoch = i
+                self.lr_scheduler.step()
+                self.epoch += 1
                 self.iter = 1
 
     def step(self):

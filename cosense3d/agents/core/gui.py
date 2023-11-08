@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QDesktopWidget, QApplication
 from cosense3d.agents.viewer.gl_viewer import GLViewer
 from cosense3d.agents.viewer.output_viewer import OutputViewer
 from cosense3d.agents.viewer.img_viewer import ImgViewer
+from cosense3d.agents.viewer.img_anno3d_viewer import ImgAnno3DViewer
 
 
 class GUI(QtWidgets.QMainWindow):
@@ -27,6 +28,7 @@ class GUI(QtWidgets.QMainWindow):
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.step)
+        self.data = None
 
     def setupUI(self, cfg):
         self.tabs = QtWidgets.QTabWidget()
@@ -36,6 +38,9 @@ class GUI(QtWidgets.QMainWindow):
 
         self.img_viewer = ImgViewer()
         self.tabs.addTab(self.img_viewer, 'ImgViewer')
+
+        self.img_anno3d_viewer = ImgAnno3DViewer()
+        self.tabs.addTab(self.img_anno3d_viewer, 'ImgAnno3DViewer')
 
         self.output_viewer = OutputViewer(**cfg['output_viewer'])
         self.tabs.addTab(self.output_viewer, 'OutputViewer')
@@ -89,18 +94,24 @@ class GUI(QtWidgets.QMainWindow):
         self.button_step.clicked.connect(self.step)
         self.button_start.clicked.connect(self.start)
         self.button_stop.clicked.connect(self.stop)
+        self.tabs.currentChanged.connect(self.refresh)
 
     def step(self):
         self.runner.step()
-        data = self.runner.vis_data()
-        self.glViewer0.refresh(data)
-        self.img_viewer.refresh(data)
-        self.output_viewer.refresh(data)
+        self.data = self.runner.vis_data()
+        self.refresh()
         if self.runner.iter == self.runner.total_iter:
             self.timer.stop()
 
+    def refresh(self):
+        if self.data is not None:
+            self.tabs.currentWidget().refresh(self.data)
+            # self.glViewer0.refresh(data)
+            # self.img_viewer.refresh(data)
+            # self.output_viewer.refresh(data)
+
     def start(self):
-        self.timer.start(100)  # Trigger the animate method every 100ms
+        self.timer.start(300)  # Trigger the animate method every 100ms
 
     def stop(self):
         self.timer.stop()

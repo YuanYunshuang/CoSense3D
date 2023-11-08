@@ -51,7 +51,7 @@ class BaseRunner:
         batch = next(self.data_iter)
         return batch
 
-    def vis_data(self,
+    def _vis_data(self,
                  with_input=True,
                  with_detection=False,
                  with_bev=False):
@@ -63,5 +63,8 @@ class BaseRunner:
         if with_bev:
             data['bev'] = self.controller.data_manager.get_vis_data_bev()
         return data
+
+    def vis_data(self):
+        return self._vis_data()
 
 

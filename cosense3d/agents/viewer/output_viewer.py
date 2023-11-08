@@ -51,7 +51,8 @@ class DetectionCanvas(MplCanvas):
         for cav_id, det_dict in data['detection'].items():
             self.axes.clear()
             points = data['input']['pcds'][cav_id]
-            gt_boxes = data['input']['global_bboxes_3d'][cav_id].cpu().numpy()
+            gt_boxes = list(data['input']['global_labels'][cav_id].values())
+            gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()
             draw_points_boxes_plt(
                 points=points,
@@ -62,7 +63,6 @@ class DetectionCanvas(MplCanvas):
             )
             self.draw()
             break
-
 
 
 class OutputViewer(QtWidgets.QWidget):

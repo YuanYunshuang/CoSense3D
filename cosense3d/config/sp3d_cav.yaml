@@ -7,7 +7,7 @@ DATASET:
   data_info: &data_info
     lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
     voxel_size:  &voxel_size [0.2, 0.2, 0.2]
-  batch_size_train: 1
+  batch_size_train: 4
   n_workers: 4
 
   max_num_cavs: 7
@@ -45,11 +45,10 @@ CONTROLLER:
   cav_manager:
     prototype: sp3d_cav.Sp3DCAV
     memory_len: *seq_len
-  forward_runner: {}
 
 VISUALIZATION:
-  canvas_viewer:
-    plots: 'pycfg.mink3d_stride2_vox2_naive_lidar.plots'
+  output_viewer:
+    plots: 'pycfg.data_pipeline.output_viewer'
 
 
 

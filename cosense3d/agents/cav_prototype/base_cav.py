@@ -12,7 +12,7 @@ class BaseCAV:
         self.memory_len = memery_len
         self.data = {}
         self.memory = []  # FIFO
-        self.prepare_data_keys = ['points', 'annos_global', 'annos_local']
+        self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
 
     def update(self, lidar_pose):
         self.lidar_pose = lidar_pose

@@ -54,7 +54,7 @@ class VisRunner(BaseRunner):
         self.progress_bar.update(1)
 
     def vis_data(self):
-        data = super().vis_data(with_input=True)
+        data = self._vis_data(with_input=True)
         return data
 
 

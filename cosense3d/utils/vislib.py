@@ -490,7 +490,7 @@ def draw_2d_bboxes_on_img(img, boxes2d, ax_in=None):
 
         for box in box_4corners:
             vertices = [(box[i][0], box[i][1]) for i in [0, 1, 2, 3, 0]]
-            polygon = Polygon(vertices, fill=None, edgecolor='r')
+            polygon = Polygon(vertices, fill=None, edgecolor='lime')
             ax.add_patch(polygon)
 
     if ax_in is None:
@@ -498,3 +498,69 @@ def draw_2d_bboxes_on_img(img, boxes2d, ax_in=None):
         plt.close()
     else:
         return ax
+
+
+def draw_3d_points_boxes_on_img(ax, img,  lidar2img, points=None, boxes=None):
+    """
+        1 -------- 6             ^ z
+       /|         /|             |
+      2 -------- 5.             |
+      | |        | |             | . x
+      . 0 -------- 7             |/
+      |/         |/              +-------> y
+      3 -------- 4
+    Parameters
+    ----------
+    ax: plt plot axis
+    img: np.ndarray, (H, W, 3)
+    lidar2img: np.ndarray, (4, 4), transformation matrix from lidar to camera coordinates
+    points: np.ndarray, (N, 3+C)
+    boxes: np.ndarray, (N, 8, 3) or (N, 7), in lidar coordinates
+    """
+    H, W = img.shape[:2]
+    if points is not None:
+        points_homo = np.concatenate([points[:, :3], np.ones_like(points[:, :1])], axis=1).T
+        points_homo = lidar2img @ points_homo
+        pixels = points_homo[:3]
+        pixels[:2] = pixels[:2] / pixels[2:]
+        px = pixels[0].astype(int)
+        py = pixels[1].astype(int)
+        mask = (px >= 0) & (px<W) & (py >= 0) & (py < H) & (pixels[2] > 0)
+        if mask.sum() > 0:
+            px, py = px[mask], py[mask]
+            dist = np.linalg.norm(points_homo[:2].T[mask], axis=1)
+            dist_norm = np.clip(dist, a_min=0, a_max=100) / 100.
+            # Create a colormap based on the numbers
+            cmap = plt.get_cmap('cool')
+
+            # Convert the numbers to colors using the colormap
+            colors = np.array([cmap(num) for num in dist_norm])
+            colors = colors[:, :3] * 255
+            img[py, px] = colors
+
+    ax.imshow(img)
+    # Loop through the boxes and draw them on the image
+    if boxes is not None:
+        n_box = len(boxes)
+        if boxes.shape[1] == 7:
+            boxes = boxes_to_corners_3d(boxes)
+        box_points = boxes.reshape(-1, 3)
+        box_points_homo = np.concatenate([box_points[:, :3], np.ones_like(box_points[:, :1])], axis=1).T
+        box_points_homo = lidar2img @ box_points_homo
+
+        box_pixels = box_points_homo[:3]
+        box_pixels[:2] = box_pixels[:2] / box_pixels[2:]
+        box_pixels = box_pixels.T.reshape(n_box, 8, 3)
+        box_pixels = box_pixels[(box_pixels[:, :, 2] > 0).all(axis=1)]
+        for box in box_pixels:
+            faces = [
+                [0, 1, 2, 3, 0],
+                [4, 5, 6, 7, 4],
+                [0, 1, 5, 4, 0],
+                [2, 3, 7, 6, 2]
+            ]
+            for face in faces:
+                vertices = [(box[i][0], box[i][1]) for i in face]
+                polygon = Polygon(vertices, fill=None, edgecolor='lime')
+                ax.add_patch(polygon)
+

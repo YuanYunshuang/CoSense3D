@@ -72,6 +72,15 @@ class MinkUnet(BaseModule):
             setattr(self, f'{k}_compression', layers)
 
     def forward(self, points: list, **kwargs):
+        res = self.forward_unet(points)
+
+        if self.height_compression is not None:
+            res = self.forward_height_compression(res)
+
+        res = self.format_output(res, len(points))
+        return res
+
+    def forward_unet(self, points):
         N = len(points)
         points = [torch.cat([torch.ones_like(pts[:, :1]) * i, pts], dim=-1
                             ) for i, pts in enumerate(points)]
@@ -100,17 +109,17 @@ class MinkUnet(BaseModule):
 
         vars = locals()
         res = {f'p{k}': vars[f'p{k}_cat'] for k in self.cache_strides}
+        return res
 
-        if self.height_compression is not None:
-            for stride in self.stride_size_dict.keys():
-                out_tensor = getattr(self, f'p{stride}_compression')(res[f'p{stride}'])
-                assert len(out_tensor.C[:, 3].unique()) == 1, \
-                    (f"height is not fully compressed. "
-                     f"Unique z coords: {','.join([str(x.item()) for x in out_tensor.C[:, 3].unique()])}")
-                if self.to_dense:
-                    out_tensor = self.stensor_to_dense(out_tensor).permute(0, 3, 1, 2)
-                res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F}
-        res = self.format_output(res, N)
+    def forward_height_compression(self, res):
+        for stride in self.stride_size_dict.keys():
+            out_tensor = getattr(self, f'p{stride}_compression')(res[f'p{stride}'])
+            assert len(out_tensor.C[:, 3].unique()) == 1, \
+                (f"height is not fully compressed. "
+                 f"Unique z coords: {','.join([str(x.item()) for x in out_tensor.C[:, 3].unique()])}")
+            if self.to_dense:
+                out_tensor = self.stensor_to_dense(out_tensor).permute(0, 3, 1, 2)
+            res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F}
         return res
 
     def format_output(self, res, N):

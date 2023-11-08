@@ -11,11 +11,11 @@ from matplotlib.figure import Figure
 from cosense3d.utils import vislib
 
 
-class ImgViewer(FigureCanvasQTAgg):
+class ImgAnno3DViewer(FigureCanvasQTAgg):
 
-    def __init__(self, dpi=100):
+    def __init__(self, dpi=50):
         self.fig = Figure(dpi=dpi)
-        super(ImgViewer, self).__init__(self.fig)
+        super(ImgAnno3DViewer, self).__init__(self.fig)
 
     def refresh(self, data):
         if len(data['input']['imgs']) == 0:
@@ -25,9 +25,10 @@ class ImgViewer(FigureCanvasQTAgg):
         n_imgs = len(list(data['input']['imgs'].values())[0])
         cav_ids = sorted(list(data['input']['imgs'].keys()))
         for i, cav_id in enumerate(cav_ids):
+            bboxes3d = np.array(list(data['input']['local_labels'][cav_id].values()))[:, [1, 2, 3, 4, 5, 6, 9]]
             for j in range(n_imgs):
                 ax = self.fig.add_subplot(n_cavs, n_imgs, i * n_imgs + j + 1)
-                bboxes2d = data['input']['bboxes2d'][cav_id][j]
                 img = data['input']['imgs'][cav_id][j].astype(np.uint8)
-                vislib.draw_2d_bboxes_on_img(img, bboxes2d.reshape(-1, 2, 2), ax)
+                lidar2img = data['input']['lidar2img'][cav_id][j]
+                vislib.draw_3d_points_boxes_on_img(ax, img, lidar2img, boxes=bboxes3d)
         self.draw()
