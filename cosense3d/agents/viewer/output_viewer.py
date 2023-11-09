@@ -51,13 +51,18 @@ class DetectionCanvas(MplCanvas):
             return
         for cav_id, det_dict in data['detection'].items():
             self.axes.clear()
-            points = data['input']['pcds'][cav_id]
+            for points in data['input']['pcds'].values():
+                draw_points_boxes_plt(
+                    pc_range=self.lidar_range,
+                    points=points,
+                    ax=self.axes,
+                    # return_ax=True
+                )
             gt_boxes = list(data['input']['global_labels'][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()
             draw_points_boxes_plt(
                 pc_range=self.lidar_range,
-                points=points,
                 boxes_pred=pred_boxes,
                 boxes_gt=gt_boxes,
                 ax=self.axes,
