@@ -6,16 +6,22 @@ from einops import rearrange
 
 from cosense3d.modules import BaseModule
 from cosense3d.modules.plugin import build_plugin_module
+from cosense3d.modules.utils.positional_encoding import img_locations
 
 
 class ResnetEncoder(BaseModule):
     """Resnet family to encode image."""
-    def __init__(self, num_layers, feat_indices, out_index, pretrained=True, neck=None, **kwargs):
+    def __init__(self, num_layers, feat_indices, out_index, img_size,
+                 pretrained=True, neck=None, **kwargs):
         super(ResnetEncoder, self).__init__(**kwargs)
 
         self.num_layers = num_layers
-        self.feat_indices = feat_indices
-        self.out_index = sorted(out_index)
+        self.feat_indices = sorted(feat_indices)
+        self.out_index = out_index
+        self.img_size = img_size
+        self.stride = 2 ** (self.out_index + 1)
+        self.feat_size = (img_size[0] // self.stride, img_size[1] // self.stride)
+        self.img_locations = nn.Parameter(img_locations(img_size, self.feat_size))
         self.pretrained = pretrained
 
         resnet = getattr(models, f'resnet{self.num_layers}', None)
@@ -54,10 +60,19 @@ class ResnetEncoder(BaseModule):
     def format_output(self, output, num_imgs):
         ptr = 0
         output_list = []
+        coor_list = []
         for n in num_imgs:
             if isinstance(output, (tuple, list)):
                 output_list.append(tuple(out[ptr:ptr+n] for out in output))
             else:
                 output_list.append(output[ptr:ptr + n])
+            if 'img_coor' in self.scatter_keys:
+                coor_list.append(self.img_locations.unsqueeze(0).repeat(n, 1, 1, 1))
             ptr += n
-        return {self.scatter_keys[0]: output_list}
+        out_dict = {}
+        if 'img_feat' in self.scatter_keys:
+            out_dict['img_feat'] = output_list
+        if 'img_coor' in self.scatter_keys:
+            out_dict['img_coor'] = coor_list
+
+        return out_dict

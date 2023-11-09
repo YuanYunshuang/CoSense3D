@@ -12,6 +12,32 @@ import torch.nn as nn
 import numpy as np
 
 
+def img_locations(img_size, feat_size=None, stride=None):
+    H, W = img_size
+    if feat_size is None:
+        assert stride is not None
+        h, w = H // stride, W // stride
+    elif stride is None:
+        h, w = feat_size
+        stride = H // h
+
+    shifts_x = (torch.arange(
+        0, stride * w, step=stride,
+        dtype=torch.float32
+    ) + stride // 2) / W
+    shifts_y = (torch.arange(
+        0, h * stride, step=stride,
+        dtype=torch.float32
+    ) + stride // 2) / H
+    shift_y, shift_x = torch.meshgrid(shifts_y, shifts_x, indexing='ij')
+    shift_x = shift_x.reshape(-1)
+    shift_y = shift_y.reshape(-1)
+    coors = torch.stack((shift_x, shift_y), dim=1)
+
+    coors = coors.reshape(h, w, 2)
+    return coors
+
+
 def pos2posemb3d(pos, num_pos_feats=128, temperature=10000):
     scale = 2 * math.pi
     pos = pos * scale

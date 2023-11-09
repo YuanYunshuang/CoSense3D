@@ -5,6 +5,8 @@ from collections import OrderedDict
 point_cloud_range = [-51.2, -38.4, -5, 51.2, 38.4, 3]
 voxel_size = [0.2, 0.2, 8]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
+img_size = (384, 768)
+num_classes = 1
 
 """
 gather_keys: 
@@ -16,10 +18,11 @@ shared_modules = OrderedDict(
     img_backbone = dict(
         type='backbone2d.resnet_encoder.ResnetEncoder',
         gather_keys=['img'],
-        scatter_keys=['img_feat'],
+        scatter_keys=['img_feat', 'img_coor'],
         num_layers=18,
         feat_indices=(3, 4),
         out_index=3,
+        img_size=img_size,
         neck=dict(
             type='fpn.FPN',
             in_channels=[256, 512],
@@ -28,10 +31,19 @@ shared_modules = OrderedDict(
         )
     ),
 
+    img_roi = dict(
+        type='heads.img_focal.ImgFocal',
+        gather_keys=['img_feat', 'img_coor'],
+        scatter_keys=['img_roi'],
+        in_channels=128,
+        embed_dims=128,
+        num_classes=num_classes,
+        with_reg=True,
+    ),
 
     img2bev = dict(
         type='projection.petr_decoder.PETRDecoder',
-        gather_keys=['img_feat', 'img_size', 'intrinsics', 'lidar2img'],
+        gather_keys=['img_roi', 'img_coor', 'img_size', 'intrinsics', 'lidar2img'],
         scatter_keys=['bev_feat'],
         in_channels=128,
         decoder=dict(

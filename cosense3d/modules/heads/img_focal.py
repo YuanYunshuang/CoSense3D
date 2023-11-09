@@ -3,6 +3,7 @@ from torch import nn
 from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.init import bias_init_with_prob
 from cosense3d.modules.utils.common import inverse_sigmoid
+from cosense3d.utils.box_utils import bbox_xyxy_to_cxcywh
 
 
 class ImgFocal(BaseModule):
@@ -38,7 +39,7 @@ class ImgFocal(BaseModule):
         if self.with_depth:
             self.depth = nn.Conv2d(self.embed_dims, 1, kernel_size=1)
 
-    def forward(self, img_feat, img_coor, **kwargs):
+    def forward(self, img_feat, img_coor=None, **kwargs):
         out_dict = {}
         x = self.data_from_list(img_feat)
         N, c, h, w = x.shape
@@ -59,6 +60,8 @@ class ImgFocal(BaseModule):
         })
 
         if self.with_reg:
+            assert img_coor is not None
+            img_coor = self.data_from_list(img_coor)
             reg_feat = self.shared_reg(x)
             ltrb = self.ltrb(reg_feat).permute(0, 2, 3, 1).contiguous()
             ltrb = ltrb.sigmoid()
@@ -75,6 +78,17 @@ class ImgFocal(BaseModule):
 
         if self.with_depth:
             raise NotImplementedError
+
+        return self.format_output(out_dict, img_feat)
+
+    def format_output(self, out_dict, img_feat):
+        ptr = 0
+        output_list = []
+        for imgs in img_feat:
+            n = imgs.shape[0]
+            output_list.append({k: v[ptr:ptr+n] for k, v in out_dict.items()})
+            ptr += n
+        return {self.scatter_keys[0]: output_list}
 
     @staticmethod
     def apply_center_offset(locations, center_offset):

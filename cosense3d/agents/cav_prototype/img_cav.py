@@ -25,10 +25,12 @@ class ImgCAV(BaseCAV):
     def forward_local(self, tasks, training_mode):
         if self.is_ego and training_mode:
             tasks['with_grad'].append((self.id, '1:img_backbone', {}))
-            tasks['with_grad'].append((self.id, '2:img2bev', {}))
+            tasks['with_grad'].append((self.id, '2:img_roi', {}))
+            tasks['with_grad'].append((self.id, '3:img2bev', {}))
         else:
             tasks['no_grad'].append((self.id, '1:img_backbone', {}))
-            tasks['no_grad'].append((self.id, '2:img2bev', {}))
+            tasks['no_grad'].append((self.id, '2:img_roi', {}))
+            tasks['no_grad'].append((self.id, '3:img2bev', {}))
 
     def forward_fusion(self, tasks, training_mode):
         pass
