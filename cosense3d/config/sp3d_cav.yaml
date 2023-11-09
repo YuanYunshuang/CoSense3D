@@ -19,7 +19,7 @@ TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
   log_every: 10
-  max_epoch: 50
+  max_epoch: 30
   gpus: 1
   resume: true
   hooks: 'pycfg.mink3d_stride2_vox2_naive_lidar.train_hooks'
@@ -31,7 +31,7 @@ TRAIN:
     gamma: 0.1
   lr_scheduler:
     policy: 'MultiStepLR'
-    milestones: [25, 40]
+    milestones: [10, 20]
     gamma: 0.1
 
 TEST:

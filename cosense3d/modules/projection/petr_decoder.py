@@ -10,10 +10,13 @@ from cosense3d.modules.utils.misc import SELayer_Linear, MLN
 
 
 class PETRDecoder(BaseModule):
-    def __init__(self, decoder, **kwargs):
+    def __init__(self, in_channels, decoder, **kwargs):
         super().__init__(**kwargs)
         self.decoder = build_module(decoder)
         self.embed_dims = self.decoder.embed_dims
+        self.img_position_dim = 128
+        self.num_pose_feat = 64
+        self.in_channels = in_channels
 
         self.img_position_encoder = nn.Sequential(
             nn.Linear(self.img_position_dim, self.embed_dims * 4),
@@ -36,11 +39,6 @@ class PETRDecoder(BaseModule):
 
         self.spatial_alignment = MLN(8, f_dim=self.embed_dims)
         self.pts_spatial_alignment = MLN(2, f_dim=self.embed_dims)
-
-        self.time_embedding = nn.Sequential(
-            nn.Linear(self.num_pose_feat, self.embed_dims),
-            nn.LayerNorm(self.embed_dims)
-        )
 
     def init_weights(self):
         # follow the official DETR to init parameters

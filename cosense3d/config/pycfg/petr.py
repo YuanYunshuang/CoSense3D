@@ -18,12 +18,22 @@ shared_modules = OrderedDict(
         gather_keys=['img'],
         scatter_keys=['img_feat'],
         num_layers=18,
+        feat_indices=(3, 4),
+        out_index=3,
+        neck=dict(
+            type='fpn.FPN',
+            in_channels=[256, 512],
+            out_channels=128,
+            num_outs=2
+        )
     ),
+
 
     img2bev = dict(
         type='projection.petr_decoder.PETRDecoder',
         gather_keys=['img_feat', 'img_size', 'intrinsics', 'lidar2img'],
         scatter_keys=['bev_feat'],
+        in_channels=128,
         decoder=dict(
             type='TransformerDecoder',
             return_intermediate=True,

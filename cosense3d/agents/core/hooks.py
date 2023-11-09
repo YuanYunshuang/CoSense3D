@@ -89,12 +89,14 @@ class CheckPointsHook(BaseHook):
             self.save(runner, f'latest.pth')
 
     def save(self, runner, name):
+        save_path = os.path.join(runner.logger.log_path, name)
+        print(f'Saving checkpoint to {save_path}.')
         torch.save({
             'epoch': runner.epoch,
             'model': runner.forward_runner.state_dict(),
             'optimizer': runner.optimizer.state_dict(),
             'lr_scheduler': runner.lr_scheduler.state_dict(),
-        }, os.path.join(runner.logger.log_path, name))
+        }, save_path)
 
 
 class BEVSparseToDenseHook(BaseHook):

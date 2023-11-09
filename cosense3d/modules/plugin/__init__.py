@@ -1,15 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved. Modified by Yunshuang Yuan.
 import inspect
-import platform
 from typing import Dict, Tuple, Union
 from importlib import import_module
 
 import torch.nn as nn
-
-if platform.system() == 'Windows':
-    import regex as re  # type: ignore
-else:
-    import re  # type: ignore
+import re  # type: ignore
 
 
 def infer_abbr(class_type: type) -> str:
@@ -93,3 +88,12 @@ def build_plugin_layer(cfg: Dict,
     layer = plugin_layer(**kwargs, **cfg_)
 
     return name, layer
+
+
+def build_plugin_module(cfg: Dict):
+    cfg_ = cfg.copy()
+    type_ = cfg_.pop('type')
+    module_name, cls_name = type_.split('.')
+    module = import_module(f'{__package__}.{module_name}')
+    cls_inst = getattr(module, cls_name)(**cfg_)
+    return cls_inst

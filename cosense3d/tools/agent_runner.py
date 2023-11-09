@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument("--visualize", action="store_true")
     parser.add_argument("--resume-from", type=str)
     parser.add_argument("--load-from", type=str)
-    parser.add_argument("--log_dir", type=str, default="../logs")
+    parser.add_argument("--log_dir", type=str, default="/media/yuan/luna/cosense3d")
     parser.add_argument("--run_name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
