@@ -3,13 +3,14 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 
 
 class BaseCAV:
-    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range, memery_len):
+    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range, memery_len, all_grad=False):
         self.id = id
         self.mapped_id = mapped_id
         self.is_ego = is_ego
         self.lidar_pose = lidar_pose
         self.lidar_range = lidar_range
         self.memory_len = memery_len
+        self.all_grad = all_grad
         self.data = {}
         self.memory = []  # FIFO
         self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']

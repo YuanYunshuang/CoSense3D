@@ -144,7 +144,7 @@ class DataOnlineProcessor:
         data['points'] = torch.cat([lidar, xyz_new], dim=0)
 
     @staticmethod
-    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=16, alpha=0.05):
+    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=20, alpha=0.05):
         """
         Add free space points according to the distance of points to the origin.
 

@@ -3,9 +3,10 @@ import torch
 from cosense3d.agents.cav_prototype import get_prototype
 
 class CAVManager:
-    def __init__(self, lidar_range, prototype=None, memory_len=1, **kwargs):
+    def __init__(self, lidar_range, prototype=None, memory_len=1, all_grad=False, **kwargs):
         self.lidar_range = torch.tensor(lidar_range)
         self.memory_len = memory_len
+        self.all_grad = all_grad
         self.cavs = []
         self.cav_dict = {}
         assert prototype is not None, "CAV prototype should be defined."
@@ -33,7 +34,8 @@ class CAVManager:
                 cav = self.get_cav_with_id(cav_id)
                 if not cav:
                     cav = self.prototype(cav_id, i, is_ego, lidar_poses[b][i],
-                                         self.lidar_range, self.memory_len)
+                                         self.lidar_range, self.memory_len,
+                                         all_grad=self.all_grad)
                 else:
                     cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)

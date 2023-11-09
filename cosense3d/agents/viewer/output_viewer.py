@@ -22,9 +22,9 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 class BEVSparseCanvas(MplCanvas):
-    def __init__(self, **kwargs):
+    def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
-        # self.scatter = self.axes.scatter([0], [0], cmap='hot', c=[0], s=1, vmin=0, vmax=1)
+        self.lidar_range = lidar_range
 
     def refresh(self, data):
         if 'bev' not in data:
@@ -42,8 +42,9 @@ class BEVSparseCanvas(MplCanvas):
 
 
 class DetectionCanvas(MplCanvas):
-    def __init__(self, **kwargs):
+    def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
+        self.lidar_range = lidar_range
 
     def refresh(self, data):
         if 'detection' not in data:
@@ -55,6 +56,7 @@ class DetectionCanvas(MplCanvas):
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()
             draw_points_boxes_plt(
+                pc_range=self.lidar_range,
                 points=points,
                 boxes_pred=pred_boxes,
                 boxes_gt=gt_boxes,

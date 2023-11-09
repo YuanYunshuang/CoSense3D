@@ -56,6 +56,8 @@ class TestRunner(BaseRunner):
     def step(self):
         data = self.next_batch()
         self.run_itr(data)
+        if self.iter == self.total_iter:
+            self.hooks(self, 'post_epoch')
 
     def run_itr(self, data):
         self.hooks(self, 'pre_iter')

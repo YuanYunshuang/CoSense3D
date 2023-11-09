@@ -20,12 +20,3 @@ data_manager = dict(
     test=dict()
 )
 
-train_pipeline_gpu = OrderedDict(
-    FormatSequenceData=dict(),
-    ProjectToEgo=dict(),
-    GlobalRotScaleTrans=dict(),
-)
-
-test_pipeline_gpu = OrderedDict(
-
-)

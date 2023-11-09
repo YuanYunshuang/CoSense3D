@@ -45,10 +45,11 @@ CONTROLLER:
   cav_manager:
     prototype: sp3d_cav.Sp3DCAV
     memory_len: *seq_len
+    all_grad: true
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.data_pipeline.output_viewer'
+    plots: 'pycfg.mink3d_stride2_vox2_naive_lidar.plots'
 
 
 

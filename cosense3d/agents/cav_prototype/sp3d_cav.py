@@ -13,28 +13,35 @@ class Sp3DCAV(BaseCAV):
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
+    def get_response_cpm(self):
+        cpm = {}
+        for k in ['pts_feat']:
+            if k in self.data:
+                cpm[k] = self.data[k]
+        return cpm
+
     def forward_local(self, tasks, training_mode):
-        if self.is_ego and training_mode:
-            tasks['with_grad'].append((self.id, '3:pts_backbone', {}))
+        if (self.is_ego or self.all_grad) and training_mode:
+            tasks['with_grad'].append((self.id, '01:pts_backbone', {}))
         else:
-            tasks['no_grad'].append((self.id, '3:pts_backbone', {}))
+            tasks['no_grad'].append((self.id, '01:pts_backbone', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '4:fusion', {}))
-            tasks['with_grad'].append((self.id, '5:fusion_neck', {}))
+            tasks['with_grad'].append((self.id, '11:fusion', {}))
+            tasks['with_grad'].append((self.id, '12:fusion_neck', {}))
         return tasks
 
     def forward_head(self, tasks, training_mode):
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '6:bev_head', {}))
-            tasks['with_grad'].append((self.id, '7:detection_head', {}))
+            tasks['with_grad'].append((self.id, '13:bev_head', {}))
+            tasks['with_grad'].append((self.id, '14:detection_head', {}))
         return tasks
 
     def loss(self, tasks):
         if self.is_ego:
-            tasks['loss'].append((self.id, '1:bev_head', {}))
-            tasks['loss'].append((self.id, '2:detection_head', {}))
+            tasks['loss'].append((self.id, '21:bev_head', {}))
+            tasks['loss'].append((self.id, '22:detection_head', {}))
         return tasks
 
     def reset_data(self):
