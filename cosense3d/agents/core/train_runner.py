@@ -59,6 +59,7 @@ class TrainRunner(BaseRunner):
             load_model_dict(self.forward_runner, ckpt['model'])
             if resume_from is not None:
                 self.start_epoch = ckpt['epoch']
+                self.epoch = ckpt['epoch']
                 self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
                 self.optimizer.load_state_dict(ckpt['optimizer'])
 
