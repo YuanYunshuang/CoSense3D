@@ -19,7 +19,7 @@ TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
   log_every: 10
-  max_epoch: 30
+  max_epoch: 50
   gpus: 1
   resume: true
   hooks: 'pycfg.mink3d_stride2_vox2_naive_lidar.train_hooks'

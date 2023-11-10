@@ -143,6 +143,8 @@ class DetectionNMSHook(BaseHook):
                     'scr': torch.zeros((0,), device=scores.device),
                     'lbl': torch.zeros((0,), device=labels.device),
                     'idx': torch.zeros((3, 0), device=indices.device),
+                    'ctr': values['center'],
+                    'conf': values['conf']
                 })
             else:
                 keep = self.nms(
@@ -156,6 +158,8 @@ class DetectionNMSHook(BaseHook):
                     'scr': scores[keep],
                     'lbl': labels[keep],
                     'idx': indices[keep],
+                    'ctr': values['center'],
+                    'conf': values['conf']
                 })
 
         runner.controller.data_manager.scatter(cav_ids, {'detection': preds})

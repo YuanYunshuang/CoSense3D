@@ -34,7 +34,7 @@ class BEVSparseCanvas(MplCanvas):
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
             self.axes.clear()
             self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
-                                             cmap='jet', c=conf, s=3, vmin=0, vmax=1)
+                                             cmap='jet', c=conf, s=2, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
             # self.scatter.set_offsets(centers)
             self.draw()
@@ -51,6 +51,7 @@ class DetectionCanvas(MplCanvas):
             return
         for cav_id, det_dict in data['detection'].items():
             self.axes.clear()
+            # plot points
             for points in data['input']['pcds'].values():
                 draw_points_boxes_plt(
                     pc_range=self.lidar_range,
@@ -58,6 +59,13 @@ class DetectionCanvas(MplCanvas):
                     ax=self.axes,
                     # return_ax=True
                 )
+            # plot centers
+            centers = det_dict['ctr'].detach().cpu().numpy()
+            conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
+            mask = conf > 0.5
+            centers = centers[mask]
+            conf = conf[mask]
+            self.axes.scatter(centers[:, 0], centers[:, 1], cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
             gt_boxes = list(data['input']['global_labels'][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()

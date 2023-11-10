@@ -500,6 +500,7 @@ class TargetAssigner(object):
         box_coder = self.encode_box_args['_target_']
         roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
         lbl_cnt = torch.cumsum(torch.Tensor([0] + [m.shape[1] for m in preds['cls']]), dim=0)
+        confs = []
         for h, center_cls in enumerate(preds['cls']):
             if center_cls.ndim > 2:
                 conf, _ = logit_to_edl(center_cls.permute(0, 2, 3, 1))
@@ -534,5 +535,6 @@ class TargetAssigner(object):
             roi['scr'].append(cur_scr)
             roi['lbl'].append(cur_lbl)
             roi['idx'].append(center_indices)
+            confs.append(conf)
 
-        return roi
+        return roi, torch.stack(confs, dim=1)

@@ -152,7 +152,7 @@ class DetCenterSparse(BaseModule):
         }
 
         if not self.training:
-            out_dict['preds'] = self.predictions(out_dict, B)
+            out_dict['preds'], out_dict['conf'] = self.predictions(out_dict, B)
 
         return self.format_output(out_dict, B)
 
@@ -167,6 +167,8 @@ class DetCenterSparse(BaseModule):
             output_new['center'].append(output['center'][mask, 1:])
             output_new['cls'].append([h_cls[mask] for h_cls in output['cls']])
             output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
+            if 'conf' in output:
+                output_new['conf'].append(output['conf'][mask])
             if 'preds' in output:
                 preds = {k: [] for k in output['preds'].keys()}
                 for h, inds in enumerate(output['preds']['idx']):
