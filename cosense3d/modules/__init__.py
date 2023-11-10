@@ -51,6 +51,23 @@ class BaseModule(nn.Module):
         else:
             return torch.cat(data, dim=0)
 
+    def cat_list(self, x_list, recursive=False):
+        """Concatenate sub_lists to one list"""
+        if len(x_list) > 0 and isinstance(x_list[0], list):
+            out = []
+            for x in x_list:
+                out.extend(self.cat_list(x) if recursive else x)
+            return out
+        else:
+            return x_list
+
+    def cat_dict_list(self, d_list: List[Dict]):
+        out_dict = {k:[] for k in d_list[0].keys()}
+        for k in d_list[0].keys():
+            for d in d_list:
+                out_dict[k].extend(d[k])
+        return out_dict
+
     def compose_imgs(self, img_list):
         imgs = [img for x in img_list for img in x]
         return torch.stack(imgs, dim=0)

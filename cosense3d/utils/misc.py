@@ -10,6 +10,28 @@ import numpy as np
 from rich.logging import RichHandler
 
 
+def multi_apply(func, *args, **kwargs):
+    """Apply function to a list of arguments.
+
+    Note:
+        This function applies the ``func`` to multiple inputs and
+        map the multiple outputs of the ``func`` into different
+        list. Each list contains the same type of outputs corresponding
+        to different inputs.
+
+    Args:
+        func (Function): A function that will be applied to a list of
+            arguments
+
+    Returns:
+        tuple(list): A tuple containing multiple list, each list contains \
+            a kind of returned results by the function
+    """
+    pfunc = partial(func, **kwargs) if kwargs else func
+    map_results = map(pfunc, *args)
+    return tuple(map(list, zip(*map_results)))
+
+
 def setup_logger(exp_name, debug):
     from imp import reload
 
@@ -164,8 +186,11 @@ def multi_apply(func, *args, **kwargs):
             a kind of returned results by the function
     """
     pfunc = partial(func, **kwargs) if kwargs else func
-    map_results = map(pfunc, *args)
-    return tuple(map(list, zip(*map_results)))
+    map_results = list(map(pfunc, *args))
+    if isinstance(map_results[0], tuple):
+        return tuple(map(list, zip(*map_results)))
+    else:
+        return map_results
 
 
 def torch_tensor_to_numpy(torch_tensor):

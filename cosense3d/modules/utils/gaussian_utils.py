@@ -1,6 +1,7 @@
 import torch
 from torch.distributions.multivariate_normal import _batch_mahalanobis
 import torch_scatter
+import numpy as np
 
 
 def weighted_mahalanobis_dists(vars, dists, weights=None):
@@ -62,6 +63,25 @@ def gaussian_radius(box_dims, pixel_sz, overlap, min_radius=2):
     radius = torch.clamp_min(radius.int(), min=min_radius)
 
     return radius
+
+
+def gaussian_2d(shape, sigma=1.0):
+    """Generate gaussian map.
+
+    Args:
+        shape (list[int]): Shape of the map.
+        sigma (float, optional): Sigma to generate gaussian map.
+            Defaults to 1.
+
+    Returns:
+        np.ndarray: Generated gaussian map.
+    """
+    m, n = [(ss - 1.) / 2. for ss in shape]
+    y, x = np.ogrid[-m:m + 1, -n:n + 1]
+
+    h = np.exp(-(x * x + y * y) / (2 * sigma * sigma))
+    h[h < np.finfo(h.dtype).eps * h.max()] = 0
+    return h
 
 
 def draw_gaussian_map(boxes, lidar_range, pixel_sz, batch_size, radius=None, sigma=1, min_radius=2):

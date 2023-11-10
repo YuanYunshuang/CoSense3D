@@ -35,43 +35,60 @@ shared_modules = OrderedDict(
         type='heads.img_focal.ImgFocal',
         gather_keys=['img_feat', 'img_coor'],
         scatter_keys=['img_roi'],
+        gt_keys=['labels2d', 'centers2d', 'bboxes2d', 'img_size'],
         in_channels=128,
         embed_dims=128,
         num_classes=num_classes,
-        with_reg=True,
+        loss_cls2d=dict(
+            type='QualityFocalLoss',
+            use_sigmoid=True,
+            beta=2.0,
+            loss_weight=2.0),
+        loss_centerness=dict(type='GaussianFocalLoss', reduction='mean', loss_weight=1.0),
+        loss_bbox2d=dict(type='L1Loss', loss_weight=5.0),
+        loss_iou2d=dict(type='GIoULoss', loss_weight=2.0),
+        loss_centers2d=dict(type='L1Loss', loss_weight=10.0),
+        center_assigner= dict(type='target_assigners.HeatmapAssigner'),
+        box_assigner=dict(
+            type='target_assigners.HungarianAssigner2D',
+            cls_cost = dict(type='focal_loss', weight=2.),
+            reg_cost = dict(type='bboxl1', weight=5.0, box_format='xywh'),
+            iou_cost = dict(type='giou', weight=2.0),
+            centers2d_cost = dict(type='l1', weight=10.0)
+        ),
     ),
 
-    img2bev = dict(
-        type='projection.petr_decoder.PETRDecoder',
-        gather_keys=['img_roi', 'img_coor', 'img_size', 'intrinsics', 'lidar2img'],
-        scatter_keys=['bev_feat'],
-        in_channels=128,
-        decoder=dict(
-            type='TransformerDecoder',
-            return_intermediate=True,
-            num_layers=3,
-            transformerlayers=dict(
-                type='TransformerDecoderLayer',
-                attn_cfgs=[
-                    dict(type='MultiheadAttention',  # fp16 for 2080Ti training (save GPU memory).
-                         embed_dims=128,
-                         num_heads=8,
-                         dropout=0.1)
-                ],
-                ffn_cfgs=dict(
-                    type='FFN',
-                    embed_dims=128,
-                    feedforward_channels=1024,
-                    num_fcs=2,
-                    dropout=0.,
-                    act_cfg=dict(type='ReLU', inplace=True),
-                ),
-                feedforward_channels=1024,
-                ffn_dropout=0.1,
-                with_cp=False,  ###use checkpoint to save memory
-                operation_order=('cross_attn', 'norm', 'ffn', 'norm')),
-        )
-    ),
+    # img2bev = dict(
+    #     type='projection.petr_decoder.PETRDecoder',
+    #     gather_keys=['img_roi', 'img_coor', 'img_size', 'intrinsics', 'lidar2img'],
+    #     scatter_keys=['bev_feat'],
+    #     in_channels=128,
+    #     decoder=dict(
+    #         type='TransformerDecoder',
+    #         return_intermediate=True,
+    #         num_layers=3,
+    #         transformerlayers=dict(
+    #             type='TransformerDecoderLayer',
+    #             attn_cfgs=[
+    #                 dict(type='MultiheadAttention',  # fp16 for 2080Ti training (save GPU memory).
+    #                      embed_dims=128,
+    #                      num_heads=8,
+    #                      dropout=0.1)
+    #             ],
+    #             ffn_cfgs=dict(
+    #                 type='FFN',
+    #                 embed_dims=128,
+    #                 feedforward_channels=1024,
+    #                 num_fcs=2,
+    #                 dropout=0.,
+    #                 act_cfg=dict(type='ReLU', inplace=True),
+    #             ),
+    #             feedforward_channels=1024,
+    #             ffn_dropout=0.1,
+    #             with_cp=False,  ###use checkpoint to save memory
+    #             operation_order=('cross_attn', 'norm', 'ffn', 'norm')),
+    #     )
+    # ),
 
 )
 
