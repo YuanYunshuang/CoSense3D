@@ -51,6 +51,7 @@ class CenterController:
                 if 'loss' in k:
                     loss = loss + v
                 loss_dict[f'f{i}.{k}'] = v
+        loss_dict['total_loss'] = loss
         return loss, loss_dict
 
     def test_forward(self, batch_dict, **kwargs):
