@@ -76,7 +76,7 @@ class BEV(BaseModule):
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         tgt_pts, tgt_label, valid = self.get_tgt(batch_list, gt_boxes, gt_labels, **kwargs)
         epoch_num = kwargs.get('epoch', 0)
-        reg = self.data_from_list(batch_list, 'reg')
+        reg = self.cat_data_from_list(batch_list, 'reg')
         loss_dict = edl_mse_loss(preds=reg[valid],
                                        tgt=tgt_label,
                                        n_cls=2,
@@ -89,8 +89,8 @@ class BEV(BaseModule):
     def get_tgt(self, batch_list, gt_boxes, gt_labels, **kwargs):
         epoch_num = kwargs.get('epoch', 0)
         B = len(batch_list)
-        tgt_pts = self.data_from_list(batch_list, 'center', pad_idx=True)
-        boxes = self.data_from_list(gt_boxes, pad_idx=True).clone()
+        tgt_pts = self.cat_data_from_list(batch_list, 'center', pad_idx=True)
+        boxes = self.cat_data_from_list(gt_boxes, pad_idx=True).clone()
         boxes[:, 3] = 0
         pts = pad_r(tgt_pts)
         try:
@@ -117,7 +117,7 @@ class BEV(BaseModule):
             tgt_label[tgt_label == -1] = 0  # set area B to 0
 
             # positive sample annealing
-            conf = self.data_from_list(batch_list, 'conf')
+            conf = self.cat_data_from_list(batch_list, 'conf')
             labeled_pos = tgt_label == 1
             potential_pos = (conf[..., 1] > (1 - annealing_ratio * 0.5))
             unlabeled_potential_pos = torch.logical_and(potential_pos,

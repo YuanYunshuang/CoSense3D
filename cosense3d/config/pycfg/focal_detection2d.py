@@ -59,54 +59,6 @@ shared_modules = OrderedDict(
         ),
     ),
 
-    img2bev = dict(
-        type='projection.petr.PETR',
-        gather_keys=['img_feat', 'img_roi', 'img_coor', 'img_size', 'intrinsics', 'lidar2img'],
-        scatter_keys=['petr_feat'],
-        in_channels=128,
-        LID=True,
-        position_range=position_range,
-        transformer=dict(
-            type='transformer.PETRTransformer',
-            decoder=dict(
-                type='TransformerDecoder',
-                return_intermediate=True,
-                num_layers=3,
-                transformerlayers=dict(
-                    type='TransformerDecoderLayer',
-                    attn_cfgs=[
-                        dict(type='MultiheadAttention',  # fp16 for 2080Ti training (save GPU memory).
-                             embed_dims=128,
-                             num_heads=8,
-                             dropout=0.1)
-                    ],
-                    ffn_cfgs=dict(
-                        type='FFN',
-                        embed_dims=128,
-                        feedforward_channels=1024,
-                        num_fcs=2,
-                        dropout=0.,
-                        act_cfg=dict(type='ReLU', inplace=True),
-                    ),
-                    feedforward_channels=1024,
-                    ffn_dropout=0.1,
-                    with_cp=False,  ###use checkpoint to save memory
-                    operation_order=('cross_attn', 'norm', 'ffn', 'norm')),
-                )
-            )
-        ),
-
-    detection = dict(
-        type='heads.petr_head.PETRHead',
-        gather_keys=['petr_feat'],
-        scatter_keys=['petr_out'],
-        gt_keys=['local_boxes_3d', 'local_labels_3d'],
-        embed_dims=128,
-        pc_range=point_cloud_range,
-        code_weights=[2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        num_classes=1,
-    )
-
     )
 
 train_hooks = [

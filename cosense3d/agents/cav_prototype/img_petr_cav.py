@@ -3,7 +3,7 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 from .multi_modal_cav import BaseCAV
 
 
-class ImgCAV(BaseCAV):
+class ImgPETRCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prepare_data_keys = ['img', 'annos_global']
@@ -26,23 +26,25 @@ class ImgCAV(BaseCAV):
         if (self.is_ego or self.all_grad) and training_mode:
             tasks['with_grad'].append((self.id, '01:img_backbone', {}))
             tasks['with_grad'].append((self.id, '02:img_roi', {}))
-            # tasks['with_grad'].append((self.id, '3:img2bev', {}))
+            tasks['with_grad'].append((self.id, '03:img2bev', {}))
         else:
             tasks['no_grad'].append((self.id, '01:img_backbone', {}))
             tasks['no_grad'].append((self.id, '02:img_roi', {}))
-            # tasks['no_grad'].append((self.id, '3:img2bev', {}))
+            tasks['no_grad'].append((self.id, '03:img2bev', {}))
 
     def forward_fusion(self, tasks, training_mode):
         pass
         return tasks
 
     def forward_head(self, tasks, training_mode):
-        pass
+        if self.is_ego:
+            tasks['with_grad'].append((self.id, '11:detection', {}))
         return tasks
 
     def loss(self, tasks):
         if self.is_ego:
             tasks['loss'].append((self.id, '21:img_roi', {}))
+            tasks['loss'].append((self.id, '21:detection', {}))
         return tasks
 
 

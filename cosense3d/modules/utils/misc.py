@@ -49,3 +49,4 @@ class MLN(nn.Module):
         gamma = self.gamma(c)
         beta = self.beta(c)
         out = gamma * x + beta
+        return out

@@ -22,7 +22,7 @@ TRAIN:
   max_epoch: 50
   gpus: 1
   resume: true
-  hooks: 'pycfg.petr.train_hooks'
+  hooks: 'pycfg.focal_detection2d.train_hooks'
   optimizer:
     lr: 0.001
     weight_decay: 1e-2
@@ -37,21 +37,21 @@ TRAIN:
     lr_min: 2e-4
 
 TEST:
-  hooks: 'pycfg.petr.test_hooks'
+  hooks: 'pycfg.focal_detection2d.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
   data_manager: 'pycfg.data_pipeline_img.data_manager'
-  shared_modules: 'pycfg.petr.shared_modules'
+  shared_modules: 'pycfg.focal_detection2d.shared_modules'
   cav_manager:
-    prototype: img_cav.ImgCAV
+    prototype: img_focal_cav.ImgFocalCAV
     memory_len: *seq_len
   forward_runner: {}
 
 VISUALIZATION:
   img_viewer:
-    plots: 'pycfg.petr.plots'
+    plots: 'pycfg.focal_detection2d.plots'
 
 
 

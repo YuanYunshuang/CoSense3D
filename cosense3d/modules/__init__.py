@@ -41,15 +41,29 @@ class BaseModule(nn.Module):
     def format_output(self, output, B):
         pass
 
-    def data_from_list(self, input, key=None, pad_idx=False):
+    def cat_data_from_list(self, input, key=None, pad_idx=False):
         if key is not None:
             data = [x[key] for x in input]
         else:
             data = input
-        if pad_idx:
-            return cat_coor_with_idx(data)
+        if isinstance(data[0], torch.Tensor):
+            if pad_idx:
+                return cat_coor_with_idx(data)
+            else:
+                return torch.cat(data, dim=0)
         else:
-            return torch.cat(data, dim=0)
+            return data
+
+    def stack_data_from_list(self, input, key=None):
+        if key is not None:
+            data = [x[key] for x in input]
+        else:
+            data = input
+        if isinstance(data[0], torch.Tensor):
+            return torch.stack(data, dim=0)
+        else:
+            return data
+
 
     def cat_list(self, x_list, recursive=False):
         """Concatenate sub_lists to one list"""

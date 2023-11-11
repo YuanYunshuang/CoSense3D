@@ -52,7 +52,7 @@ class ImgFocal(BaseModule):
 
     def forward(self, img_feat, img_coor, **kwargs):
         out_dict = {}
-        x = self.data_from_list(img_feat)
+        x = self.cat_data_from_list(img_feat)
         N, c, h, w = x.shape
         n_pixels = h * w
 
@@ -72,7 +72,7 @@ class ImgFocal(BaseModule):
         })
 
 
-        img_coor = self.data_from_list(img_coor)
+        img_coor = self.cat_data_from_list(img_coor)
         reg_feat = self.shared_reg(x)
         ltrb = self.ltrb(reg_feat).permute(0, 2, 3, 1).contiguous()
         ltrb = ltrb.sigmoid()
@@ -104,10 +104,10 @@ class ImgFocal(BaseModule):
 
     def loss(self, batch_list, labels2d, centers2d, bboxes2d, img_size, **kwargs):
         feat_size = batch_list[0]['feat_size']
-        centerness = self.data_from_list(batch_list, 'centerness')
-        cls_score = self.data_from_list(batch_list, 'cls_score')
-        pred_boxes = self.data_from_list(batch_list, 'pred_boxes')
-        pred_centers2d = self.data_from_list(batch_list, 'pred_centers2d')
+        centerness = self.cat_data_from_list(batch_list, 'centerness')
+        cls_score = self.cat_data_from_list(batch_list, 'cls_score')
+        pred_boxes = self.cat_data_from_list(batch_list, 'pred_boxes')
+        pred_centers2d = self.cat_data_from_list(batch_list, 'pred_centers2d')
         labels2d = self.cat_list(labels2d)
         centers2d = self.cat_list(centers2d)
         bboxes2d = self.cat_list(bboxes2d)

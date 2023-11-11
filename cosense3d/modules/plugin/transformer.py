@@ -6,6 +6,8 @@ import torch.utils.checkpoint as cp
 
 from cosense3d.modules.utils import build_torch_module
 from cosense3d.modules.utils.norm import build_norm_layer
+from cosense3d.modules.utils.init import xavier_init
+
 
 def build_module(cfg):
     cfg_ = copy.deepcopy(cfg)
@@ -570,3 +572,180 @@ class TransformerDecoder(TransformerLayerSequence):
                 else:
                     intermediate.append(query)
         return torch.stack(intermediate)
+
+
+class PETRTemporalTransformer(nn.Module):
+    """Implements the DETR transformer.
+    Following the official DETR implementation, this module copy-paste
+    from torch.nn.Transformer with modifications:
+        * positional encodings are passed in MultiheadAttention
+        * extra LN at the end of encoder is removed
+        * decoder returns a stack of activations from all decoding layers
+    See `paper: End-to-End Object Detection with Transformers
+    <https://arxiv.org/pdf/2005.12872>`_ for details.
+    Args:
+        encoder (`mmcv.ConfigDict` | Dict): Config of
+            TransformerEncoder. Defaults to None.
+        decoder ((`mmcv.ConfigDict` | Dict)): Config of
+            TransformerDecoder. Defaults to None
+        init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
+            Defaults to None.
+    """
+
+    def __init__(self, encoder=None, decoder=None, cross=False):
+        super(PETRTemporalTransformer, self).__init__()
+        if encoder is not None:
+            self.encoder = build_module(encoder)
+        else:
+            self.encoder = None
+        self.decoder = build_module(decoder)
+        self.embed_dims = self.decoder.embed_dims
+        self.cross = cross
+
+    def init_weights(self):
+        # follow the official DETR to init parameters
+        for m in self.modules():
+            if hasattr(m, 'weight') and m.weight.dim() > 1:
+                xavier_init(m, distribution='uniform')
+        self._is_init = True
+
+    def forward(self, memory, tgt, query_pos, pos_embed, attn_masks, temp_memory=None, temp_pos=None,
+                mask=None, query_mask=None, reg_branch=None):
+        """Forward function for `Transformer`.
+        Args:
+            x (Tensor): Input query with shape [bs, c, h, w] where
+                c = embed_dims.
+            mask (Tensor): The key_padding_mask used for encoder and decoder,
+                with shape [bs, h, w].
+            query_embed (Tensor): The query embedding for decoder, with shape
+                [num_query, c].
+            pos_embed (Tensor): The positional encoding for encoder and
+                decoder, with the same shape as `x`.
+        Returns:
+            tuple[Tensor]: results of decoder containing the following tensor.
+                - out_dec: Output from decoder. If return_intermediate_dec \
+                      is True output has shape [num_dec_layers, bs,
+                      num_query, embed_dims], else has shape [1, bs, \
+                      num_query, embed_dims].
+                - memory: Output results from encoder, with shape \
+                      [bs, embed_dims, h, w].
+        """
+        memory = memory.transpose(0, 1).contiguous()
+        query_pos = query_pos.transpose(0, 1).contiguous()
+        pos_embed = pos_embed.transpose(0, 1).contiguous()
+
+        n, bs, c = memory.shape
+
+        if tgt is None:
+            tgt = torch.zeros_like(query_pos)
+        else:
+            tgt = tgt.transpose(0, 1).contiguous()
+
+        if temp_memory is not None:
+            temp_memory = temp_memory.transpose(0, 1).contiguous()
+            temp_pos = temp_pos.transpose(0, 1).contiguous()
+
+        # out_dec: [num_layers, num_query, bs, dim]
+        if not isinstance(attn_masks, list):
+            attn_masks = [attn_masks, None]
+        out_dec = self.decoder(
+            query=tgt,
+            key=memory,
+            value=memory,
+            key_pos=pos_embed,
+            query_pos=query_pos,
+            temp_memory=temp_memory,
+            temp_pos=temp_pos,
+            query_key_padding_mask=query_mask,
+            key_padding_mask=mask,
+            attn_masks=attn_masks,
+            reg_branch=reg_branch,
+        )
+        out_dec = out_dec.transpose(1, 2).contiguous()
+        memory = memory.reshape(-1, bs, c).transpose(0, 1).contiguous()
+        return out_dec, memory
+
+
+class PETRTransformer(nn.Module):
+    """Implements the DETR transformer.
+    Following the official DETR implementation, this module copy-paste
+    from torch.nn.Transformer with modifications:
+        * positional encodings are passed in MultiheadAttention
+        * extra LN at the end of encoder is removed
+        * decoder returns a stack of activations from all decoding layers
+    See `paper: End-to-End Object Detection with Transformers
+    <https://arxiv.org/pdf/2005.12872>`_ for details.
+    Args:
+        encoder (`mmcv.ConfigDict` | Dict): Config of
+            TransformerEncoder. Defaults to None.
+        decoder ((`mmcv.ConfigDict` | Dict)): Config of
+            TransformerDecoder. Defaults to None
+        init_cfg (obj:`mmcv.ConfigDict`): The Config for initialization.
+            Defaults to None.
+    """
+
+    def __init__(self, encoder=None, decoder=None, cross=False):
+        super(PETRTransformer, self).__init__()
+        if encoder is not None:
+            self.encoder = build_module(encoder)
+        else:
+            self.encoder = None
+        self.decoder = build_module(decoder)
+        self.embed_dims = self.decoder.embed_dims
+        self.cross = cross
+
+    def init_weights(self):
+        # follow the official DETR to init parameters
+        for m in self.modules():
+            if hasattr(m, 'weight') and m.weight.dim() > 1:
+                xavier_init(m, distribution='uniform')
+        self._is_init = True
+
+    def forward(self, memory, tgt, query_pos, pos_embed, attn_masks=None,
+                mask=None, query_mask=None):
+        """Forward function for `Transformer`.
+        Args:
+            x (Tensor): Input query with shape [bs, c, h, w] where
+                c = embed_dims.
+            mask (Tensor): The key_padding_mask used for encoder and decoder,
+                with shape [bs, h, w].
+            query_embed (Tensor): The query embedding for decoder, with shape
+                [num_query, c].
+            pos_embed (Tensor): The positional encoding for encoder and
+                decoder, with the same shape as `x`.
+        Returns:
+            tuple[Tensor]: results of decoder containing the following tensor.
+                - out_dec: Output from decoder. If return_intermediate_dec \
+                      is True output has shape [num_dec_layers, bs,
+                      num_query, embed_dims], else has shape [1, bs, \
+                      num_query, embed_dims].
+                - memory: Output results from encoder, with shape \
+                      [bs, embed_dims, h, w].
+        """
+        memory = memory.transpose(0, 1).contiguous()
+        query_pos = query_pos.transpose(0, 1).contiguous()
+        pos_embed = pos_embed.transpose(0, 1).contiguous()
+
+        n, bs, c = memory.shape
+
+        if tgt is None:
+            tgt = torch.zeros_like(query_pos)
+        else:
+            tgt = tgt.transpose(0, 1).contiguous()
+
+        # out_dec: [num_layers, num_query, bs, dim]
+        if not isinstance(attn_masks, list):
+            attn_masks = [attn_masks]
+        out_dec = self.decoder(
+            query=tgt,
+            key=memory,
+            value=memory,
+            key_pos=pos_embed,
+            query_pos=query_pos,
+            query_key_padding_mask=query_mask,
+            key_padding_mask=mask,
+            attn_masks=attn_masks,
+        )
+        out_dec = out_dec.transpose(1, 2).contiguous()
+        memory = memory.reshape(-1, bs, c).transpose(0, 1).contiguous()
+        return out_dec, memory
