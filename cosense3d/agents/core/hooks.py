@@ -79,9 +79,11 @@ class CheckPointsHook(BaseHook):
             self.save(runner, f'epoch{runner.epoch}.pth')
         else:
             if runner.epoch > self.max_ckpt:
-                os.remove(os.path.join(
+                filename = os.path.join(
                     runner.logger.log_path,
-                    f'epoch{runner.epoch - self.max_ckpt}.pth'))
+                    f'epoch{runner.epoch - self.max_ckpt}.pth')
+                if os.path.exists(filename):
+                    os.remove(filename)
             self.save(runner, f'epoch{runner.epoch}.pth')
 
     def post_iter(self, runner, **kwargs):
