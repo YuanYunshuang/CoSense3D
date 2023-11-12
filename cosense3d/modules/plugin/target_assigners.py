@@ -5,7 +5,9 @@ from typing import List, Dict, Optional
 import torch
 from scipy.optimize import linear_sum_assignment
 
-from cosense3d.utils.box_utils import bbox_xyxy_to_cxcywh, bbox_cxcywh_to_xyxy
+from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
+                                       bbox_cxcywh_to_xyxy,
+                                       normalize_bbox)
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
 from cosense3d.modules.utils.gaussian_utils import gaussian_2d
 
@@ -245,6 +247,89 @@ class HungarianAssigner2D(BaseAssigner):
         # assign foregrounds based on matching results
         assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
         assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
+        return num_gts, assigned_gt_inds, assigned_labels
+
+
+class HungarianAssigner3D(BaseAssigner):
+    def __init__(self,
+                 cls_cost=dict(type='focal_loss', weight=1.0),
+                 reg_cost=dict(type='l1', weight=1.0),
+                 iou_cost=dict(type='iou', weight=1.0)):
+        cost_builder = MatchCost()
+        self.cls_cost = cost_builder.build(**cls_cost)
+        self.reg_cost = cost_builder.build(**reg_cost)
+        self.iou_cost = cost_builder.build(**iou_cost)
+
+    def assign(self,
+               bbox_pred,
+               cls_pred,
+               gt_bboxes,
+               gt_labels,
+               code_weights=None,
+               eps=1e-7):
+        num_gts, num_bboxes = gt_bboxes.size(0), bbox_pred.size(0)
+        # 1. assign -1 by default
+        assigned_gt_inds = bbox_pred.new_full((num_bboxes,),
+                                              -1,
+                                              dtype=torch.long)
+        assigned_labels = bbox_pred.new_full((num_bboxes,),
+                                             -1,
+                                             dtype=torch.long)
+        if num_gts == 0 or num_bboxes == 0:
+            # No ground truth or boxes, return empty assignment
+            if num_gts == 0:
+                # No ground truth, assign all to background
+                assigned_gt_inds[:] = 0
+            return num_gts, assigned_gt_inds, assigned_labels
+            # 2. compute the weighted costs
+        # classification and bboxcost.
+        cls_cost = self.cls_cost(cls_pred, gt_labels)
+        # regression L1 cost
+        normalized_gt_bboxes = normalize_bbox(gt_bboxes)
+        if code_weights is not None:
+            bbox_pred = bbox_pred * code_weights
+            normalized_gt_bboxes = normalized_gt_bboxes * code_weights
+
+        reg_cost = self.reg_cost(bbox_pred[:, :8], normalized_gt_bboxes[:, :8])
+
+        # weighted sum of above two costs
+        cost = cls_cost + reg_cost
+
+        # 3. do Hungarian matching on CPU using linear_sum_assignment
+        cost = cost.detach().cpu()
+        cost = torch.nan_to_num(cost, nan=100.0, posinf=100.0, neginf=-100.0)
+        matched_row_inds, matched_col_inds = linear_sum_assignment(cost)
+        matched_row_inds = torch.from_numpy(matched_row_inds).to(
+            bbox_pred.device)
+        matched_col_inds = torch.from_numpy(matched_col_inds).to(
+            bbox_pred.device)
+
+        # 4. assign backgrounds and foregrounds
+        # assign all indices to backgrounds first
+        assigned_gt_inds[:] = 0
+        # assign foregrounds based on matching results
+        assigned_gt_inds[matched_row_inds] = matched_col_inds + 1
+        assigned_labels[matched_row_inds] = gt_labels[matched_col_inds]
+
+        # # 5. align matched pred and gt
+        # aligned_tgt_boxes = torch.zeros_like(bbox_pred)
+        # assign_mask = assigned_gt_inds > 0
+        # aligned_tgt_boxes[assign_mask] = normalized_gt_bboxes[assigned_gt_inds[assign_mask] - 1]
+
+        # from projects.utils.vislib import draw_points_boxes_plt
+        # vis_boxes_pred = denormalize_bbox(bbox_pred[assign_mask], self.pc_range)[:, :-2]
+        # vis_boxes_pred[:, :2] /= code_weights[:2]
+        # vis_boxes_gt = denormalize_bbox(aligned_tgt_boxes[assign_mask], self.pc_range)[:, :-2]
+        # vis_boxes_gt[:, :2] /= code_weights[:2]
+        # draw_points_boxes_plt(
+        #     pc_range=51.2,
+        #     boxes_pred=vis_boxes_pred.detach().cpu().numpy(),
+        #     bbox_pred_label=[str(i) for i in range(vis_boxes_pred.shape[0])],
+        #     boxes_gt=vis_boxes_gt.detach().cpu().numpy(),
+        #     bbox_gt_label=[str(i) for i in range(vis_boxes_gt.shape[0])],
+        #     filename='/home/yuan/Downloads/tmp.png'
+        # )
+
         return num_gts, assigned_gt_inds, assigned_labels
 
 

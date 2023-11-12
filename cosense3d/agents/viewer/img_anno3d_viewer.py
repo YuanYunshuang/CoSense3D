@@ -25,7 +25,12 @@ class ImgAnno3DViewer(FigureCanvasQTAgg):
         n_imgs = len(list(data['input']['imgs'].values())[0])
         cav_ids = sorted(list(data['input']['imgs'].keys()))
         for i, cav_id in enumerate(cav_ids):
-            bboxes3d = np.array(list(data['input']['local_labels'][cav_id].values()))[:, [1, 2, 3, 4, 5, 6, 9]]
+            if cav_id in data['input']['local_labels']:
+                bboxes3d = np.array(list(data['input']['local_labels'][cav_id].values())
+                                    )[:, [1, 2, 3, 4, 5, 6, 9]]
+            else:
+                bboxes3d = np.array(list(data['input']['global_labels'][cav_id].values())
+                                    )[:, [1, 2, 3, 4, 5, 6, 9]]
             for j in range(n_imgs):
                 ax = self.fig.add_subplot(n_cavs, n_imgs, i * n_imgs + j + 1)
                 img = data['input']['imgs'][cav_id][j].astype(np.uint8)

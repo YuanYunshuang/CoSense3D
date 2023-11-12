@@ -10,7 +10,7 @@ DATASET:
   batch_size_train: 4
   n_workers: 4
 
-  max_num_cavs: 7
+  max_num_cavs: 1
   seq_len: &seq_len 1
   train_pipeline: 'pycfg.data_pipeline_img.pipeline_cpu'
   test_pipeline: 'pycfg.data_pipeline_img.pipeline_cpu'
@@ -50,8 +50,10 @@ CONTROLLER:
   forward_runner: {}
 
 VISUALIZATION:
-  img_viewer:
+  output_viewer:
     plots: 'pycfg.petr.plots'
+
+
 
 
 

@@ -6,8 +6,9 @@ from torch import nn
 from cosense3d.modules import BaseModule
 from cosense3d.modules.plugin import build_plugin_module
 from cosense3d.modules.utils.common import inverse_sigmoid
-from cosense3d.modules.utils.misc import SELayer_Linear, MLN
-from cosense3d.modules.utils.positional_encoding import pos2posemb3d
+from cosense3d.utils.misc import multi_apply
+from cosense3d.utils.box_utils import normalize_bbox
+from cosense3d.modules.losses import build_loss
 
 
 class PETRHead(BaseModule):
@@ -16,6 +17,10 @@ class PETRHead(BaseModule):
                  pc_range,
                  code_weights,
                  num_classes,
+                 box_assigner,
+                 loss_cls,
+                 loss_bbox,
+                 loss_iou=None,
                  num_reg_fcs=2,
                  num_pred=3,
                  use_logits=True,
@@ -30,6 +35,13 @@ class PETRHead(BaseModule):
 
         self.pc_range = nn.Parameter(torch.tensor(pc_range), requires_grad=False)
         self.code_weights = nn.Parameter(torch.tensor(code_weights), requires_grad=False)
+
+        self.box_assigner = build_plugin_module(box_assigner)
+
+        self.loss_cls = build_loss(**loss_cls)
+        self.loss_bbox = build_loss(**loss_bbox)
+        if loss_iou is not None:
+            self.loss_iou = build_loss(**loss_iou)
 
         self._init_layers()
 
@@ -70,24 +82,22 @@ class PETRHead(BaseModule):
             out_dec = outs_dec[lvl]
             out_dec = torch.nan_to_num(out_dec)
 
-            # assert reference.shape[-1] == 3
-            outputs_class = self.cls_branches[lvl](out_dec)
-            tmp = self.reg_branches[lvl](out_dec)
+            pred_cls = self.cls_branches[lvl](out_dec)
+            pred_reg = self.reg_branches[lvl](out_dec)
 
             if self.use_logits:
-                reference = reference_points.clone()
-                reference[..., :3] = inverse_sigmoid(reference[..., :3])
-                tmp[..., :reference.shape[-1]] = tmp[..., :reference.shape[-1]] + reference
-                tmp[..., 0:3] = tmp[..., 0:3].sigmoid()
+                # reference = reference_points.clone()
+                reference = inverse_sigmoid(reference_points.clone())
+                pred_reg[..., :reference.shape[-1]] += reference
+                pred_reg[..., :3] = pred_reg[..., :3].sigmoid()
             else:
                 reference = reference_points.clone()
                 reference[..., :3] = reference[..., :3] * (
                         self.pc_range[3:6] - self.pc_range[0:3]) + self.pc_range[0:3]
-                tmp[..., :reference.shape[-1]] = tmp[..., :reference.shape[-1]] + reference
+                pred_reg[..., :reference.shape[-1]] = pred_reg[..., :reference.shape[-1]] + reference
 
-            outputs_coord = tmp
-            outputs_classes.append(outputs_class)
-            outputs_coords.append(outputs_coord)
+            outputs_classes.append(pred_cls)
+            outputs_coords.append(pred_reg)
 
         all_cls_scores = torch.stack(outputs_classes)
         all_bbox_preds = torch.stack(outputs_coords)
@@ -104,8 +114,57 @@ class PETRHead(BaseModule):
 
         return {self.scatter_keys[0]: outs}
 
-
-
     def loss(self, petr_out, local_boxes, local_labels, **kwargs):
-        pass
+        cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
+        bbox_preds = self.stack_data_from_list(petr_out, 'all_bbox_preds').flatten(0, 1)
+        gt_boxes = [boxes for boxes in local_boxes for _ in range(self.num_pred)]
+        gt_labels = [labels for labels in local_labels for _ in range(self.num_pred)]
+        code_weights = [self.code_weights] * len(gt_labels)
+
+        num_gts, assigned_gt_inds, assigned_labels = multi_apply(
+            self.box_assigner.assign,
+            bbox_preds,
+            cls_scores,
+            gt_boxes,
+            gt_labels,
+            code_weights
+        )
+
+        cared_pred_boxes = []
+        aligned_bboxes_gt = []
+        aligned_labels = []
+        mask = []
+        for i in range(len(cls_scores)):
+            pos_mask = assigned_gt_inds[i] > 0
+            mask.append(pos_mask)
+            pos_inds = assigned_gt_inds[i][pos_mask] - 1
+            boxes = bbox_preds[i][pos_mask]
+            cared_pred_boxes.append(boxes)
+            aligned_bboxes_gt.append(gt_boxes[i][pos_inds])
+            labels = pos_mask.new_full((len(pos_mask), ), self.num_classes, dtype=torch.long)
+            labels[pos_mask] = gt_labels[i][pos_inds]
+            aligned_labels.append(labels)
+
+        cared_pred_boxes = torch.cat(cared_pred_boxes, dim=0)
+        aligned_bboxes_gt = torch.cat(aligned_bboxes_gt, dim=0)
+        aligned_labels = torch.cat(aligned_labels, dim=0)
+        mask = torch.cat(mask, dim=0)
+
+        cls_avg_factor = max(sum(num_gts), 1)
+        loss_cls = self.loss_cls(cls_scores.reshape(-1, cls_scores.shape[-1]),
+                                 aligned_labels,  avg_factor=cls_avg_factor)
+
+        bbox_preds = bbox_preds.reshape(-1, bbox_preds.size(-1))[mask]
+        normalized_bbox_targets = normalize_bbox(aligned_bboxes_gt)
+        isnotnan = torch.isfinite(bbox_preds).all(dim=-1)
+        bbox_weights = torch.ones_like(cared_pred_boxes) * self.code_weights
+        loss_box = self.loss_bbox(cared_pred_boxes[isnotnan],
+                                  normalized_bbox_targets[isnotnan],
+                                  bbox_weights[isnotnan])
+        return {
+            'petr_cls_loss': loss_cls,
+            'petr_box_loss': loss_box
+        }
+
+
 

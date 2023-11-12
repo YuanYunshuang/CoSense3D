@@ -21,7 +21,7 @@ class ResnetEncoder(BaseModule):
         self.img_size = img_size
         self.stride = 2 ** (self.out_index + 1)
         self.feat_size = (img_size[0] // self.stride, img_size[1] // self.stride)
-        self.img_locations = nn.Parameter(img_locations(img_size, self.feat_size))
+        self.img_locations = nn.Parameter(img_locations(img_size, self.feat_size), requires_grad=False)
         self.pretrained = pretrained
 
         resnet = getattr(models, f'resnet{self.num_layers}', None)
