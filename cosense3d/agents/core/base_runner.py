@@ -54,7 +54,8 @@ class BaseRunner:
     def _vis_data(self,
                  with_input=True,
                  with_detection=False,
-                 with_bev=False):
+                 with_bev=False,
+                 with_meta=False):
         data = {}
         if with_input:
             data['input'] = self.controller.data_manager.get_vis_data_input()
@@ -62,6 +63,8 @@ class BaseRunner:
             data['detection'] = self.controller.data_manager.get_vis_data_detection()
         if with_bev:
             data['bev'] = self.controller.data_manager.get_vis_data_bev()
+        if with_meta:
+            data['meta'] = self.controller.data_manager.get_vis_data_meta()
         return data
 
     def vis_data(self):

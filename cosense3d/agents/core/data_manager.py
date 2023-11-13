@@ -159,5 +159,11 @@ class DataManager:
     def get_vis_data_bev(self, batch_idx=0):
         return self.gather_batch(batch_idx, 'bev')
 
+    def get_vis_data_meta(self, batch_idx=0):
+        return {
+            'scenario': self.gather_batch(batch_idx, 'scenario'),
+            'frame': self.gather_batch(batch_idx, 'frame')
+        }
+
 
 

@@ -4,7 +4,8 @@ import numpy as np
 import torch
 
 from cosense3d.utils.misc import torch_tensor_to_numpy
-from cosense3d.utils.box_utils import convert_box_to_polygon, compute_iou, boxes_to_corners_2d
+from cosense3d.utils.box_utils import convert_box_to_polygon, compute_iou, boxes_to_corners_3d
+from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu, boxes_iou_bev, boxes_iou3d_cpu, boxes_bev_iou_cpu
 
 
 def voc_ap(rec, prec):
@@ -67,9 +68,9 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
         gt_boxes = torch_tensor_to_numpy(gt_boxes)
         # convert center format to corners
         if det_boxes.ndim==2 and det_boxes.shape[1] == 7:
-            det_boxes = boxes_to_corners_2d(det_boxes)
+            det_boxes = boxes_to_corners_3d(det_boxes)[..., :4]
         if gt_boxes.ndim==2 and gt_boxes.shape[1] == 7:
-            gt_boxes = boxes_to_corners_2d(gt_boxes)
+            gt_boxes = boxes_to_corners_3d(gt_boxes)[..., :4]
 
         det_polygon_list_origin = list(convert_box_to_polygon(det_boxes))
         gt_polygon_list_origin = list(convert_box_to_polygon(gt_boxes))
@@ -171,3 +172,59 @@ def eval_final_results(result_stat, iou_thrs, range=""):
                           f'mrec_{iou_str}': mrec,
                           })
         print(f"AP@{iou}: {ap:.3f}")
+
+
+def ops_cal_tp(pred_boxes, gt_boxes, iou_mode='3d', IoU_thr=0.7):
+    if len(pred_boxes) == 0:
+        return torch.zeros(pred_boxes.shape[0], device=pred_boxes.device)
+    elif len(gt_boxes) == 0:
+        return torch.zeros(len(pred_boxes), device=pred_boxes.device).bool()
+    else:
+        if pred_boxes.is_cuda:
+            iou_func = boxes_iou3d_gpu if iou_mode == '3d' else boxes_iou_bev
+        else:
+            iou_func = boxes_iou3d_cpu if iou_mode == '3d' else boxes_bev_iou_cpu
+        ious = iou_func(pred_boxes, gt_boxes)
+        max_iou_pred_to_gts = ious.max(dim=1)
+        max_iou_gt_to_preds = ious.max(dim=0)
+        tp = max_iou_pred_to_gts[0] > IoU_thr
+        is_best_match = max_iou_gt_to_preds[1][max_iou_pred_to_gts[1]] \
+                        == torch.tensor([i for i in range(len(tp))], device=tp.device)
+        tp[torch.logical_not(is_best_match)] = False
+        return tp
+
+
+def cal_precision_recall(scores, tps, n_pred, n_gt):
+    order_inds = scores.argsort(descending=True)
+    tp_all = tps[order_inds]
+    list_accTP = tp_all.cumsum(dim=0)
+    precision = list_accTP.float() / torch.arange(1, n_pred + 1)
+    recall = list_accTP.float() / n_gt
+    return precision, recall
+
+
+def cal_ap_all_point(scores, tps, n_pred, n_gt):
+    '''
+    source: https://github.com/rafaelpadilla/Object-Detection-Metrics/blob/7c0bd0489e3fd4ae71fc0bc8f2a67dbab5dbdc9c/lib/Evaluator.py#L292
+    '''
+
+    prec, rec = cal_precision_recall(scores, tps, n_pred, n_gt)
+    mrec = []
+    mrec.append(0)
+    [mrec.append(e.item()) for e in rec]
+    mrec.append(1)
+    mpre = []
+    mpre.append(0)
+    [mpre.append(e.item()) for e in prec]
+    mpre.append(0)
+    for i in range(len(mpre) - 1, 0, -1):
+        mpre[i - 1] = max(mpre[i - 1], mpre[i])
+    ii = []
+    for i in range(len(mrec) - 1):
+        if mrec[1:][i] != mrec[0:-1][i]:
+            ii.append(i + 1)
+    ap = 0
+    for i in ii:
+        ap = ap + np.sum((mrec[i] - mrec[i - 1]) * mpre[i])
+    # return [ap, mpre[1:len(mpre)-1], mrec[1:len(mpre)-1], ii]
+    return [ap, mpre[0:len(mpre) - 1], mrec[0:len(mpre) - 1], ii]

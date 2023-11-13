@@ -19,6 +19,10 @@ class Hooks:
         for hook in self.hooks:
             getattr(hook, hook_stage)(runner, **kwargs)
 
+    def set_logdir(self, logdir):
+        for hook in self.hooks:
+            hook.set_logdir(logdir)
+
 
 class BaseHook:
     def __init__(self, **kwargs):
@@ -35,6 +39,9 @@ class BaseHook:
 
     def post_epoch(self, runner, **kwargs):
         pass
+
+    def set_logdir(self, logdir):
+        self.logdir = logdir
 
 
 class MemoryUsageHook(BaseHook):
@@ -186,4 +193,56 @@ class EvalOPV2VDetectionHook(BaseHook):
 
     def post_epoch(self, runner, **kwargs):
         self.eval_funcs.eval_final_results(self.result_stat, self.iou_thr)
+
+
+class EvalDetectionHook(BaseHook):
+    def __init__(self, iou_thr=[0.5, 0.7], pc_range=None, save_result=False, **kwargs):
+        super().__init__(**kwargs)
+        self.iou_thr = iou_thr
+        self.pc_range = pc_range
+        self.save_result = save_result
+        self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
+        # Create the dictionary for evaluation
+        self.result_stat = {iou: {'tp': [], 'gt': 0, 'scr': []} for iou in iou_thr}
+
+    def set_logdir(self, logdir):
+        logdir = os.path.join(logdir, 'detection_eval')
+        os.makedirs(logdir, exist_ok=True)
+        self.logdir = logdir
+
+    def post_iter(self, runner, **kwargs):
+        detection = runner.controller.data_manager.gather_ego_data('detection')
+        gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
+        if self.save_result:
+            ego_key = list(detection.keys())[0]
+            senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
+            frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
+            filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
+            result = {'detection': detection[ego_key], 'gt_boxes': gt_boxes[ego_key]}
+            torch.save(result, os.path.join(self.logdir, filename))
+        for cav_id, preds in detection.items():
+            for iou in self.iou_thr:
+                tp =self.eval_funcs.ops_cal_tp(
+                    preds['box'].detach(), gt_boxes[cav_id].detach(), IoU_thr=iou
+                )
+                self.result_stat[iou]['tp'].append(tp.cpu())
+                self.result_stat[iou]['gt'] += len(gt_boxes[cav_id])
+                self.result_stat[iou]['scr'].append(preds['scr'].detach().cpu())
+        # pass
+
+    def post_epoch(self, runner, **kwargs):
+        result = {}
+        for iou in self.iou_thr:
+            scores = torch.cat(self.result_stat[iou]['scr'], dim=0)
+            tps = torch.cat(self.result_stat[iou]['tp'], dim=0)
+            n_pred = len(scores)
+            n_gt = self.result_stat[iou]['gt']
+
+            ap, mpre, mrec, _ = self.eval_funcs.cal_ap_all_point(scores, tps, n_pred, n_gt)
+            iou_str = f"{int(iou * 100)}"
+            result[iou] = {f'ap_{iou_str}': ap,
+                          f'mpre_{iou_str}': mpre,
+                          f'mrec_{iou_str}': mrec,
+                          }
+            print(f"AP@{iou}: {ap:.3f}")
 

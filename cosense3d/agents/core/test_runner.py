@@ -25,6 +25,7 @@ class TestRunner(BaseRunner):
         else:
             logdir = os.path.join(logdir, f'test_{os.path.basename(ckpt)[:-4]}')
         self.logger = TestLogger(logdir)
+        self.hooks.set_logdir(logdir)
 
     def load(self, load_from):
         assert load_from is not None, "load path not given."
@@ -71,7 +72,7 @@ class TestRunner(BaseRunner):
         self.progress_bar.update(1)
 
     def vis_data(self):
-        data = self._vis_data(with_input=True, with_detection=True, with_bev=True)
+        data = self._vis_data(with_input=True, with_detection=True, with_bev=True, with_meta=True)
         return data
 
 

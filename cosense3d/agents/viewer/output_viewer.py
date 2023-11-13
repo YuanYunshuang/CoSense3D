@@ -20,6 +20,9 @@ class MplCanvas(FigureCanvasQTAgg):
         self.data = {}
         super(MplCanvas, self).__init__(fig)
 
+    def update_title(self, meta, cav_id):
+        self.axes.set_title(f"{meta['scenario'][cav_id]}.{meta['frame'][cav_id]}")
+
 
 class BEVSparseCanvas(MplCanvas):
     def __init__(self, lidar_range=None, **kwargs):
@@ -33,6 +36,7 @@ class BEVSparseCanvas(MplCanvas):
             centers = data_dict['center'].cpu().numpy()
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
             self.axes.clear()
+            self.update_title(data['meta'], cav_id)
             self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
                                              cmap='jet', c=conf, s=2, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
@@ -51,6 +55,7 @@ class DetectionCanvas(MplCanvas):
             return
         for cav_id, det_dict in data['detection'].items():
             self.axes.clear()
+            self.update_title(data['meta'], cav_id)
             # plot points
             for points in data['input']['pcds'].values():
                 draw_points_boxes_plt(

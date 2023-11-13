@@ -116,6 +116,7 @@ class DataOnlineProcessor:
             filter_range(data, lidar_range, k)
 
     @staticmethod
+    @torch.no_grad()
     def free_space_augmentation(data, d=10, h=1.5, step=1.5):
         lidar = data['points']
         # get point lower than z_min=1.5m
@@ -144,6 +145,7 @@ class DataOnlineProcessor:
         data['points'] = torch.cat([lidar, xyz_new], dim=0)
 
     @staticmethod
+    @torch.no_grad()
     def adaptive_free_space_augmentation(data, min_h=-1.5, steps=20, alpha=0.05):
         """
         Add free space points according to the distance of points to the origin.
