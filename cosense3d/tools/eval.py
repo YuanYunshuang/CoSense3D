@@ -73,24 +73,25 @@ def compare_detection(test_dir1, test_dir2):
         pred_boxes1 = corners_to_boxes_3d(data1['pred'], 7)
         pred_scores1 = data1['score']
         gt_boxes1 = corners_to_boxes_3d(data1['gt'], 7)
+        points1 = data1['points'][:, :3].cpu().numpy()
 
         pred_boxes2 = data2['detection']['box']
         pred_scores2 = data2['detection']['scr']
         gt_boxes2 = data2['gt_boxes']
         centers = data2['detection']['ctr']
 
-        fig = plt.figure(figsize=(14, 10))
+        fig = plt.figure(figsize=(20, 14))
         axs = fig.subplots(2, 1)
         draw_points_boxes_plt(
             pc_range=pc_range,
-            points=centers.cpu().numpy(),
+            points=points1,
             boxes_pred=pred_boxes1.cpu().numpy(),
             boxes_gt=gt_boxes1.cpu().numpy(),
             ax=axs[0]
         )
         draw_points_boxes_plt(
             pc_range=pc_range,
-            points=centers.cpu().numpy(),
+            points=points1,
             boxes_pred=pred_boxes2.detach().cpu().numpy(),
             boxes_gt=gt_boxes2.detach().cpu().numpy(),
             ax=axs[1]
