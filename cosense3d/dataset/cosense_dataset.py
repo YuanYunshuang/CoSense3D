@@ -30,7 +30,7 @@ from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 class CosenseDataset(Dataset):
     LABEL_COLORS = {}
     VALID_CLS = []
-    COM_RANGE = 140
+    COM_RANGE = 70
 
     def __init__(self, cfgs, mode):
         self.cfgs = cfgs

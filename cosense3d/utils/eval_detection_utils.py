@@ -35,7 +35,7 @@ def voc_ap(rec, prec):
 
 
 def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
-                    left_range=-float('inf'), right_range=float('inf')):
+                    det_range=None):
     """
     Calculate the true positive and false positive numbers of the current
     frames.
@@ -52,15 +52,13 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
         A dictionary contains fp, tp and gt number.
     iou_thresh : float
         The iou thresh.
-    right_range : float
-        The evaluarion range right bound
-    left_range : float
+    range : list, [left_range, right_range]
         The evaluation range left bound
     """
     # fp, tp and gt in the current frame
     fp = []
     tp = []
-
+    gt = gt_boxes.shape[0]
     if det_boxes is not None:
         # convert bounding boxes to numpy array
         det_boxes = torch_tensor_to_numpy(det_boxes)
@@ -68,35 +66,19 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
         gt_boxes = torch_tensor_to_numpy(gt_boxes)
         # convert center format to corners
         if det_boxes.ndim==2 and det_boxes.shape[1] == 7:
-            det_boxes = boxes_to_corners_3d(det_boxes)[..., :4]
+            det_boxes = boxes_to_corners_3d(det_boxes)
         if gt_boxes.ndim==2 and gt_boxes.shape[1] == 7:
-            gt_boxes = boxes_to_corners_3d(gt_boxes)[..., :4]
+            gt_boxes = boxes_to_corners_3d(gt_boxes)
 
-        det_polygon_list_origin = list(convert_box_to_polygon(det_boxes))
-        gt_polygon_list_origin = list(convert_box_to_polygon(gt_boxes))
-        det_polygon_list = []
-        gt_polygon_list = []
-        det_score_new = []
         # remove the bbx out of range
-        for i in range(len(det_polygon_list_origin)):
-            det_polygon = det_polygon_list_origin[i]
-            distance = np.sqrt(det_polygon.centroid.x ** 2 +
-                               det_polygon.centroid.y ** 2)
-            if left_range < distance < right_range:
-                det_polygon_list.append(det_polygon)
-                det_score_new.append(det_score[i])
+        if det_range is not None:
+            pass
 
-        for i in range(len(gt_polygon_list_origin)):
-            gt_polygon = gt_polygon_list_origin[i]
-            distance = np.sqrt(gt_polygon.centroid.x ** 2 +
-                               gt_polygon.centroid.y ** 2)
-            if left_range < distance < right_range:
-                gt_polygon_list.append(gt_polygon)
-
-        gt = len(gt_polygon_list)
-        det_score_new = np.array(det_score_new)
         # sort the prediction bounding box by score
-        score_order_descend = np.argsort(-det_score_new)
+        score_order_descend = np.argsort(-det_score)
+        det_score = det_score[score_order_descend]  # from high to low
+        det_polygon_list = list(convert_box_to_polygon(det_boxes))
+        gt_polygon_list = list(convert_box_to_polygon(gt_boxes))
 
         # match prediction and gt bounding box
         for i in range(score_order_descend.shape[0]):
@@ -113,6 +95,7 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
 
             gt_index = np.argmax(ious)
             gt_polygon_list.pop(gt_index)
+        result_stat[iou_thresh]['score'] += det_score.tolist()
     else:
         gt = gt_boxes.shape[0]
     result_stat[iou_thresh]['fp'] += fp
@@ -120,7 +103,7 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
     result_stat[iou_thresh]['gt'] += gt
 
 
-def calculate_ap(result_stat, iou):
+def calculate_ap(result_stat, iou, global_sort_detections):
     """
     Calculate the average precision and recall, and save them into a txt.
 
@@ -128,13 +111,28 @@ def calculate_ap(result_stat, iou):
     ----------
     result_stat : dict
         A dictionary contains fp, tp and gt number.
+
     iou : float
+
+    global_sort_detections : bool
+        Whether to sort the detection results globally.
     """
     iou_5 = result_stat[iou]
 
-    fp = iou_5['fp']
-    tp = iou_5['tp']
-    assert len(fp) == len(tp)
+    if global_sort_detections:
+        fp = np.array(iou_5['fp'])
+        tp = np.array(iou_5['tp'])
+        score = np.array(iou_5['score'])
+
+        assert len(fp) == len(tp) and len(tp) == len(score)
+        sorted_index = np.argsort(-score)
+        fp = fp[sorted_index].tolist()
+        tp = tp[sorted_index].tolist()
+
+    else:
+        fp = iou_5['fp']
+        tp = iou_5['tp']
+        assert len(fp) == len(tp)
 
     gt_total = iou_5['gt']
 
@@ -161,11 +159,11 @@ def calculate_ap(result_stat, iou):
     return ap, mrec, mprec
 
 
-def eval_final_results(result_stat, iou_thrs, range=""):
+def eval_final_results(result_stat, iou_thrs, global_sort_detections=False, range=""):
     dump_dict = {}
     print(f'Range: {range}')
     for iou in iou_thrs:
-        ap, mrec, mpre = calculate_ap(result_stat, iou)
+        ap, mrec, mpre = calculate_ap(result_stat, iou, global_sort_detections)
         iou_str = f"{int(iou * 100)}"
         dump_dict.update({f'ap_{iou_str}': ap,
                           f'mpre_{iou_str}': mpre,

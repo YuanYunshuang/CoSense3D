@@ -1,20 +1,33 @@
 import os, glob, tqdm
 import torch
 from cosense3d.utils.eval_detection_utils import *
+from cosense3d.utils.box_utils import corners_to_boxes_3d
+from cosense3d.utils.vislib import draw_points_boxes_plt,plt
+from cosense3d.utils.pclib import load_pcd
 
 
 def eval_detection_opv2v(test_dir, iou_thr=[0.5, 0.7]):
-    result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0} for iou in iou_thr}
-    filenames = glob.glob(os.path.join(test_dir, '*.pth'))
-    for f in tqdm.tqdm(filenames):
-        data = torch.load(f)
-        preds = data['detection']
-        gt_boxes = data['gt_boxes']
+    result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
+    filenames = sorted(glob.glob(os.path.join(test_dir, '*.pth')))
+    for i in tqdm.tqdm(range(len(filenames))):
+        if os.path.exists(os.path.join(test_dir, f"{i}.pth")):
+            data = torch.load(os.path.join(test_dir, f"{i}.pth"))
+        else:
+            data = torch.load(filenames[i])
+
+        if 'pred' in data:
+            pred_boxes = data['pred']
+            pred_scores = data['score']
+            gt_boxes = data['gt']
+        else:
+            pred_boxes = data['detection']['box']
+            pred_scores = data['detection']['scr']
+            gt_boxes = data['gt_boxes']
         for iou in iou_thr:
             caluclate_tp_fp(
-                preds['box'], preds['scr'], gt_boxes, result_stat, iou
+                pred_boxes, pred_scores, gt_boxes, result_stat, iou
             )
-    eval_final_results(result_stat, iou_thr)
+    eval_final_results(result_stat, iou_thr, global_sort_detections=True)
 
 
 def eval_detection_cosense3d(test_dir, iou_thr=[0.5, 0.7], mode='bev'):
@@ -48,8 +61,56 @@ def eval_detection_cosense3d(test_dir, iou_thr=[0.5, 0.7], mode='bev'):
         print(f"AP@{iou}: {ap:.3f}")
 
 
+def compare_detection(test_dir1, test_dir2):
+    filenames = sorted(glob.glob(os.path.join(test_dir2, '*.pth')))
+    pc_range = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
+    for i, f in enumerate(filenames):
+        if not i % 10 == 0:
+            continue
+        data1 = torch.load(os.path.join(test_dir1, f"{i}.pth"))
+        data2 = torch.load(f)
+
+        pred_boxes1 = corners_to_boxes_3d(data1['pred'], 7)
+        pred_scores1 = data1['score']
+        gt_boxes1 = corners_to_boxes_3d(data1['gt'], 7)
+
+        pred_boxes2 = data2['detection']['box']
+        pred_scores2 = data2['detection']['scr']
+        gt_boxes2 = data2['gt_boxes']
+        centers = data2['detection']['ctr']
+
+        fig = plt.figure(figsize=(14, 10))
+        axs = fig.subplots(2, 1)
+        draw_points_boxes_plt(
+            pc_range=pc_range,
+            points=centers.cpu().numpy(),
+            boxes_pred=pred_boxes1.cpu().numpy(),
+            boxes_gt=gt_boxes1.cpu().numpy(),
+            ax=axs[0]
+        )
+        draw_points_boxes_plt(
+            pc_range=pc_range,
+            points=centers.cpu().numpy(),
+            boxes_pred=pred_boxes2.detach().cpu().numpy(),
+            boxes_gt=gt_boxes2.detach().cpu().numpy(),
+            ax=axs[1]
+        )
+
+
+        scenario, frame, _, _ = os.path.basename(f).split('.')
+        plt.savefig(f"/koko/logs/tmp/{scenario}_{frame}.jpg")
+        plt.close()
+        # data_path = "/koko/OPV2V/test"
+        # cavs = os.listdir(f"{data_path}/{scenario}")
+        # pcds = []
+        # for cav in cavs:
+        #     if 'yaml' in cav:
+        #         continue
+        #     points = load_pcd(f"{data_path}/{scenario}/{cav}/{frame}.pcd")['xyz']
+
 
 if __name__=="__main__":
-    eval_detection_cosense3d(
-        "/media/yuan/luna/cosense3d/default/epoch50/detection_eval",
+    compare_detection(
+        "/home/projects/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
+        "/koko/logs/cosense3d/epoch50/detection_eval",
     )

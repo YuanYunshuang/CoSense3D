@@ -175,16 +175,32 @@ class DetectionNMSHook(BaseHook):
 
 
 class EvalOPV2VDetectionHook(BaseHook):
-    def __init__(self, iou_thr=[0.5, 0.7], range=[""], **kwargs):
+    def __init__(self, iou_thr=[0.5, 0.7], range=[""], save_result=False, **kwargs):
         super().__init__(**kwargs)
         self.iou_thr = iou_thr
+        self.save_result = save_result
         self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
         # Create the dictionary for evaluation
-        self.result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0} for iou in iou_thr}
+        self.result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
+
+    def set_logdir(self, logdir):
+        logdir = os.path.join(logdir, 'detection_eval')
+        os.makedirs(logdir, exist_ok=True)
+        self.logdir = logdir
 
     def post_iter(self, runner, **kwargs):
         detection = runner.controller.data_manager.gather_ego_data('detection')
         gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
+        points = runner.controller.data_manager.gather_batch(0, 'points')
+        if self.save_result:
+            ego_key = list(detection.keys())[0]
+            senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
+            frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
+            filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
+            result = {'detection': detection[ego_key],
+                      'gt_boxes': gt_boxes[ego_key],
+                      'points': points}
+            torch.save(result, os.path.join(self.logdir, filename))
         for cav_id, preds in detection.items():
             for iou in self.iou_thr:
                 self.eval_funcs.caluclate_tp_fp(
@@ -213,12 +229,15 @@ class EvalDetectionHook(BaseHook):
     def post_iter(self, runner, **kwargs):
         detection = runner.controller.data_manager.gather_ego_data('detection')
         gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
+        points = runner.controller.data_manager.gather_batch(0, 'points')
         if self.save_result:
             ego_key = list(detection.keys())[0]
             senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
             frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
             filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
-            result = {'detection': detection[ego_key], 'gt_boxes': gt_boxes[ego_key]}
+            result = {'detection': detection[ego_key],
+                      'gt_boxes': gt_boxes[ego_key],
+                      'points': points}
             torch.save(result, os.path.join(self.logdir, filename))
         for cav_id, preds in detection.items():
             for iou in self.iou_thr:
