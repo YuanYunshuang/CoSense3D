@@ -5,12 +5,90 @@ import torch
 from cosense3d.ops.utils import points_in_boxes_gpu
 
 
-class ResidualBoxCoder(object):
-    def __init__(self):
-        pass
+def build_box_coder(type, **kwargs):
+    return globals()[type](**kwargs)
 
-    @staticmethod
-    def encode(anchors, boxes):
+
+class ResidualBoxCoder(object):
+    def __init__(self, mode='simple_dist'):
+        """
+
+        Parameters
+        ----------
+        mode str: simple_dist | sin_cos_dist | compass_rose
+        """
+        self.mode = mode
+        if mode == 'simple_dist':
+            self.code_size = 7
+        elif mode == 'sin_cos_dist':
+            self.code_size = 8
+        elif mode == 'compass_rose':
+            self.code_size = 10
+            self.cls_code_size = 2
+        else:
+            raise NotImplementedError
+
+    def encode_direction(self, ra, rg):
+        if self.mode == 'simple_dist':
+            reg = (rg - ra).view(-1, 1)
+            return reg, None
+        elif self.mode == 'sin_cos_dist':
+            rgx = torch.cos(rg)
+            rgy = torch.sin(rg)
+            rax = torch.cos(ra)
+            ray = torch.sin(ra)
+            rtx = rgx - rax
+            rty = rgy - ray
+            ret = [rtx, rty]
+            reg = torch.stack(ret, dim=-1)  # N 2
+            return reg, None
+        elif self.mode == 'compass_rose':
+            # encode box directions
+            rgx = torch.cos(rg).view(-1, 1)  # N 1
+            rgy = torch.sin(rg).view(-1, 1)  # N 1
+            ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
+            rax = torch.cos(ra_ext)  # N 2
+            ray = torch.sin(ra_ext)  # N 2
+            # cos(a - b) = cos(a)cos(b) + sin(a)sin(b)
+            # we use arccos instead of a-b to control the difference in 0-pi
+            diff_angle = torch.arccos(rax * rgx + ray * rgy)  # N 2
+            dir_score = 1 - diff_angle / math.pi  # N 2
+            rtx = rgx - rax  # N 2
+            rty = rgy - ray  # N 2
+
+            dir_score = dir_score  # N 2
+            ret = [rtx, rty]
+            reg = torch.cat(ret, dim=-1)  # N 4
+            return reg, dir_score
+        else:
+            raise NotImplementedError
+
+    def decode_direction(self, ra, vt, dir_scores=None):
+        if self.mode == 'simple_dist':
+            rg = (vt + ra).view(-1, 1)
+            return rg
+        elif self.mode == 'sin_cos_dist':
+            rax = torch.cos(ra)
+            ray = torch.sin(ra)
+            va = torch.cat([rax, ray], dim=-1)
+            vg = vt + va
+            rg = torch.atan2(vg[..., 1], vg[..., 0]).view(-1, 1)
+            return rg
+        elif self.mode == 'compass_rose':
+            ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
+            rax = torch.cos(ra_ext)  # N 2
+            ray = torch.sin(ra_ext)  # N 2
+            va = torch.cat([rax, ray], dim=-1)
+            vg = vt + va
+            rg = torch.atan2(vg[..., 2:], vg[..., :2]).view(-1, 2)
+
+            dirs = torch.argmax(dir_scores, dim=-1).view(-1)
+            rg = rg[torch.arange(len(rg)), dirs].view(len(vt), -1, 1)
+            return rg
+        else:
+            raise NotImplementedError
+
+    def encode(self, anchors, boxes):
         xa, ya, za, la, wa, ha, ra = torch.split(anchors, 1, dim=-1)
         xg, yg, zg, lg, wg, hg, rg = torch.split(boxes, 1, dim=-1)
 
@@ -23,27 +101,13 @@ class ResidualBoxCoder(object):
         wt = torch.log(wg / wa)
         ht = torch.log(hg / ha)
 
-        # encode box directions
-        rgx = torch.cos(rg).view(-1, 1)  # N 1
-        rgy = torch.sin(rg).view(-1, 1)  # N 1
-        ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
-        rax = torch.cos(ra_ext)  # N 2
-        ray = torch.sin(ra_ext)  # N 2
-        # cos(a - b) = cos(a)cos(b) + sin(a)sin(b)
-        # we use arccos instead of a-b to control the difference in 0-pi
-        diff_angle = torch.arccos(rax * rgx + ray * rgy)  # N 2
-        dir_score = 1 - diff_angle / math.pi  # N 2
-        rtx = rgx - rax  # N 2
-        rty = rgy - ray  # N 2
-
-        dir_score = dir_score  # N 2
-        ret = [xt, yt, zt, lt, wt, ht, rtx, rty]
+        reg_dir, dir_score = self.encode_direction(ra, rg)
+        ret = [xt, yt, zt, lt, wt, ht, reg_dir]
         reg = torch.cat(ret, dim=1)  # N 6+4
 
         return reg, dir_score
 
-    @staticmethod
-    def decode(anchors, boxes_enc, dir_scores):
+    def decode(self, anchors, boxes_enc, dir_scores=None):
         xa, ya, za, la, wa, ha, ra = torch.split(anchors, 1, dim=-1)
         xt, yt, zt, lt, wt, ht = torch.split(boxes_enc[..., :6], 1, dim=-1)
         vt = boxes_enc[..., 6:]
@@ -57,15 +121,7 @@ class ResidualBoxCoder(object):
         wg = torch.exp(wt) * wa
         hg = torch.exp(ht) * ha
 
-        ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert
-        rax = torch.cos(ra_ext)  # N 2
-        ray = torch.sin(ra_ext)  # N 2
-        va = torch.cat([rax, ray], dim=-1)
-        vg = vt + va
-        rg = torch.atan2(vg[..., 2:], vg[..., :2]).view(-1, 2)
-
-        dirs = torch.argmax(dir_scores, dim=-1).view(-1)
-        rg = rg[torch.arange(len(rg)), dirs].view(len(xg), -1, 1)
+        rg = self.decode_direction(ra, vt, dir_scores)
 
         return torch.cat([xg, yg, zg, lg, wg, hg, rg], dim=-1)
 

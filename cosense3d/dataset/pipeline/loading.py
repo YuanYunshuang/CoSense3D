@@ -14,7 +14,7 @@ class LoadLidarPoints:
                  coop_mode=True,
                  use_intensity=True):
         self.coop_mode = coop_mode
-        self.use_instensity = use_intensity
+        self.use_intensity = use_intensity
 
     def read_pcd(self, pts_filename):
         with open(pts_filename, "r") as pcd_file:
@@ -96,7 +96,7 @@ class LoadLidarPoints:
 
     def _load_single(self, pts_filename):
         lidar_dict = self._load_points(pts_filename)
-        if self.use_instensity:
+        if self.use_intensity:
             points = np.concatenate([lidar_dict['xyz'],
                                      lidar_dict['intensity']],
                                     axis=1)

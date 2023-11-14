@@ -76,7 +76,11 @@ def apply_transform(data, transform, key):
 def filter_range(data, lidar_range, key):
     if key == 'points':
         mask = filter_range_mask(data['points'], lidar_range)
-        data['points'] = data['points'][mask]
+        points = data['points'][mask]
+        if len(points) == 0:
+            # pad empty point cloud with one point full of zeros
+            points = torch.zeros_like(data['points'][:1])
+        data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         coor = key.split('_')[1]
         if f'{coor}_bboxes_3d' not in data:

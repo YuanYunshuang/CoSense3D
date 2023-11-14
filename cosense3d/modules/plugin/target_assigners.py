@@ -3,13 +3,17 @@ from functools import partial
 from typing import List, Dict, Optional
 
 import torch
+from torch import nn
 from scipy.optimize import linear_sum_assignment
 
 from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
                                        bbox_cxcywh_to_xyxy,
-                                       normalize_bbox)
+                                       normalize_bbox,
+                                       boxes3d_to_standup_bboxes)
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
 from cosense3d.modules.utils.gaussian_utils import gaussian_2d
+from cosense3d.modules.utils.box_coder import build_box_coder
+from cosense3d.ops.iou3d_nms_utils import boxes_iou_bev
 
 
 class BaseAssigner(metaclass=ABCMeta):
@@ -381,3 +385,101 @@ class HeatmapAssigner(BaseAssigner):
             for center, r in zip(obj_centers2d, radius):
                 heatmap = self.draw_heatmap_gaussian(heatmap, center / 16, radius=int(r), k=1)
         return heatmap
+
+
+class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
+    def __init__(self,
+                 box_size,
+                 dirs,
+                 voxel_size,
+                 lidar_range,
+                 stride,
+                 box_coder,
+                 pos_threshold=0.6,
+                 neg_threshold=0.45):
+        super().__init__()
+        self.voxel_size = voxel_size
+        self.lidar_range = lidar_range
+        self.num_anchors = len(dirs)
+        self.stride = stride
+        self.pos_threshold = pos_threshold
+        self.neg_threshold = neg_threshold
+        self.box_coder = build_box_coder(**box_coder)
+        anchors, standup_anchors = self.get_anchor_template(box_size, dirs)
+        self.anchors = nn.Parameter(anchors, requires_grad=False)
+        self.standup_anchors = nn.Parameter(standup_anchors, requires_grad=False)
+
+    def get_anchor_template(self, box_size, dirs):
+        pix_x = self.voxel_size[0] * self.stride
+        pix_y = self.voxel_size[1] * self.stride
+        x = torch.arange(self.lidar_range[0], self.lidar_range[3], pix_x) + pix_x * 0.5
+        y = torch.arange(self.lidar_range[1], self.lidar_range[4], pix_y) + pix_y * 0.5
+        xys = torch.stack(torch.meshgrid(x, y, indexing='ij'), dim=-1)
+        xys = xys.unsqueeze(2).repeat(1, 1, self.num_anchors, 1)
+        zs = - torch.ones_like(xys[..., :1])
+        h, w = xys.shape[:2]
+        lwh = torch.tensor(box_size).reshape(
+            1, 1, 1, -1).repeat(h, w, self.num_anchors, 1)
+        rs = torch.deg2rad(torch.tensor(dirs)).reshape(
+            1, 1, -1, 1).repeat(h, w, 1, 1)
+        anchors = torch.cat([xys, zs, lwh, rs], dim=-1).view(-1, 7)
+        standup_anchors = boxes3d_to_standup_bboxes(anchors)
+        # standup_anchors[:, [0, 2]] -= self.lidar_range[0]
+        # standup_anchors[:, [1, 3]] -= self.lidar_range[1]
+        return anchors, standup_anchors
+
+    def assign(self, gt_boxes):
+        """
+
+        Parameters
+        ----------
+        gt_boxes Tensor(N, 7): [x, y, z, l, w, h, r]
+
+        Returns
+        -------
+        reg Tensor(H, W, num_anchors, code_size): box regression targets
+        """
+        standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
+        ious = self.box_overlaps(self.standup_anchors, standup_boxes)
+        iou_max, max_inds = ious.max(dim=1)
+        top1_inds = torch.argmax(ious, dim=0)
+
+        pos = iou_max > self.pos_threshold
+        pos_inds = torch.cat([top1_inds, torch.where(pos)[0]]).unique()
+        neg = iou_max < self.neg_threshold
+        neg[pos_inds] = False
+
+        labels = gt_boxes.new_full((ious.shape[0],), -1)
+        labels[neg] = 0
+        labels[pos_inds] = 1
+
+        aligned_gt_boxes = gt_boxes[max_inds[pos_inds]]
+        aligned_anchors = self.anchors[pos_inds]
+        reg_tgt, dir_score = self.box_coder.encode(aligned_anchors, aligned_gt_boxes)
+
+        return labels, reg_tgt, dir_score
+
+    def box_overlaps(self, boxes1, boxes2):
+        areas1 = (boxes1[:, 2] - boxes1[:, 0] + 1) * \
+                 (boxes1[:, 3] - boxes1[:, 1] + 1)
+        areas2 = (boxes2[:, 2] - boxes2[:, 0] + 1) * \
+                 (boxes2[:, 3] - boxes2[:, 1] + 1)
+
+        boxes1_mat = boxes1.unsqueeze(1).repeat(1, boxes2.shape[0], 1)
+        boxes2_mat = boxes2.unsqueeze(0).repeat(boxes1.shape[0], 1, 1)
+        x_extend = torch.minimum(boxes1_mat[..., 2], boxes2_mat[..., 2]) - \
+            torch.maximum(boxes1_mat[..., 0], boxes2_mat[..., 0]) + 1
+        y_extend = torch.minimum(boxes1_mat[..., 3], boxes2_mat[..., 3]) - \
+            torch.maximum(boxes1_mat[..., 1], boxes2_mat[..., 1]) + 1
+
+        overlaps = torch.zeros_like(boxes1_mat[..., 0])
+
+        pos = torch.logical_and(x_extend > 0, y_extend > 0)
+        intersection = x_extend[pos] * y_extend[pos]
+        union = (areas1.unsqueeze(1) + areas2.unsqueeze(0))[pos] - intersection
+        overlaps[pos] = intersection / union
+
+        return overlaps
+
+
+

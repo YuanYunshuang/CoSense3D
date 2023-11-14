@@ -39,6 +39,7 @@ class SmoothL1Loss(BaseLoss):
 
         assert pred.size() == target.size()
         diff = torch.abs(pred - target)
-        loss = torch.where(diff < self.beta, 0.5 * diff * diff / self.beta,
+        loss = torch.where(diff < self.beta,
+                           0.5 * diff * diff / self.beta,
                            diff - 0.5 * self.beta)
         return loss

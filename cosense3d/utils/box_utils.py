@@ -157,6 +157,25 @@ def corners_to_boxes_3d(corners, mode=9):
     return boxes.numpy() if is_numpy else boxes
 
 
+def boxes3d_to_standup_bboxes(boxes):
+    """
+
+    Parameters
+    ----------
+    boxes Tensor(N, 7)
+    expand float: expand box in x and y axis
+
+    Returns
+    bboxes2d Tenosr(N, 4): [x_min, y_min, x_max, y_max)
+    -------
+    """
+    corners = boxes_to_corners_3d(boxes)
+    standup_boxes = torch.zeros_like(boxes[:, :4])
+    standup_boxes[:, :2] = corners[..., :2].min(dim=1)[0]
+    standup_boxes[:, 2:] = corners[..., :2].max(dim=1)[0]
+    return standup_boxes
+
+
 def find_rigid_alignment(A, B):
     """
     Find rotation and translation from A to B.
