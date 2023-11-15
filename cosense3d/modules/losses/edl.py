@@ -160,7 +160,7 @@ class EDLLoss(BaseLoss):
             cared = tgt >= 0
             evidence = evidence[cared]
             tgt = tgt[cared]
-            tgt_onehot = F.one_hot(tgt.long(), self.n_cls)
+            tgt_onehot = F.one_hot(tgt.long(), self.n_cls).float()
         elif len(tgt.shape) == 2 and tgt.shape[1] > 1:
             cared = (tgt >= 0).all(dim=-1)
             evidence = evidence[cared]
