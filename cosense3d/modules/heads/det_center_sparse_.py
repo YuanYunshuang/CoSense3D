@@ -1,13 +1,10 @@
 
 import importlib
-
-import torch
 from einops import rearrange
 
-from cosense3d.modules import BaseModule, plugin
+from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.common import linear_last
-from cosense3d.utils.misc import multi_apply
-from cosense3d.modules.losses import build_loss, logits_to_edl_conf_unc
+from cosense3d.modules.losses.common import weighted_smooth_l1_loss
 from cosense3d.modules.utils.me_utils import *
 
 
@@ -103,16 +100,15 @@ class DetCenterSparse(BaseModule):
                  cls_head_cfg,
                  reg_head_cfg,
                  reg_channels,
-                 cls_assigner,
-                 box_assigner,
-                 loss_cls,
-                 loss_box,
+                 loss_cfg,
+                 target_assigner=None,
                  **kwargs):
         super(DetCenterSparse, self).__init__(**kwargs)
         update_me_essentials(self, data_info, stride)
 
         self.n_heads = len(class_names_each_head)
         self.class_names_each_head = class_names_each_head
+        self.loss_cfg = loss_cfg
         self.reg_heads = []
 
         self.cls_head = globals()[cls_head_cfg['name']](
@@ -127,11 +123,15 @@ class DetCenterSparse(BaseModule):
             sigmoid_keys=reg_head_cfg['sigmoid_keys'],
         )
 
-        self.cls_assigner = plugin.build_plugin_module(cls_assigner)
-        self.box_assigner = plugin.build_plugin_module(box_assigner)
-
-        self.loss_cls = build_loss(**loss_cls)
-        self.loss_box = build_loss(**loss_box)
+        if target_assigner is not None:
+            from cosense3d.modules.utils.target_assigner import TargetAssigner
+            self.tgt_assigner = TargetAssigner(target_assigner,
+                                               class_names_each_head=class_names_each_head,
+                                               batch_dict_key=self.__class__.__name__)
+        for k, v in self.loss_cfg.items():
+            if isinstance(v['_target_'], str):
+                m_name, cls_name = v['_target_'].rsplit('.', 1)
+                v['_target_'] = getattr(importlib.import_module(f'cosense3d.{m_name}'), cls_name)
 
         self.out_dict = {'cls': []}
         for name in self.reg_heads:
@@ -184,66 +184,81 @@ class DetCenterSparse(BaseModule):
         return output
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
-        centers = [batch['center'] for batch in batch_list]
-        pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
-        pred_scores = [logits_to_edl_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
-        cls_tgt = multi_apply(self.cls_assigner.assign, centers, gt_boxes, gt_labels, pred_scores)
-        try:
-            cls_tgt = torch.cat(cls_tgt, dim=0)
-        except:
-            for x in cls_tgt:
-                print(x.shape)
+        tgt = self.tgt_assigner(batch_list, gt_boxes, gt_labels)
         n_classes = [len(n) for n in self.class_names_each_head]
 
-        # get reg target
-        box_tgt = self.box_assigner.assign(
-            self.cat_data_from_list(centers, pad_idx=True),
-            self.cat_data_from_list(gt_boxes, pad_idx=True),
-            self.cat_data_from_list(gt_labels)
-        )
+        # peudo_src = copy.copy(src)
+        # mask = tgt['reg']['valid_mask'][0]
+        # peudo_src['centers'] = peudo_src['centers'][mask]
+        # class_logits = torch.zeros_like(src['cls'][0][mask])
+        # tgt_cls = tgt['center_cls'][mask].squeeze()
+        # tgt_cls[tgt_cls < 0] = 0
+        # class_logits[:, 0] = 1 - tgt_cls
+        # class_logits[:, 1] = tgt_cls * 50
+        # peudo_src['cls'][0] = class_logits
+        # peudo_src['reg'] = tgt['reg']
+        # batch = copy.copy(batch_dict)
+        # batch['det_center_head'] = peudo_src
+        # self.predictions(batch)
 
         ptr = 0
-        loss_cls = 0
-        loss_box = 0
         for h in range(self.n_heads):
             # center loss
-            cur_cls_src = torch.cat([x[h] for x in pred_cls_list], dim=0).contiguous()
-            cur_cls_tgt = cls_tgt[..., ptr:ptr+n_classes[h]].contiguous() # one hot foreground labels
-
+            pred_cls = torch.cat([x['cls'][h] for x in batch_list], dim=0)
+            cur_cls_src = rearrange(pred_cls, 'n d ... -> n ... d').contiguous()
+            cur_cls_tgt = rearrange(tgt['centerness'][:, ptr:ptr+n_classes[h]
+                                    ], 'n d ... -> n ... d').contiguous().float().squeeze(-2)
             cared = (cur_cls_tgt >= 0).any(dim=-1)
             cur_cls_src = cur_cls_src[cared]
             cur_cls_tgt = cur_cls_tgt[cared]
             ptr += n_classes[h]
+            # tgt_pos = cur_cls_tgt.sum(dim=-1, keepdim=True) # b, h, w, 1
+            # tgt_neg = 1 - torch.clamp(tgt_pos, min=0, max=1.0)
+            # cur_cls_tgt = torch.cat([tgt_neg, cur_cls_tgt], dim=-1)
+            # cur_cls_tgt = torch.div(cur_cls_tgt, cur_cls_tgt.sum(dim=-1, keepdim=True))
+            # cur_cls_tgt = cur_cls_tgt.permute(0, 2, 3, 1).contiguous()  # b, h, w, n_cls+1
+            max_scrs, max_inds = cur_cls_tgt.max(dim=-1, keepdim=True)
+            tgt_pos = max_scrs > 0.1
+            tgt_neg = torch.logical_not(tgt_pos)
 
-            # convert one-hot to labels
-            cur_labels = torch.zeros_like(cur_cls_tgt[..., 0]).long()
-            lbl_inds, cls_inds = torch.where(cur_cls_tgt)
-            cur_labels[lbl_inds] = cls_inds + 1
+            if cur_cls_tgt.shape[-1] == n_classes[h]:
+                cur_cls_tgt_onehot = cur_cls_tgt
+            elif cur_cls_tgt.shape[-1] == 1:
+                cur_cls_tgt_onehot = torch.zeros_like(cur_cls_src).view(-1, n_classes[h])
+                cur_cls_tgt_onehot[torch.arange(max_inds.numel()), max_inds.view(-1)] = 1
+            else:
+                raise NotImplementedError
+            cur_cls_tgt_onehot = torch.cat([tgt_neg.view(-1, 1).float(),
+                                            cur_cls_tgt_onehot],
+                                           dim=-1).contiguous()  # b, h, w, n_cls+1
 
-            avg_factor = max((cur_labels > 0).sum(), 1)
-
-            lcenter = self.loss_cls(
-                cur_cls_src,
-                cur_labels,
-                temp=self.temp // 250,
-                n_cls_override=n_classes[h] + 1,
-                avg_factor=avg_factor
+            lcenter = self.loss_cfg['center']['_target_'](
+                cur_cls_src.view(-1, n_classes[h] + 1),
+                cur_cls_tgt_onehot,
+                n_classes[h] + 1,
+                self.temp // 250,
+                self.loss_cfg['center']['args']['annealing_step'] // 250,
+                f"cls_h{h}"
             )
-            loss_cls = loss_cls + lcenter
 
             # reg loss
-            ind = box_tgt['idx'][h]
+            reg_loss = 0
+            ind = tgt['reg']['idx'][h]
             if ind.shape[1] > 0:
                 for reg_name in self.reg_head.reg_channels.keys():
                     pred_reg = torch.cat([x['reg'][reg_name][h] for x in batch_list], dim=0)
                     cur_reg_src = rearrange(pred_reg, 'n d ... -> n ... d').contiguous()
-                    cur_reg_src = cur_reg_src[box_tgt['valid_mask'][h]]
-                    cur_reg_tgt = box_tgt[reg_name][h]  # N, C
-                    cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)
+                    if cur_reg_src.ndim > 2:
+                        cur_reg_src = cur_reg_src[ind[0], ind[1], ind[2]]  # N, C
+                    else:
+                        cur_reg_src = cur_reg_src[tgt['reg']['valid_mask'][h]]
+                    cur_reg_tgt = tgt['reg'][reg_name][h]  # N, C
+                    cur_loss = weighted_smooth_l1_loss(cur_reg_src, cur_reg_tgt).mean()
 
-                    loss_box = loss_box + cur_loss
+                    reg_loss = reg_loss + cur_loss
 
-        loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
+        loss_dict = {'reg_loss': reg_loss}
+        loss_dict.update(lcenter)
         return loss_dict
 
     def predictions(self, out_dict, B):

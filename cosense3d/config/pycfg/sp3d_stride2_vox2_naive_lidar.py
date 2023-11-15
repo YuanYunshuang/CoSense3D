@@ -54,14 +54,13 @@ shared_modules = OrderedDict(
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
         data_info=data_info,
         stride=out_stride,
-        annealing_step=50,
         in_dim=128,
-        sampling=dict(annealing=False, topk=False),
-
+        target_assigner=dict(type='target_assigners.BEVPointAssigner'),
+        loss_cls=dict(type='EDLLoss', annealing_step=50, n_cls=2, loss_weight=2.0),
     ),
 
     detection_head = dict(
-        type='heads.det_center_sparse_.DetCenterSparse',
+        type='heads.det_center_sparse.DetCenterSparse',
         gather_keys=['fused_neck_feat'],
         scatter_keys=['detection'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
@@ -74,17 +73,23 @@ shared_modules = OrderedDict(
         reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
         class_names_each_head=[['vehicle.car']],
         reg_channels=['box:6', 'dir:8', 'scr:4'],
-        target_assigner=dict(
-            data_info=data_info,
-            meter_per_pixel=out_stride * voxel_size[0],
+        cls_assigner=dict(
+            type='target_assigners.BEVHardCenternessAssigner',
+            n_cls=1,
+            min_radius=1.0,
+            pos_neg_ratio=5,
+        ),
+        box_assigner=dict(
+            type='target_assigners.BoxCenterAssigner',
+            voxel_size=voxel_size,
+            lidar_range=point_cloud_range,
             stride=out_stride,
             detection_benchmark='Car',
-            assigners=OrderedDict(
-                points_centerness=dict(min_radius=1.0, pos_neg_ratio=5),
-                encode_box=dict(_target_='modules.utils.box_coder.CenterBoxCoder', center_thresh=0.5)),
+            class_names_each_head=[['vehicle.car']],
+            box_coder=dict(type='CenterBoxCoder'),
         ),
-        loss_cfg=dict(center=dict(_target_='modules.losses.edl.edl_mse_loss', args=dict(annealing_step=5000)),
-                      reg=dict(_target_='modules.losses.common.weighted_smooth_l1_loss')),
+        loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
+        loss_box=dict(type='SmoothL1Loss', loss_weight=2.0),
     ),
 )
 

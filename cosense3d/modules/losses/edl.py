@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 
+from cosense3d.modules.losses import BaseLoss
+
 
 def relu_evidence(y):
     return F.relu(y)
@@ -72,8 +74,7 @@ def edl_mse_loss(preds, tgt, n_cls, temp, annealing_step, model_label='edl'):
         cared = tgt >= 0
         evidence = evidence[cared]
         tgt = tgt[cared]
-        tgt_onehot = torch.zeros((len(tgt), n_cls), device=evidence.device)
-        tgt_onehot[torch.arange(len(tgt), device=tgt.device), tgt.long()] = 1
+        tgt_onehot = F.one_hot(tgt.long(), n_cls).float()
     elif len(tgt.shape) == 2 and tgt.shape[1] > 1:
         cared = (tgt >= 0).all(dim=-1)
         evidence = evidence[cared]
@@ -117,3 +118,56 @@ def evidence_to_conf_unc(evidence, edl=True):
         # conf = torch.sqrt(evidence * (1 - unc.unsqueeze(-1)))
         conf = evidence
     return conf, unc
+
+
+def logits_to_edl_conf_unc(logits, evidence_type='relu'):
+    if evidence_type == 'relu':
+        evidence = relu_evidence(logits)
+    elif evidence_type == 'exp':
+        evidence = exp_evidence(logits)
+    else:
+        raise NotImplementedError
+    alpha = evidence + 1
+    S = torch.sum(alpha, dim=-1, keepdim=True)
+    conf = torch.div(alpha, S)
+    K = evidence.shape[-1]
+    unc = torch.div(K, S)
+    # conf = torch.sqrt(conf * (1 - unc))
+    unc = unc.squeeze(dim=-1)
+    return conf, unc
+
+class EDLLoss(BaseLoss):
+    """
+    Args:
+        n_cls (int): number of classes, including background.
+        annealing_step (int): maximum annealing step.
+        reduction (str, optional): The method to reduce the loss.
+            Options are "none", "mean" and "sum".
+        loss_weight (float, optional): The weight of loss.
+    """
+    def __init__(self,
+                 n_cls,
+                 annealing_step,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.n_cls = n_cls
+        self.annealing_step = annealing_step
+
+    def loss(self, preds, tgt, temp, n_cls_override=None):
+        evidence = relu_evidence(preds)
+        if len(tgt.shape) == 1:
+            cared = tgt >= 0
+            evidence = evidence[cared]
+            tgt = tgt[cared]
+            tgt_onehot = F.one_hot(tgt.long(), self.n_cls)
+        elif len(tgt.shape) == 2 and tgt.shape[1] > 1:
+            cared = (tgt >= 0).all(dim=-1)
+            evidence = evidence[cared]
+            tgt_onehot = tgt[cared]
+        else:
+            raise NotImplementedError
+        alpha = evidence + 1
+        n_cls = self.n_cls if n_cls_override is None else n_cls_override
+        loss = mse_loss(tgt_onehot, alpha, temp, n_cls, self.annealing_step)
+
+        return loss
