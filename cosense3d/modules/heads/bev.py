@@ -77,12 +77,12 @@ class BEV(BaseModule):
             tgt_pts, gt_boxes, len(batch_list), conf, **kwargs)
         epoch_num = kwargs.get('epoch', 0)
         reg = self.cat_data_from_list(batch_list, 'reg')
-        avg_factor = max(tgt_label.sum(), 1)
+        # avg_factor = max(tgt_label.sum(), 1)
         loss_cls = self.loss_cls(
             reg[valid],
             tgt_label,
             temp=epoch_num,
-            avg_factor=avg_factor
+            # avg_factor=avg_factor
         )
         loss_dict = {'bev_loss': loss_cls}
         return loss_dict

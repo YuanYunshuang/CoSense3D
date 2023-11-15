@@ -103,6 +103,18 @@ class TargetAssigner(object):
         points = torch.stack([indices[:, 0].float(), x, y], dim=1)
         return points
 
+    def indices_to_pts(self, indices):
+        """
+        Args:
+            indices: (N, 3), 1st column is batch idx
+        """
+        x = indices[:, 1].float() * self.meter_per_pixel[0] + self.lidar_range[0] \
+                 + self.meter_per_pixel[0] * 0.5
+        y = indices[:, 2].float() * self.meter_per_pixel[1] + self.lidar_range[1] \
+                 + self.meter_per_pixel[1] * 0.5
+        points = torch.stack([indices[:, 0].float(), x, y], dim=1)
+        return points
+
     def sample_mining(self, scores, labels, ratio, **kwargs):
         """
         Mine potential positive samples and ignore a portion of negative samples for training.

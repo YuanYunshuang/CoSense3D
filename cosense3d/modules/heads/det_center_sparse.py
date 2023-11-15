@@ -107,10 +107,11 @@ class DetCenterSparse(BaseModule):
                  box_assigner,
                  loss_cls,
                  loss_box,
+                 center_threshold=0.5,
                  **kwargs):
         super(DetCenterSparse, self).__init__(**kwargs)
         update_me_essentials(self, data_info, stride)
-
+        self.center_threshold = center_threshold
         self.n_heads = len(class_names_each_head)
         self.class_names_each_head = class_names_each_head
         self.reg_heads = []
@@ -227,7 +228,7 @@ class DetCenterSparse(BaseModule):
                 cur_labels,
                 temp=self.temp // 250,
                 n_cls_override=n_classes[h] + 1,
-                avg_factor=avg_factor
+                # avg_factor=avg_factor
             )
             loss_cls = loss_cls + lcenter
 
@@ -246,6 +247,64 @@ class DetCenterSparse(BaseModule):
         loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
         return loss_dict
 
-    def predictions(self, out_dict, B):
-        return self.tgt_assigner.decode_box(out_dict)
+    def predictions(self, preds, B):
+        """
+           Decode the center and regression maps into BBoxes.
+           Args:
+               preds:
+                   cls: list[Tensor], each tensor is the result from a cls head with shape (B or N, Ncls, ...).
+                   reg:
+                       box: list[Tensor], one tensor per reg head with shape (B or N, 6, ...).
+                       dir: list[Tensor], one tensor per reg head with shape (B or N, 8, ...).
+                       scr: list[Tensor], one tensor per reg head with shape (B or N, 4, ...).
+
+           Returns:
+               roi:
+                   box: list[Tensor], one tensor per head with shape (N, 8).
+                   scr: list[Tensor], one tensor per head with shape (N,).
+                   lbl: list[Tensor], one tensor per head with shape (N,).
+                   idx: list[Tensor], one tensor per head with shape (3, N), center map indices of the boxes.
+
+           """
+        box_coder = self.box_assigner.box_coder
+        roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        lbl_cnt = torch.cumsum(torch.Tensor([0] + [m.shape[1] for m in preds['cls']]), dim=0)
+        confs = []
+        for h, center_cls in enumerate(preds['cls']):
+            if center_cls.ndim > 2:
+                conf, _ = logits_to_edl_conf_unc(center_cls.permute(0, 2, 3, 1))
+                center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                center_indices = torch.stack(torch.where(center_mask), dim=0)
+                centers = self.box_assigner.indices_to_pts(center_indices[1:]).T
+                cur_centers = torch.cat([center_indices[0].unsqueeze(-1), centers], dim=-1)
+                cur_reg = {k: preds['reg'][k][h].permute(0, 2, 3, 1)[center_mask]
+                           for k in ['box', 'dir', 'scr']}
+            else:
+                conf, _ = logits_to_edl_conf_unc(center_cls)
+                centers = preds['center']
+                center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                cur_centers = centers[center_mask]
+                center_indices = self.box_assigner.pts_to_indices(cur_centers)
+                cur_reg = {k: preds['reg'][k][h][center_mask]
+                           for k in ['box', 'dir', 'scr']}
+
+                # from cosense3d.utils import vislib
+                # mask = cur_centers[:, 0].int() == 0
+                # confs = conf[center_mask][mask, 1].detach().cpu().numpy()
+                # points = cur_centers[mask, 1:].detach().cpu().numpy()
+                # fig = vislib.plt.figure(figsize=(6, 6))
+                # vislib.plt.scatter(points[:, 0], points[:, 1], c=confs, s=1)
+                # vislib.plt.show()
+                # vislib.plt.close()
+
+            cur_box = box_coder.decode(cur_centers, cur_reg)
+            cur_scr, cur_lbl = conf[center_mask].max(dim=-1)
+            cur_lbl = cur_lbl + lbl_cnt[h]
+            roi['box'].append(cur_box)
+            roi['scr'].append(cur_scr)
+            roi['lbl'].append(cur_lbl)
+            roi['idx'].append(center_indices)
+            confs.append(conf)
+
+        return roi, torch.stack(confs, dim=1)
 

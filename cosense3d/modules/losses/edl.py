@@ -136,6 +136,7 @@ def logits_to_edl_conf_unc(logits, evidence_type='relu'):
     unc = unc.squeeze(dim=-1)
     return conf, unc
 
+
 class EDLLoss(BaseLoss):
     """
     Args:

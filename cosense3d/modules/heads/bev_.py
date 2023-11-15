@@ -105,7 +105,7 @@ class BEV(BaseModule):
             print(boxes.shape)
             print(pts.shape)
         # set area B: dense neg as -1 for down-sampling, differentiate from area C: sparse neg.
-        tgt_label = - (box_idx_of_pts >= 0).int()
+        tgt_label = - (box_idx_of_pts2 >= 0).int()
         tgt_label[box_idx_of_pts >= 0] = 1
 
         n_sam = len(boxes) * 50

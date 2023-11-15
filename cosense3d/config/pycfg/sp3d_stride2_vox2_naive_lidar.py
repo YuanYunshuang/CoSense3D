@@ -56,7 +56,7 @@ shared_modules = OrderedDict(
         stride=out_stride,
         in_dim=128,
         target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-        loss_cls=dict(type='EDLLoss', annealing_step=50, n_cls=2, loss_weight=2.0),
+        loss_cls=dict(type='EDLLoss', annealing_step=50, n_cls=2, loss_weight=1.0),
     ),
 
     detection_head = dict(
@@ -77,7 +77,8 @@ shared_modules = OrderedDict(
             type='target_assigners.BEVHardCenternessAssigner',
             n_cls=1,
             min_radius=1.0,
-            pos_neg_ratio=5,
+            pos_neg_ratio=3,
+            max_mining_ratio=2,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',
@@ -89,7 +90,7 @@ shared_modules = OrderedDict(
             box_coder=dict(type='CenterBoxCoder'),
         ),
         loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
-        loss_box=dict(type='SmoothL1Loss', loss_weight=2.0),
+        loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 )
 

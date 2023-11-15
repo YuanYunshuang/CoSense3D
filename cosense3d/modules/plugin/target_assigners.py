@@ -19,7 +19,7 @@ from cosense3d.modules.utils.common import pad_r
 from cosense3d.ops.utils import points_in_boxes_gpu
 
 
-def sample_mining(scores, labels, sample_mining_thr=0.5, max_sample_ratio=5):
+def sample_mining(scores, labels, sample_mining_thr=0.5, max_sample_ratio=5, max_num_sample=None):
     """
     When only limited numbers of negative targets are sampled for training,
     and the majority of the negative samples are ignored, then there is a
@@ -48,9 +48,9 @@ def sample_mining(scores, labels, sample_mining_thr=0.5, max_sample_ratio=5):
     not_cared = labels == -1
     sample_inds = torch.where(torch.logical_and(pred_pos, not_cared))[0]
     n_pos = (labels > 0).sum()
-    max_n_sample = n_pos * max_sample_ratio
-    if len(sample_inds) > max_n_sample:
-        sample_inds = sample_inds[torch.randperm(len(sample_inds))[:max_n_sample]]
+    max_num_sample = n_pos * max_sample_ratio if max_num_sample is None else max_num_sample
+    if len(sample_inds) > max_num_sample:
+        sample_inds = sample_inds[torch.randperm(len(sample_inds))[:max_num_sample]]
     labels[sample_inds] = 0
     return labels
 
@@ -597,6 +597,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
                  min_radius=1.0,
                  pos_neg_ratio=5,
                  sample_mining_thr=0.5,
+                 max_mining_ratio=3,
                  merge_all_classes=False
                  ):
         super().__init__()
@@ -604,6 +605,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
         self.min_radius = min_radius
         self.pos_neg_ratio = pos_neg_ratio
         self.sample_mining_thr = sample_mining_thr
+        self.max_mining_ratio = max_mining_ratio
         self.merge_all_classes = merge_all_classes
 
     def get_labels_single_head(self, centers, gt_boxes, pred_scores=None):
@@ -615,7 +617,9 @@ class BEVHardCenternessAssigner(BaseAssigner):
             labels = pos_neg_sampling(labels, self.pos_neg_ratio)
         if self.sample_mining_thr > 0:
             assert pred_scores is not None
-            labels = sample_mining(pred_scores, labels, self.sample_mining_thr)
+            labels = sample_mining(pred_scores, labels,
+                                   self.sample_mining_thr,
+                                   self.max_mining_ratio)
 
         return labels
 
@@ -633,16 +637,50 @@ class BEVHardCenternessAssigner(BaseAssigner):
                 labels.append(self.get_labels_single_head(centers, cur_boxes, cur_scores))
             labels = torch.stack(labels, dim=-1)
 
+
+        # from cosense3d.utils import vislib
+        # pc_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
+        # label = labels.int().detach().cpu().numpy()
+        # label = label[:, 0]
+        # points = centers.detach().cpu().numpy()
+        # boxes = gt_boxes.cpu().numpy()
+        # ax = vislib.draw_points_boxes_plt(
+        #     pc_range=pc_range,
+        #     points=points,
+        #     return_ax=True
+        # )
+        # ax = vislib.draw_points_boxes_plt(
+        #     pc_range=pc_range,
+        #     points=points[label == 0],
+        #     points_c='k',
+        #     ax=ax,
+        #     return_ax=True
+        # )
+        # vislib.draw_points_boxes_plt(
+        #     pc_range=pc_range,
+        #     points=points[label == 1],
+        #     points_c='r',
+        #     boxes_gt=boxes,
+        #     ax=ax,
+        #     filename='/koko/logs/tmp.png'
+        # )
+        #
+        # pass
+
         return labels
 
 
 class BEVPointAssigner(BaseAssigner):
     def __init__(self,
+                 sample_mining_thr=0.5,
+                 max_mining_ratio=3,
                  annealing_step=None,
                  topk_sampling=False,
                  annealing_sampling=False
                  ):
         super().__init__()
+        self.sample_mining_thr = sample_mining_thr
+        self.max_mining_ratio = max_mining_ratio
         self.annealing_step = annealing_step
         self.topk_sampling = topk_sampling
         self.annealing_sampling = annealing_sampling
@@ -654,11 +692,19 @@ class BEVPointAssigner(BaseAssigner):
             mask = torch.rand_like(tgt_label[pos].float()) < max_sam / pos.sum()
             selected[pos] = mask
 
-        neg = tgt_label == 0
+        buffer = tgt_label == 0
+        if buffer.sum() > max_sam:
+            mask = torch.rand_like(tgt_label[buffer].float()) < max_sam / buffer.sum()
+            selected[buffer] = mask
+
+        neg = tgt_label == -1
         if neg.sum() > max_sam:
             mask = torch.rand_like(tgt_label[neg].float()) < max_sam / neg.sum()
             selected[neg] = mask
-        return selected
+            labels = - torch.ones_like(mask).long()
+            labels[mask] = 0
+            tgt_label[neg] = labels
+        return selected, tgt_label
 
     def assign(self, tgt_pts, gt_boxes, B, conf=None, **kwargs):
         epoch_num = kwargs.get('epoch', 0)
@@ -670,46 +716,27 @@ class BEVPointAssigner(BaseAssigner):
                 pts, boxes, batch_size=B
             )
             boxes[:, 4:6] *= 2
-            _, box_idx_of_pts2 = points_in_boxes_gpu(
+            _, enlarged_box_idx_of_pts = points_in_boxes_gpu(
                 pts, boxes, batch_size=B
             )
         except:
             print(boxes.shape)
             print(pts.shape)
-        # set area B: dense neg as -1 for down-sampling, differentiate from area C: sparse neg.
-        tgt_label = - (box_idx_of_pts >= 0).int()
-        tgt_label[box_idx_of_pts >= 0] = 1
 
+        pos_mask = box_idx_of_pts >= 0
+        buffer_mask = (box_idx_of_pts < 0) & (enlarged_box_idx_of_pts >= 0)
+        tgt_label = - torch.ones_like(box_idx_of_pts)
+        tgt_label[pos_mask] = 1
+        tgt_label[buffer_mask] = 0
         n_sam = len(boxes) * 50
-        if self.annealing_sampling:
-            assert self.annealing_step is not None, \
-                'annealing_step should be set if use annealing sampling'
-            assert conf is not None
-            annealing_ratio = epoch_num / self.annealing_step
-            n_sam = n_sam + annealing_ratio * len(tgt_label) / 50
-            # down-sample
-            mask = self.downsample_tgt_pts(tgt_label, max_sam=n_sam)
-            tgt_label[tgt_label == -1] = 0  # set area B to 0
 
-            # positive sample annealing
-            labeled_pos = tgt_label == 1
-            potential_pos = (conf[..., 1] > (1 - annealing_ratio * 0.5))
-            unlabeled_potential_pos = torch.logical_and(potential_pos,
-                                                        torch.logical_not(labeled_pos))
-            if self.topk_sampling:
-                k = int(labeled_pos.sum().item() * (1 + 30 * annealing_ratio))
-                topk = torch.topk(conf[..., 1], k)
-                is_topk = torch.zeros_like(labeled_pos)
-                is_topk[topk.indices] = 1
-                topk_potential_pos = torch.logical_and(is_topk, unlabeled_potential_pos)
-                unlabeled_potential_pos = topk_potential_pos
+        # add points that have high pred scores
+        if self.sample_mining_thr > 0:
+            scores = conf[..., 1:].sum(dim=-1)
+            tgt_label = sample_mining(scores, tgt_label, self.sample_mining_thr,
+                                      max_num_sample=n_sam)
 
-            # set potential positive samples label to ignore
-            tgt_label[unlabeled_potential_pos] = -1
-        else:
-            mask = self.downsample_tgt_pts(tgt_label, max_sam=n_sam)
-            # mask = torch.ones_like(tgt_label).bool()
-            tgt_label[tgt_label == -1] = 0  # set area B to 0
+        mask, tgt_label = self.downsample_tgt_pts(tgt_label, max_sam=n_sam)
 
         # get final tgt
         tgt_pts = tgt_pts[mask]
