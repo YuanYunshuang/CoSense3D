@@ -77,8 +77,9 @@ shared_modules = OrderedDict(
             type='target_assigners.BEVHardCenternessAssigner',
             n_cls=1,
             min_radius=1.0,
-            pos_neg_ratio=3,
-            max_mining_ratio=2,
+            pos_neg_ratio=5,
+            mining_thr=0.5,
+            max_mining_ratio=1,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',
@@ -89,7 +90,7 @@ shared_modules = OrderedDict(
             class_names_each_head=[['vehicle.car']],
             box_coder=dict(type='CenterBoxCoder'),
         ),
-        loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', annealing_step=20, n_cls=2, loss_weight=1.0),
         loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 )

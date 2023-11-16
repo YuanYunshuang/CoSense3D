@@ -189,11 +189,8 @@ class DetCenterSparse(BaseModule):
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
         pred_scores = [logits_to_edl_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
         cls_tgt = multi_apply(self.cls_assigner.assign, centers, gt_boxes, gt_labels, pred_scores)
-        try:
-            cls_tgt = torch.cat(cls_tgt, dim=0)
-        except:
-            for x in cls_tgt:
-                print(x.shape)
+        cls_tgt = torch.cat(cls_tgt, dim=0)
+
         n_classes = [len(n) for n in self.class_names_each_head]
 
         # get reg target

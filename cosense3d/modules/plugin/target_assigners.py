@@ -19,7 +19,7 @@ from cosense3d.modules.utils.common import pad_r
 from cosense3d.ops.utils import points_in_boxes_gpu
 
 
-def sample_mining(scores, labels, sample_mining_thr=0.5, max_sample_ratio=5, max_num_sample=None):
+def sample_mining(scores, labels, dists=None, sample_mining_thr=0.5, max_sample_ratio=5, max_num_sample=None):
     """
     When only limited numbers of negative targets are sampled for training,
     and the majority of the negative samples are ignored, then there is a
@@ -45,6 +45,9 @@ def sample_mining(scores, labels, sample_mining_thr=0.5, max_sample_ratio=5, max
     assert scores.ndim == labels.ndim
     assert scores.shape == labels.shape
     pred_pos = scores > sample_mining_thr
+    if dists is not None:
+        # only mine points that are far from real positive samples
+        pred_pos[dists < 3] = False
     not_cared = labels == -1
     sample_inds = torch.where(torch.logical_and(pred_pos, not_cared))[0]
     n_pos = (labels > 0).sum()
@@ -572,6 +575,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         indices = torch.stack([bev_pts[:, 0].long(), x.long(), y.long()], dim=1)
         return indices
 
+    @torch.no_grad()
     def assign(self, centers, gt_boxes, gt_labels, **kwargs):
         box_names = [self.csb[c.item()][0] for c in gt_labels]
 
@@ -596,7 +600,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
                  n_cls,
                  min_radius=1.0,
                  pos_neg_ratio=5,
-                 sample_mining_thr=0.5,
+                 mining_thr=0,
                  max_mining_ratio=3,
                  merge_all_classes=False
                  ):
@@ -604,7 +608,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
         self.n_cls = n_cls
         self.min_radius = min_radius
         self.pos_neg_ratio = pos_neg_ratio
-        self.sample_mining_thr = sample_mining_thr
+        self.sample_mining_thr = mining_thr
         self.max_mining_ratio = max_mining_ratio
         self.merge_all_classes = merge_all_classes
 
@@ -618,14 +622,16 @@ class BEVHardCenternessAssigner(BaseAssigner):
         if self.sample_mining_thr > 0:
             assert pred_scores is not None
             labels = sample_mining(pred_scores, labels,
+                                   dists_min,
                                    self.sample_mining_thr,
                                    self.max_mining_ratio)
 
         return labels
 
+    @torch.no_grad()
     def assign(self, centers, gt_boxes, gt_labels, pred_scores=None, **kwargs):
         if len(gt_boxes) == 0:
-            labels = torch.zeros_like(centers[:, :1]).unsqueeze(-1)
+            labels = torch.zeros_like(centers[:, :1])
             return labels
         if self.merge_all_classes:
             labels = self.get_labels_single_head(centers, gt_boxes).unsqueeze(-1)
