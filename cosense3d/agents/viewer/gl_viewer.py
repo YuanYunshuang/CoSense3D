@@ -113,30 +113,43 @@ class GLViewer(gl.GLViewWidget):
             self.pcd_items[lidar_id] = item
             self.addItem(item)
 
-    def updateLabel(self, local_labels, global_labels, predecessor=None):
+    def updateLabel(self, local_labels, global_labels, pred_labels, predecessor=None):
         self.boxes = []
         if local_labels is not None:
             for agent_id, labels in local_labels.items():
                 self.local_boxes[agent_id] = []
                 for id, label in labels.items():
-                    item = LineBoxItem(box=[id, ] + label,
-                                       last_pose=None)
+                    item = LineBoxItem(box=[id, ] + label, last_pose=None,
+                                       status='gt', line_width=2)
                     item.setVisible(self.visibility.get(f'{agent_id}.0', True))
                     self.local_boxes[agent_id].append(item)
                     self.addItem(item)
         if global_labels is not None:
             for id, label in global_labels.items():
-                pred_label = None if predecessor is None else predecessor[id]
-                item = LineBoxItem(box=[id, ] + label,
-                                   last_pose=pred_label)
+                prev_label = None if predecessor is None else predecessor[id]
+                item = LineBoxItem(box=[id, ] + label, last_pose=prev_label,
+                                   status='gt', line_width=2)
+                self.boxes.append(item)
+                self.addItem(item)
+        if pred_labels is not None:
+            for id, label in pred_labels.items():
+                item = LineBoxItem(box=[id, ] + label, last_pose=None,
+                                   status='pred', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
 
-    def updateFrameData(self, pcds, local_label=None, label=None, predecessor=None):
+    def updateFrameData(self, pcds,
+                        local_label=None,
+                        global_label=None,
+                        pred_label=None,
+                        predecessor=None):
         self.clear()
         self.draw_axes()
         self.updatePCDs(pcds)
-        self.updateLabel(local_label, label, predecessor)
+        self.updateLabel(local_label,
+                         global_label,
+                         pred_label,
+                         predecessor)
         self.update()
 
     def refresh(self, data_dict):
@@ -145,10 +158,12 @@ class GLViewer(gl.GLViewWidget):
         # local_labels = data_dict['input'].get('local_labels', None)
         ego_id = list(global_labels.keys())[0]
         if 'detection' in data_dict:
-            detections = {k: v['labels'] for k, v in data_dict['detection'].items()}
+            pred_label = {k: v['labels'] for k, v in data_dict['detection'].items()}
         else:
-            detections = None
-        self.updateFrameData(pcds, detections, global_labels[ego_id])
+            pred_label = None
+        self.updateFrameData(pcds,
+                             pred_label=pred_label[ego_id],
+                             global_label=global_labels[ego_id])
 
     def addBox(self):
         if self.rectangle is not None:

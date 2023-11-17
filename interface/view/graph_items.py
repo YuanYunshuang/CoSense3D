@@ -12,7 +12,9 @@ CSCOLORS = (np.array([csColors[k] for k in cs.OBJ_LIST]) / 255.).tolist()
 BOX_COLORs = {
     'inactive': CSCOLORS,
     'highlight': (0., 1, 1, 1),
-    'active': (0.9, 0, 1, 1)
+    'active': (0.9, 0, 1, 1),
+    'gt': (0, 1, 0, 1),
+    'pred': (1, 0, 0, 1),
 }
 
 pens = {
@@ -75,7 +77,8 @@ class LineBoxItem(gl.GLLinePlotItem):
                  box,
                  status='inactive',
                  show_direction=False,
-                 last_pose=None):
+                 last_pose=None,
+                 line_width=1.):
         """
         :param box: ([id], type_id, x, y, z, l, w, h, roll, pitch, yaw)
         :param color:
@@ -161,7 +164,7 @@ class LineBoxItem(gl.GLLinePlotItem):
 
         super().__init__(pos=vertices_pairs,
                          color=self.color(status),
-                         width=1.0,
+                         width=line_width,
                          mode='lines',
                          glOptions='opaque')
 
@@ -186,8 +189,8 @@ class LineBoxItem(gl.GLLinePlotItem):
         return self.color == BOX_COLORs['active']
 
     def color(self, status):
-        if status == 'inactive':
-            return BOX_COLORs['inactive'][self.typeid] + [0.5]
+        if status in ['inactive']:
+            return BOX_COLORs[status][self.typeid] + [0.5]
         else:
             return BOX_COLORs[status]
 

@@ -65,14 +65,14 @@ class ResidualBoxCoder(object):
 
     def decode_direction(self, ra, vt, dir_scores=None):
         if self.mode == 'simple_dist':
-            rg = (vt + ra).view(-1, 1)
+            rg = vt + ra
             return rg
         elif self.mode == 'sin_cos_dist':
             rax = torch.cos(ra)
             ray = torch.sin(ra)
             va = torch.cat([rax, ray], dim=-1)
             vg = vt + va
-            rg = torch.atan2(vg[..., 1], vg[..., 0]).view(-1, 1)
+            rg = torch.atan2(vg[..., 1], vg[..., 0])
             return rg
         elif self.mode == 'compass_rose':
             ra_ext = torch.cat([ra, ra + math.pi], dim=-1)  # N 2, invert

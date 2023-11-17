@@ -65,12 +65,15 @@ class DetectionCanvas(MplCanvas):
                     # return_ax=True
                 )
             # plot centers
-            centers = det_dict['ctr'].detach().cpu().numpy()
-            conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
-            mask = conf > 0.5
-            centers = centers[mask]
-            conf = conf[mask]
-            self.axes.scatter(centers[:, 0], centers[:, 1], cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
+            if 'ctr' in det_dict:
+                centers = det_dict['ctr'].detach().cpu().numpy()
+                conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
+                mask = conf > 0.5
+                centers = centers[mask]
+                conf = conf[mask]
+                self.axes.scatter(centers[:, 0], centers[:, 1],
+                                  cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
+            # plot pcds and boxes
             gt_boxes = list(data['input']['global_labels'][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()

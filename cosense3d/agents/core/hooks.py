@@ -146,14 +146,18 @@ class DetectionNMSHook(BaseHook):
             labels = torch.cat(values['preds']['lbl'])
             indices = torch.cat(values['preds']['idx'])  # map index for retrieving features
 
+            out = {}
+            if 'center' in values:
+                out['ctr'] = values['center']
+            if 'conf' in values:
+                out['conf'] = values['conf']
+
             if len(boxes) == 0:
-                preds.append({
+                out.update({
                     'box': torch.zeros((0, 7), device=boxes.device),
                     'scr': torch.zeros((0,), device=scores.device),
                     'lbl': torch.zeros((0,), device=labels.device),
                     'idx': torch.zeros((3, 0), device=indices.device),
-                    'ctr': values['center'],
-                    'conf': values['conf']
                 })
             else:
                 keep = self.nms(
@@ -162,14 +166,14 @@ class DetectionNMSHook(BaseHook):
                     thresh=self.nms_thr,
                     pre_maxsize=self.pre_max_size
                 )
-                preds.append({
+                out.update({
                     'box': boxes[keep],
                     'scr': scores[keep],
                     'lbl': labels[keep],
                     'idx': indices[keep],
-                    'ctr': values['center'],
-                    'conf': values['conf']
                 })
+            preds.append(out)
+
 
         runner.controller.data_manager.scatter(cav_ids, {'detection': preds})
 

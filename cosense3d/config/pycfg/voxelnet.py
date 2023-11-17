@@ -48,7 +48,7 @@ shared_modules = OrderedDict(
     detection_head = dict(
         type='heads.det_anchor_dense.DetAnchorDense',
         gather_keys=['bev_feat_fused'],
-        scatter_keys=['detection_out'],
+        scatter_keys=['detection'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d'],
         in_channels=768,
         target_assigner=dict(
@@ -60,6 +60,7 @@ shared_modules = OrderedDict(
             stride=2,
             pos_threshold=0.6,
             neg_threshold=0.45,
+            score_thrshold=0.25,
             box_coder=dict(type='ResidualBoxCoder', mode='simple_dist')
         ),
         loss_cls = dict(type='FocalLoss', use_sigmoid=True,
@@ -76,7 +77,7 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500),
         dict(type="EvalOPV2VDetectionHook"),
         dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
         dict(type="EvalDenseBEVHook", thr=0.5)

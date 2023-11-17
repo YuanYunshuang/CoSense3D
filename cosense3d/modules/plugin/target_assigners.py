@@ -17,6 +17,7 @@ from cosense3d.ops.iou3d_nms_utils import boxes_iou_bev
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
 from cosense3d.modules.utils.common import pad_r
 from cosense3d.ops.utils import points_in_boxes_gpu
+from cosense3d.modules.losses import logits_to_edl_conf_unc
 
 
 def sample_mining(scores, labels, dists=None, sample_mining_thr=0.5, max_sample_ratio=5, max_num_sample=None):
@@ -461,7 +462,9 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
                  stride,
                  box_coder,
                  pos_threshold=0.6,
-                 neg_threshold=0.45):
+                 neg_threshold=0.45,
+                 score_thrshold=0.25,
+                 ):
         super().__init__()
         self.voxel_size = voxel_size
         self.lidar_range = lidar_range
@@ -469,6 +472,7 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         self.stride = stride
         self.pos_threshold = pos_threshold
         self.neg_threshold = neg_threshold
+        self.score_thrshold = score_thrshold
         self.box_coder = build_box_coder(**box_coder)
         anchors, standup_anchors = self.get_anchor_template(box_size, dirs)
         self.anchors = nn.Parameter(anchors, requires_grad=False)
@@ -545,6 +549,27 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
 
         return overlaps
 
+    def get_predictions(self, preds):
+        roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        B = len(preds['cls'])
+        pred_cls = preds['cls'].permute(0, 3, 2, 1).reshape(B, -1)
+        pred_reg = preds['reg'].permute(0, 3, 2, 1).reshape(B, -1, 7)
+        indices = torch.stack([torch.ones_like(pred_cls[0]) * i for i in range(B)], dim=0)
+
+        anchors = self.anchors.unsqueeze(0).repeat(B, 1, 1)
+        pos = pred_cls > self.score_thrshold
+
+        boxes_dec = self.box_coder.decode(anchors, pred_reg)
+        pred_cls = pred_cls[pos]
+        pred_box = boxes_dec[pos]
+        roi['scr'].append(pred_cls)
+        roi['box'].append(pred_box)
+        # TODO currently only support class car
+        roi['lbl'].append(torch.zeros_like(pred_cls))
+        roi['idx'].append(indices[pos])
+
+        return roi
+
 
 class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
     def __init__(self,
@@ -592,6 +617,66 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
         return reg_tgt
+
+    def get_predictions(self, preds):
+        """
+           Decode the center and regression maps into BBoxes.
+           Args:
+               preds:
+                   cls: list[Tensor], each tensor is the result from a cls head with shape (B or N, Ncls, ...).
+                   reg:
+                       box: list[Tensor], one tensor per reg head with shape (B or N, 6, ...).
+                       dir: list[Tensor], one tensor per reg head with shape (B or N, 8, ...).
+                       scr: list[Tensor], one tensor per reg head with shape (B or N, 4, ...).
+
+           Returns:
+               roi:
+                   box: list[Tensor], one tensor per head with shape (N, 8).
+                   scr: list[Tensor], one tensor per head with shape (N,).
+                   lbl: list[Tensor], one tensor per head with shape (N,).
+                   idx: list[Tensor], one tensor per head with shape (3, N), center map indices of the boxes.
+
+           """
+        roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        lbl_cnt = torch.cumsum(torch.Tensor([0] + [m.shape[1] for m in preds['cls']]), dim=0)
+        confs = []
+        for h, center_cls in enumerate(preds['cls']):
+            if center_cls.ndim > 2:
+                conf, _ = logits_to_edl_conf_unc(center_cls.permute(0, 2, 3, 1))
+                center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                center_indices = torch.stack(torch.where(center_mask), dim=0)
+                centers = self.indices_to_pts(center_indices[1:]).T
+                cur_centers = torch.cat([center_indices[0].unsqueeze(-1), centers], dim=-1)
+                cur_reg = {k: preds['reg'][k][h].permute(0, 2, 3, 1)[center_mask]
+                           for k in ['box', 'dir', 'scr']}
+            else:
+                conf, _ = logits_to_edl_conf_unc(center_cls)
+                centers = preds['center']
+                center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                cur_centers = centers[center_mask]
+                center_indices = self.pts_to_indices(cur_centers)
+                cur_reg = {k: preds['reg'][k][h][center_mask]
+                           for k in ['box', 'dir', 'scr']}
+
+                # from cosense3d.utils import vislib
+                # mask = cur_centers[:, 0].int() == 0
+                # confs = conf[center_mask][mask, 1].detach().cpu().numpy()
+                # points = cur_centers[mask, 1:].detach().cpu().numpy()
+                # fig = vislib.plt.figure(figsize=(6, 6))
+                # vislib.plt.scatter(points[:, 0], points[:, 1], c=confs, s=1)
+                # vislib.plt.show()
+                # vislib.plt.close()
+
+            cur_box = self.box_coder.decode(cur_centers, cur_reg)
+            cur_scr, cur_lbl = conf[center_mask].max(dim=-1)
+            cur_lbl = cur_lbl + lbl_cnt[h]
+            roi['box'].append(cur_box)
+            roi['scr'].append(cur_scr)
+            roi['lbl'].append(cur_lbl)
+            roi['idx'].append(center_indices)
+            confs.append(conf)
+
+        return roi, torch.stack(confs, dim=1)
 
 
 class BEVHardCenternessAssigner(BaseAssigner):

@@ -40,13 +40,28 @@ class DetAnchorDense(BaseModule):
         reg = self.reg_head(bev_feat)
 
         out = {'cls': cls, 'reg': reg}
+
+        if not self.training:
+            out['preds'] = self.predictions(out)
+
         return self.format_output(out, len(bev_feat))
 
-    def format_output(self, out_dict, B):
-        out_list = []
+    def format_output(self, output, B):
+        # decompose batch
+        output_new = {k: [] for k in output.keys()}
         for i in range(B):
-            out_list.append({k: v[i] for k, v in out_dict.items()})
-        return {self.scatter_keys[0]: out_list}
+            output_new['cls'].append([cls for cls in output['cls']])
+            output_new['reg'].append([v for v in output['reg']])
+            if 'preds' in output:
+                preds = {k: [] for k in output['preds'].keys()}
+                for h, inds in enumerate(output['preds']['idx']):
+                    mask = inds == i
+                    for k, v in output['preds'].items():
+                        preds[k].append(v[h][mask])
+                output_new['preds'].append(preds)
+
+        output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
+        return output
 
     def loss(self, preds, gt_boxes, gt_labels, **kwargs):
         pred_cls = self.stack_data_from_list(preds, 'cls')
@@ -96,6 +111,11 @@ class DetAnchorDense(BaseModule):
         boxes2 = torch.cat([boxes2[..., :dim], rad_tg_encoding,
                             boxes2[..., dim + 1:]], dim=-1)
         return boxes1, boxes2
+
+    def predictions(self, preds):
+        return self.target_assigner.get_predictions(preds)
+
+
 
 
 
