@@ -1,0 +1,55 @@
+import torch
+from torch import nn
+from cosense3d.modules import BaseModule, plugin
+from cosense3d.modules.utils.common import *
+from cosense3d.modules.utils.me_utils import *
+
+
+class VoxelNet(BaseModule):
+    def __init__(self,
+                 voxel_generator,
+                 voxel_encoder,
+                 cml,
+                 bev_compressor=None,
+                 **kwargs):
+        super(VoxelNet, self).__init__(**kwargs)
+        self.voxel_generator = plugin.build_plugin_module(voxel_generator)
+        self.voxel_encoder = plugin.build_plugin_module(voxel_encoder)
+        self.grid_size = self.voxel_generator.grid_size
+        self.cml = plugin.build_plugin_module(cml)
+
+        if bev_compressor is not None:
+            self.bev_compressor = plugin.build_plugin_module(bev_compressor)
+
+    def forward(self, points: list, **kwargs):
+        N = len(points)
+        voxels, coords, num_points = self.voxel_generator(points)
+        coords = self.cat_data_from_list(coords, pad_idx=True)
+        voxels = self.cat_data_from_list(voxels)
+        num_points = self.cat_data_from_list(num_points)
+        voxel_features = self.voxel_encoder(voxels, coords, num_points)
+        voxel_features = self.to_dense(coords, voxel_features, N)
+        voxel_features = self.cml(voxel_features)
+
+        # 3d to 2d feature
+        bev_feat = voxel_features.flatten(1, 2)
+        if hasattr(self, 'bev_compressor'):
+            bev_feat = self.bev_compressor(bev_feat)
+
+        return {self.scatter_keys[0]: bev_feat}
+
+    def to_dense(self, coor, feat, N):
+        bev_feat = torch.zeros(N,
+                               self.grid_size[2],
+                               self.grid_size[1],
+                               self.grid_size[0],
+                               feat.shape[-1],
+                               dtype=feat.dtype,
+                               device=feat.device)
+        coor = coor.long()
+        bev_feat[coor[:, 0], coor[:, 1], coor[:, 2], coor[:, 3]] = feat
+
+        return bev_feat.permute(0, 4, 1, 2, 3)
+
+
+

@@ -185,6 +185,7 @@ class DetCenterSparse(BaseModule):
         return output
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        epoch = kwargs.get('epoch', 0)
         centers = [batch['center'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
         pred_scores = [logits_to_edl_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
@@ -223,7 +224,7 @@ class DetCenterSparse(BaseModule):
             lcenter = self.loss_cls(
                 cur_cls_src,
                 cur_labels,
-                temp=self.temp // 250,
+                temp=epoch,
                 n_cls_override=n_classes[h] + 1,
                 # avg_factor=avg_factor
             )

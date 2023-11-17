@@ -3,7 +3,7 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 from .multi_modal_cav import BaseCAV
 
 
-class FCooperCAV(BaseCAV):
+class LidarDetCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prepare_data_keys = ['points', 'annos_global']

@@ -47,11 +47,11 @@ def sample_mining(scores, labels, dists=None, sample_mining_thr=0.5, max_sample_
     pred_pos = scores > sample_mining_thr
     if dists is not None:
         # only mine points that are far from real positive samples
-        pred_pos[dists < 3] = False
+        pred_pos[dists < 8] = False
     not_cared = labels == -1
     sample_inds = torch.where(torch.logical_and(pred_pos, not_cared))[0]
     n_pos = (labels > 0).sum()
-    max_num_sample = n_pos * max_sample_ratio if max_num_sample is None else max_num_sample
+    max_num_sample = int(n_pos * max_sample_ratio) if max_num_sample is None else max_num_sample
     if len(sample_inds) > max_num_sample:
         sample_inds = sample_inds[torch.randperm(len(sample_inds))[:max_num_sample]]
     labels[sample_inds] = 0
@@ -487,10 +487,9 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
             1, 1, 1, -1).repeat(h, w, self.num_anchors, 1)
         rs = torch.deg2rad(torch.tensor(dirs)).reshape(
             1, 1, -1, 1).repeat(h, w, 1, 1)
+        # (w, h, num_anchor, 7) --> (whn, 7)
         anchors = torch.cat([xys, zs, lwh, rs], dim=-1).view(-1, 7)
         standup_anchors = boxes3d_to_standup_bboxes(anchors)
-        # standup_anchors[:, [0, 2]] -= self.lidar_range[0]
-        # standup_anchors[:, [1, 3]] -= self.lidar_range[1]
         return anchors, standup_anchors
 
     def assign(self, gt_boxes):

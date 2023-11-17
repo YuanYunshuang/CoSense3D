@@ -51,6 +51,7 @@ class DetAnchorDense(BaseModule):
     def loss(self, preds, gt_boxes, gt_labels, **kwargs):
         pred_cls = self.stack_data_from_list(preds, 'cls')
         pred_reg = self.stack_data_from_list(preds, 'reg')
+        # convert to shape(n, w, h, c) -> (nwh, c) to match the anchors
         pred_cls = pred_cls.permute(0, 3, 2, 1).reshape(-1)
         pred_reg = pred_reg.permute(0, 3, 2, 1).reshape(-1, 7)
         cls_tgt, reg_tgt, _ = multi_apply(
@@ -66,6 +67,7 @@ class DetAnchorDense(BaseModule):
         # neg_inds = neg_inds[torch.randperm(len(neg_inds))[:avg_factor * 5]]
         # cared[neg_inds] = True
 
+        # focal loss encode the last dim of tgt as background
         labels = pos_mask.new_full((len(pos_mask), ), self.num_classes, dtype=torch.long)
         labels[pos_mask] = 0
 

@@ -1,9 +1,11 @@
 import random
 
 import torch
+import torch_scatter
 
 from cosense3d.model.pre_process import PreProcess
 from cosense3d.model.post_process import PostProcess
+from cosense3d.ops.utils import points_in_boxes_gpu
 
 
 class DataManager:
@@ -20,6 +22,19 @@ class DataManager:
             return batch_dict
         else:
             return self.postP(batch_dict)
+
+    def remove_empty_boxes(self):
+        for cavs in self.cav_manager.cavs:
+            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
+            assert cavs[0].is_ego
+            global_boxes = cavs[0].data['global_bboxes_3d']
+            box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3], global_boxes.unsqueeze(0))[0]
+            box_idx = box_idx[box_idx > -1]
+            num_pts = torch.zeros_like(global_boxes[:, 0]).long()
+            torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+            mask = num_pts > 3
+            cavs[0].data['global_bboxes_3d'] = global_boxes[mask]
+            cavs[0].data['global_labels_3d'] = cavs[0].data['global_labels_3d'][mask]
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []

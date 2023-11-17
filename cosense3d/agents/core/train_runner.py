@@ -87,7 +87,7 @@ class TrainRunner(BaseRunner):
         load_tensors_to_gpu(data)
         self.optimizer.zero_grad()
 
-        total_loss, loss_dict = self.controller.train_forward(data)
+        total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch)
         total_loss.backward()
         # grad_norm = clip_grads(self.controller.parameters)
         # Updating parameters

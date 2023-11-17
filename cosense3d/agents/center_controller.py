@@ -82,6 +82,8 @@ class CenterController:
         # get pseudo forward tasks
         tasks = self.cav_manager.forward(with_loss, training_mode)
         batched_tasks = self.task_manager.summarize_tasks(tasks)
+        # remove empty_boxes after point transformation
+        self.data_manager.remove_empty_boxes()
 
         # process local cav data
         if len(batched_tasks[0]['no_grad']) > 0:

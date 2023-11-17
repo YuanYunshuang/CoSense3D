@@ -79,7 +79,7 @@ shared_modules = OrderedDict(
             min_radius=1.0,
             pos_neg_ratio=5,
             mining_thr=0.5,
-            max_mining_ratio=1,
+            max_mining_ratio=0.1,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',

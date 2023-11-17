@@ -3,15 +3,15 @@ from typing import Dict
 
 import torch
 
-from cosense3d.modules import BaseModule
+from cosense3d.modules import BaseModule, plugin
 from cosense3d.modules.plugin.attn import ScaledDotProductAttention
 from cosense3d.modules.utils.me_utils import update_me_essentials
 from cosense3d.modules.utils.common import cat_coor_with_idx
 
 
-class AttentionFusion(BaseModule):
+class SparseAttentionFusion(BaseModule):
     def __init__(self, data_info, stride, in_channels, **kwargs):
-        super(AttentionFusion, self).__init__(**kwargs)
+        super(SparseAttentionFusion, self).__init__(**kwargs)
         update_me_essentials(self, data_info, stride=stride)
         self.d = len(self.voxel_size)
         self.attn = ScaledDotProductAttention(in_channels)
@@ -51,6 +51,29 @@ class AttentionFusion(BaseModule):
         return {self.scatter_keys[0]: output}
 
 
+class DenseAttentionFusion(BaseModule):
+    def __init__(self, feature_dim, neck=None, **kwargs):
+        super(DenseAttentionFusion, self).__init__(**kwargs)
+        self.attn = ScaledDotProductAttention(feature_dim)
+        if neck is not None:
+            self.neck = plugin.build_plugin_module(neck)
 
-
+    def forward(self, ego_feats, coop_feats=None, **kwargs):
+        out = []
+        for ego_feat, coop_feat in zip(ego_feats, coop_feats):
+            feat = [ego_feat]
+            for cpfeat in coop_feat.values():
+                if 'bev_feat' not in cpfeat:
+                    continue
+                feat.append(cpfeat['bev_feat'])
+            xx = torch.stack(feat, dim=0)
+            N, C, H, W = xx.shape
+            xx = xx.view(N, C, -1).permute(2, 0, 1)
+            h = self.attn(xx, xx, xx)
+            h = h.permute(1, 2, 0).view(N, C, H, W)[0, ...]
+            out.append(h)
+        out = torch.stack(out)
+        if hasattr(self, 'neck'):
+            out = self.neck(out)
+        return {self.scatter_keys[0]: out}
 
