@@ -12,7 +12,7 @@ from cosense3d.modules.utils.positional_encoding import img_locations
 class ResnetEncoder(BaseModule):
     """Resnet family to encode image."""
     def __init__(self, num_layers, feat_indices, out_index, img_size,
-                 pretrained=True, neck=None, **kwargs):
+                 neck=None, **kwargs):
         super(ResnetEncoder, self).__init__(**kwargs)
 
         self.num_layers = num_layers
@@ -22,7 +22,6 @@ class ResnetEncoder(BaseModule):
         self.stride = 2 ** (self.out_index + 1)
         self.feat_size = (img_size[0] // self.stride, img_size[1] // self.stride)
         self.img_locations = nn.Parameter(img_locations(img_size, self.feat_size), requires_grad=False)
-        self.pretrained = pretrained
 
         resnet = getattr(models, f'resnet{self.num_layers}', None)
 
@@ -54,7 +53,10 @@ class ResnetEncoder(BaseModule):
 
         if self.neck is not None:
             out = self.neck(out)
-        out = out[self.feat_indices.index(self.out_index)]
+        if isinstance(self.out_index, tuple):
+            out = [out[self.feat_indices.index(i)] for i in self.out_index]
+        else:
+            out = out[self.feat_indices.index(self.out_index)]
         return self.format_output(out, num_imgs)
 
     def format_output(self, output, num_imgs):

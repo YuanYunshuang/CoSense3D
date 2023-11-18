@@ -1,12 +1,9 @@
 from collections import OrderedDict
 
-# point_cloud_range = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
-# point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
-point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
-point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
-voxel_size = [0.2, 0.2, 0.2]
+point_cloud_range = [-50, -50, -3, 50, 50, 1]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
-out_stride = 2
+img_size = (384, 768)
+num_classes = 1
 
 """
 gather_keys: 
@@ -18,85 +15,92 @@ shared_modules = OrderedDict(
     img_backbone = dict(
         type='backbone2d.resnet_encoder.ResnetEncoder',
         gather_keys=['img'],
-        scatter_keys=['img_feat'],
-        num_layers=18,
+        scatter_keys=['img_feat', 'img_coor'],
+        num_layers=34,
+        feat_indices=(2, 3, 4),
+        out_index=(2, 3, 4),
+        img_size=img_size,
+        # neck=dict(
+        #     type='fpn.FPN',
+        #     in_channels=[256, 512],
+        #     out_channels=128,
+        #     num_outs=2
+        # )
     ),
 
-    fusion = dict(
-        type='fusion.naive_fusion.NaiveFusion',
-        gather_keys=['pts_feat', 'received_response'],
-        scatter_keys=['fused_feat'],
-        data_info=data_info,
-        stride=out_stride,
-        dim=128
-    ),
-
-    fusion_neck = dict(
-        type='necks.dilation_spconv.DilationSpconv',
-        gather_keys=['fused_feat'],
-        scatter_keys=['fused_neck_feat'],
-        data_info=data_info,
-        d=2,
-        convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
-    ),
-
-
-    bev_head = dict(
-        type='heads.bev.BEV',
-        gather_keys=['fused_neck_feat'],
-        scatter_keys=['bev'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        data_info=data_info,
-        stride=out_stride,
-        annealing_step=50,
-        in_dim=128,
-        sampling=dict(annealing=False, topk=False),
-
-    ),
-
-    detection_head = dict(
-        type='heads.det_center_sparse.DetCenterSparse',
-        gather_keys=['fused_neck_feat'],
-        scatter_keys=['detection'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        data_info=data_info,
-        input_channels=128,
-        shared_conv_channel=128,
-        get_predictions=True,
-        stride=out_stride,
-        cls_head_cfg=dict(name='UnitedClsHead'),
-        reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
-        class_names_each_head=[['vehicle.car']],
-        reg_channels=['box:6', 'dir:8', 'scr:4'],
-        target_assigner=dict(
-            data_info=data_info,
-            meter_per_pixel=out_stride * voxel_size[0],
-            stride=out_stride,
-            detection_benchmark='Car',
-            assigners=OrderedDict(
-                points_centerness=dict(min_radius=1.6, pos_neg_ratio=2),
-                encode_box=dict(_target_='modules.utils.box_coder.CenterBoxCoder', center_thresh=0.5)),
+    img2bev = dict(
+        type='projection.fax.FAXModule',
+        gather_keys=['img_feat'],
+        scatter_keys=['bev_feat'],
+        dim=[128, 128, 128],
+        middle=[2, 2, 2],
+        bev_embedding=dict(
+            sigma=1.0,
+            bev_height=256,
+            bev_width=256,
+            h_meters=100,
+            w_meters=100,
+            offset=0.0,
+            upsample_scales=[2, 4, 8],
         ),
-        loss_cfg=dict(center=dict(_target_='modules.losses.edl.edl_mse_loss', args=dict(annealing_step=5000)),
-                      reg=dict(_target_='modules.losses.common.weighted_smooth_l1_loss')),
+        cross_view=dict(
+            img_size=img_size,
+            no_image_features=False,
+            skip=True,
+            heads=[4, 4, 4],
+            dim_head=[32, 32, 32],
+            qkv_bias=True,
+        ),
+        cross_view_swap=dict(
+            rel_pos_emb=False,
+            q_win_size=[[16, 16], [16, 16], [32, 32]],
+            feat_win_size=[[8, 8], [8, 8], [16, 16]],
+            bev_embedding_flag=[True, False, False],
+        ),
+        self_attn=dict(
+            dim_head=32,
+            dropout=0.1,
+            window_size=32,
+        )
     ),
-)
+
+    detection = dict(
+        type='heads.petr_head.PETRHead',
+        gather_keys=['petr_feat'],
+        scatter_keys=['petr_out'],
+        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+        embed_dims=128,
+        pc_range=point_cloud_range,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+        num_classes=1,
+        box_assigner=dict(
+            type='target_assigners.HungarianAssigner3D',
+            cls_cost=dict(type='focal_loss', weight=2.),
+            reg_cost=dict(type='l1', weight=.25),
+            iou_cost=dict(type='iou', weight=0.0),
+        ),
+        loss_cls=dict(type='FocalLoss', use_sigmoid=True,
+                      gamma=2.0, alpha=0.25, loss_weight=2.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=0.25),
+        # loss_iou=dict(type='GIoULoss', loss_weight=0.0),
+    )
+
+    )
 
 train_hooks = [
         dict(type='MemoryUsageHook'),
         dict(type='TrainTimerHook'),
-        dict(type="CheckPointsHook")
+        dict(type="CheckPointsHook", epoch_every=10)
     ]
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
         dict(type="EvalOPV2VDetectionHook"),
-        dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 
+
 plots = [
-    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+    # dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
+    # dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
 ]
