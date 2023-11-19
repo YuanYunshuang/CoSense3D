@@ -19,7 +19,7 @@ def filter_box_ranges(boxes, lidar_range):
     return mask
 
 
-def eval_detection_opv2v(test_dir, iou_thr=[0.5, 0.7], global_sort_detections=True, use_opencood_gt=True):
+def eval_detection_opv2v(test_dir, iou_thr=[0.5, 0.7], global_sort_detections=True):
     result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
     filenames = sorted(glob.glob(os.path.join(test_dir, '*.pth')))
     for i in tqdm.tqdm(range(len(filenames))):
@@ -162,8 +162,12 @@ if __name__=="__main__":
     #     "/home/projects/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
     #     "/koko/logs/cosense3d/epoch50/detection_eval",
     # )
-    eval_detection_opv2v_with_opencood_gt(
-        "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
-        "/media/yuan/luna/cosense3d/score_sampling_11-16-17-04-22/epoch37/detection_eval",
+    eval_detection_opv2v(
+        "/mars/projects20/CoSense3D/cosense3d/logs/voxelnet_all_grad/epoch50/detection_eval",
         global_sort_detections=False,
     )
+    # eval_detection_opv2v_with_opencood_gt(
+    #     "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
+    #     "/media/yuan/luna/cosense3d/score_sampling_11-16-17-04-22/epoch37/detection_eval",
+    #     global_sort_detections=False,
+    # )

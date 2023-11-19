@@ -78,7 +78,7 @@ train_hooks = [
 
 test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500),
-        dict(type="EvalOPV2VDetectionHook"),
+        dict(type="EvalOPV2VDetectionHook", save_result=True),
         dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
