@@ -129,7 +129,7 @@ class BaseModule(nn.Module):
                         'coor': v['coor'][i],
                         'feat': v['feat'][i]
                     }
-                elif isinstance(v, list):
+                elif isinstance(v, list) or isinstance(v, torch.Tensor):
                     cur_res[k] = v[i]
                 else:
                     raise NotImplementedError

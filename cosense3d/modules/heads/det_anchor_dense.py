@@ -48,19 +48,17 @@ class DetAnchorDense(BaseModule):
 
     def format_output(self, output, B):
         # decompose batch
-        output_new = {k: [] for k in output.keys()}
-        for i in range(B):
-            output_new['cls'].append([cls for cls in output['cls']])
-            output_new['reg'].append([v for v in output['reg']])
-            if 'preds' in output:
+        if 'preds' in output:
+            preds_list = []
+            for i in range(B):
                 preds = {k: [] for k in output['preds'].keys()}
                 for h, inds in enumerate(output['preds']['idx']):
                     mask = inds == i
                     for k, v in output['preds'].items():
                         preds[k].append(v[h][mask])
-                output_new['preds'].append(preds)
-
-        output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
+                preds_list.append(preds)
+            output['preds'] = preds_list
+        output = {self.scatter_keys[0]: self.compose_result_list(output, B)}
         return output
 
     def loss(self, preds, gt_boxes, gt_labels, **kwargs):

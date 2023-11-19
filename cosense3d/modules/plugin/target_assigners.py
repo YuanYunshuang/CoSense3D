@@ -578,13 +578,16 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                  stride,
                  detection_benchmark,
                  class_names_each_head,
-                 box_coder):
+                 center_threshold,
+                 box_coder,
+                 ):
         super().__init__()
         self.voxel_size = voxel_size
         self.lidar_range = lidar_range
         self.meter_per_pixel = (voxel_size[0] * stride, voxel_size[1] * stride)
         self.csb = csb.get(detection_benchmark)
         self.class_names_each_head = class_names_each_head
+        self.center_threshold = center_threshold
         self.box_coder = build_box_coder(**box_coder)
 
     def pts_to_indices(self, bev_pts):

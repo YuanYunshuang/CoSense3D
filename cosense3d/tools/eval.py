@@ -163,8 +163,8 @@ if __name__=="__main__":
     #     "/koko/logs/cosense3d/epoch50/detection_eval",
     # )
     eval_detection_opv2v(
-        "/mars/projects20/CoSense3D/cosense3d/logs/voxelnet_all_grad/epoch50/detection_eval",
-        global_sort_detections=False,
+        "/media/yuan/luna/cosense3d/score_sampling/epoch50/detection_eval",
+        global_sort_detections=True,
     )
     # eval_detection_opv2v_with_opencood_gt(
     #     "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",

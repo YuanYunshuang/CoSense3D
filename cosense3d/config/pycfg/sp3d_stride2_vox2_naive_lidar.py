@@ -88,6 +88,7 @@ shared_modules = OrderedDict(
             stride=out_stride,
             detection_benchmark='Car',
             class_names_each_head=[['vehicle.car']],
+            center_threshold=0.5,
             box_coder=dict(type='CenterBoxCoder'),
         ),
         loss_cls=dict(type='EDLLoss', annealing_step=20, n_cls=2, loss_weight=1.0),
