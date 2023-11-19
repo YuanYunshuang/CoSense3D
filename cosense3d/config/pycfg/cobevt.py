@@ -1,8 +1,7 @@
 from collections import OrderedDict
 
 point_cloud_range = [-50, -50, -3, 50, 50, 1]
-data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
-img_size = (384, 768)
+img_size = (512, 512)
 num_classes = 1
 
 """
@@ -30,10 +29,13 @@ shared_modules = OrderedDict(
 
     img2bev = dict(
         type='projection.fax.FAXModule',
-        gather_keys=['img_feat'],
+        gather_keys=['img_feat', 'intrinsics', 'extrinsics'],
         scatter_keys=['bev_feat'],
         dim=[128, 128, 128],
         middle=[2, 2, 2],
+        img_size=img_size,
+        strides=[8, 16, 32],
+        feat_dims=[128, 256, 512],
         bev_embedding=dict(
             sigma=1.0,
             bev_height=256,
@@ -63,27 +65,6 @@ shared_modules = OrderedDict(
             window_size=32,
         )
     ),
-
-    detection = dict(
-        type='heads.petr_head.PETRHead',
-        gather_keys=['petr_feat'],
-        scatter_keys=['petr_out'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        embed_dims=128,
-        pc_range=point_cloud_range,
-        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
-        num_classes=1,
-        box_assigner=dict(
-            type='target_assigners.HungarianAssigner3D',
-            cls_cost=dict(type='focal_loss', weight=2.),
-            reg_cost=dict(type='l1', weight=.25),
-            iou_cost=dict(type='iou', weight=0.0),
-        ),
-        loss_cls=dict(type='FocalLoss', use_sigmoid=True,
-                      gamma=2.0, alpha=0.25, loss_weight=2.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=0.25),
-        # loss_iou=dict(type='GIoULoss', loss_weight=0.0),
-    )
 
     )
 

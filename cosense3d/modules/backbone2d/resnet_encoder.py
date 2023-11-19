@@ -19,9 +19,13 @@ class ResnetEncoder(BaseModule):
         self.feat_indices = sorted(feat_indices)
         self.out_index = out_index
         self.img_size = img_size
-        self.stride = 2 ** (self.out_index + 1)
-        self.feat_size = (img_size[0] // self.stride, img_size[1] // self.stride)
-        self.img_locations = nn.Parameter(img_locations(img_size, self.feat_size), requires_grad=False)
+        self.strides = [2 ** (idx + 1) for idx in out_index]
+        self.feat_sizes = [(img_size[0] // stride, img_size[1] // stride)
+                           for stride in self.strides]
+        if 'img_coor' in self.scatter_keys:
+            self.img_locations = [nn.Parameter(
+                img_locations(img_size, feat_size), requires_grad=False)
+            for feat_size in self.feat_sizes]
 
         resnet = getattr(models, f'resnet{self.num_layers}', None)
 
@@ -69,7 +73,10 @@ class ResnetEncoder(BaseModule):
             else:
                 output_list.append(output[ptr:ptr + n])
             if 'img_coor' in self.scatter_keys:
-                coor_list.append(self.img_locations.unsqueeze(0).repeat(n, 1, 1, 1))
+                assert hasattr(self, 'img_locations')
+                img_locs = [locs.unsqueeze(0).repeat(n, 1, 1, 1)
+                            for locs in self.img_locations]
+                coor_list.append(img_locs)
             ptr += n
         out_dict = {}
         if 'img_feat' in self.scatter_keys:

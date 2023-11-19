@@ -9,19 +9,16 @@ from cosense3d.ops.utils import points_in_boxes_gpu
 
 
 class DataManager:
-    def __init__(self, cav_manager, lidar_range, voxel_size=None, aug=None, post_process=None):
+    def __init__(self, cav_manager, lidar_range, voxel_size=None, aug=None, pre_process=[]):
         self.cav_manager = cav_manager
         self.lidar_range = lidar_range
         self.voxel_size = voxel_size
         self.aug = aug
-        if post_process is not None:
-            self.postP = PostProcess(post_process)
+        self.pre_process = pre_process
 
-    def post_process(self, batch_dict):
-        if not hasattr(self, 'postP'):
-            return batch_dict
-        else:
-            return self.postP(batch_dict)
+    def apply_preprocess(self):
+        for p in self.pre_process:
+            getattr(self, p)()
 
     def remove_empty_boxes(self):
         for cavs in self.cav_manager.cavs:

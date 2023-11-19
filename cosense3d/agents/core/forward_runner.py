@@ -21,7 +21,14 @@ class ForwardRunner(nn.Module):
     def gather_cav_ids(self, tasks):
         return [t[0] for t in tasks]
 
-    def forward(self, tasks, **kwargs):
+    def forward(self, tasks, with_grad=True, **kwargs):
+        if with_grad:
+            self._forward(tasks, **kwargs)
+        else:
+            with torch.no_grad():
+                self._forward(tasks, **kwargs)
+
+    def _forward(self, tasks, **kwargs):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             cav_ids = self.gather_cav_ids(task_list)

@@ -252,8 +252,7 @@ class CrossViewSwapAttention(nn.Module):
         feat_dim: int,
         dim: int,
         index: int,
-        image_height: int,
-        image_width: int,
+        img_size: tuple, # (h, w)
         qkv_bias: bool,
         q_win_size: list,
         feat_win_size: list,
@@ -269,8 +268,8 @@ class CrossViewSwapAttention(nn.Module):
 
         # 1 1 3 h w
         image_plane = generate_grid(feat_height, feat_width)[None]
-        image_plane[:, :, 0] *= image_width
-        image_plane[:, :, 1] *= image_height
+        image_plane[:, :, 0] *= img_size[1]
+        image_plane[:, :, 1] *= img_size[0]
 
         self.register_buffer('image_plane', image_plane, persistent=False)
 
@@ -353,15 +352,7 @@ class CrossViewSwapAttention(nn.Module):
         img_embed = d_embed - c_embed                                           # (b n) d h w
         img_embed = img_embed / (img_embed.norm(dim=1, keepdim=True) + 1e-7)    # (b n) d h w
 
-        # todo: some hard-code for now.
-        if index == 0:
-            world = bev.grid0[:2]
-        elif index == 1:
-            world = bev.grid1[:2]
-        elif index == 2:
-            world = bev.grid2[:2]
-        elif index == 3:
-            world = bev.grid3[:2]
+        world = getattr(bev, f'grid{index}')[:2]
 
         if self.bev_embed_flag:
             # 2 H W
@@ -398,11 +389,12 @@ class CrossViewSwapAttention(nn.Module):
                           w1=self.feat_win_size[0], w2=self.feat_win_size[1])  # window partition
         val = rearrange(val, 'b n d (x w1) (y w2) -> b n x y w1 w2 d',
                           w1=self.feat_win_size[0], w2=self.feat_win_size[1])  # window partition
-        query = rearrange(self.cross_win_attend_1(query, key, val,
-                                                skip=rearrange(x,
-                                                            'b d (x w1) (y w2) -> b x y w1 w2 d',
-                                                             w1=self.q_win_size[0], w2=self.q_win_size[1]) if self.skip else None),
-                       'b x y w1 w2 d  -> b (x w1) (y w2) d')    # reverse window to feature
+        query = rearrange(
+            self.cross_win_attend_1(
+                query, key, val,
+                skip=rearrange(x, 'b d (x w1) (y w2) -> b x y w1 w2 d',
+                               w1=self.q_win_size[0], w2=self.q_win_size[1]) if self.skip else None),
+            'b x y w1 w2 d  -> b (x w1) (y w2) d')    # reverse window to feature
 
         query = query + self.mlp_1(self.prenorm_1(query))
 

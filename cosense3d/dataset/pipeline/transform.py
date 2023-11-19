@@ -5,7 +5,7 @@ import torch
 
 class ResizeCropFlipRotImage:
     """
-    Modified from StreamPETR.
+    Augment images with random resize, crop, flip and rotation. Modified from StreamPETR.
     """
     def __init__(self, data_aug_conf=None, with_2d=True, filter_invisible=True, training=True):
         self.data_aug_conf = data_aug_conf
@@ -66,7 +66,8 @@ class ResizeCropFlipRotImage:
         data_dict['labels2d'] = new_gt_labels
         data_dict['depths2d'] = new_depths
         data_dict['img'] = new_imgs
-        data_dict['lidar2img'] = [data_dict['intrinsics'][i] @ data_dict['extrinsics'][i] for i in range(len(data_dict['extrinsics']))]
+        data_dict['lidar2img'] = [data_dict['intrinsics'][i] @ data_dict['extrinsics'][i]
+                                  for i in range(len(data_dict['extrinsics']))]
 
         return data_dict
 
@@ -187,3 +188,27 @@ class ResizeCropFlipRotImage:
             flip = False
             rotate = 0
         return resize, resize_dims, crop, flip, rotate
+
+
+class ResizeImage:
+    """
+    Resize images.
+    """
+    def __init__(self, img_size):
+        self.img_size = img_size
+
+    def __call__(self, data_dict):
+        imgs = data_dict['img']
+        imgs_out = []
+        for i, img in enumerate(imgs):
+            img = Image.fromarray(np.uint8(img))
+            W, H = img.size
+            img = img.resize(self.img_size)
+            imgs_out.append(np.array(img).astype(np.float32))
+
+            data_dict['intrinsics'][i][0, 0] = self.img_size[0] / W * data_dict['intrinsics'][i][0, 0]
+            data_dict['intrinsics'][i][1, 1] = self.img_size[1] / H * data_dict['intrinsics'][i][1, 1]
+
+            # todo convert 2d annotations
+        data_dict['img'] = imgs_out
+        return data_dict

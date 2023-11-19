@@ -1,7 +1,3 @@
-import sys
-
-import torch
-
 from cosense3d.agents import core
 
 
@@ -15,9 +11,11 @@ class CenterController:
         self.global_data = {}
 
     def setup_core(self, cfg):
-        self.cav_manager = core.CAVManager(**self.update_cfg(cfg['cav_manager'], self.data_info))
+        self.cav_manager = core.CAVManager(**self.update_cfg(cfg['cav_manager'],
+                                                             self.data_info))
         self.data_manager = core.DataManager(
-            self.cav_manager, **self.update_cfg(cfg['data_manager'][self.mode], self.data_info))
+            self.cav_manager, **self.update_cfg(
+                cfg['data_manager'][self.mode], self.data_info))
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
         self.task_manager = core.TaskManager()
 
@@ -82,26 +80,20 @@ class CenterController:
         # get pseudo forward tasks
         tasks = self.cav_manager.forward(with_loss, training_mode)
         batched_tasks = self.task_manager.summarize_tasks(tasks)
-        # remove empty_boxes after point transformation
-        if training_mode:
-            self.data_manager.remove_empty_boxes()
+        # preprocess after transformation to ego frame
+        self.data_manager.apply_preprocess()
 
         # process local cav data
         if len(batched_tasks[0]['no_grad']) > 0:
-            with torch.no_grad():
-                self.forward_runner(batched_tasks[0]['no_grad'], **kwargs)
-        if not training_mode:
-            with torch.no_grad():
-                self.forward_runner(batched_tasks[0]['with_grad'], **kwargs)
-        else:
-            self.forward_runner(batched_tasks[0]['with_grad'], **kwargs)
+            self.forward_runner(batched_tasks[0]['no_grad'], with_grad=False, **kwargs)
+        self.forward_runner(batched_tasks[0]['with_grad'], with_grad=training_mode, **kwargs)
 
         # send coop cav feature-level cpm to ego cav
         response = self.cav_manager.send_response()
         self.cav_manager.receive_response(response)
 
         # process ego cav data and fuse data from coop cav with grad if training
-        self.forward_runner(batched_tasks[1]['with_grad'], **kwargs)
+        self.forward_runner(batched_tasks[1]['with_grad'], with_grad=training_mode, **kwargs)
         self.cav_manager.apply_cav_function('post_update_memory')
 
         frame_loss_dict = {}
