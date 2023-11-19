@@ -552,7 +552,7 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
     def get_predictions(self, preds):
         roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
         B = len(preds['cls'])
-        pred_cls = preds['cls'].permute(0, 3, 2, 1).reshape(B, -1)
+        pred_cls = preds['cls'].sigmoid().permute(0, 3, 2, 1).reshape(B, -1)
         pred_reg = preds['reg'].permute(0, 3, 2, 1).reshape(B, -1, 7)
         indices = torch.stack([torch.ones_like(pred_cls[0]) * i for i in range(B)], dim=0)
 

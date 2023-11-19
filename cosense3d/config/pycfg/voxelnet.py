@@ -77,13 +77,10 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=100),
         dict(type="EvalOPV2VDetectionHook", save_result=True),
-        dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
-        dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 
 plots = [
-    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
     dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
 ]
