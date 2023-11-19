@@ -83,15 +83,18 @@ class CenterController:
         tasks = self.cav_manager.forward(with_loss, training_mode)
         batched_tasks = self.task_manager.summarize_tasks(tasks)
         # remove empty_boxes after point transformation
-        self.data_manager.remove_empty_boxes()
+        if training_mode:
+            self.data_manager.remove_empty_boxes()
 
         # process local cav data
         if len(batched_tasks[0]['no_grad']) > 0:
-            self.forward_runner.eval()
-            self.forward_runner(batched_tasks[0]['no_grad'], **kwargs)
-        if training_mode:
-            self.forward_runner.train()
-        self.forward_runner(batched_tasks[0]['with_grad'], **kwargs)
+            with torch.no_grad():
+                self.forward_runner(batched_tasks[0]['no_grad'], **kwargs)
+        if not training_mode:
+            with torch.no_grad():
+                self.forward_runner(batched_tasks[0]['with_grad'], **kwargs)
+        else:
+            self.forward_runner(batched_tasks[0]['with_grad'], **kwargs)
 
         # send coop cav feature-level cpm to ego cav
         response = self.cav_manager.send_response()
