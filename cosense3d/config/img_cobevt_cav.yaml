@@ -5,12 +5,13 @@ DATASET:
   data_path: /koko/OPV2V
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-140.8, -41.6, -3, 140.8, 41.6, 1]
-    voxel_size: &voxel_size [ 0.4, 0.4, 0.4 ]
-  batch_size_train: 2
+    lidar_range: [-50, -50, -3, 50, 50, 1]
+    voxel_size: &voxel_size [ 0.4, 0.4]
+  drop_scenarios: ['2021_09_09_13_20_58']
+  batch_size_train: 1
   n_workers: 4
 
-  max_num_cavs: 7
+  max_num_cavs: 5
   seq_len: &seq_len 1
   train_pipeline: 'pycfg.data_pipeline_cobevt.pipeline_cpu'
   test_pipeline: 'pycfg.data_pipeline_cobevt.pipeline_cpu'
@@ -24,15 +25,17 @@ TRAIN:
   resume: true
   hooks: 'pycfg.cobevt.train_hooks'
   optimizer:
-    lr: 0.002
-    weight_decay: 1e-4
+    lr: 2e-4
+    weight_decay: 1e-2
     betas: [0.95, 0.999]
     milestones: [25, 40]
     gamma: 0.1
   lr_scheduler:
-    policy: 'MultiStepLR'
-    milestones: [15, 30]
-    gamma: 0.1
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-5
+    warmup_epochs: 10
+    lr_min: 5e-6
 
 TEST:
   hooks: 'pycfg.cobevt.test_hooks'

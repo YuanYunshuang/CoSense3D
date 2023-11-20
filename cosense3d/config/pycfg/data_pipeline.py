@@ -3,7 +3,8 @@ from collections import OrderedDict
 train_pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(),
     LoadMultiViewImg=dict(),
-    LoadAnnotations=dict(with_velocity=True),
+    LoadAnnotations=dict(load2d=True, load3d_local=True, load3d_global=True,
+                         min_num_pts=0, with_velocity=True),
     ResizeCropFlipRotImage=dict(
         training=True,
         data_aug_conf=dict(

@@ -77,7 +77,10 @@ class CosenseDataset(Dataset):
         """List all frame-wise instances"""
         # list all frames, each frame as a sample
         self.samples = []
+        drop_scenarios = self.cfgs.get('drop_scenarios', [])
         for scenario, scontent in self.meta_dict.items():
+            if scenario in drop_scenarios:
+                continue
             self.samples.extend(sorted([[scenario, frame] for frame in scontent.keys()]))
         self.samples = sorted(self.samples)
 

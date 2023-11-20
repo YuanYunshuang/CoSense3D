@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(),
-    LoadAnnotations=dict(load2d=False, load3d_local=False, min_num_pts=1),
+    LoadAnnotations=dict(load3d_global=True, min_num_pts=1),
 )
 
 inference_pipeline_cpu = OrderedDict(

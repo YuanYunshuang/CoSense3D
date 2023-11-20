@@ -82,8 +82,7 @@ class FAXModule(BaseModule):
             x = cross_view(i, x, self.bev_embedding, feature, I_inv, E_inv)
             x = layer(x)
             if i < len(img_feat[0])-1:
-                down_sample_block = self.downsample_layers[i]
-                x = down_sample_block(x)
+                x = self.downsample_layers[i](x)
 
         x = self.self_attn(x)
         return {self.scatter_keys[0]: x}

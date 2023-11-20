@@ -65,8 +65,51 @@ shared_modules = OrderedDict(
             window_size=32,
         )
     ),
+    spatial_transform=dict(
+        type='projection.spatial_transform.STTF',
+        gather_keys=['bev_feat', 'received_request', 'lidar_poses'],
+        scatter_keys=['bev_feat'],
+        resolution=0.390625,  # m/pixel
+        downsample_rate=8,
+        use_roi_mask=True
+    ),
 
+    fusion=dict(
+        type='fusion.fax.SwapFusionEncoder',
+        gather_keys=['bev_feat', 'received_response'],
+        scatter_keys=['bev_feat_fused'],
+        input_dim=128,
+        mlp_dim=256,
+        agent_size=5,
+        window_size=8,
+        dim_head=32,
+        drop_out=0.1,
+        depth=3,
+        mask=True,
+        decoder=dict(
+            input_dim=128,
+            num_layer=3,
+            num_ch_dec=[32, 64, 128]
+        )
+    ),
+
+    bev_head=dict(
+        type='heads.bev_dense.BevSegHead',
+        gather_keys=['bev_feat_fused'],
+        scatter_keys=['bevseg'],
+        gt_keys=['bev_visibility_corp'],
+        target='dynamic',
+        input_dim=32,
+        output_class=2,
+        loss_cls=dict(
+            type='VanillaSegLoss',
+            d_weights=75.0,
+            s_weights=15.0,
+            d_coe=2.0,
+            s_coe=0.0,
+        )
     )
+)
 
 train_hooks = [
         dict(type='MemoryUsageHook'),

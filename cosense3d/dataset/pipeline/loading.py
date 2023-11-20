@@ -124,7 +124,8 @@ class LoadLidarPoints:
 
 
 class LoadMultiViewImg:
-    def __init__(self, to_float32=False, max_num_img=None, img_filter_keys=None):
+    def __init__(self, bgr2rgb=False, to_float32=False, max_num_img=None, img_filter_keys=None):
+        self.bgr2rgb = bgr2rgb
         self.to_float32 = to_float32
         self.max_num_img = max_num_img
         self.img_filter_keys = img_filter_keys
@@ -156,7 +157,10 @@ class LoadMultiViewImg:
                 num_cam += 1
                 chosen_cams[ai].append(ci)
                 img_file = os.path.join(data_dict['data_path'], filename)
-                img.append(cv2.imread(img_file))
+                I = cv2.imread(img_file)
+                if self.bgr2rgb:
+                    I = cv2.cvtColor(I, cv2.COLOR_BGR2RGB)
+                img.append(I)
         # img is of shape (h, w, c, num_views)
         img = np.stack(img, axis=0)
         if self.to_float32:
@@ -168,8 +172,11 @@ class LoadMultiViewImg:
 
 
 class LoadAnnotations:
-    def __init__(self, load2d=True, load3d_local=True, load3d_global=True, min_num_pts=0, with_velocity=False):
+    def __init__(self, load2d=False, load_cam_param=False,
+                 load3d_local=False, load3d_global=False,
+                 min_num_pts=0, with_velocity=False):
         self.load2d = load2d
+        self.load_cam_param = load_cam_param
         self.load3d_local = load3d_local
         self.load3d_global = load3d_global
         self.min_num_pts = min_num_pts
@@ -179,6 +186,9 @@ class LoadAnnotations:
         self._load_essential(data_dict)
         if self.load2d:
             data_dict = self._load_anno2d(data_dict)
+        elif self.load_cam_param:
+            data_dict = self._load_cam_param(data_dict)
+
         if self.load3d_local:
             data_dict = self._load_anno3d_local(data_dict)
         if self.load3d_global:
@@ -204,6 +214,35 @@ class LoadAnnotations:
             'ego_poses': ego_pose,
         })
 
+        return data_dict
+
+    def _load_cam_param(self, data_dict):
+        intrinsics = []
+        extrinsics = []
+        lidar2img = []
+
+        agents = data_dict['sample_info']['agents']
+        chosen_cams = data_dict['chosen_cams']
+        for ai in data_dict['valid_agent_ids']:
+            if ai not in agents:
+                # previous agents might not in current frame when load sequential data
+                continue
+            adict = agents[ai]
+            cam_ids = chosen_cams[ai]
+            for ci in cam_ids:
+                cdict = adict['camera'][ci]
+                I4x4 = np.eye(4)
+                I4x4[:3, :3] = np.array(cdict['intrinsic'])
+                intrinsics.append(I4x4.astype(np.float32))
+                extrinsics.append(np.array(cdict['lidar2cam']).astype(np.float32))
+                lidar2img.append(self.get_lidar2img_transform(
+                    cdict['lidar2cam'], cdict['intrinsic']).astype(np.float32))
+
+        data_dict.update({
+            'intrinsics': intrinsics,
+            'extrinsics': extrinsics,
+            'lidar2img': lidar2img,
+        })
         return data_dict
 
     def _load_anno2d(self, data_dict):
@@ -311,3 +350,39 @@ class LoadAnnotations:
             print(lidar2cam)
         lidar2img = np.concatenate([P, lidar2cam[3:]], axis=0)
         return lidar2img
+
+
+class LoadOPV2VBevMaps:
+    def __init__(self, keys, ego_only=True):
+        assert len(keys) > 0
+        self.keys = keys
+        self.ego_only = ego_only
+
+    def __call__(self, data_dict):
+        path = os.path.join(data_dict['data_path'], data_dict['scenario'])
+
+        if self.ego_only:
+            ai = data_dict['valid_agent_ids'][0]
+            load_dict = self.load_single(path, ai, data_dict['frame'])
+        else:
+            load_dict = {k: [] for k in self.keys}
+            agents = data_dict['valid_agent_ids']
+            for ai in agents:
+                out = self.load_single(path, ai, data_dict['frame'])
+                for k in self.keys:
+                    load_dict[k].append(out[k])
+        data_dict.update(load_dict)
+        return data_dict
+
+    def load_single(self, path, ai, frame):
+        out = {}
+        for k in self.keys:
+            filename = os.path.join(path, ai, f"{frame}_{k}.png")
+            bev_map = cv2.imread(filename)
+            bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
+            bev_map = np.array(bev_map, dtype=np.float) / 255.
+            bev_map[bev_map > 0] = 1
+            out[k] = bev_map
+        return out
+
+
