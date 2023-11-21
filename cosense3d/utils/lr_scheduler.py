@@ -41,3 +41,9 @@ class LRUpdater:
             self.lr_scheduler.step(epoch)
         else:
             self.lr_scheduler.step()
+
+    def state_dict(self):
+        return self.lr_scheduler.state_dict()
+
+    def load_state_dict(self, state_dict):
+        self.lr_scheduler.load_state_dict(state_dict)
