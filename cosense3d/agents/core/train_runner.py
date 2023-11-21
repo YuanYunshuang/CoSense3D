@@ -2,6 +2,7 @@ import os, glob, logging
 from datetime import datetime
 
 from cosense3d.utils.train_utils import *
+from cosense3d.utils.lr_scheduler import build_lr_scheduler
 from cosense3d.utils.logger import LogMeter
 from cosense3d.utils.misc import ensure_dir, setup_logger
 from cosense3d.agents.core.base_runner import BaseRunner
@@ -69,7 +70,7 @@ class TrainRunner(BaseRunner):
                 self.hooks(self, 'pre_epoch')
                 self.run_epoch()
                 self.hooks(self, 'post_epoch')
-                self.lr_scheduler.step()
+                self.lr_scheduler.step(i)
                 self.epoch += 1
                 self.iter = 1
 

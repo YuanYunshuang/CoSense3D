@@ -380,7 +380,7 @@ class LoadOPV2VBevMaps:
             filename = os.path.join(path, ai, f"{frame}_{k}.png")
             bev_map = cv2.imread(filename)
             bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
-            bev_map = np.array(bev_map, dtype=np.float) / 255.
+            bev_map = np.array(bev_map, dtype=float) / 255.
             bev_map[bev_map > 0] = 1
             out[k] = bev_map
         return out

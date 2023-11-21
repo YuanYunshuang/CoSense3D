@@ -45,7 +45,7 @@ def eval_detection_opv2v(test_dir, iou_thr=[0.5, 0.7], global_sort_detections=Tr
             caluclate_tp_fp(
                 pred_boxes, pred_scores, gt_boxes, result_stat, iou
             )
-    eval_final_results(result_stat, iou_thr, global_sort_detections=global_sort_detections)
+    result = eval_final_results(result_stat, iou_thr, global_sort_detections=global_sort_detections)
 
 
 
@@ -163,7 +163,7 @@ if __name__=="__main__":
     #     "/koko/logs/cosense3d/epoch50/detection_eval",
     # )
     eval_detection_opv2v(
-        "/media/yuan/luna/cosense3d/score_sampling/epoch50/detection_eval",
+        "/media/yuan/luna/cosense3d/voxelnet_all_grad/epoch50/detection_eval",
         global_sort_detections=True,
     )
     # eval_detection_opv2v_with_opencood_gt(

@@ -149,8 +149,8 @@ class TestLogger(object):
         ensure_dir(self.logdir)
         self.log_fh = (pathlib.Path(self.logdir) / "test.log").open('a')
 
-    def log(self, runner):
-        pass
+    def log(self, msg):
+        self.log_fh.writelines(msg)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.log_fh.close()

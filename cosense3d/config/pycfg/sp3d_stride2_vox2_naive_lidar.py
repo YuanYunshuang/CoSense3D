@@ -3,7 +3,7 @@ from collections import OrderedDict
 # point_cloud_range = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 # point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
-point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
+point_cloud_range_test = [-140.8, -40, -3, 140.8, 40, 1]
 voxel_size = [0.2, 0.2, 0.2]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
@@ -105,7 +105,7 @@ train_hooks = [
 
 test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
-        dict(type="EvalOPV2VDetectionHook", save_result=True),
+        dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test, metrics=['OPV2V', 'CoSense3D']),
         dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]

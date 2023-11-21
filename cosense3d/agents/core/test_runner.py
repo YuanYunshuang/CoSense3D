@@ -18,6 +18,7 @@ class TestRunner(BaseRunner):
         ckpt = self.load(load_from)
         self.progress_bar = tqdm(total=self.total_iter)
         self.setup_logger(ckpt, logdir)
+        self.forward_runner.eval()
 
     def setup_logger(self, ckpt, logdir):
         if logdir is None:
@@ -25,7 +26,7 @@ class TestRunner(BaseRunner):
         else:
             logdir = os.path.join(logdir, f'test_{os.path.basename(ckpt)[:-4]}')
         self.logger = TestLogger(logdir)
-        self.hooks.set_logdir(logdir)
+        self.hooks.set_logger(self.logger)
 
     def load(self, load_from):
         assert load_from is not None, "load path not given."
@@ -63,10 +64,7 @@ class TestRunner(BaseRunner):
     def run_itr(self, data):
         self.hooks(self, 'pre_iter')
         load_tensors_to_gpu(data)
-
         self.controller.test_forward(data)
-        self.logger.log(self)
-
         self.hooks(self, 'post_iter')
         self.iter += 1
         self.progress_bar.update(1)

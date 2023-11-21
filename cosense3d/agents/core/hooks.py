@@ -19,9 +19,9 @@ class Hooks:
         for hook in self.hooks:
             getattr(hook, hook_stage)(runner, **kwargs)
 
-    def set_logdir(self, logdir):
+    def set_logger(self, logger):
         for hook in self.hooks:
-            hook.set_logdir(logdir)
+            hook.set_logger(logger)
 
 
 class BaseHook:
@@ -40,8 +40,8 @@ class BaseHook:
     def post_epoch(self, runner, **kwargs):
         pass
 
-    def set_logdir(self, logdir):
-        self.logdir = logdir
+    def set_logger(self, logger):
+        self.logger = logger
 
 
 class MemoryUsageHook(BaseHook):
@@ -188,8 +188,9 @@ class EvalOPV2VDetectionHook(BaseHook):
         # Create the dictionary for evaluation
         self.result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
 
-    def set_logdir(self, logdir):
-        logdir = os.path.join(logdir, 'detection_eval')
+    def set_logger(self, logger):
+        super().set_logger(logger)
+        logdir = os.path.join(logger.logdir, 'detection_eval')
         os.makedirs(logdir, exist_ok=True)
         self.logdir = logdir
 
@@ -213,60 +214,135 @@ class EvalOPV2VDetectionHook(BaseHook):
                 )
 
     def post_epoch(self, runner, **kwargs):
-        self.eval_funcs.eval_final_results(self.result_stat, self.iou_thr)
+        result = self.eval_funcs.eval_final_results(self.result_stat, self.iou_thr)
+        msg = "##### DETECTION OPV2V AP"
 
 
 class EvalDetectionHook(BaseHook):
-    def __init__(self, iou_thr=[0.5, 0.7], pc_range=None, save_result=False, **kwargs):
+    def __init__(self, pc_range, iou_thr=[0.5, 0.7], metrics=['CoSense3D'], save_result=False, **kwargs):
         super().__init__(**kwargs)
         self.iou_thr = iou_thr
         self.pc_range = pc_range
         self.save_result = save_result
+        for m in metrics:
+            assert m in ['OPV2V', 'CoSense3D']
+            setattr(self, f'{m.lower()}_result',
+                    {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr})
+        self.metrics = metrics
         self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
-        # Create the dictionary for evaluation
-        self.result_stat = {iou: {'tp': [], 'gt': 0, 'scr': []} for iou in iou_thr}
 
-    def set_logdir(self, logdir):
-        logdir = os.path.join(logdir, 'detection_eval')
+    def set_logger(self, logger):
+        super().set_logger(logger)
+        logdir = os.path.join(logger.logdir, 'detection_eval')
         os.makedirs(logdir, exist_ok=True)
         self.logdir = logdir
 
     def post_iter(self, runner, **kwargs):
         detection = runner.controller.data_manager.gather_ego_data('detection')
         gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
-        points = runner.controller.data_manager.gather_batch(0, 'points')
-        if self.save_result:
-            ego_key = list(detection.keys())[0]
-            senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
-            frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
-            filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
-            result = {'detection': detection[ego_key],
-                      'gt_boxes': gt_boxes[ego_key],
-                      'points': points}
-            torch.save(result, os.path.join(self.logdir, filename))
-        for cav_id, preds in detection.items():
+
+        for i, (cav_id, preds) in enumerate(detection.items()):
+            preds['box'], preds['scr'], preds['lbl'], preds['idx'] = \
+            self.filter_box_ranges(preds['box'], preds['scr'], preds['lbl'], preds['idx'])
+            cur_gt_boxes = self.filter_box_ranges(gt_boxes[cav_id])[0]
+            cur_points = runner.controller.data_manager.gather_batch(i, 'points')
+
+            if self.save_result:
+                ego_key = cav_id
+                senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
+                frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
+                filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
+                result = {'detection': preds,
+                          'gt_boxes': cur_gt_boxes,
+                          'points': cur_points}
+                torch.save(result, os.path.join(self.logdir, filename))
+
             for iou in self.iou_thr:
-                tp =self.eval_funcs.ops_cal_tp(
-                    preds['box'].detach(), gt_boxes[cav_id].detach(), IoU_thr=iou
-                )
-                self.result_stat[iou]['tp'].append(tp.cpu())
-                self.result_stat[iou]['gt'] += len(gt_boxes[cav_id])
-                self.result_stat[iou]['scr'].append(preds['scr'].detach().cpu())
-        # pass
+                if 'OPV2V' in self.metrics:
+                    result_dict = getattr(self, f'opv2v_result')
+                    self.eval_funcs.caluclate_tp_fp(
+                        preds['box'], preds['scr'], cur_gt_boxes, result_dict, iou
+                    )
+                if 'CoSense3D' in self.metrics:
+                    result_dict = getattr(self, f'cosense3d_result')
+                    tp = self.eval_funcs.ops_cal_tp(
+                        preds['box'].detach(), cur_gt_boxes.detach(), IoU_thr=iou
+                    )
+                    result_dict[iou]['tp'].append(tp.cpu())
+                    result_dict[iou]['gt'] += len(cur_gt_boxes)
+                    result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
+
+    def filter_box_ranges(self, boxes, scores=None, labels=None, indices=None):
+        mask = boxes.new_ones((len(boxes),)).bool()
+        if boxes.ndim == 3:
+            centers = boxes.mean(dim=1)
+        else:
+            centers = boxes[:, :3]
+        for i in range(3):
+            mask = mask & (centers[:, i] > self.pc_range[1]) & (centers[:, i] < self.pc_range[i + 3])
+        boxes = boxes[mask]
+        if scores is not None:
+            scores = scores[mask]
+        if labels is not None:
+            labels = labels[mask]
+        if indices is not None:
+            indices = indices[mask]
+        return boxes, scores, labels, indices
 
     def post_epoch(self, runner, **kwargs):
-        result = {}
+        fmt_str = ("################\n"
+                   "DETECTION RESULT\n"
+                   "################\n")
+        if 'OPV2V' in self.metrics:
+            result_dict = getattr(self, f'opv2v_result')
+            out_dict = self.eval_funcs.eval_final_results(
+                result_dict,
+                self.iou_thr,
+                global_sort_detections=True
+            )
+            fmt_str += "OPV2V BEV Global sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+
+            out_dict = self.eval_funcs.eval_final_results(
+                result_dict,
+                self.iou_thr,
+                global_sort_detections=False
+            )
+            fmt_str += "OPV2V BEV Local sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+        if 'CoSense3D' in self.metrics:
+            out_dict = self.eval_cosense3d_final()
+            fmt_str += "CoSense3D Global sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+        print(fmt_str)
+        self.logger.log(fmt_str)
+
+    def format_final_result(self, out_dict):
+        fmt_str = ""
         for iou in self.iou_thr:
-            scores = torch.cat(self.result_stat[iou]['scr'], dim=0)
-            tps = torch.cat(self.result_stat[iou]['tp'], dim=0)
+            iou_str = f"{int(iou * 100)}"
+            fmt_str += f"AP@{iou_str}: {out_dict[f'ap_{iou_str}']:.3f}\n"
+            # fmt_str += f"Precision@{iou_str}: {out_dict[f'mpre_{iou_str}']:.3f}\n"
+            # fmt_str += f"Recall@{iou_str}: {out_dict[f'mrec_{iou_str}']:.3f}\n"
+        return fmt_str
+
+    def eval_cosense3d_final(self):
+        out_dict = {}
+        result_dict = getattr(self, f'cosense3d_result')
+        for iou in self.iou_thr:
+            scores = torch.cat(result_dict[iou]['scr'], dim=0)
+            tps = torch.cat(result_dict[iou]['tp'], dim=0)
             n_pred = len(scores)
-            n_gt = self.result_stat[iou]['gt']
+            n_gt = result_dict[iou]['gt']
 
             ap, mpre, mrec, _ = self.eval_funcs.cal_ap_all_point(scores, tps, n_pred, n_gt)
             iou_str = f"{int(iou * 100)}"
-            result[iou] = {f'ap_{iou_str}': ap,
-                          f'mpre_{iou_str}': mpre,
-                          f'mrec_{iou_str}': mrec,
-                          }
-            print(f"AP@{iou}: {ap:.3f}")
+            out_dict.update({f'ap_{iou_str}': ap,
+                             f'mpre_{iou_str}': mpre,
+                             f'mrec_{iou_str}': mrec})
+        return out_dict
+
 

@@ -95,7 +95,7 @@ def caluclate_tp_fp(det_boxes, det_score, gt_boxes, result_stat, iou_thresh,
 
             gt_index = np.argmax(ious)
             gt_polygon_list.pop(gt_index)
-        result_stat[iou_thresh]['score'] += det_score.tolist()
+        result_stat[iou_thresh]['scr'] += det_score.tolist()
     else:
         gt = gt_boxes.shape[0]
     result_stat[iou_thresh]['fp'] += fp
@@ -122,7 +122,7 @@ def calculate_ap(result_stat, iou, global_sort_detections):
     if global_sort_detections:
         fp = np.array(iou_5['fp'])
         tp = np.array(iou_5['tp'])
-        score = np.array(iou_5['score'])
+        score = np.array(iou_5['scr'])
 
         assert len(fp) == len(tp) and len(tp) == len(score)
         sorted_index = np.argsort(-score)
@@ -159,9 +159,8 @@ def calculate_ap(result_stat, iou, global_sort_detections):
     return ap, mrec, mprec
 
 
-def eval_final_results(result_stat, iou_thrs, global_sort_detections=False, range=""):
+def eval_final_results(result_stat, iou_thrs, global_sort_detections=False):
     dump_dict = {}
-    print(f'Range: {range}')
     for iou in iou_thrs:
         ap, mrec, mpre = calculate_ap(result_stat, iou, global_sort_detections)
         iou_str = f"{int(iou * 100)}"
@@ -169,7 +168,7 @@ def eval_final_results(result_stat, iou_thrs, global_sort_detections=False, rang
                           f'mpre_{iou_str}': mpre,
                           f'mrec_{iou_str}': mrec,
                           })
-        print(f"AP@{iou}: {ap:.3f}")
+    return dump_dict
 
 
 def ops_cal_tp(pred_boxes, gt_boxes, iou_mode='3d', IoU_thr=0.7):
