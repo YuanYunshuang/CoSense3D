@@ -3,7 +3,7 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 from .multi_modal_cav import BaseCAV
 
 
-class LidarDetCAV(BaseCAV):
+class FpvrcnnCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prepare_data_keys = ['points', 'annos_global']
@@ -23,26 +23,26 @@ class LidarDetCAV(BaseCAV):
         if (self.is_ego or self.all_grad) and training_mode:
             tasks['with_grad'].append((self.id, '01:pts_backbone', {}))
             tasks['with_grad'].append((self.id, '02:detection_head_local', {}))
-            tasks['with_grad'].append((self.id, '03:cpm_composer', {}))
+            # tasks['with_grad'].append((self.id, '03:cpm_composer', {}))
         else:
             tasks['no_grad'].append((self.id, '01:pts_backbone', {}))
             tasks['no_grad'].append((self.id, '02:detection_head_local', {}))
-            tasks['with_grad'].append((self.id, '03:cpm_composer', {}))
+            # tasks['no_grad'].append((self.id, '03:cpm_composer', {}))
 
     def forward_fusion(self, tasks, training_mode):
-        if self.is_ego:
-            tasks['with_grad'].append((self.id, '11:fusion', {}))
+        # if self.is_ego:
+        #     tasks['with_grad'].append((self.id, '11:fusion', {}))
         return tasks
 
     def forward_head(self, tasks, training_mode):
-        if self.is_ego:
-            tasks['with_grad'].append((self.id, '12:detection_head_global', {}))
+        # if self.is_ego:
+        #     tasks['with_grad'].append((self.id, '12:detection_head_global', {}))
         return tasks
 
     def loss(self, tasks):
         if self.is_ego:
             tasks['loss'].append((self.id, '22:detection_head_local', {}))
-            tasks['loss'].append((self.id, '22:detection_head_global', {}))
+            # tasks['loss'].append((self.id, '22:detection_head_global', {}))
         return tasks
 
     def reset_data(self):

@@ -1,6 +1,8 @@
 from functools import partial
+from typing import List
 
 import spconv
+import torch
 import torch.nn as nn
 
 from spconv.pytorch import  SparseSequential, SubMConv3d, SparseConv3d, SparseInverseConv3d, SparseConvTensor
@@ -32,14 +34,21 @@ def post_act_block(in_channels, out_channels, kernel_size, indice_key=None, stri
 class Spconv(BaseModule):
     def __init__(self,
                  in_channels,
+                 out_channels,
                  voxel_generator,
                  voxel_encoder,
-                 num_point_features=128,
                  bev_neck=None,
                  bev_compressor=None,
+                 cache_coords=True,
+                 cache_strides=[1, 2, 4, 8],
                  **kwargs):
         super(Spconv, self).__init__(**kwargs)
-        self.num_point_features = num_point_features
+        self.num_point_features = out_channels
+        self.cache_keys = []
+        if cache_coords:
+            self.cache_keys.append('coords')
+        for s in cache_strides:
+            self.cache_keys.append(f'p{s}')
         self.voxel_generator = plugin.build_plugin_module(voxel_generator)
         self.voxel_encoder = plugin.build_plugin_module(voxel_encoder)
         self.grid_size = self.voxel_generator.grid_size
@@ -47,11 +56,13 @@ class Spconv(BaseModule):
             self.bev_neck = plugin.build_plugin_module(bev_neck)
         if bev_compressor is not None:
             self.bev_compressor = plugin.build_plugin_module(bev_compressor)
+        self._init_layers(in_channels, out_channels)
 
-    def _init_layers(self, in_channels):
+    def _init_layers(self, in_channels, out_channels):
         norm_fn = partial(nn.BatchNorm1d, eps=1e-3, momentum=0.01)
 
-        self.sparse_shape = self.grid_size[::-1] + [1, 0, 0]
+        self.sparse_shape = self.grid_size.tolist()[::-1]
+        self.sparse_shape[0] += 1
 
         self.conv_input = SparseSequential(
             SubMConv3d(in_channels, 16, 3,
@@ -93,9 +104,9 @@ class Spconv(BaseModule):
         last_pad = 0
         self.conv_out = SparseSequential(
             # [200, 150, 5] -> [200, 150, 2]
-            SparseConv3d(64, self.num_point_features, (3, 1, 1),
+            SparseConv3d(64, out_channels, (3, 1, 1),
                          stride=(2, 1, 1), padding=last_pad, bias=False, indice_key='spconv_down2'),
-            norm_fn(self.num_point_features),
+            norm_fn(out_channels),
             nn.ReLU(),
         )
 
@@ -103,18 +114,22 @@ class Spconv(BaseModule):
             'x_conv1': 16,
             'x_conv2': 32,
             'x_conv3': 64,
-            'x_conv4': 64
+            'x_conv4': 64,
+            'out': out_channels
         }
 
     def forward(self, points: list, **kwargs):
         B = len(points)
+        res_dict = {}
         voxels, coords, num_points = self.voxel_generator(points)
+        res_dict['coords'] = coords
         coords = self.cat_data_from_list(coords, pad_idx=True)
         voxels = self.cat_data_from_list(voxels)
         num_points = self.cat_data_from_list(num_points)
+        voxel_features = self.voxel_encoder(voxels, num_points)
 
         input_sp_tensor = SparseConvTensor(
-            features=voxels,
+            features=voxel_features,
             indices=coords.int(),
             spatial_shape=self.sparse_shape,
             batch_size=B
@@ -122,22 +137,42 @@ class Spconv(BaseModule):
 
         x = self.conv_input(input_sp_tensor)
 
-        x_conv1 = self.conv1(x)
-        x_conv2 = self.conv2(x_conv1)
-        x_conv3 = self.conv3(x_conv2)
-        x_conv4 = self.conv4(x_conv3)
+        res_dict['p1'] = self.conv1(x)
+        res_dict['p2'] = self.conv2(res_dict['p1'])
+        res_dict['p4'] = self.conv3(res_dict['p2'] )
+        res_dict['p8'] = self.conv4(res_dict['p4'] )
 
-        # for detection head
-        # [200, 176, 5] -> [200, 176, 2]
-        out = self.conv_out(x_conv4)
-        bev_feat = self.to_dense(out)
+        res_dict['p8_out'] = self.conv_out(res_dict['p8'])
+        res_dict['bev'] = self.to_dense(res_dict['p8_out'])
 
         if hasattr(self, 'bev_neck'):
-            bev_feat = self.bev_neck(bev_feat)
+            res_dict['bev'] = self.bev_neck(res_dict['bev'])
         if hasattr(self, 'bev_compressor'):
-            bev_feat = self.bev_compressor(bev_feat)
+            res_dict['bev'] = self.bev_compressor(res_dict['bev'])
 
-        return {self.scatter_keys[0]: bev_feat}
+        out_dict = {}
+        if 'voxel_feat' in self.scatter_keys:
+            out_dict['voxel_feat'] = self.format_output(
+                {k: res_dict[k] for k in self.cache_keys}, B)
+        if 'bev_feat' in self.scatter_keys:
+            out_dict['bev_feat'] = res_dict['bev']
+        return out_dict
+
+    def format_output(self, out_dict, B):
+        out_list = []
+        for i in range(B):
+            new_dict = {}
+            for k, v in out_dict.items():
+                if isinstance(v, list) or isinstance(v, torch.Tensor):
+                    new_dict[k] = v[i]
+                else:
+                    coor = v.indices
+                    feat = v.features.contiguous()
+                    mask = coor[:, 0] == i
+                    new_dict[k] = {'coor': coor[mask, 1:], 'feat': feat[mask]}
+            out_list.append(new_dict)
+
+        return out_list
 
     def to_dense(self, stensor):
         spatial_features = stensor.dense()

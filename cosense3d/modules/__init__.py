@@ -13,7 +13,10 @@ def build_module(module_cfg):
     module = importlib.import_module(f'cosense3d.modules.{package}')
     cls_obj = getattr(module, module_name, None)
     assert cls_obj is not None, f'Class \'{module_name}\' not found.'
-    inst = cls_obj(**module_cfg)
+    try:
+        inst = cls_obj(**module_cfg)
+    except Exception as e:
+        raise Exception(f"{module_name}:{e.__repr__()}")
     return inst
 
 

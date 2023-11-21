@@ -15,10 +15,12 @@ class DetAnchorDense(BaseModule):
                  loss_box,
                  num_classes=1,
                  target_assigner=None,
+                 get_boxes_when_training=False,
                  **kwargs):
         super(DetAnchorDense, self).__init__(**kwargs)
         assert num_classes == 1, 'currently only support binary classification.'
         self.num_classes = num_classes
+        self.get_boxes_when_training = get_boxes_when_training
         self.target_assigner = plugin.build_plugin_module(target_assigner)
         self.num_anchors = self.target_assigner.num_anchors
         self.code_size = self.target_assigner.box_coder.code_size
@@ -41,7 +43,7 @@ class DetAnchorDense(BaseModule):
 
         out = {'cls': cls, 'reg': reg}
 
-        if not self.training:
+        if self.get_boxes_when_training or not self.training:
             out['preds'] = self.predictions(out)
 
         return self.format_output(out, len(bev_feat))
@@ -51,11 +53,10 @@ class DetAnchorDense(BaseModule):
         if 'preds' in output:
             preds_list = []
             for i in range(B):
-                preds = {k: [] for k in output['preds'].keys()}
-                for h, inds in enumerate(output['preds']['idx']):
-                    mask = inds == i
-                    for k, v in output['preds'].items():
-                        preds[k].append(v[h][mask])
+                preds = {}
+                mask = output['preds']['idx'] == i
+                for k, v in output['preds'].items():
+                    preds[k] = v[mask]
                 preds_list.append(preds)
             output['preds'] = preds_list
         output = {self.scatter_keys[0]: self.compose_result_list(output, B)}

@@ -41,7 +41,7 @@ CONTROLLER:
   data_manager: 'pycfg.fpvrcnn.data_manager'
   shared_modules: 'pycfg.fpvrcnn.shared_modules'
   cav_manager:
-    prototype: lidardet_cav.LidarDetCAV
+    prototype: fpvrcnn_cav.FpvrcnnCAV
     memory_len: *seq_len
     all_grad: false
 

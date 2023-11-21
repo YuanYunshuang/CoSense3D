@@ -39,7 +39,9 @@ shared_modules = OrderedDict(
     pts_backbone = dict(
         type='backbone3d.spconv.Spconv',
         gather_keys=['points'],
-        scatter_keys=['bev_feat'],
+        scatter_keys=['voxel_feat', 'bev_feat'],
+        in_channels=4,
+        out_channels=64,
         voxel_generator=dict(
             type='voxel_generator.VoxelGenerator',
             voxel_size=voxel_size,
@@ -49,28 +51,26 @@ shared_modules = OrderedDict(
             max_voxels_test=70000
         ),
         voxel_encoder=dict(
-            type='pillar_encoder.PillarEncoder',
-            voxel_size=voxel_size,
-            lidar_range=point_cloud_range,
-            features=['xyz', 'intensity', 'absolute_xyz'],
-            channels=[64]
+            type='voxel_encoder.MeanVFE',
+            num_point_features=4,
         ),
-        bev_neck=dict(type='ssfa.SSFA', in_channels=64),
+        bev_neck=dict(type='ssfa.SSFA', in_channels=64, out_channels=128),
     ),
 
     detection_head_local = dict(
         type='heads.det_anchor_dense.DetAnchorDense',
-        gather_keys=['bev_feat_fused'],
-        scatter_keys=['detection'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        in_channels=768,
+        gather_keys=['bev_feat'],
+        scatter_keys=['detection_local'],
+        gt_keys=['local_bboxes_3d', 'local_labels_3d'],
+        in_channels=128,
+        get_boxes_when_training=True,
         target_assigner=dict(
             type='target_assigners.BoxAnchorAssigner',
             box_size=[3.9, 1.6, 1.56],
             dirs=[0, 90],
             voxel_size=voxel_size,
             lidar_range=point_cloud_range,
-            stride=2,
+            stride=8,
             pos_threshold=0.6,
             neg_threshold=0.45,
             score_thrshold=0.25,
@@ -82,8 +82,19 @@ shared_modules = OrderedDict(
     ),
 
     cpm_composer=dict(
-        type='necks.cpm_composer.KeypointsComposer',
-
+        type='necks.cpm_composer.KeypointComposer',
+        gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
+        scatter_keys=['keypoint_feat'],
+        vsa=dict(
+            type='vsa.VoxelSetAbstraction',
+            voxel_size=voxel_size,
+            point_cloud_range=point_cloud_range,
+            num_keypoints=4096,
+            num_out_features=32,
+            num_bev_features=128,
+            num_rawpoint_features=3,
+            enlarge_selection_boxes=True,
+        )
     ),
 
     # fusion=dict(

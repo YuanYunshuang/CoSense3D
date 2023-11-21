@@ -13,7 +13,6 @@ class PFNLayer(nn.Module):
                  use_norm=True,
                  last_layer=False):
         super().__init__()
-
         self.last_vfe = last_layer
         self.use_norm = use_norm
         if not self.last_vfe:
@@ -69,6 +68,7 @@ class PillarEncoder(nn.Module):
         self.features = features
         assert isinstance(channels, list)
         self.channels = [self.num_point_features] + channels
+        self.out_channels = channels[-1]
         self.use_norm = use_norm
         self._init_layers(self.channels)
 

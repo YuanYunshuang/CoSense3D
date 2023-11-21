@@ -550,7 +550,8 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         return overlaps
 
     def get_predictions(self, preds):
-        roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        # roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        roi = {}
         B = len(preds['cls'])
         pred_cls = preds['cls'].sigmoid().permute(0, 3, 2, 1).reshape(B, -1)
         pred_reg = preds['reg'].permute(0, 3, 2, 1).reshape(B, -1, 7)
@@ -562,11 +563,11 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         boxes_dec = self.box_coder.decode(anchors, pred_reg)
         pred_cls = pred_cls[pos]
         pred_box = boxes_dec[pos]
-        roi['scr'].append(pred_cls)
-        roi['box'].append(pred_box)
+        roi['scr'] = pred_cls
+        roi['box'] = pred_box
         # TODO currently only support class car
-        roi['lbl'].append(torch.zeros_like(pred_cls))
-        roi['idx'].append(indices[pos])
+        roi['lbl'] = torch.zeros_like(pred_cls)
+        roi['idx'] = indices[pos]
 
         return roi
 
@@ -678,8 +679,13 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             roi['lbl'].append(cur_lbl)
             roi['idx'].append(center_indices)
             confs.append(conf)
-
-        return roi, torch.stack(confs, dim=1)
+        # merge detections from all heads
+        roi['box'] = torch.cat(roi['box'], dim=0)
+        roi['scr'] = torch.cat(roi['box'], dim=0)
+        roi['lbl'] = torch.cat(roi['box'], dim=0)
+        roi['idx'] = torch.cat(roi['box'], dim=0)
+        confs = torch.stack(confs, dim=1)
+        return roi, confs
 
 
 class BEVHardCenternessAssigner(BaseAssigner):
