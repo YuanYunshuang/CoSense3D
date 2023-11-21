@@ -20,6 +20,15 @@ setup(
             'src/iou_nms/iou3d_cpu.cpp',
             'src/iou_nms/iou3d_nms.cpp',
             'src/iou_nms/iou3d_nms_kernel.cu',
+            # pointnet2 stack
+            'src/pointnet2_stack/ball_query.cpp',
+            'src/pointnet2_stack/ball_query_gpu.cu',
+            'src/pointnet2_stack/group_points.cpp',
+            'src/pointnet2_stack/group_points_gpu.cu',
+            'src/pointnet2_stack/sampling.cpp',
+            'src/pointnet2_stack/sampling_gpu.cu',
+            'src/pointnet2_stack/interpolate.cpp',
+            'src/pointnet2_stack/interpolate_gpu.cu',
         ],
                       extra_compile_args={
                           'cxx': ['-g'],

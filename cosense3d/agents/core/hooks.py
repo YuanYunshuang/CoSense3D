@@ -82,8 +82,8 @@ class CheckPointsHook(BaseHook):
         self.iter_every = iter_every
 
     def post_epoch(self, runner, **kwargs):
+        self.save(runner, f'epoch{runner.epoch}.pth')
         if runner.epoch > self.max_ckpt:
-            self.save(runner, f'epoch{runner.epoch}.pth')
             if (self.epoch_every is None or not
             (runner.epoch - self.max_ckpt) % self.epoch_every == 0):
                 filename = os.path.join(
@@ -91,8 +91,6 @@ class CheckPointsHook(BaseHook):
                     f'epoch{runner.epoch - self.max_ckpt}.pth')
                 if os.path.exists(filename):
                     os.remove(filename)
-        if self.epoch_every is not None and runner.epoch % self.epoch_every == 0:
-            self.save(runner, f'epoch{runner.epoch}.pth')
 
     def post_iter(self, runner, **kwargs):
         if self.iter_every is not None and runner.iter % self.iter_every == 0:
