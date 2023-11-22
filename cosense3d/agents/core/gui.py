@@ -18,6 +18,10 @@ class GUI(QtWidgets.QMainWindow):
         self.header_height = 30
         path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.css_dir = os.path.join(path, 'viewer', 'css')
+        self.data_keys = [
+            'scenario', 'frame',
+            'points', 'img', 'bboxes2d', 'lidar2img',
+            'global_labels', 'local_labels']
         self.setupUI(cfg)
         self.setWindowTitle("Cosense3D")
 
@@ -36,14 +40,15 @@ class GUI(QtWidgets.QMainWindow):
         self.glViewer0 = GLViewer('MAINVIEW', self)
         self.tabs.addTab(self.glViewer0, 'GLViewer')
 
-        self.img_viewer = ImgViewer()
+        self.img_viewer = ImgViewer(**cfg.get('img_viewer', {}))
         self.tabs.addTab(self.img_viewer, 'ImgViewer')
 
-        self.img_anno3d_viewer = ImgAnno3DViewer()
+        self.img_anno3d_viewer = ImgAnno3DViewer(**cfg.get('img_anno3d_viewer', {}))
         self.tabs.addTab(self.img_anno3d_viewer, 'ImgAnno3DViewer')
 
         self.output_viewer = OutputViewer(**cfg['output_viewer'])
         self.tabs.addTab(self.output_viewer, 'OutputViewer')
+        self.data_keys.extend(self.output_viewer.gather_data_keys)
 
         self.setCentralWidget(self.tabs)
         self.get_toolbar()
@@ -98,7 +103,7 @@ class GUI(QtWidgets.QMainWindow):
 
     def step(self):
         self.runner.step()
-        self.data = self.runner.vis_data()
+        self.data = self.runner.vis_data(self.data_keys)
         self.refresh()
         if self.runner.iter == self.runner.total_iter:
             self.timer.stop()
@@ -106,9 +111,6 @@ class GUI(QtWidgets.QMainWindow):
     def refresh(self):
         if self.data is not None:
             self.tabs.currentWidget().refresh(self.data)
-            # self.glViewer0.refresh(data)
-            # self.img_viewer.refresh(data)
-            # self.output_viewer.refresh(data)
 
     def start(self):
         self.timer.start(300)  # Trigger the animate method every 100ms

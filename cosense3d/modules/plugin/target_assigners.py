@@ -681,9 +681,9 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             confs.append(conf)
         # merge detections from all heads
         roi['box'] = torch.cat(roi['box'], dim=0)
-        roi['scr'] = torch.cat(roi['box'], dim=0)
-        roi['lbl'] = torch.cat(roi['box'], dim=0)
-        roi['idx'] = torch.cat(roi['box'], dim=0)
+        roi['scr'] = torch.cat(roi['scr'], dim=0)
+        roi['lbl'] = torch.cat(roi['lbl'], dim=0)
+        roi['idx'] = torch.cat(roi['lbl'], dim=0)
         confs = torch.stack(confs, dim=1)
         return roi, confs
 

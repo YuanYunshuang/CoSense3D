@@ -27,9 +27,7 @@ TRAIN:
   optimizer:
     lr: 2e-4
     weight_decay: 1e-2
-    betas: [0.95, 0.999]
-    milestones: [25, 40]
-    gamma: 0.1
+    eps: 1e-10
   lr_scheduler:
     policy: 'CosineAnnealingWarm'
     epochs: 50
@@ -51,6 +49,9 @@ CONTROLLER:
     all_grad: false
 
 VISUALIZATION:
+  img_viewer:
+    mean: [123.675, 116.28, 103.53]
+    std: [58.395, 57.12, 57.375]
   output_viewer:
     plots: 'pycfg.cobevt.plots'
 

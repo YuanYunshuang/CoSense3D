@@ -69,8 +69,8 @@ class TestRunner(BaseRunner):
         self.iter += 1
         self.progress_bar.update(1)
 
-    def vis_data(self):
-        data = self._vis_data(with_input=True, with_detection=True, with_bev=True, with_meta=True)
-        return data
+    # def vis_data(self, keys):
+    #     data = self._vis_data(keys)
+    #     return data
 
 

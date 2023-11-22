@@ -474,7 +474,7 @@ def draw_2d_bboxes_on_img(img, boxes2d, ax_in=None):
         ax = ax_in
     ax.imshow(img)
 
-    if len(boxes2d) > 0:
+    if boxes2d is not None and len(boxes2d) > 0:
         assert len(boxes2d.shape) == 3
         if boxes2d.shape[1] == 2:
             box_4corners = []

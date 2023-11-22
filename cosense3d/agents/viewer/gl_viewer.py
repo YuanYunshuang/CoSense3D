@@ -153,9 +153,11 @@ class GLViewer(gl.GLViewWidget):
         self.update()
 
     def refresh(self, data_dict):
-        pcds = data_dict['input']['pcds']
-        global_labels = data_dict['input'].get('global_labels', None)
+        pcds = data_dict.get('points', None)
+        global_labels = data_dict.get('global_labels', None)
         # local_labels = data_dict['input'].get('local_labels', None)
+        if pcds is None or global_labels is None:
+            return
         ego_id = list(global_labels.keys())[0]
         if 'detection' in data_dict:
             pred_label = {k: v['labels'] for k, v in data_dict['detection'].items()}

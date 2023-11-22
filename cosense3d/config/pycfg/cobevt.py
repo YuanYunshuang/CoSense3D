@@ -96,7 +96,7 @@ shared_modules = OrderedDict(
     bev_head=dict(
         type='heads.bev_dense.BevSegHead',
         gather_keys=['bev_feat_fused'],
-        scatter_keys=['bevseg'],
+        scatter_keys=['dynamic_bev_pred'],
         gt_keys=['bev_visibility_corp'],
         target='dynamic',
         input_dim=32,
@@ -119,12 +119,11 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="EvalOPV2VDetectionHook"),
         dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 
 
 plots = [
-    # dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
+    dict(title='BEVDenseCanvas', width=12, height=6, nrows=1, ncols=2, data_keys=['dynamic_bev_pred', 'bev_visibility_corp']),
     # dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
 ]

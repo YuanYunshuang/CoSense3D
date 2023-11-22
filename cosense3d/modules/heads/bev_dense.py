@@ -30,16 +30,19 @@ class BevSegHead(BaseModule):
         x = self.stack_data_from_list(x)
         out_dict = {}
         if 'dynamic' in self.target:
-            out_dict['dynamic_seg'] = self.dynamic_head(x)
-
+            out_dict['dynamic_bev_pred'] = self.dynamic_head(x)
+            if not self.training:
+                out_dict['dynamic_bev_pred'] = out_dict['dynamic_bev_pred'].permute(0, 2, 3, 1).softmax(dim=-1)
         if 'static' in self.target:
-            out_dict['static_seg'] = self.static_head(x)
+            out_dict['dynamic_bev_pred'] = self.static_head(x)
+            if not self.training:
+                out_dict['static_bev_pred'] = out_dict['dynamic_bev_pred'].permute(0, 2, 3, 1).softmax(dim=1)
 
-        output_list = self.compose_result_list(out_dict, len(x))
-        return {self.scatter_keys[0]: output_list}
+        # output_list = self.compose_result_list(out_dict, len(x))
+        return out_dict
 
-    def loss(self, preds, dynamic_bev, **kwargs):
-        dynamic_bev_preds = self.stack_data_from_list(preds, 'dynamic_seg')
+    def loss(self, dynamic_bev_preds, dynamic_bev, **kwargs):
+        dynamic_bev_preds = self.stack_data_from_list(dynamic_bev_preds)
         dynamic_bev_gt = torch.stack(dynamic_bev, dim=0)
         loss_dict = self.loss_cls(
             dynamic_pred=dynamic_bev_preds,

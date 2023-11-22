@@ -146,14 +146,41 @@ class DataManager:
             labels[k] = self.boxes_to_vis_format(gt_boxes[k], gt_labels[k])
         return labels
 
-    def get_vis_data_input(self, batch_idx=0):
+    def gather_vis_data(self, batch_idx=0, keys=['points']):
+        gather_dict = {}
+        for k in keys:
+            if k in ['global_bboxes_3d', 'local_bboxes_3d']:
+                ref_coor = k.split('_')[0]
+                gather_dict[f'{ref_coor}_labels'] = (
+                    self.get_gt_boxes_as_vis_format(batch_idx, ref_coor))
+            elif 'detection' in k:
+                detection = self.gather_batch(batch_idx, k)
+                for cav_id, det in detection.items():
+                    detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+                gather_dict[k] = detection
+            else:
+                gather_dict[k] = self.gather_batch(batch_idx, k, True)
+        return gather_dict
+
+    def get_vis_data_input(self, batch_idx=0, keys=None):
+        """
+
+        Parameters
+        ----------
+        batch_idx
+        key: additional gt keys that are not standarlized in consense3d data API
+
+        Returns
+        -------
+
+        """
         pcds = self.gather_batch(batch_idx, 'points', True)
         imgs = self.gather_batch(batch_idx, 'img', True)
         global_labels = self.get_gt_boxes_as_vis_format(batch_idx, 'global')
         local_labels = self.get_gt_boxes_as_vis_format(batch_idx, 'local')
         bboxes2d = self.gather_batch(batch_idx, 'bboxes2d', True)
         lidar2img = self.gather_batch(batch_idx, 'lidar2img', True)
-        return {
+        out_dict = {
             'pcds': pcds,
             'imgs': imgs,
             'bboxes2d': bboxes2d,
@@ -161,17 +188,33 @@ class DataManager:
             'global_labels': global_labels,
             'local_labels': local_labels
         }
+        if keys is not None:
+            for k in keys:
+                out_dict[k] = self.gather_batch(batch_idx, k, True)
+        return out_dict
 
-    def get_vis_data_detection(self, batch_idx=0):
+    def get_vis_data_detection(self, batch_idx=0, keys='detection'):
+        """
+
+        Parameters
+        ----------
+        batch_idx: batch index
+        key: the default key for detection is 'detection', customized key can also be used,
+        depending on which key is used for saving detection result in the CAV data pool.
+
+        Returns
+        -------
+            detection: result with boxes and labels converted to the visualizing format.
+        """
         detection = self.gather_batch(batch_idx, 'detection')
         for cav_id, det in detection.items():
             detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
         return detection
 
-    def get_vis_data_bev(self, batch_idx=0):
+    def get_vis_data_bev(self, batch_idx=0, keys='bev'):
         return self.gather_batch(batch_idx, 'bev')
 
-    def get_vis_data_meta(self, batch_idx=0):
+    def get_vis_data_meta(self, batch_idx=0, keys=None):
         return {
             'scenario': self.gather_batch(batch_idx, 'scenario'),
             'frame': self.gather_batch(batch_idx, 'frame')

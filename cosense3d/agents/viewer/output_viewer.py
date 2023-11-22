@@ -13,15 +13,15 @@ from cosense3d.utils.vislib import draw_points_boxes_plt
 
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, width=5, height=4, dpi=100, title='plot', nrows=1, ncols=1):
+    def __init__(self, data_keys, width=5, height=4, dpi=100, title='plot', nrows=1, ncols=1):
         fig = Figure(figsize=(width, height), dpi=dpi)
         fig.suptitle(title, fontsize=16)
         self.axes = fig.subplots(nrows, ncols)
-        self.data = {}
+        self.data_keys = data_keys
         super(MplCanvas, self).__init__(fig)
 
-    def update_title(self, meta, cav_id):
-        self.axes.set_title(f"{meta['scenario'][cav_id]}.{meta['frame'][cav_id]}")
+    def update_title(self, scenario, frame, cav_id):
+        self.axes.set_title(f"{scenario[cav_id]}.{frame[cav_id]}")
 
 
 class BEVSparseCanvas(MplCanvas):
@@ -41,6 +41,30 @@ class BEVSparseCanvas(MplCanvas):
                                              cmap='jet', c=conf, s=2, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
             # self.scatter.set_offsets(centers)
+            self.draw()
+            break
+
+
+class BEVDenseCanvas(MplCanvas):
+    def __init__(self, lidar_range=None, **kwargs):
+        super().__init__(**kwargs)
+        assert len(self.data_keys) == 2, '1st key should be pred bev map, 2nd key should be gt bev map.'
+        self.lidar_range = lidar_range
+        self.pred_key = self.data_keys[0]
+        self.gt_key = self.data_keys[1]
+
+    def refresh(self, data):
+        if self.pred_key not in data and self.gt_key not in data:
+            return
+        gt_bev = data.get(self.gt_key, False)
+        for cav_id, pred_bev in data[self.pred_key].items():
+            self.axes[0].clear()
+            self.axes[1].clear()
+            self.axes[0].set_title(f"Pred: {data['scenario'][cav_id]}.{data['frame'][cav_id]}")
+            self.axes[1].set_title(f"GT: {data['scenario'][cav_id]}.{data['frame'][cav_id]}")
+            self.axes[0].imshow(pred_bev[..., 1])
+            if gt_bev:
+                self.axes[1].imshow(gt_bev[cav_id])
             self.draw()
             break
 
@@ -92,11 +116,14 @@ class OutputViewer(QtWidgets.QWidget):
     def __init__(self, plots, parent=None):
         super(OutputViewer, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
+        self.gather_data_keys = []
         self.plots = []
         for p in plots:
             plot = globals()[p['title']](**p)
             layout.addWidget(plot)
             self.plots.append(plot)
+            self.gather_data_keys = self.gather_data_keys + plot.data_keys
+        self.gather_data_keys = list(set(self.gather_data_keys))
 
     def refresh(self, data):
         for plot in self.plots:

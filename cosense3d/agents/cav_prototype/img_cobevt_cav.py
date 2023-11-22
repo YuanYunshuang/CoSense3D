@@ -23,7 +23,7 @@ class ImgCobevtCAV(BaseCAV):
 
     def prepare_data(self):
         self.normalize_imgs()
-        self.apply_transform()
+        # self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
         self.data['img_size'] = [x.shape[:2] for x in self.data['img']]
 
@@ -41,6 +41,7 @@ class ImgCobevtCAV(BaseCAV):
         else:
             tasks['no_grad'].append((self.id, '01:img_backbone', {}))
             tasks['no_grad'].append((self.id, '02:img2bev', {}))
+        if not self.is_ego:
             tasks['no_grad'].append((self.id, '03:spatial_transform', {}))
 
     def forward_fusion(self, tasks, training_mode):
