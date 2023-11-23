@@ -11,4 +11,6 @@ class KeypointComposer(BaseModule):
 
     def forward(self, preds, bev_feat, voxel_feat, points, **kwargs):
         res = self.vsa(preds, bev_feat, voxel_feat, points)
+        res = self.compose_result_list(res, len(preds))
+        return {self.scatter_keys[0]: res}
 

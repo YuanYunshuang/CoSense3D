@@ -9,6 +9,8 @@ import torch
 import numpy as np
 from rich.logging import RichHandler
 
+PI = 3.14159265358979323846
+
 
 def multi_apply(func, *args, **kwargs):
     """Apply function to a list of arguments.

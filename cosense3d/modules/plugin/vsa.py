@@ -158,19 +158,19 @@ class VoxelSetAbstraction(nn.Module):
         B = len(bev_features)
         point_bev_features_list = []
         for i in range(B):
-            keypoints = keypoints_list[i]
+            keypoints = keypoints_list[i][:, :3]
             x_idxs = (keypoints[..., 0] - self.point_cloud_range[0]) / self.voxel_size[0]
             y_idxs = (keypoints[..., 1] - self.point_cloud_range[1]) / self.voxel_size[1]
             x_idxs = x_idxs / self.bev_stride
             y_idxs = y_idxs / self.bev_stride
             cur_bev_features = bev_features[i].permute(1, 2, 0)  # (H, W, C)
             point_bev_features = bilinear_interpolate_torch(cur_bev_features, x_idxs, y_idxs)
-            point_bev_features_list.append(point_bev_features.unsqueeze(dim=0))
+            point_bev_features_list.append(point_bev_features)
 
         point_bev_features = torch.cat(point_bev_features_list, dim=0)  # (B, N, C0)
         return point_bev_features
 
-    def get_sampled_points(self, batch_size, points, voxel_coords):
+    def get_sampled_points(self, points, voxel_coords):
         B = len(points)
         keypoints_list = []
         for i in range(B):
@@ -200,7 +200,7 @@ class VoxelSetAbstraction(nn.Module):
                 empty_num = num_kpts - sampled_points.shape[1]
                 cur_pt_idxs[0, -empty_num:] = cur_pt_idxs[0, :empty_num]
 
-            keypoints = sampled_points[0][cur_pt_idxs[0]].unsqueeze(dim=0)
+            keypoints = sampled_points[0][cur_pt_idxs[0]]
 
             # keypoints[:len(kpts[0]), :] = kpts
             keypoints_list.append(keypoints)
@@ -211,14 +211,23 @@ class VoxelSetAbstraction(nn.Module):
     def forward(self, det_out, bev_feat, voxel_feat, points):
         B = len(points)
         preds = [x['preds'] for x in det_out]
-        keypoints = self.get_sampled_points(B, points, voxel_feat) # BxNx4
+        keypoints_list = self.get_sampled_points(points, voxel_feat) # BxNx4
 
         # Only select the points that are in the predicted bounding boxes
         boxes = cat_coor_with_idx([x['box'] for x in preds])
-        keypoints = cat_coor_with_idx(keypoints)
+        scores = torch.cat([x['scr'] for x in preds])
+        # At the early training stage, there might be too many boxes,
+        # we select limited number of boxes for the second stage.
+        if boxes.shape[0] > B * 50:
+            topk = scores.topk(k=50 * B).indices
+            scores = scores[topk]
+            boxes = boxes[topk]
+
+        boxes_tmp = boxes.clone()
         if self.enlarge_selection_boxes:
-            boxes[:, 4:7] += 0.5
-        kpt_mask = points_in_boxes_gpu(keypoints, boxes, batch_size=B) > 0
+            boxes_tmp[:, 4:7] += 0.5
+        keypoints = cat_coor_with_idx(keypoints_list)
+        kpt_mask = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1] >= 0
 
         # Ensure there are more than 2 points are selected to satisfy the
         # condition of batch norm in the FC layers of feature fusion module
@@ -228,23 +237,19 @@ class VoxelSetAbstraction(nn.Module):
         point_features_list = []
         if 'bev' in self.features_source:
             point_bev_features = self.interpolate_from_bev_features(
-                keypoints[..., :3], bev_feat, B,
-                bev_stride=8
+                keypoints_list, bev_feat
             )
             point_features_list.append(point_bev_features[kpt_mask])
 
-        batch_size, num_keypoints, _ = keypoints.shape
-
         new_xyz = keypoints[kpt_mask]
-        new_xyz_batch_cnt = torch.tensor([(mask).sum() for mask in kpt_mask], device=new_xyz.device).int()
+        new_xyz_batch_cnt = torch.tensor([(new_xyz[:, 0] == b).sum() for b in range(B)],
+                                         device=new_xyz.device).int()
 
         if 'raw_points' in self.features_source:
-            raw_points = points
+            xyz_batch_cnt = torch.tensor([len(pts) for pts in points],
+                                         device=points[0].device).int()
+            raw_points = cat_coor_with_idx(points)
             xyz = raw_points[:, 1:4]
-            xyz_batch_cnt = xyz.new_zeros(batch_size).int()
-            indices = raw_points[:, 0].long()
-            for bs_idx in range(batch_size):
-                xyz_batch_cnt[bs_idx] = (indices == bs_idx).sum()
             point_features = None
 
             pooled_points, pooled_features = self.SA_rawpoints(
@@ -257,23 +262,23 @@ class VoxelSetAbstraction(nn.Module):
             point_features_list.append(pooled_features)
 
         for k, src_name in enumerate(self.SA_layer_names):
-            cur_coords = feature_dict['multi_scale_features'][src_name].indices
+            cur_stride = 2 ** (int(src_name[-1]) - 1)
+            cur_coords = [feat[f"p{cur_stride}"]['coor'] for feat in voxel_feat]
+            cur_feats = [feat[f"p{cur_stride}"]['feat'] for feat in voxel_feat]
             xyz = get_voxel_centers(
-                cur_coords[:, 1:4],
+                torch.cat(cur_coords),
                 downsample_times=self.downsample_times_map[src_name],
                 voxel_size=self.voxel_size,
                 point_cloud_range=self.point_cloud_range
             )
-            xyz_batch_cnt = xyz.new_zeros(batch_size).int()
-            for bs_idx in range(batch_size):
-                xyz_batch_cnt[bs_idx] = (cur_coords[:, 0] == bs_idx).sum()
-
+            xyz_batch_cnt = torch.tensor([len(coor) for coor in cur_coords],
+                                         device=cur_coords[0].device).int()
             pooled_points, pooled_features = self.SA_layers[k](
                 xyz=xyz.contiguous(),
                 xyz_batch_cnt=xyz_batch_cnt,
                 new_xyz=new_xyz[:, :3].contiguous(),
                 new_xyz_batch_cnt=new_xyz_batch_cnt,
-                features=feature_dict['multi_scale_features'][src_name].features.contiguous(),
+                features=torch.cat(cur_feats, dim=0),
             )
 
             point_features_list.append(pooled_features)
@@ -281,15 +286,20 @@ class VoxelSetAbstraction(nn.Module):
         point_features = torch.cat(point_features_list, dim=1)
 
         out_dict = {}
-        out_dict['point_features_before_fusion'] = point_features.view(-1, point_features.shape[-1])
-        point_features = self.vsa_point_feature_fusion(point_features.view(-1, point_features.shape[-1]))
+        # out_dict['point_features_before_fusion'] = point_features
+        point_features = self.vsa_point_feature_fusion(point_features)
 
         cur_idx = 0
         out_dict['point_features'] = []
         out_dict['point_coords'] = []
-        for num in new_xyz_batch_cnt:
+        out_dict['boxes'] = []
+        out_dict['scores'] = []
+        for i, num in enumerate(new_xyz_batch_cnt):
             out_dict['point_features'].append(point_features[cur_idx:cur_idx + num])
             out_dict['point_coords'].append(new_xyz[cur_idx:cur_idx + num])
+            mask = boxes[:, 0] == i
+            out_dict['boxes'].append(boxes[mask, 1:])
+            out_dict['scores'].append(scores[mask])
             cur_idx += num
 
         return out_dict

@@ -45,6 +45,48 @@ def sigmoid_binary_cross_entropy(preds, tgts, weights=None, reduction='none'):
     return per_entry_cross_ent
 
 
+def weighted_sigmoid_binary_cross_entropy(preds, tgts, weights=None,
+                                          class_indices=None):
+    if weights is not None:
+        weights = weights.unsqueeze(-1)
+    if class_indices is not None:
+        weights *= (
+            indices_to_dense_vector(class_indices, preds.shape[2])
+                .view(1, 1, -1)
+                .type_as(preds)
+        )
+    per_entry_cross_ent = F.binary_cross_entropy_with_logits(preds, tgts, weights)
+    return per_entry_cross_ent
+
+
+def indices_to_dense_vector(
+        indices, size, indices_value=1.0, default_value=0, dtype=float
+):
+    """Creates dense vector with indices set to specific value and rest to zeros.
+
+    This function exists because it is unclear if it is safe to use
+        tf.sparse_to_dense(indices, [size], 1, validate_indices=False)
+    with indices which are not ordered.
+    This function accepts a dynamic size (e.g. tf.shape(tensor)[0])
+
+    Args:
+        indices: 1d Tensor with integer indices which are to be set to
+            indices_values.
+        size: scalar with size (integer) of output Tensor.
+        indices_value: values of elements specified by indices in the output vector
+        default_value: values of other elements in the output vector.
+        dtype: data type.
+
+    Returns:
+        dense 1D Tensor of shape [size] with indices set to indices_values and the
+            rest set to default_value.
+    """
+    dense = torch.zeros(size).fill_(default_value)
+    dense[indices] = indices_value
+
+    return dense
+
+
 def cross_entroy_with_logits(preds, tgts, n_cls, weights=None, reduction='none'):
     cared = tgts >= 0
     preds = preds[cared]

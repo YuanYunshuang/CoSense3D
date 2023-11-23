@@ -81,32 +81,50 @@ shared_modules = OrderedDict(
         loss_box = dict(type='SmoothL1Loss', loss_weight=2.0),
     ),
 
-    # keypoint_composer=dict(
-    #     type='necks.cpm_composer.KeypointComposer',
-    #     gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
-    #     scatter_keys=['keypoint_feat'],
-    #     vsa=dict(
-    #         type='vsa.VoxelSetAbstraction',
-    #         voxel_size=voxel_size,
-    #         point_cloud_range=point_cloud_range,
-    #         num_keypoints=4096,
-    #         num_out_features=32,
-    #         num_bev_features=128,
-    #         num_rawpoint_features=3,
-    #         enlarge_selection_boxes=True,
-    #     )
-    # ),
+    keypoint_composer=dict(
+        type='necks.cpm_composer.KeypointComposer',
+        gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
+        scatter_keys=['keypoint_feat'],
+        vsa=dict(
+            type='vsa.VoxelSetAbstraction',
+            voxel_size=voxel_size,
+            point_cloud_range=point_cloud_range,
+            num_keypoints=4096,
+            num_out_features=32,
+            num_bev_features=128,
+            num_rawpoint_features=3,
+            enlarge_selection_boxes=True,
+        )
+    ),
 
-    # fusion=dict(
-    #     type='fusion.keypoints.VoxelKeypointsFusion',
-    #     gather_keys=['bev_feat', 'received_response'],
-    #     scatter_keys=['bev_feat_fused'],
-    #     feature_dim=128,
-    # ),
+    fusion=dict(
+        type='fusion.keypoints.KeypointsFusion',
+        gather_keys=['keypoint_feat', 'received_response'],
+        scatter_keys=['keypoint_feat_fused'],
+        lidar_range=point_cloud_range,
+    ),
 
-    # detection_head_global = dict(
-    #     type='heads.det_roi_refine.DetROIRefine',
-    # )
+    detection_head_global = dict(
+        type='heads.det_roi_refine.KeypointRoIHead',
+        gather_keys=['keypoint_feat_fused'],
+        scatter_keys=['detection'],
+        gt_keys=['global_bboxes_3d'],
+        num_cls=1,
+        in_channels=32,
+        n_fc_channels=256,
+        dp_ratio=0.3,
+        roi_grid_pool=dict(
+            grid_size=6,
+            mlps=[[64, 64], [64, 64]],
+            pool_radius=[0.8, 1.6],
+            n_sample=[16, 16],
+            pool_method='max_pool',
+        ),
+        target_assigner=dict(
+            type='target_assigners.RoIBox3DAssigner',
+            box_coder=dict(type='ResidualBoxCoder', mode='simple_dist')
+        )
+    )
 )
 
 train_hooks = [

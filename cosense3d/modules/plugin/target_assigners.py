@@ -9,15 +9,18 @@ from scipy.optimize import linear_sum_assignment
 from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
                                        bbox_cxcywh_to_xyxy,
                                        normalize_bbox,
-                                       boxes3d_to_standup_bboxes)
+                                       boxes3d_to_standup_bboxes,
+                                       rotate_points_batch)
+from cosense3d.utils.pclib import rotate_points_along_z_torch
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
 from cosense3d.modules.utils.gaussian_utils import gaussian_2d
 from cosense3d.modules.utils.box_coder import build_box_coder
-from cosense3d.ops.iou3d_nms_utils import boxes_iou_bev
+from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
 from cosense3d.modules.utils.common import pad_r
 from cosense3d.ops.utils import points_in_boxes_gpu
 from cosense3d.modules.losses import logits_to_edl_conf_unc
+from cosense3d.utils.misc import PI
 
 
 def sample_mining(scores, labels, dists=None, sample_mining_thr=0.5, max_sample_ratio=5, max_num_sample=None):
@@ -561,6 +564,10 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         pos = pred_cls > self.score_thrshold
 
         boxes_dec = self.box_coder.decode(anchors, pred_reg)
+        # remove abnormal boxes
+        mask = (boxes_dec[..., 3:6] > 0.1) & (boxes_dec[..., 3:6] < 10)
+        pos = torch.logical_and(pos, mask.all(dim=-1))
+
         pred_cls = pred_cls[pos]
         pred_box = boxes_dec[pos]
         roi['scr'] = pred_cls
@@ -844,7 +851,93 @@ class BEVPointAssigner(BaseAssigner):
         return tgt_pts, tgt_label, mask
 
 
+class RoIBox3DAssigner(BaseAssigner):
+    def __init__(self,
+                 box_coder,
+                 ):
+        self.box_coder = build_box_coder(**box_coder)
+        self.code_size = self.box_coder.code_size
+    
+    def assign(self, pred_boxes, gt_boxes, **kwargs):
+        tgt_dict = {
+            'rois': [],
+            'gt_of_rois': [],
+            'gt_of_rois_src': [],
+            'cls_tgt': [],
+            'reg_tgt': [],
+            'iou_tgt': [],
+            'rois_anchor': [],
+            'record_len': []
+        }
 
+        for rois, gts in zip(pred_boxes, gt_boxes):
+            gts[:, -1] *= 1
+            ious = boxes_iou3d_gpu(rois, gts)
+            max_ious, gt_inds = ious.max(dim=1)
+            gt_of_rois = gts[gt_inds]
+            rcnn_labels = (max_ious > 0.3).float()
+            mask = torch.logical_not(rcnn_labels.bool())
+
+            # set negative samples back to rois, no correction in stage2 for them
+            gt_of_rois[mask] = rois[mask]
+            gt_of_rois_src = gt_of_rois.clone().detach()
+
+            # canoical transformation
+            roi_center = rois[:, 0:3]
+            # TODO: roi_ry > 0 in pcdet
+            roi_ry = rois[:, 6] % (2 * PI)
+            gt_of_rois[:, 0:3] = gt_of_rois[:, 0:3] - roi_center
+            gt_of_rois[:, 6] = gt_of_rois[:, 6] - roi_ry
+
+            # transfer LiDAR coords to local coords
+            gt_of_rois = rotate_points_along_z_torch(
+                points=gt_of_rois.view(-1, 1, gt_of_rois.shape[-1]),
+                angle=-roi_ry.view(-1)
+            ).view(-1, gt_of_rois.shape[-1])
+
+            # flip orientation if rois have opposite orientation
+            heading_label = (gt_of_rois[:, 6] + (
+                    torch.div(torch.abs(gt_of_rois[:, 6].min()),
+                              (2 * PI), rounding_mode='trunc')
+                    + 1) * 2 * PI) % (2 * PI)  # 0 ~ 2pi
+            opposite_flag = (heading_label > PI * 0.5) & (
+                    heading_label < PI * 1.5)
+
+            # (0 ~ pi/2, 3pi/2 ~ 2pi)
+            heading_label[opposite_flag] = (heading_label[
+                                                opposite_flag] + PI) % (
+                                                   2 * PI)
+            flag = heading_label > PI
+            heading_label[flag] = heading_label[
+                                      flag] - PI * 2  # (-pi/2, pi/2)
+            heading_label = torch.clamp(heading_label, min=-PI / 2,
+                                        max=PI / 2)
+            gt_of_rois[:, 6] = heading_label
+
+            # generate regression target
+            rois_anchor = rois.clone().detach().view(-1, self.code_size)
+            rois_anchor[:, 0:3] = 0
+            rois_anchor[:, 6] = 0
+
+            reg_targets, _ = self.box_coder.encode(
+                rois_anchor, gt_of_rois.view(-1, self.code_size)
+            )
+
+            tgt_dict['rois'].append(rois)
+            tgt_dict['gt_of_rois'].append(gt_of_rois)
+            tgt_dict['gt_of_rois_src'].append(gt_of_rois_src)
+            tgt_dict['cls_tgt'].append(rcnn_labels)
+            tgt_dict['reg_tgt'].append(reg_targets)
+            tgt_dict['iou_tgt'].append(max_ious)
+            tgt_dict['rois_anchor'].append(rois_anchor)
+            tgt_dict['record_len'].append(rois.shape[0])
+
+        # cat list to tensor
+        for k, v in tgt_dict.items():
+            if k == 'record_len':
+                continue
+            tgt_dict[k] = torch.cat(v, dim=0)
+        return tgt_dict
 
 
 
