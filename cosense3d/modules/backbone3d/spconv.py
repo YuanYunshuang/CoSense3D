@@ -150,9 +150,6 @@ class Spconv(BaseModule):
         if hasattr(self, 'bev_compressor'):
             res_dict['bev'] = self.bev_compressor(res_dict['bev'])
 
-        # bev shape (B, C, H, W), --> (B, C, W, H)
-        res_dict['bev'] = res_dict['bev'].permute(0, 1, 3, 2)
-
         out_dict = {}
         if 'voxel_feat' in self.scatter_keys:
             out_dict['voxel_feat'] = self.format_output(
