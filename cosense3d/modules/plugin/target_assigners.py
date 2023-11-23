@@ -510,6 +510,12 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         -------
         reg Tensor(H, W, num_anchors, code_size): box regression targets
         """
+        if len(gt_boxes) == 0:
+            labels = gt_boxes.new_full((self.standup_anchors.shape[0],), -1)
+            reg_tgt = gt_boxes.new_full((0, self.box_coder.code_size))
+            dir_scores = gt_boxes.new_full((0, 4))
+            # Todo dir_score, gt_boxes, correct shape
+            return labels, reg_tgt, dir_scores
         standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
         ious = self.box_overlaps(self.standup_anchors, standup_boxes)
         iou_max, max_inds = ious.max(dim=1)
