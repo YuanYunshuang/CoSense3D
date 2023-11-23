@@ -6,7 +6,7 @@ from .multi_modal_cav import BaseCAV
 class FpvrcnnCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prepare_data_keys = ['points', 'annos_global']
+        self.prepare_data_keys = ['points', 'annos_global', 'annos_local']
 
     def prepare_data(self):
         self.apply_transform()

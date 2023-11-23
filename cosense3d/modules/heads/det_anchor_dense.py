@@ -67,12 +67,22 @@ class DetAnchorDense(BaseModule):
         pred_cls = self.stack_data_from_list(preds, 'cls')
         pred_reg = self.stack_data_from_list(preds, 'reg')
         # convert to shape(b, c, h, w) -> (nwh, c) to match the anchors
+        b, c, h, w = pred_cls.shape
         pred_cls = pred_cls.permute(0, 3, 2, 1).reshape(-1)
         pred_reg = pred_reg.permute(0, 3, 2, 1).reshape(-1, 7)
         cls_tgt, reg_tgt, _ = multi_apply(
             self.target_assigner.assign, gt_boxes)
         cls_tgt = torch.cat(cls_tgt, dim=0)
         reg_tgt = torch.cat(reg_tgt, dim=0)
+
+        # vis_cls_pred = pred_cls.view(b, w, h, c).softmax(dim=-1).max(dim=-1).values[0]
+        # vis_cls_tgt = cls_tgt.view(b, w, h, c).max(dim=-1).values[0]
+        # img = torch.cat([vis_cls_pred, vis_cls_tgt], dim=1).detach().cpu().numpy().T
+        # import matplotlib.pyplot as plt
+        #
+        # plt.imshow(img)
+        # plt.show()
+        # plt.close()
 
         pos_mask = cls_tgt > 0
         cared = cls_tgt >= 0
