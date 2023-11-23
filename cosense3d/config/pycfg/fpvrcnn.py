@@ -81,21 +81,21 @@ shared_modules = OrderedDict(
         loss_box = dict(type='SmoothL1Loss', loss_weight=2.0),
     ),
 
-    cpm_composer=dict(
-        type='necks.cpm_composer.KeypointComposer',
-        gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
-        scatter_keys=['keypoint_feat'],
-        vsa=dict(
-            type='vsa.VoxelSetAbstraction',
-            voxel_size=voxel_size,
-            point_cloud_range=point_cloud_range,
-            num_keypoints=4096,
-            num_out_features=32,
-            num_bev_features=128,
-            num_rawpoint_features=3,
-            enlarge_selection_boxes=True,
-        )
-    ),
+    # keypoint_composer=dict(
+    #     type='necks.cpm_composer.KeypointComposer',
+    #     gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
+    #     scatter_keys=['keypoint_feat'],
+    #     vsa=dict(
+    #         type='vsa.VoxelSetAbstraction',
+    #         voxel_size=voxel_size,
+    #         point_cloud_range=point_cloud_range,
+    #         num_keypoints=4096,
+    #         num_out_features=32,
+    #         num_bev_features=128,
+    #         num_rawpoint_features=3,
+    #         enlarge_selection_boxes=True,
+    #     )
+    # ),
 
     # fusion=dict(
     #     type='fusion.keypoints.VoxelKeypointsFusion',
@@ -117,10 +117,12 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=100),
-        dict(type="EvalOPV2VDetectionHook", save_result=True),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=100, det_key='detection_local'),
+        dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test,
+             metrics=['OPV2V', 'CoSense3D'], det_key='detection_local', gt_key='local_bboxes_3d'),
     ]
 
 plots = [
-    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+    dict(title='DenseDetectionCanvas', width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection_local', 'local_labels'])
 ]

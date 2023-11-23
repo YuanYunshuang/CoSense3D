@@ -128,22 +128,23 @@ class EvalDenseBEVHook(BaseHook):
 
 
 class DetectionNMSHook(BaseHook):
-    def __init__(self, nms_thr, pre_max_size, **kwargs):
+    def __init__(self, nms_thr, pre_max_size, det_key='detection', **kwargs):
         super().__init__(**kwargs)
         self.nms_thr = nms_thr
         self.pre_max_size = pre_max_size
         self.nms = import_module('cosense3d.ops.iou3d_nms_utils').nms_gpu
+        self.det_key = det_key
 
     def post_iter(self, runner, **kwargs):
-        detection_out = runner.controller.data_manager.gather_ego_data('detection')
+        detection_out = runner.controller.data_manager.gather_ego_data(self.det_key)
         preds = []
         cav_ids = []
         for cav_id, values in detection_out.items():
             cav_ids.append(cav_id)
-            boxes = torch.cat(values['preds']['box'])
-            scores = torch.cat(values['preds']['scr'])
-            labels = torch.cat(values['preds']['lbl'])
-            indices = torch.cat(values['preds']['idx'])  # map index for retrieving features
+            boxes =   values['preds']['box']
+            scores =  values['preds']['scr']
+            labels =  values['preds']['lbl']
+            indices = values['preds']['idx']  # map index for retrieving features
 
             out = {}
             if 'center' in values:
@@ -174,14 +175,17 @@ class DetectionNMSHook(BaseHook):
             preds.append(out)
 
 
-        runner.controller.data_manager.scatter(cav_ids, {'detection': preds})
+        runner.controller.data_manager.scatter(cav_ids, {self.det_key: preds})
 
 
 class EvalOPV2VDetectionHook(BaseHook):
-    def __init__(self, iou_thr=[0.5, 0.7], range=[""], save_result=False, **kwargs):
+    def __init__(self, iou_thr=[0.5, 0.7], range=[""], save_result=False,
+                 det_key='detection', gt_key='global_bboxes_3d', **kwargs):
         super().__init__(**kwargs)
         self.iou_thr = iou_thr
         self.save_result = save_result
+        self.det_key = det_key
+        self.gt_key = gt_key
         self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
         # Create the dictionary for evaluation
         self.result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
@@ -193,8 +197,8 @@ class EvalOPV2VDetectionHook(BaseHook):
         self.logdir = logdir
 
     def post_iter(self, runner, **kwargs):
-        detection = runner.controller.data_manager.gather_ego_data('detection')
-        gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
+        detection = runner.controller.data_manager.gather_ego_data(self.det_key)
+        gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_key)
         points = runner.controller.data_manager.gather_batch(0, 'points')
         if self.save_result:
             ego_key = list(detection.keys())[0]
@@ -217,11 +221,14 @@ class EvalOPV2VDetectionHook(BaseHook):
 
 
 class EvalDetectionHook(BaseHook):
-    def __init__(self, pc_range, iou_thr=[0.5, 0.7], metrics=['CoSense3D'], save_result=False, **kwargs):
+    def __init__(self, pc_range, iou_thr=[0.5, 0.7], metrics=['CoSense3D'], save_result=False,
+                 det_key='detection', gt_key='global_bboxes_3d', **kwargs):
         super().__init__(**kwargs)
         self.iou_thr = iou_thr
         self.pc_range = pc_range
         self.save_result = save_result
+        self.det_key = det_key
+        self.gt_key = gt_key
         for m in metrics:
             assert m in ['OPV2V', 'CoSense3D']
             setattr(self, f'{m.lower()}_result',
@@ -236,8 +243,8 @@ class EvalDetectionHook(BaseHook):
         self.logdir = logdir
 
     def post_iter(self, runner, **kwargs):
-        detection = runner.controller.data_manager.gather_ego_data('detection')
-        gt_boxes = runner.controller.data_manager.gather_ego_data('global_bboxes_3d')
+        detection = runner.controller.data_manager.gather_ego_data(self.det_key)
+        gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_key)
 
         for i, (cav_id, preds) in enumerate(detection.items()):
             preds['box'], preds['scr'], preds['lbl'], preds['idx'] = \

@@ -1,4 +1,4 @@
-import os, glob, logging
+import os, glob, logging, warnings
 from datetime import datetime
 
 from cosense3d.utils.train_utils import *
@@ -62,7 +62,12 @@ class TrainRunner(BaseRunner):
                 self.start_epoch = ckpt['epoch']
                 self.epoch = ckpt['epoch']
                 self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
-                self.optimizer.load_state_dict(ckpt['optimizer'])
+                try:
+                    self.optimizer.load_state_dict(ckpt['optimizer'])
+                except:
+                    warnings.warn("Cannot load optimizer state_dict, "
+                                  "there might be training parameter changes, "
+                                  "please consider using 'load-from'.")
 
     def run(self):
         with torch.autograd.set_detect_anomaly(True):

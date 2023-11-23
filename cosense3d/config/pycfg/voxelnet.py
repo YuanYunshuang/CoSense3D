@@ -78,7 +78,7 @@ train_hooks = [
 
 test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=100),
-        dict(type="EvalOPV2VDetectionHook", save_result=True),
+        dict(type="EvalDetectionHook", save_result=True),
     ]
 
 plots = [

@@ -154,7 +154,7 @@ class DataManager:
                 gather_dict[f'{ref_coor}_labels'] = (
                     self.get_gt_boxes_as_vis_format(batch_idx, ref_coor))
             elif 'detection' in k:
-                detection = self.gather_batch(batch_idx, k)
+                detection = self.gather_ego_data(k)
                 for cav_id, det in detection.items():
                     detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
                 gather_dict[k] = detection

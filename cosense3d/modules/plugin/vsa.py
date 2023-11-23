@@ -154,19 +154,17 @@ class VoxelSetAbstraction(nn.Module):
         self.num_point_features = self.num_out_features
         self.num_point_features_before_fusion = c_in
 
-    def interpolate_from_bev_features(self, keypoints, bev_features):
+    def interpolate_from_bev_features(self, keypoints_list, bev_features):
         B = len(bev_features)
-        x_idxs = (keypoints[..., 0] - self.point_cloud_range[0]) / self.voxel_size[0]
-        y_idxs = (keypoints[..., 1] - self.point_cloud_range[1]) / self.voxel_size[1]
-        x_idxs = x_idxs / self.bev_stride
-        y_idxs = y_idxs / self.bev_stride
-
         point_bev_features_list = []
-        for k in range(B):
-            cur_x_idxs = x_idxs[k]
-            cur_y_idxs = y_idxs[k]
-            cur_bev_features = bev_features[k].permute(1, 2, 0)  # (H, W, C)
-            point_bev_features = bilinear_interpolate_torch(cur_bev_features, cur_x_idxs, cur_y_idxs)
+        for i in range(B):
+            keypoints = keypoints_list[i]
+            x_idxs = (keypoints[..., 0] - self.point_cloud_range[0]) / self.voxel_size[0]
+            y_idxs = (keypoints[..., 1] - self.point_cloud_range[1]) / self.voxel_size[1]
+            x_idxs = x_idxs / self.bev_stride
+            y_idxs = y_idxs / self.bev_stride
+            cur_bev_features = bev_features[i].permute(1, 2, 0)  # (H, W, C)
+            point_bev_features = bilinear_interpolate_torch(cur_bev_features, x_idxs, y_idxs)
             point_bev_features_list.append(point_bev_features.unsqueeze(dim=0))
 
         point_bev_features = torch.cat(point_bev_features_list, dim=0)  # (B, N, C0)
@@ -208,7 +206,7 @@ class VoxelSetAbstraction(nn.Module):
             keypoints_list.append(keypoints)
 
         # keypoints = torch.cat(keypoints_list, dim=0)  # (B, M, 3)
-        return keypoints
+        return keypoints_list
 
     def forward(self, det_out, bev_feat, voxel_feat, points):
         B = len(points)

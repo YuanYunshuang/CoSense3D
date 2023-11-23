@@ -150,6 +150,9 @@ class Spconv(BaseModule):
         if hasattr(self, 'bev_compressor'):
             res_dict['bev'] = self.bev_compressor(res_dict['bev'])
 
+        # bev shape (B, C, H, W), --> (B, C, W, H)
+        res_dict['bev'] = res_dict['bev'].permute(0, 1, 3, 2)
+
         out_dict = {}
         if 'voxel_feat' in self.scatter_keys:
             out_dict['voxel_feat'] = self.format_output(
@@ -177,8 +180,8 @@ class Spconv(BaseModule):
     def to_dense(self, stensor):
         spatial_features = stensor.dense()
         N, C, D, H, W = spatial_features.shape
-        bev_featrues = spatial_features.view(N, C * D, H, W)
-        return bev_featrues
+        bev_featrues = spatial_features.reshape(N, C * D, H, W)
+        return bev_featrues.contiguous()
 
 
 

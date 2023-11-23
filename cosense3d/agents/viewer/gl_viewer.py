@@ -155,17 +155,26 @@ class GLViewer(gl.GLViewWidget):
     def refresh(self, data_dict):
         pcds = data_dict.get('points', None)
         global_labels = data_dict.get('global_labels', None)
-        # local_labels = data_dict['input'].get('local_labels', None)
-        if pcds is None or global_labels is None:
+        local_labels = data_dict.get('local_labels', None)
+        if pcds is None or global_labels is None or local_labels is None:
             return
-        ego_id = list(global_labels.keys())[0]
+        labels = local_labels if global_labels is None else global_labels
+        ego_id = list(labels.keys())[0]
         if 'detection' in data_dict:
-            pred_label = {k: v['labels'] for k, v in data_dict['detection'].items()}
+            k = 'detection'
+        elif 'detection_global' in data_dict:
+            k = 'detection_global'
+        elif 'detection_local' in data_dict:
+            k = 'detection_local'
         else:
+            k = False
             pred_label = None
+        if k:
+            # pred_label = {k: v['labels'] for k, v in data_dict[k].items()}
+            pred_label = data_dict[k][ego_id]['labels']
         self.updateFrameData(pcds,
-                             pred_label=pred_label[ego_id],
-                             global_label=global_labels[ego_id])
+                             pred_label=pred_label,
+                             global_label=labels[ego_id])
 
     def addBox(self):
         if self.rectangle is not None:

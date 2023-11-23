@@ -40,6 +40,7 @@ def load_config(args):
     # update params
     if args.mode == 'train':
         cfg['TRAIN']['resume_from'] = args.resume_from
+        cfg['TRAIN']['load_from'] = args.load_from
         cfg['TRAIN']['log_dir'] = args.log_dir
         cfg['TRAIN']['run_name'] = args.run_name
     elif args.mode == 'test':

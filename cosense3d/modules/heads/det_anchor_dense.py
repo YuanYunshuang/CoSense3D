@@ -63,9 +63,10 @@ class DetAnchorDense(BaseModule):
         return output
 
     def loss(self, preds, gt_boxes, gt_labels, **kwargs):
+        """The dense bev maps show have the shape ((b, c, w, h))"""
         pred_cls = self.stack_data_from_list(preds, 'cls')
         pred_reg = self.stack_data_from_list(preds, 'reg')
-        # convert to shape(n, w, h, c) -> (nwh, c) to match the anchors
+        # convert to shape(b, c, w, h) -> (nwh, c) to match the anchors
         pred_cls = pred_cls.permute(0, 3, 2, 1).reshape(-1)
         pred_reg = pred_reg.permute(0, 3, 2, 1).reshape(-1, 7)
         cls_tgt, reg_tgt, _ = multi_apply(

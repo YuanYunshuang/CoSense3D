@@ -69,19 +69,21 @@ class BEVDenseCanvas(MplCanvas):
             break
 
 
-class DetectionCanvas(MplCanvas):
+class SparseDetectionCanvas(MplCanvas):
     def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
         self.lidar_range = lidar_range
+        self.pred_key = self.data_keys[0]
+        self.gt_key = self.data_keys[1]
 
     def refresh(self, data):
-        if 'detection' not in data:
+        if self.pred_key not in data:
             return
-        for cav_id, det_dict in data['detection'].items():
+        for cav_id, det_dict in data[self.pred_key].items():
             self.axes.clear()
-            self.update_title(data['meta'], cav_id)
+            self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
             # plot points
-            for points in data['input']['pcds'].values():
+            for points in data['points'].values():
                 draw_points_boxes_plt(
                     pc_range=self.lidar_range,
                     points=points,
@@ -98,7 +100,52 @@ class DetectionCanvas(MplCanvas):
                 self.axes.scatter(centers[:, 0], centers[:, 1],
                                   cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
             # plot pcds and boxes
-            gt_boxes = list(data['input']['global_labels'][cav_id].values())
+            gt_boxes = list(data[self.gt_key][cav_id].values())
+            gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
+            pred_boxes = det_dict['box'].detach().cpu().numpy()
+            draw_points_boxes_plt(
+                pc_range=self.lidar_range,
+                boxes_pred=pred_boxes,
+                boxes_gt=gt_boxes,
+                ax=self.axes,
+                # return_ax=True
+            )
+            self.draw()
+            break
+
+
+class DenseDetectionCanvas(MplCanvas):
+    def __init__(self, lidar_range=None, **kwargs):
+        super().__init__(**kwargs)
+        self.lidar_range = lidar_range
+        self.pred_key = self.data_keys[0]
+        self.gt_key = self.data_keys[1]
+
+    def refresh(self, data):
+        if self.pred_key not in data:
+            return
+        for cav_id, det_dict in data[self.pred_key].items():
+            self.axes.clear()
+            self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
+            # plot points
+            for points in data['points'].values():
+                draw_points_boxes_plt(
+                    pc_range=self.lidar_range,
+                    points=points,
+                    ax=self.axes,
+                    # return_ax=True
+                )
+            # plot centers
+            if 'ctr' in det_dict:
+                centers = det_dict['ctr'].detach().cpu().numpy()
+                conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
+                mask = conf > 0.5
+                centers = centers[mask]
+                conf = conf[mask]
+                self.axes.scatter(centers[:, 0], centers[:, 1],
+                                  cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
+            # plot pcds and boxes
+            gt_boxes = list(data[self.gt_key][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
             pred_boxes = det_dict['box'].detach().cpu().numpy()
             draw_points_boxes_plt(
