@@ -25,7 +25,6 @@ shared_modules = OrderedDict(
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 128, 128], steps=[5, 3]))
     ),
 
     fusion = dict(
@@ -34,7 +33,7 @@ shared_modules = OrderedDict(
         scatter_keys=['fused_feat'],
         data_info=data_info,
         stride=out_stride,
-        dim=128
+        in_channels=128
     ),
 
     fusion_neck = dict(
@@ -43,56 +42,61 @@ shared_modules = OrderedDict(
         scatter_keys=['fused_neck_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
+        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=128, out_dim=128))
     ),
 
 
     bev_head = dict(
-        type='heads.bev.BEV',
-        gather_keys=['fused_neck_feat'],
+        type='heads.bev.ContinuousBEV',
+        gather_keys=['fused_neck_feat', 'global_bboxes_3d', 'global_labels_3d'],
         scatter_keys=['bev'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+        gt_keys=[],
         data_info=data_info,
         stride=out_stride,
         in_dim=128,
+        context_decoder=dict(
+            type='attn.NeighborhoodAttention',
+            data_info=data_info,
+            stride=out_stride,
+            emb_dim=128),
         target_assigner=dict(type='target_assigners.BEVPointAssigner'),
         loss_cls=dict(type='EDLLoss', annealing_step=50, n_cls=2, loss_weight=1.0),
     ),
 
-    detection_head = dict(
-        type='heads.det_center_sparse.DetCenterSparse',
-        gather_keys=['fused_neck_feat'],
-        scatter_keys=['detection'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        data_info=data_info,
-        input_channels=128,
-        shared_conv_channel=128,
-        get_predictions=True,
-        stride=out_stride,
-        cls_head_cfg=dict(name='UnitedClsHead'),
-        reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
-        class_names_each_head=[['vehicle.car']],
-        reg_channels=['box:6', 'dir:8', 'scr:4'],
-        cls_assigner=dict(
-            type='target_assigners.BEVHardCenternessAssigner',
-            n_cls=1,
-            min_radius=1.0,
-            pos_neg_ratio=3,
-            max_mining_ratio=2,
-        ),
-        box_assigner=dict(
-            type='target_assigners.BoxCenterAssigner',
-            voxel_size=voxel_size,
-            lidar_range=point_cloud_range,
-            stride=out_stride,
-            detection_benchmark='Car',
-            class_names_each_head=[['vehicle.car']],
-            center_threshold=0.5,
-            box_coder=dict(type='CenterBoxCoder'),
-        ),
-        loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
-        loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
-    ),
+    # detection_head = dict(
+    #     type='heads.det_center_sparse.DetCenterSparse',
+    #     gather_keys=['fused_neck_feat'],
+    #     scatter_keys=['detection'],
+    #     gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+    #     data_info=data_info,
+    #     input_channels=128,
+    #     shared_conv_channel=128,
+    #     get_predictions=True,
+    #     stride=out_stride,
+    #     cls_head_cfg=dict(name='UnitedClsHead'),
+    #     reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
+    #     class_names_each_head=[['vehicle.car']],
+    #     reg_channels=['box:6', 'dir:8', 'scr:4'],
+    #     cls_assigner=dict(
+    #         type='target_assigners.BEVHardCenternessAssigner',
+    #         n_cls=1,
+    #         min_radius=1.0,
+    #         pos_neg_ratio=3,
+    #         max_mining_ratio=2,
+    #     ),
+    #     box_assigner=dict(
+    #         type='target_assigners.BoxCenterAssigner',
+    #         voxel_size=voxel_size,
+    #         lidar_range=point_cloud_range,
+    #         stride=out_stride,
+    #         detection_benchmark='Car',
+    #         class_names_each_head=[['vehicle.car']],
+    #         center_threshold=0.5,
+    #         box_coder=dict(type='CenterBoxCoder'),
+    #     ),
+    #     loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
+    #     loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
+    # ),
 )
 
 train_hooks = [

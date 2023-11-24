@@ -21,6 +21,15 @@ class SparseAttentionFusion(BaseModule):
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             coor = [ego_feat[f'p{self.stride}']['coor']]
             feat = [ego_feat[f'p{self.stride}']['feat']]
+            if len(coop_feat) == 0:
+                fused_feat.append({
+                    f'p{self.stride}': {
+                        'coor': coor[0],
+                        'feat': feat[0]
+                    }
+                })
+                continue
+
             # fuse coop to ego
             for cpfeat in coop_feat.values():
                 if 'pts_feat' not in cpfeat:
@@ -29,16 +38,17 @@ class SparseAttentionFusion(BaseModule):
                 feat.append(cpfeat['pts_feat'][f'p{self.stride}']['feat'])
             coor_cat = cat_coor_with_idx(coor)
             feat_cat = torch.cat(feat, dim=0)
-            uniq_coor, reverse_inds = torch.unique(coor_cat[:, 1:], eturn_inverse=True)
+            uniq_coor, reverse_inds = torch.unique(coor_cat[:, 1:], dim=0,
+                                                   return_inverse=True)
 
             feats_pad = []
             for i, c in enumerate(coor):
-                feat_pad = feat_cat.new_zeros(len(uniq_coor), feat.shape[-1])
-                feat_pad[reverse_inds[coor_cat[:, 0] == 0]] = feat[i]
+                feat_pad = feat_cat.new_zeros(len(uniq_coor), feat_cat.shape[-1])
+                feat_pad[reverse_inds[coor_cat[:, 0] == i]] = feat[i]
                 feats_pad.append(feat_pad)
             q = feats_pad[0].unsqueeze(1)  # num_pts, 1, d
             kv = torch.stack(feats_pad[1:], dim=1)  # num_pts, num_coop_cav, d
-            out = self.attn(q, kv, kv)
+            out = self.attn(q, kv, kv).squeeze(1)
             fused_feat.append({
                 f'p{self.stride}': {
                     'coor': uniq_coor,

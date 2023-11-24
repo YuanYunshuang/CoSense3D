@@ -784,7 +784,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
 
 class BEVPointAssigner(BaseAssigner):
     def __init__(self,
-                 sample_mining_thr=0.5,
+                 sample_mining_thr=0.,
                  max_mining_ratio=3,
                  annealing_step=None,
                  topk_sampling=False,
@@ -819,7 +819,6 @@ class BEVPointAssigner(BaseAssigner):
         return selected, tgt_label
 
     def assign(self, tgt_pts, gt_boxes, B, conf=None, **kwargs):
-        epoch_num = kwargs.get('epoch', 0)
         boxes = gt_boxes.clone()
         boxes[:, 3] = 0
         pts = pad_r(tgt_pts)
