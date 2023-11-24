@@ -21,7 +21,7 @@ class GUI(QtWidgets.QMainWindow):
         self.data_keys = [
             'scenario', 'frame',
             'points', 'img', 'bboxes2d', 'lidar2img',
-            'global_bboxes_3d', 'local_bboxes_3d']
+            'global_labels', 'local_labels']
         self.setupUI(cfg)
         self.setWindowTitle("Cosense3D")
 

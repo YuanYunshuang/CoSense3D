@@ -179,16 +179,26 @@ class KeypointRoIHead(BaseModule):
         rcnn_reg = self.reg_layers(shared_features).transpose(
             1, 2).contiguous().squeeze( dim=1)  # (B, C)
 
+        roi_preds = None
+        if not self.training:
+            rois = torch.cat([p['boxes'] for p in preds], dim=0)
+            roi_preds = self.target_assigner.get_predictions(
+                rcnn_cls, rcnn_iou, rcnn_reg, rois
+            )
+
         idx = 0
         out_list = []
         for p in preds:
             num = len(p['boxes'])
-            out_list.append({
+            out_dict = {
             'rois': p['boxes'],
             'rcnn_cls': rcnn_cls[idx:idx+num],
             'rcnn_iou': rcnn_iou[idx:idx+num],
             'rcnn_reg': rcnn_reg[idx:idx+num],
-            })
+            }
+            if roi_preds is not None:
+                out_dict['preds'] = {k: v[idx:idx+num] for k, v in roi_preds.items()}
+            out_list.append(out_dict)
             idx += num
 
         return {self.scatter_keys[0]: out_list}

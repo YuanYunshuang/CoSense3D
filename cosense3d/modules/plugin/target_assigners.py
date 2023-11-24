@@ -945,5 +945,38 @@ class RoIBox3DAssigner(BaseAssigner):
             tgt_dict[k] = torch.cat(v, dim=0)
         return tgt_dict
 
+    def get_predictions(self, rcnn_cls, rcnn_iou, rcnn_reg, rois):
+        rcnn_cls = rcnn_cls.sigmoid().view(-1)
+        rcnn_iou = rcnn_iou.view(-1)
+        rcnn_score = rcnn_cls * rcnn_iou**4
+        rcnn_reg = rcnn_reg.view(-1, 7)
+
+        rois_anchor = rois.clone().detach().view(-1, self.code_size)
+        rois_anchor[:, 0:3] = 0
+        rois_anchor[:, 6] = 0
+
+        roi_center = rois[:, 0:3]
+        roi_ry = rois[:, 6] % (2 * PI)
+
+        boxes_local = self.box_coder.decode(rois_anchor, rcnn_reg)
+        # boxes_local = rcnn_reg + rois_anchor
+        detections = rotate_points_along_z_torch(
+            points=boxes_local.view(-1, 1, boxes_local.shape[-1]), angle=roi_ry.view(-1)
+        ).view(-1, boxes_local.shape[-1])
+        detections[:, :3] = detections[:, :3] + roi_center
+        detections[:, 6] = detections[:, 6] + roi_ry
+        mask = rcnn_score >= 0.01
+        detections = detections[mask]
+        scores = rcnn_score[mask]
+
+        return {
+            'box': detections,
+            'scr': scores,
+            # Todo currently only support cars
+            'lbl': torch.zeros_like(scores),
+            # map indices to be aligned with sparse detection head format
+            'idx': torch.zeros_like(scores),
+        }
+
 
 

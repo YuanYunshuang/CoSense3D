@@ -149,7 +149,7 @@ class DataManager:
     def gather_vis_data(self, batch_idx=0, keys=['points']):
         gather_dict = {}
         for k in keys:
-            if k in ['global_bboxes_3d', 'local_bboxes_3d']:
+            if k in ['global_labels', 'local_labels']:
                 ref_coor = k.split('_')[0]
                 gather_dict[f'{ref_coor}_labels'] = (
                     self.get_gt_boxes_as_vis_format(batch_idx, ref_coor))

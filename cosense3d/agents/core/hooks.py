@@ -174,7 +174,6 @@ class DetectionNMSHook(BaseHook):
                 })
             preds.append(out)
 
-
         runner.controller.data_manager.scatter(cav_ids, {self.det_key: preds})
 
 

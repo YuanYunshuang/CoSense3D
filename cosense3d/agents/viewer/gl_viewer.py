@@ -153,12 +153,12 @@ class GLViewer(gl.GLViewWidget):
         self.update()
 
     def refresh(self, data_dict):
-        pcds = data_dict.get('points', None)
-        global_labels = data_dict.get('global_labels', None)
-        local_labels = data_dict.get('local_labels', None)
-        if pcds is None or global_labels is None or local_labels is None:
+        pcds = data_dict.get('points', {})
+        global_labels = data_dict.get('global_labels', {})
+        local_labels = data_dict.get('local_labels', {})
+        if pcds is None or global_labels is {} or local_labels is None:
             return
-        labels = local_labels if global_labels is None else global_labels
+        labels = local_labels if global_labels is {} else global_labels
         ego_id = list(labels.keys())[0]
         if 'detection' in data_dict:
             k = 'detection'
