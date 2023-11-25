@@ -512,8 +512,8 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         """
         if len(gt_boxes) == 0:
             labels = gt_boxes.new_full((self.standup_anchors.shape[0],), -1)
-            reg_tgt = gt_boxes.new_full((0, self.box_coder.code_size))
-            dir_scores = gt_boxes.new_full((0, 4))
+            reg_tgt = gt_boxes.new_zeros((0, self.box_coder.code_size))
+            dir_scores = gt_boxes.new_zeros((0, 4))
             # Todo dir_score, gt_boxes, correct shape
             return labels, reg_tgt, dir_scores
         standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
