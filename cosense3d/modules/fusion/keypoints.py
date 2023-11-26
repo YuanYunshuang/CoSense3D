@@ -11,11 +11,14 @@ def limit_period(val, offset=0.5, period=2 * pi):
 
 
 class KeypointsFusion(BaseModule):
-    def __init__(self, lidar_range, **kwargs):
+    def __init__(self, lidar_range, train_from_epoch=0, **kwargs):
         super().__init__(**kwargs)
         self.lidar_range = lidar_range
+        self.train_from_epoch = train_from_epoch
 
-    def forward(self, ego_feats, coop_feats, **kwargs):
+    def forward(self, ego_feats, coop_feats, epoch, **kwargs):
+        if epoch < self.train_from_epoch:
+            return {self.scatter_keys[0]: [None for _ in ego_feats]}
         out_dict = {'boxes': [], 'scores': [], 'feat': [], 'coor': []}
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             feat = [ego_feat['point_features']]

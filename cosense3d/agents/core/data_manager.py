@@ -156,6 +156,8 @@ class DataManager:
             elif 'detection' in k:
                 detection = self.gather_ego_data(k)
                 for cav_id, det in detection.items():
+                    if 'preds' in det:
+                        det = det['preds'] # todo: without nms hook, keywork preds is not removed
                     detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
                 gather_dict[k] = detection
             else:

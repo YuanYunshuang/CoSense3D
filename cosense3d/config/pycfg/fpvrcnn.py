@@ -73,7 +73,7 @@ shared_modules = OrderedDict(
             stride=8,
             pos_threshold=0.6,
             neg_threshold=0.45,
-            score_thrshold=0.25,
+            score_thrshold=0.15,
             box_coder=dict(type='ResidualBoxCoder', mode='simple_dist')
         ),
         loss_cls = dict(type='FocalLoss', use_sigmoid=True,
@@ -85,6 +85,7 @@ shared_modules = OrderedDict(
         type='necks.cpm_composer.KeypointComposer',
         gather_keys=['detection_local', 'bev_feat', "voxel_feat", 'points'],
         scatter_keys=['keypoint_feat'],
+        train_from_epoch=5,
         vsa=dict(
             type='vsa.VoxelSetAbstraction',
             voxel_size=voxel_size,
@@ -101,6 +102,7 @@ shared_modules = OrderedDict(
         type='fusion.keypoints.KeypointsFusion',
         gather_keys=['keypoint_feat', 'received_response'],
         scatter_keys=['keypoint_feat_fused'],
+        train_from_epoch=5,
         lidar_range=point_cloud_range,
     ),
 
@@ -109,6 +111,7 @@ shared_modules = OrderedDict(
         gather_keys=['keypoint_feat_fused'],
         scatter_keys=['detection'],
         gt_keys=['global_bboxes_3d'],
+        train_from_epoch=5,
         num_cls=1,
         in_channels=32,
         n_fc_channels=256,
@@ -135,9 +138,10 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=100, det_key='detection'),
+        # dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection_local'),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection'),
         dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test,
-             metrics=['OPV2V', 'CoSense3D'], det_key='detection', gt_key='local_bboxes_3d'),
+             metrics=['OPV2V', 'CoSense3D'], det_key='detection', gt_key='global_bboxes_3d'),
     ]
 
 plots = [

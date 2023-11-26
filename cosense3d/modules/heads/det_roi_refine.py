@@ -20,10 +20,12 @@ class KeypointRoIHead(BaseModule):
                  roi_grid_pool,
                  target_assigner,
                  dp_ratio=0.3,
+                 train_from_epoch=0,
                  **kwargs):
         super().__init__(**kwargs)
         self.code_size = 7
         self.dp_ratio = dp_ratio
+        self.train_from_epoch = train_from_epoch
         self.target_assigner = plugin.build_plugin_module(target_assigner)
         mlps = copy.copy(roi_grid_pool['mlps'])
         for k in range(len(mlps)):
@@ -161,7 +163,9 @@ class KeypointRoIHead(BaseModule):
 
         return pooled_features
 
-    def forward(self, preds, **kwargs):
+    def forward(self, preds, epoch, **kwargs):
+        if epoch < self.train_from_epoch:
+            return {self.scatter_keys[0]: [None for _ in preds]}
         # RoI aware pooling
         pooled_features = self.roi_grid_pool(preds)
 
@@ -203,13 +207,15 @@ class KeypointRoIHead(BaseModule):
 
         return {self.scatter_keys[0]: out_list}
 
-    def loss(self, out, gt_boxes, **kwargs):
+    def loss(self, out, gt_boxes, epoch, **kwargs):
         """
         Parameters
         ----------
         output_dict : dict
         target_dict : dict
         """
+        if epoch < self.train_from_epoch:
+            return {}
         rois = [x['rois'] for x in out]
         label_dict = self.target_assigner.assign(rois, gt_boxes)
 
