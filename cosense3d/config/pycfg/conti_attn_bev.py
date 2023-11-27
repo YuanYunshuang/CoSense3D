@@ -4,7 +4,7 @@ from collections import OrderedDict
 # point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
-voxel_size = [0.2, 0.2, 0.2]
+voxel_size = [0.4, 0.4, 6]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
 
@@ -19,22 +19,21 @@ shared_modules = OrderedDict(
         type='backbone3d.mink_unet.MinkUnet',
         gather_keys=['points'],
         scatter_keys=['pts_feat'],
-        d=3,
+        d=2,
         cache_strides=[2],
         in_dim=4,
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 128, 128], steps=[5, 3]))
     ),
 
     fusion = dict(
-        type='fusion.naive_fusion.NaiveFusion',
+        type='fusion.attn_fusion.SparseAttentionFusion',
         gather_keys=['pts_feat', 'received_response'],
         scatter_keys=['fused_feat'],
         data_info=data_info,
         stride=out_stride,
-        dim=128
+        in_channels=128
     ),
 
     fusion_neck = dict(
@@ -43,56 +42,62 @@ shared_modules = OrderedDict(
         scatter_keys=['fused_neck_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
+        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=128, out_dim=128))
     ),
 
 
     bev_head = dict(
-        type='heads.bev.BEV',
-        gather_keys=['fused_neck_feat'],
+        type='heads.bev.ContiAttnBEV',
+        gather_keys=['fused_neck_feat', 'global_bboxes_3d', 'global_labels_3d'],
         scatter_keys=['bev'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+        gt_keys=[],
         data_info=data_info,
         stride=out_stride,
         in_dim=128,
+        out_channnles=2,
+        context_decoder=dict(
+            type='attn.NeighborhoodAttention',
+            data_info=data_info,
+            stride=out_stride,
+            emb_dim=128),
         target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=50, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', annealing_step=50, n_cls=2, loss_weight=1.0),
     ),
 
-    detection_head = dict(
-        type='heads.det_center_sparse.DetCenterSparse',
-        gather_keys=['fused_neck_feat'],
-        scatter_keys=['detection'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
-        data_info=data_info,
-        input_channels=128,
-        shared_conv_channel=128,
-        get_predictions=True,
-        stride=out_stride,
-        cls_head_cfg=dict(name='UnitedClsHead'),
-        reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
-        class_names_each_head=[['vehicle.car']],
-        reg_channels=['box:6', 'dir:8', 'scr:4'],
-        cls_assigner=dict(
-            type='target_assigners.BEVHardCenternessAssigner',
-            n_cls=1,
-            min_radius=1.0,
-            pos_neg_ratio=3,
-            max_mining_ratio=2,
-        ),
-        box_assigner=dict(
-            type='target_assigners.BoxCenterAssigner',
-            voxel_size=voxel_size,
-            lidar_range=point_cloud_range,
-            stride=out_stride,
-            detection_benchmark='Car',
-            class_names_each_head=[['vehicle.car']],
-            center_threshold=0.5,
-            box_coder=dict(type='CenterBoxCoder'),
-        ),
-        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=5000, n_cls=2, loss_weight=1.0),
-        loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
-    ),
+    # detection_head = dict(
+    #     type='heads.det_center_sparse.DetCenterSparse',
+    #     gather_keys=['fused_neck_feat'],
+    #     scatter_keys=['detection'],
+    #     gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+    #     data_info=data_info,
+    #     input_channels=128,
+    #     shared_conv_channel=128,
+    #     get_predictions=True,
+    #     stride=out_stride,
+    #     cls_head_cfg=dict(name='UnitedClsHead'),
+    #     reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
+    #     class_names_each_head=[['vehicle.car']],
+    #     reg_channels=['box:6', 'dir:8', 'scr:4'],
+    #     cls_assigner=dict(
+    #         type='target_assigners.BEVHardCenternessAssigner',
+    #         n_cls=1,
+    #         min_radius=1.0,
+    #         pos_neg_ratio=3,
+    #         max_mining_ratio=2,
+    #     ),
+    #     box_assigner=dict(
+    #         type='target_assigners.BoxCenterAssigner',
+    #         voxel_size=voxel_size,
+    #         lidar_range=point_cloud_range,
+    #         stride=out_stride,
+    #         detection_benchmark='Car',
+    #         class_names_each_head=[['vehicle.car']],
+    #         center_threshold=0.5,
+    #         box_coder=dict(type='CenterBoxCoder'),
+    #     ),
+    #     loss_cls=dict(type='EDLLoss', annealing_step=5000, n_cls=2, loss_weight=1.0),
+    #     loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
+    # ),
 )
 
 train_hooks = [

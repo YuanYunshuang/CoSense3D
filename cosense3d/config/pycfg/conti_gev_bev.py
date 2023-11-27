@@ -54,6 +54,7 @@ shared_modules = OrderedDict(
         data_info=data_info,
         stride=out_stride,
         in_dim=128,
+        out_channnles=6,
         context_decoder=dict(
             type='attn.NeighborhoodAttention',
             data_info=data_info,

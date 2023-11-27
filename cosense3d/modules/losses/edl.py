@@ -149,13 +149,23 @@ class EDLLoss(BaseLoss):
     def __init__(self,
                  n_cls,
                  annealing_step,
+                 activation='none',
                  **kwargs):
         super().__init__(**kwargs)
         self.n_cls = n_cls
         self.annealing_step = annealing_step
+        if activation == 'relu':
+            self.activation = relu_evidence
+        elif activation == 'exp':
+            self.activation = exp_evidence
+        else:
+            self.activation = None
 
     def loss(self, preds, tgt, temp, n_cls_override=None):
-        evidence = relu_evidence(preds)
+        if self.activation is None:
+            evidence = preds
+        else:
+            evidence = self.activation(preds)
         if len(tgt.shape) == 1:
             cared = tgt >= 0
             evidence = evidence[cared]

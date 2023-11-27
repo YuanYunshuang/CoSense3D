@@ -91,6 +91,7 @@ class BEV(BaseModule):
 
 class ContinuousBEV(BaseModule):
     def __init__(self,
+                 out_channels,
                  data_info,
                  in_dim,
                  stride,
@@ -109,7 +110,7 @@ class ContinuousBEV(BaseModule):
 
         self.context_decoder = build_plugin_module(context_decoder)
 
-        self.reg_layer = linear_last(in_dim, 32, 2, bias=True)
+        self.reg_layer = linear_last(in_dim, 32, out_channels, bias=True)
 
         self.tgt_assigner = build_plugin_module(target_assigner)
         self.loss_cls = build_loss(**loss_cls)
@@ -123,19 +124,21 @@ class ContinuousBEV(BaseModule):
             new_pts, gt_boxes, len(gt_boxes))
         return ref_pts, ref_label
 
+    def get_evidence(self, ref_pts, coor, feat):
+        raise NotImplementedError
+
     def forward(self, stensor_list, gt_boxes, gt_labels, **kwargs):
         coor, feat = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
         ref_pts, ref_label = self.sample_reference_points(
             centers, gt_boxes, gt_labels)
-        ref_context = self.context_decoder(ref_pts, coor, feat)
-        reg = self.reg_layer(ref_context)
-        conf, unc = edl.evidence_to_conf_unc(reg.relu())
+        evidence = self.get_evidence(ref_pts, coor, feat)
+        conf, unc = edl.evidence_to_conf_unc(evidence)
 
         out = {
             'ref_pts': ref_pts,
             'ref_lbls': ref_label,
-            'reg': reg,
+            'evi': evidence,
             'conf': conf,
             'unc': unc
         }
@@ -178,6 +181,22 @@ class ContinuousBEV(BaseModule):
         )
         loss_dict = {'bev_loss': loss_cls}
         return loss_dict
+
+
+class ContiGevBEV(ContinuousBEV):
+
+    def get_evidence(self, ref_pts, coor, feat):
+        reg = self.reg_layer(feat)
+        reg = self.context_decoder(ref_pts, coor, reg)
+        return reg
+
+
+class ContiAttnBEV(ContinuousBEV):
+
+    def get_evidence(self, ref_pts, coor, feat):
+        ref_context = self.context_decoder(ref_pts, coor, feat)
+        reg = self.reg_layer(ref_context)
+        return reg.relu()
 
 
 
