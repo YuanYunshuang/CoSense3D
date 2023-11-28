@@ -160,16 +160,16 @@ class GLViewer(gl.GLViewWidget):
             return
         labels = local_labels if global_labels is {} else global_labels
         ego_id = list(labels.keys())[0]
+        k = False
+        pred_label = None
         if 'detection' in data_dict:
             k = 'detection'
         elif 'detection_global' in data_dict:
             k = 'detection_global'
         elif 'detection_local' in data_dict:
             k = 'detection_local'
-        else:
-            k = False
-            pred_label = None
-        if k:
+
+        if k and ego_id in data_dict[k]:
             # pred_label = {k: v['labels'] for k, v in data_dict[k].items()}
             pred_label = data_dict[k][ego_id]['labels']
         self.updateFrameData(pcds,

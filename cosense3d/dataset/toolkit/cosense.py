@@ -105,7 +105,7 @@ class CoSenseDataConverter:
                         filename = ldict['filename'].replace('\\', '/')
                         # TODO rotate points and bbxs
                         lidars.append(
-                            pclib.load_pcd(os.path.join(self.data_path, filename))
+                            pclib.load_pcd(os.path.join(self.data_path, filename))['xyz']
                         )
                 lidars = np.concatenate(lidars, axis=0)
                 lidars.tofile(os.path.join(out_dir, scenario_dir, 'lidar', f"{f}.bin"))
@@ -593,13 +593,13 @@ class CoSenseDataConverter:
 
 
 if __name__=="__main__":
-    cosense = CoSenseDataConverter(
-        "/koko/OPV2V",
-        "/koko/cosense3d/opv2v",
+    cosense3d = CoSenseDataConverter(
+        "/koko/LUMPI/cosense_fmt/data",
+        "/koko/LUMPI/cosense_fmt/meta",
         'all'
     )
     # cosense3d.to_kitti("/koko/LUMPI/kitti_test")
-    # cosense3d.to_sustech("/koko/LUMPI/sustech_fmt")
+    cosense3d.to_sustech("/koko/LUMPI/lumpi_selected_sustech")
     # cosense3d.to_opv2v("/media/hdd/yuan/koko/data/LUMPI/opv2v_fmt")
     # cosense3d.update_from_sustech("/koko/LUMPI/sustech_fmt")
     # cosense.supervison_full_to_sparse(cosense.meta,
@@ -608,5 +608,5 @@ if __name__=="__main__":
     #                                   num_box_total=534)
     # cosense.global_boxes_to_local(cosense.meta, cosense.data_path, cosense.meta_path)
     # cosense.update_from_sustech('/koko/LUMPI/sustech_fmt')
-    cosense.parse_global_bbox_velo(cosense.meta, cosense.data_path, cosense.meta_path)
+    # cosense.parse_global_bbox_velo(cosense.meta, cosense.data_path, cosense.meta_path)
     # cosense.draw_sample_distributions(cosense.meta_path)

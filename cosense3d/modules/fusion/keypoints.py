@@ -16,7 +16,8 @@ class KeypointsFusion(BaseModule):
         self.lidar_range = lidar_range
         self.train_from_epoch = train_from_epoch
 
-    def forward(self, ego_feats, coop_feats, epoch, **kwargs):
+    def forward(self, ego_feats, coop_feats, **kwargs):
+        epoch = kwargs.get('epoch', self.train_from_epoch + 1)
         if epoch < self.train_from_epoch:
             return {self.scatter_keys[0]: [None for _ in ego_feats]}
         out_dict = {'boxes': [], 'scores': [], 'feat': [], 'coor': []}

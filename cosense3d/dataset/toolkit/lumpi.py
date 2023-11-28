@@ -25,20 +25,21 @@ type_lumpi2cosense = {
 
 H, W = 640, 960
 scale_factors = {
-    '0': {'fx': W / 1920, 'fy': H / 1080},
-    '1': {'fx': W / 1920, 'fy': H / 1080},
-    '2': {'fx': W / 1920, 'fy': H / 1080},
-    '3': {'fx': W / 1920, 'fy': H / 1080},
-    '4': {'fx': W / 1920, 'fy': H / 1080},
     '5': {'fx': W / 1920, 'fy': H / 1080},
-    '6': {'fx': W / 1640, 'fy': H / 1640},
+    '6': {'fx': W / 1640, 'fy': H / 1232},
     '7': {'fx': W / 1640, 'fy': H / 1232},
+    '8': {'fx': W / 1640, 'fy': H / 1232},
+    '9': {'fx': W / 1920, 'fy': H / 1080},
+    '10': {'fx': W / 1920, 'fy': H / 1080},
 }
 
 img_sizes = {
     '5': [1920, 1080],
-    '6': [1640, 1640],
-    '7': [1640, 1640],
+    '6': [1640, 1232],
+    '7': [1640, 1232],
+    '8': [1640, 1640],
+    '9': [1920, 1080],
+    '10': [1920, 1080],
 }
 
 cam_nom = {
@@ -185,12 +186,15 @@ def update_cam_intri(intrinsic, cam_id):
     return intrinsic
 
 
-def copy_img_to_sustech(cosense_path, meta_path, sustech_path, measurement):
+def copy_img_to_sustech(cosense_path, meta_file, sustech_path, measurement):
     os.makedirs(os.path.join(sustech_path, 'calib', 'camera'), exist_ok=True)
     session_meta = load_json("/koko/LUMPI/meta.json")
     cam_params = {}
 
-    for cam in '567':
+    for cam in [5, 6, 7, 8, 9, 10]:
+        cam = str(cam)
+        if measurement not in session_meta['device'][cam]:
+            continue
         os.makedirs(os.path.join(sustech_path, 'camera', cam), exist_ok=True)
         session_id = str(session_meta['device'][cam][measurement])
         intrinsic = session_meta['session'][session_id]['intrinsic']
@@ -210,26 +214,26 @@ def copy_img_to_sustech(cosense_path, meta_path, sustech_path, measurement):
         }
         save_json(cam_calib, os.path.join(sustech_path, 'calib', 'camera', f'{cam}.json'))
 
-    meta_files = sorted(glob.glob(os.path.join(meta_path, '*.json')))[:1]
-    for mf in meta_files:
-        meta = load_json(mf)
-        for fi, fdict in meta.items():
-            m = os.path.basename(mf).split('_')[0]
-            for cam_id in '567':
-                cdict = fdict['agents'].get(cam_id, False)
-                if not cdict:
-                    continue
-                else:
-                    file_mid = cdict['camera']['0']['filenames'][1]
-                    img_file = os.path.join(cosense_path, file_mid.replace('png', 'jpg'))
-                    # img = cv2.imread(img_file)
-                    # img = cv2.undistort(img, np.array(cam_params[cam_id]['intrinsic']),
-                    #                     np.array(cam_params[cam_id]['distortion']))
-                    # cv2.imwrite(os.path.join(sustech_path, 'camera', cam_id, f'{fi}.jpg'), img)
-                    shutil.copy(
-                        img_file,
-                        os.path.join(sustech_path, 'camera', cam_id, f'{fi}.jpg')
-                    )
+    meta = load_json(meta_file)
+    for fi, fdict in tqdm.tqdm(meta.items()):
+        m = os.path.basename(meta_file).split('_')[0]
+        for cam_id in [5, 6, 7, 8, 9, 10]:
+            cam_id = str(cam_id)
+            cdict = fdict['agents'].get(cam_id, False)
+            if not cdict:
+                continue
+            else:
+                files = cdict['camera']['0']['filenames']
+                file_mid = files[len(files) // 2]
+                img_file = os.path.join(cosense_path, file_mid.replace('png', 'jpg'))
+                # img = cv2.imread(img_file)
+                # img = cv2.undistort(img, np.array(cam_params[cam_id]['intrinsic']),
+                #                     np.array(cam_params[cam_id]['distortion']))
+                # cv2.imwrite(os.path.join(sustech_path, 'camera', cam_id, f'{fi}.jpg'), img)
+                shutil.copy(
+                    img_file,
+                    os.path.join(sustech_path, 'camera', cam_id, f'{fi}.jpg')
+                )
 
 
 def crop_lidar_sustech(sustech_path):
@@ -570,14 +574,24 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
 
 
 if __name__=="__main__":
-    convert_to_cosense3d(
-        '/koko/LUMPI/lumpi-official',
-        '/koko/LUMPI/cosense_fmt/tmp',
-        '/koko/LUMPI/cosense_fmt/data',
-        parse_img=True
-    )
+    # convert_to_cosense3d(
+    #     '/koko/LUMPI/lumpi-official',
+    #     '/koko/LUMPI/cosense_fmt/tmp',
+    #     '/koko/LUMPI/cosense_fmt/data',
+    #     parse_img=True
+    # )
 
     # update_meta_boxes(
     #     '/koko/LUMPI/cosense_fmt/meta',
     #     '/mars/projects20/logs/nofusion_lumpi/test/jsons'
     # )
+
+    sustech_path = "/koko/LUMPI/lumpi_selected_sustech"
+    scenarios = sorted(os.listdir(sustech_path))
+    for s in scenarios:
+        measurement_idx = s.split('_')[0][-1]
+        copy_img_to_sustech(
+            "/koko/LUMPI/cosense_fmt/data",
+            os.path.join("/koko/LUMPI/cosense_fmt/meta", f"{s}.json"),
+            os.path.join(sustech_path, s),
+            measurement_idx)

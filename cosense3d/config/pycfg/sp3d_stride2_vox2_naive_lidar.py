@@ -111,6 +111,8 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1)
+    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['bev', 'global_labels']),
+    dict(title='DetectionCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection', 'global_labels'])
 ]

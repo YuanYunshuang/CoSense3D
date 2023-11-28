@@ -22,7 +22,7 @@ TRAIN:
   max_epoch: 50
   gpus: 1
   resume: true
-  hooks: 'pycfg.conti_bev.train_hooks'
+  hooks: 'pycfg.conti_attn_bev.train_hooks'
   optimizer:
     lr: 0.001
     weight_decay: 1e-2
@@ -37,21 +37,21 @@ TRAIN:
     lr_min: 2e-4
 
 TEST:
-  hooks: 'pycfg.conti_bev.test_hooks'
+  hooks: 'pycfg.conti_attn_bev.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
   data_manager: 'pycfg.data_pipeline_lidar.data_manager'
-  shared_modules: 'pycfg.conti_bev.shared_modules'
+  shared_modules: 'pycfg.conti_attn_bev.shared_modules'
   cav_manager:
     prototype: conti_bev_cav.ContinuousBevCAV
     memory_len: *seq_len
-  forward_runner: {}
+    all_grad: true
 
 VISUALIZATION:
   canvas_viewer:
-    plots: 'pycfg.conti_bev.plots'
+    plots: 'pycfg.conti_attn_bev.plots'
 
 
 

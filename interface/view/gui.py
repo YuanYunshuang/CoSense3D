@@ -137,9 +137,9 @@ class GUI(QtWidgets.QMainWindow):
         combobox.clear()
         combobox.addItem('------')
         combobox.addItems(items)
-
-        depth_enabled = GL.glGetBooleanv(GL.GL_DEPTH_TEST)
-        print('update_toolbar_info after:', depth_enabled)
+        #
+        # depth_enabled = GL.glGetBooleanv(GL.GL_DEPTH_TEST)
+        # print('update_toolbar_info after:', depth_enabled)
 
     def connect_events_to_funcs(self):
         self.menu.connect_events(self.controller)

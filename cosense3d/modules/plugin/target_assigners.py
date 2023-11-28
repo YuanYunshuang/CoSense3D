@@ -696,7 +696,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         roi['box'] = torch.cat(roi['box'], dim=0)
         roi['scr'] = torch.cat(roi['scr'], dim=0)
         roi['lbl'] = torch.cat(roi['lbl'], dim=0)
-        roi['idx'] = torch.cat(roi['lbl'], dim=0)
+        roi['idx'] = torch.cat(roi['idx'], dim=0)
         confs = torch.stack(confs, dim=1)
         return roi, confs
 
@@ -708,6 +708,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
                  pos_neg_ratio=5,
                  mining_thr=0,
                  max_mining_ratio=3,
+                 mining_start_epoch=5,
                  merge_all_classes=False
                  ):
         super().__init__()
@@ -716,16 +717,17 @@ class BEVHardCenternessAssigner(BaseAssigner):
         self.pos_neg_ratio = pos_neg_ratio
         self.sample_mining_thr = mining_thr
         self.max_mining_ratio = max_mining_ratio
+        self.mining_start_epoch = mining_start_epoch
         self.merge_all_classes = merge_all_classes
 
-    def get_labels_single_head(self, centers, gt_boxes, pred_scores=None):
+    def get_labels_single_head(self, centers, gt_boxes, pred_scores=None, **kwargs):
         dists = torch.norm(centers.unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0), dim=-1)
         dists_min = dists.min(dim=1).values
         labels = (dists_min < self.min_radius).float()
 
         if self.pos_neg_ratio:
             labels = pos_neg_sampling(labels, self.pos_neg_ratio)
-        if self.sample_mining_thr > 0:
+        if self.sample_mining_thr > 0 and kwargs.get('epoch', 0) > self.mining_start_epoch:
             assert pred_scores is not None
             labels = sample_mining(pred_scores, labels,
                                    dists_min,
@@ -746,7 +748,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
             for n in range(self.n_cls):
                 cur_boxes = gt_boxes[gt_labels == n]
                 cur_scores = None if pred_scores is None else pred_scores[n]
-                labels.append(self.get_labels_single_head(centers, cur_boxes, cur_scores))
+                labels.append(self.get_labels_single_head(centers, cur_boxes, cur_scores, **kwargs))
             labels = torch.stack(labels, dim=-1)
 
 

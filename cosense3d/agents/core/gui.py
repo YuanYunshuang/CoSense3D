@@ -68,8 +68,8 @@ class GUI(QtWidgets.QMainWindow):
         for name in self.infos:
             qlabel = QtWidgets.QLabel(f' {name[0].upper()}{name[1:]}:')
             w1 = qlabel.sizeHint().width()
-            qlabel.setMinimumWidth(w1 + 5)
-            qlabel.setMaximumWidth(w1 + 25)
+            qlabel.setMinimumWidth(w1 + 25)
+            qlabel.setMaximumWidth(w1 + 50)
             qcombo = QtWidgets.QComboBox()
             qcombo.addItem('---------')
             w2 = qcombo.sizeHint().width()
@@ -111,6 +111,13 @@ class GUI(QtWidgets.QMainWindow):
     def refresh(self):
         if self.data is not None:
             self.tabs.currentWidget().refresh(self.data)
+            scene = list(self.data['scenario'].values())[0]
+            frame = list(self.data['frame'].values())[0]
+            # todo adapt scenario and frame selection
+            self.combo_frame.clear()
+            self.combo_frame.addItem(frame)
+            self.combo_scene.clear()
+            self.combo_scene.addItem(scene)
 
     def start(self):
         self.timer.start(300)  # Trigger the animate method every 100ms

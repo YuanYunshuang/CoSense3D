@@ -54,6 +54,7 @@ data_manager = dict(
 
 
 output_viewer = [
-    dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1)
+    # dict(title='BEVSparseCanvas', width=10, height=4, nrows=1, ncols=1, data_keys=['bev', 'global_labels']),
+    dict(title='DenseDetectionCanvas', width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection', 'global_labels'])
 ]

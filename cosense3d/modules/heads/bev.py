@@ -155,7 +155,7 @@ class ContinuousBEV(BaseModule):
             mask = output['ref_pts'][:, 0] == i
             output_new['ref_pts'].append(output['ref_pts'][mask, 1:])
             output_new['ref_lbls'].append(output['ref_lbls'][mask])
-            output_new['reg'].append(output['reg'][mask])
+            output_new['evi'].append(output['evi'][mask])
             output_new['conf'].append(output['conf'][mask])
             output_new['unc'].append(output['unc'][mask])
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
@@ -171,10 +171,10 @@ class ContinuousBEV(BaseModule):
     def loss(self, batch_list, **kwargs):
         tgt_lbl = self.cat_data_from_list(batch_list, 'ref_lbls')
         epoch_num = kwargs.get('epoch', 0)
-        reg = self.cat_data_from_list(batch_list, 'reg')
+        evidence = self.cat_data_from_list(batch_list, 'evi')
         # avg_factor = max(tgt_label.sum(), 1)
         loss_cls = self.loss_cls(
-            reg,
+            evidence,
             tgt_lbl,
             temp=epoch_num,
             # avg_factor=avg_factor

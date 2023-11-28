@@ -171,14 +171,13 @@ class DetCenterSparse(BaseModule):
             if 'conf' in output:
                 output_new['conf'].append(output['conf'][mask])
             if 'preds' in output:
-                preds = {k: [] for k in output['preds'].keys()}
-                for h, inds in enumerate(output['preds']['idx']):
-                    mask = inds[:, 0] == i
-                    for k, v in output['preds'].items():
-                        if k in ['idx', 'box']:
-                            preds[k].append(v[h][mask][:, 1:])
-                        else:
-                            preds[k].append(v[h][mask])
+                mask = output['preds']['idx'][:, 0] == i
+                preds = {}
+                for k, v in output['preds'].items():
+                    if k in ['idx', 'box']:
+                        preds[k] = v[mask][:, 1:]
+                    else:
+                        preds[k] = v[mask]
                 output_new['preds'].append(preds)
 
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
@@ -189,7 +188,8 @@ class DetCenterSparse(BaseModule):
         centers = [batch['center'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
         pred_scores = [logits_to_edl_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
-        cls_tgt = multi_apply(self.cls_assigner.assign, centers, gt_boxes, gt_labels, pred_scores)
+        cls_tgt = multi_apply(self.cls_assigner.assign,
+                              centers, gt_boxes, gt_labels, pred_scores, **kwargs)
         cls_tgt = torch.cat(cls_tgt, dim=0)
 
         n_classes = [len(n) for n in self.class_names_each_head]

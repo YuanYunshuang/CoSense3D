@@ -27,7 +27,10 @@ class MplCanvas(FigureCanvasQTAgg):
 class BEVSparseCanvas(MplCanvas):
     def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
+        assert len(self.data_keys) == 2, '1st key should be pred bev map, 2nd key should be gt bev map.'
         self.lidar_range = lidar_range
+        self.pred_key = self.data_keys[0]
+        self.gt_key = self.data_keys[1]
 
     def refresh(self, data):
         if 'bev' not in data:
@@ -36,7 +39,7 @@ class BEVSparseCanvas(MplCanvas):
             centers = data_dict['center'].cpu().numpy()
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
             self.axes.clear()
-            self.update_title(data['meta'], cav_id)
+            self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
             self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
                                              cmap='jet', c=conf, s=2, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
@@ -114,7 +117,7 @@ class SparseDetectionCanvas(MplCanvas):
             break
 
 
-class DenseDetectionCanvas(MplCanvas):
+class DetectionCanvas(MplCanvas):
     def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
         self.lidar_range = lidar_range

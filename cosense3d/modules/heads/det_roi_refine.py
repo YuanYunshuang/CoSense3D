@@ -163,7 +163,8 @@ class KeypointRoIHead(BaseModule):
 
         return pooled_features
 
-    def forward(self, preds, epoch, **kwargs):
+    def forward(self, preds, **kwargs):
+        epoch = kwargs.get('epoch', self.train_from_epoch + 1)
         if epoch < self.train_from_epoch:
             return {self.scatter_keys[0]: [None for _ in preds]}
         # RoI aware pooling

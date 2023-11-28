@@ -35,13 +35,13 @@ class ContinuousBevCAV(BaseCAV):
     def forward_head(self, tasks, training_mode):
         if self.is_ego:
             tasks['with_grad'].append((self.id, '13:bev_head', {}))
-            # tasks['with_grad'].append((self.id, '14:detection_head', {}))
+            tasks['with_grad'].append((self.id, '14:detection_head', {}))
         return tasks
 
     def loss(self, tasks):
         if self.is_ego:
             tasks['loss'].append((self.id, '21:bev_head', {}))
-            # tasks['loss'].append((self.id, '22:detection_head', {}))
+            tasks['loss'].append((self.id, '22:detection_head', {}))
         return tasks
 
     def reset_data(self):
