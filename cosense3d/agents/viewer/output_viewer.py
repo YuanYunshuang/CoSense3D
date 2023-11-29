@@ -25,23 +25,28 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 class BEVSparseCanvas(MplCanvas):
-    def __init__(self, lidar_range=None, **kwargs):
+    def __init__(self, lidar_range=None, s=4, **kwargs):
         super().__init__(**kwargs)
-        assert len(self.data_keys) == 2, '1st key should be pred bev map, 2nd key should be gt bev map.'
+        assert len(self.data_keys) >=1, ('1st key should be pred bev map, '
+                                         '2nd key (optional) should be gt bev map.')
         self.lidar_range = lidar_range
+        self.s = s
         self.pred_key = self.data_keys[0]
-        self.gt_key = self.data_keys[1]
+        # self.gt_key = self.data_keys[1]
 
     def refresh(self, data):
         if 'bev' not in data:
             return
         for cav_id, data_dict in data['bev'].items():
-            centers = data_dict['center'].cpu().numpy()
+            if 'center' in data_dict:
+                centers = data_dict['center'].cpu().numpy()
+            elif 'ref_pts' in data_dict:
+                centers = data_dict['ref_pts'].cpu().numpy()
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
             self.axes.clear()
             self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
             self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
-                                             cmap='jet', c=conf, s=2, vmin=0, vmax=1)
+                                             cmap='jet', c=conf, s=self.s, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
             # self.scatter.set_offsets(centers)
             self.draw()
@@ -101,7 +106,7 @@ class SparseDetectionCanvas(MplCanvas):
                 centers = centers[mask]
                 conf = conf[mask]
                 self.axes.scatter(centers[:, 0], centers[:, 1],
-                                  cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
+                                  cmap='jet', c=conf, s=1, vmin=0, vmax=1)
             # plot pcds and boxes
             gt_boxes = list(data[self.gt_key][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]

@@ -83,7 +83,8 @@ shared_modules = OrderedDict(
             n_cls=1,
             min_radius=1.0,
             pos_neg_ratio=5,
-            max_mining_ratio=0.1,
+            mining_thr=0.5,
+            max_mining_ratio=0.5,
             mining_start_epoch=10,
         ),
         box_assigner=dict(
@@ -96,7 +97,7 @@ shared_modules = OrderedDict(
             center_threshold=0.5,
             box_coder=dict(type='CenterBoxCoder'),
         ),
-        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=5000, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=20, n_cls=2, loss_weight=1.0),
         loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 )
@@ -115,6 +116,9 @@ test_hooks = [
     ]
 
 plots = [
+    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range,
+         width=10, height=4, nrows=1, ncols=1,
+         data_keys=['bev']),
     dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1,
          data_keys=['detection', 'global_labels'])
 ]

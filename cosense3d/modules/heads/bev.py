@@ -118,10 +118,14 @@ class ContinuousBEV(BaseModule):
     @torch.no_grad()
     def sample_reference_points(self, centers, gt_boxes, gt_labels):
         gt_boxes = self.cat_data_from_list(gt_boxes, pad_idx=True)
-        new_pts = centers.clone()
-        new_pts[:, 1:] += (torch.rand_like(centers[:, 1:]) - 0.5) * self.res[0]
-        ref_pts, ref_label, _ = self.tgt_assigner.assign(
-            new_pts, gt_boxes, len(gt_boxes))
+        if self.training:
+            new_pts = centers.clone()
+            new_pts[:, 1:] += (torch.rand_like(centers[:, 1:]) - 0.5) * self.res[0]
+            ref_pts, ref_label, _ = self.tgt_assigner.assign(
+                new_pts, gt_boxes, len(gt_boxes))
+        else:
+            ref_pts, ref_label, _ = self.tgt_assigner.assign(
+                centers, gt_boxes, len(gt_boxes), down_sample=False)
         return ref_pts, ref_label
 
     def get_evidence(self, ref_pts, coor, feat):

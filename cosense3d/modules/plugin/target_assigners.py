@@ -820,10 +820,19 @@ class BEVPointAssigner(BaseAssigner):
             tgt_label[neg] = labels
         return selected, tgt_label
 
-    def assign(self, tgt_pts, gt_boxes, B, conf=None, **kwargs):
+    def assign(self, tgt_pts, gt_boxes, B, conf=None, down_sample=True, **kwargs):
         boxes = gt_boxes.clone()
         boxes[:, 3] = 0
         pts = pad_r(tgt_pts)
+
+        if not down_sample:
+            _, box_idx_of_pts = points_in_boxes_gpu(
+                pts, boxes, batch_size=B
+            )
+            tgt_label = torch.zeros_like(box_idx_of_pts)
+            tgt_label[box_idx_of_pts >= 0] = 1
+            return tgt_pts, tgt_label, None
+
         try:
             _, box_idx_of_pts = points_in_boxes_gpu(
                 pts, boxes, batch_size=B

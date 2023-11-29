@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Set color codes
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -25,7 +27,7 @@ pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
     --global-option="--blas=openblas"
 
 echo -e "${GREEN}[INFO] Installing cuda_ops...${NC}"
-cd ops && pip install . && cd ..
+cd cosense3d/ops && pip install . && cd ../..
 
 echo "[INFO] Installing requirements...${NC}"
 pip install -r requirements_cosense.txt
