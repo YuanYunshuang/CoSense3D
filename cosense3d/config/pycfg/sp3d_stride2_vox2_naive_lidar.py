@@ -80,6 +80,7 @@ shared_modules = OrderedDict(
             pos_neg_ratio=5,
             mining_thr=0.5,
             max_mining_ratio=0.1,
+            mining_start_epoch=10,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',
@@ -99,7 +100,7 @@ shared_modules = OrderedDict(
 train_hooks = [
         dict(type='MemoryUsageHook'),
         dict(type='TrainTimerHook'),
-        dict(type="CheckPointsHook")
+        dict(type="CheckPointsHook", epoch_every=10)
     ]
 
 

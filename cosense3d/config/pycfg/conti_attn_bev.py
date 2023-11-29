@@ -82,9 +82,9 @@ shared_modules = OrderedDict(
             type='target_assigners.BEVHardCenternessAssigner',
             n_cls=1,
             min_radius=1.0,
-            pos_neg_ratio=4,
-            max_mining_ratio=1,
-            mining_start_epoch=40,
+            pos_neg_ratio=5,
+            max_mining_ratio=0.1,
+            mining_start_epoch=10,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',
@@ -109,13 +109,12 @@ train_hooks = [
 
 
 test_hooks = [
-        dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
-        dict(type="EvalOPV2VDetectionHook", save_result=True),
-        dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
-        dict(type="EvalDenseBEVHook", thr=0.5)
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection'),
+        dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test,
+             metrics=['OPV2V', 'CoSense3D'], det_key='detection', gt_key='global_bboxes_3d'),
     ]
 
 plots = [
-    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1),
-    dict(title='DetectionCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1)
+    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection', 'global_labels'])
 ]

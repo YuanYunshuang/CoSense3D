@@ -191,8 +191,7 @@ def copy_img_to_sustech(cosense_path, meta_file, sustech_path, measurement):
     session_meta = load_json("/koko/LUMPI/meta.json")
     cam_params = {}
 
-    for cam in [5, 6, 7, 8, 9, 10]:
-        cam = str(cam)
+    for cam in measurement_cams[measurement]:
         if measurement not in session_meta['device'][cam]:
             continue
         os.makedirs(os.path.join(sustech_path, 'camera', cam), exist_ok=True)
@@ -217,8 +216,7 @@ def copy_img_to_sustech(cosense_path, meta_file, sustech_path, measurement):
     meta = load_json(meta_file)
     for fi, fdict in tqdm.tqdm(meta.items()):
         m = os.path.basename(meta_file).split('_')[0]
-        for cam_id in [5, 6, 7, 8, 9, 10]:
-            cam_id = str(cam_id)
+        for cam_id in measurement_cams[measurement]:
             cdict = fdict['agents'].get(cam_id, False)
             if not cdict:
                 continue
@@ -436,8 +434,10 @@ def convert_to_kitti(root_dir, kitti_dir, parse_img=False):
 
 def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
     meta_in = load_json(os.path.join(data_dir, 'meta.json'))
-    meta_in['experiment'] = {'4': meta_in['experiment']['4']}
+    # meta_in['experiment'] = {'4': meta_in['experiment']['4']}
     for exp, info in meta_in['experiment'].items():
+        if exp == '4':
+            continue
         # parse devices for current measurement
         device_meta = {}
         session_to_device_id = - np.ones(max([int(x) for x in meta_in['session'].keys()]))
@@ -455,7 +455,11 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
 
         # parse lidar files of current measurement
         lidar_dir = os.path.join(data_dir, f'measurement{exp}', 'lidar')
-        lidar_files = sorted(glob.glob(os.path.join(lidar_dir, '*.ply')))[:1000]
+        lidar_files = sorted(glob.glob(os.path.join(lidar_dir, '*.ply')))
+        if exp == '4':
+            lidar_files = lidar_files[:1000]
+        else:
+            lidar_files = lidar_files[:300]
 
         # for caching cam meta
         for cam_id, cam_info in cams.items():
@@ -495,16 +499,15 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
             # Loop through the video frames
             count = 0
             while cap.isOpened():
+                # Read the frame
+                print(f'Image: {count}', end='\r')
+                ret, img = cap.read()
                 if count > max(cam_info['cam_frames']):
                     break
                 if count not in cam_info['cam_frames']:
                     print(f'Skip image: {count}', end='\r')
                     count += 1
                     continue
-
-                print(f'Image: {count}', end='\r')
-                # Read the frame
-                ret, img = cap.read()
 
                 # If the frame was read successfully
                 if ret:
@@ -574,24 +577,24 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
 
 
 if __name__=="__main__":
-    # convert_to_cosense3d(
-    #     '/koko/LUMPI/lumpi-official',
-    #     '/koko/LUMPI/cosense_fmt/tmp',
-    #     '/koko/LUMPI/cosense_fmt/data',
-    #     parse_img=True
-    # )
+    convert_to_cosense3d(
+        '/koko/LUMPI/lumpi-official',
+        '/koko/LUMPI/lumpi_selected/meta',
+        '/koko/LUMPI/lumpi_selected/data',
+        parse_img=True
+    )
 
     # update_meta_boxes(
     #     '/koko/LUMPI/cosense_fmt/meta',
     #     '/mars/projects20/logs/nofusion_lumpi/test/jsons'
     # )
 
-    sustech_path = "/koko/LUMPI/lumpi_selected_sustech"
-    scenarios = sorted(os.listdir(sustech_path))
-    for s in scenarios:
-        measurement_idx = s.split('_')[0][-1]
-        copy_img_to_sustech(
-            "/koko/LUMPI/cosense_fmt/data",
-            os.path.join("/koko/LUMPI/cosense_fmt/meta", f"{s}.json"),
-            os.path.join(sustech_path, s),
-            measurement_idx)
+    # sustech_path = "/koko/LUMPI/lumpi_selected_sustech"
+    # scenarios = sorted(os.listdir(sustech_path))
+    # for s in scenarios:
+    #     measurement_idx = s.split('_')[0][-1]
+    #     copy_img_to_sustech(
+    #         "/koko/LUMPI/cosense_fmt/data",
+    #         os.path.join("/koko/LUMPI/cosense_fmt/meta", f"{s}.json"),
+    #         os.path.join(sustech_path, s),
+    #         measurement_idx)

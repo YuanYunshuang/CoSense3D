@@ -50,7 +50,7 @@ CONTROLLER:
     all_grad: true
 
 VISUALIZATION:
-  canvas_viewer:
+  output_viewer:
     plots: 'pycfg.conti_attn_bev.plots'
 
 

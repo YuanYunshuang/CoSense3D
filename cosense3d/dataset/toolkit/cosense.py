@@ -104,9 +104,9 @@ class CoSenseDataConverter:
                         lidar_pose = ldict['pose']
                         filename = ldict['filename'].replace('\\', '/')
                         # TODO rotate points and bbxs
-                        lidars.append(
-                            pclib.load_pcd(os.path.join(self.data_path, filename))['xyz']
-                        )
+                        pcd = pclib.load_pcd(os.path.join(self.data_path, filename))
+                        points = np.concatenate([pcd['xyz'], pcd['intensity'].reshape(-1, 1)], axis=-1)
+                        lidars.append(points.astype(np.float32))
                 lidars = np.concatenate(lidars, axis=0)
                 lidars.tofile(os.path.join(out_dir, scenario_dir, 'lidar', f"{f}.bin"))
                 # write label file
@@ -594,8 +594,8 @@ class CoSenseDataConverter:
 
 if __name__=="__main__":
     cosense3d = CoSenseDataConverter(
-        "/koko/LUMPI/cosense_fmt/data",
-        "/koko/LUMPI/cosense_fmt/meta",
+        "/koko/LUMPI/lumpi_selected/data",
+        "/koko/LUMPI/lumpi_selected/meta",
         'all'
     )
     # cosense3d.to_kitti("/koko/LUMPI/kitti_test")
