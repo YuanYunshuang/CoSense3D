@@ -436,7 +436,7 @@ def convert_to_cosense3d(data_dir, meta_out_dir, data_out_dir, parse_img=False):
     meta_in = load_json(os.path.join(data_dir, 'meta.json'))
     # meta_in['experiment'] = {'4': meta_in['experiment']['4']}
     for exp, info in meta_in['experiment'].items():
-        if exp == '4':
+        if exp != '4':
             continue
         # parse devices for current measurement
         device_meta = {}
@@ -593,8 +593,10 @@ if __name__=="__main__":
     # scenarios = sorted(os.listdir(sustech_path))
     # for s in scenarios:
     #     measurement_idx = s.split('_')[0][-1]
+    #     if  measurement_idx != '4':
+    #         continue
     #     copy_img_to_sustech(
-    #         "/koko/LUMPI/cosense_fmt/data",
-    #         os.path.join("/koko/LUMPI/cosense_fmt/meta", f"{s}.json"),
+    #         "/koko/LUMPI/lumpi_selected/data",
+    #         os.path.join("/koko/LUMPI/lumpi_selected/meta", f"{s}.json"),
     #         os.path.join(sustech_path, s),
     #         measurement_idx)
