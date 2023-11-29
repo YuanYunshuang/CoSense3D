@@ -5,10 +5,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import open3d as o3d
-from plyfile import PlyData
+from plyfile import PlyData, PlyElement
 from scipy.spatial.transform import Rotation as R
 
 from cosense3d.utils.misc import check_numpy_to_torch
+
+ply_fields = {'x': 'f4', 'y': 'f4', 'z': 'f4', 'ObjIdx': 'u4', 'ObjTag': 'u4', 'ring': 'u1', 'time': 'f4'}
+np_types = {'f4': np.float32, 'u4': np.uint32, 'u1': np.uint8}
 
 
 def header(points):
@@ -49,6 +52,23 @@ def read_ply(filename):
     property_types = [prop.val_dtype for prop in data.properties]
 
     return {name: np.array(data[name]) for name in properties}, property_types
+
+
+def save_cosense_ply(data, output_file_name):
+    data = {
+        'x': data['x'].astype(np_types[ply_fields['x']]),
+        'y': data['y'].astype(np_types[ply_fields['y']]),
+        'z': data['z'].astype(np_types[ply_fields['z']]),
+        'ObjIdx': data['ObjIdx'].astype(np_types[ply_fields['ObjIdx']]),
+        'ObjTag': data['ObjTag'].astype(np_types[ply_fields['ObjTag']]),
+        'ring': data['ring'].astype(np_types[ply_fields['ring']]),
+        'time': data['time'].astype(np_types[ply_fields['time']])
+    }
+    vertex_data = list(zip(*[data[k] for k, v in ply_fields.items()]))
+    vertex_type = [(k, v) for k, v in ply_fields.items()]
+    vertex = np.array(vertex_data, dtype=vertex_type)
+    el = PlyElement.describe(vertex, 'vertex')
+    PlyData([el]).write(output_file_name)
 
 
 def lidar_ply2bin(ply_file, bin_file,

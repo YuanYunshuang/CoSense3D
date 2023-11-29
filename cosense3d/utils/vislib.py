@@ -161,7 +161,7 @@ def bbx2linset(bbx, color=(0, 1, 0)):
     Parameters
     ----------
     bbx : np.ndarray
-        shape: (n, 7) or (n, 8, 3).
+        shape: (n, 7) or (n, 11) or (n, 8, 3).
     color : tuple
         The bounding box color.
 
@@ -244,7 +244,8 @@ def update_lineset_vbo(vbo, bbx, color=None):
 
 def o3d_draw_pcds_bbxs(pcds: list,
                        bbxs: list,
-                       bbxs_colors: list=None):
+                       bbxs_colors: list=None,
+                       pcds_colors: list=None):
     """
     Parameters
     ----------
@@ -252,6 +253,7 @@ def o3d_draw_pcds_bbxs(pcds: list,
     bbxs: list of np array,
         bounding boxes in corner format
     bbxs_colors: list of tuples
+    pcds_colors: list of np array, shape same as pcds
     """
     pcds_vis = []
     linsets = []
@@ -266,8 +268,12 @@ def o3d_draw_pcds_bbxs(pcds: list,
         points[:, 0] *= -1
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-        colors = get_palette_colors('calm_afternoon')
-        pcd.paint_uniform_color(colors[i])
+        if pcds_colors is not None:
+            assert pcds_colors[i].shape == points[:, :3].shape
+            pcd.colors = o3d.utility.Vector3dVector(pcds_colors[i])
+        else:
+            colors = get_palette_colors('calm_afternoon')
+            pcd.paint_uniform_color(colors[i])
         pcds_vis.append(pcd)
     o3d.visualization.draw_geometries(pcds_vis + linsets)
 

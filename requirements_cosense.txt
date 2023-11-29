@@ -4,3 +4,8 @@ torch-scatter
 PyYAML
 Shapely
 scipy
+rich
+tqdm
+open3d
+plyfile
+einops

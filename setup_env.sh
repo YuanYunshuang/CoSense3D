@@ -8,6 +8,7 @@ NC='\033[0m' # No Color
 #conda create -n cosense3d python=3.8
 #conda activate cosense3d
 conda install openblas-devel -c anaconda -y
+conda install -c conda-forge libstdcxx-ng libffi -y
 sudo apt install build-essential python3-dev libopenblas-dev -y
 
 echo -e "${GREEN}[INFO] Installing pytorch essentials...${NC}"
@@ -27,7 +28,8 @@ echo -e "${GREEN}[INFO] Installing cuda_ops...${NC}"
 cd ops && pip install . && cd ..
 
 echo "[INFO] Installing requirements...${NC}"
-pip install -r requirements.txt
+pip install -r requirements_cosense.txt
+pip install -r requirements_ui.txt
 
 echo -e "${GREEN}[INFO] Done.${NC}"
 
