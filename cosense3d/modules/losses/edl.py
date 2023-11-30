@@ -120,20 +120,32 @@ def evidence_to_conf_unc(evidence, edl=True):
     return conf, unc
 
 
-def logits_to_edl_conf_unc(logits, evidence_type='relu'):
-    if evidence_type == 'relu':
-        evidence = relu_evidence(logits)
-    elif evidence_type == 'exp':
-        evidence = exp_evidence(logits)
+def pred_to_conf_unc(preds, activation='relu', edl=True):
+    if activation == 'relu':
+        evidence = relu_evidence(preds)
+    elif activation == 'exp':
+        evidence = exp_evidence(preds)
+    elif activation == 'sigmoid':
+        evidence = preds.sigmoid()
+    elif activation == 'softmax':
+        evidence = preds.softmax(dim=-1)
     else:
-        raise NotImplementedError
-    alpha = evidence + 1
-    S = torch.sum(alpha, dim=-1, keepdim=True)
-    conf = torch.div(alpha, S)
-    K = evidence.shape[-1]
-    unc = torch.div(K, S)
-    # conf = torch.sqrt(conf * (1 - unc))
-    unc = unc.squeeze(dim=-1)
+        evidence = preds
+
+    if edl:
+        alpha = evidence + 1
+        S = torch.sum(alpha, dim=-1, keepdim=True)
+        conf = torch.div(alpha, S)
+        K = evidence.shape[-1]
+        unc = torch.div(K, S)
+        # conf = torch.sqrt(conf * (1 - unc))
+        unc = unc.squeeze(dim=-1)
+    else:
+        # use entropy as uncertainty
+        entropy = -evidence * torch.log2(evidence)
+        unc = entropy.sum(dim=-1)
+        # conf = torch.sqrt(evidence * (1 - unc.unsqueeze(-1)))
+        conf = evidence
     return conf, unc
 
 
@@ -149,14 +161,13 @@ class EDLLoss(BaseLoss):
     def __init__(self,
                  n_cls,
                  annealing_step,
-                 activation='none',
                  **kwargs):
         super().__init__(**kwargs)
         self.n_cls = n_cls
         self.annealing_step = annealing_step
-        if activation == 'relu':
+        if self.activation == 'relu':
             self.activation = relu_evidence
-        elif activation == 'exp':
+        elif self.activation == 'exp':
             self.activation = exp_evidence
         else:
             self.activation = None

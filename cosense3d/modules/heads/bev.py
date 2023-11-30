@@ -37,7 +37,8 @@ class BEV(BaseModule):
 
         centers = indices2metric(coor, self.voxel_size)
         reg = self.reg_layer(feat)
-        conf, unc = edl.evidence_to_conf_unc(reg.relu())
+        is_edl = True if 'edl' in self.loss_cls.name.lower() else False
+        conf, unc = self.tgt_assigner.get_predictions(reg, is_edl, self.loss_cls.activation)
 
         out = {
             'center': centers,

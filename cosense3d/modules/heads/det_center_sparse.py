@@ -7,7 +7,7 @@ from einops import rearrange
 from cosense3d.modules import BaseModule, plugin
 from cosense3d.modules.utils.common import linear_last
 from cosense3d.utils.misc import multi_apply
-from cosense3d.modules.losses import build_loss, logits_to_edl_conf_unc
+from cosense3d.modules.losses import build_loss, pred_to_conf_unc
 from cosense3d.modules.utils.me_utils import *
 
 
@@ -187,7 +187,7 @@ class DetCenterSparse(BaseModule):
         epoch = kwargs.get('epoch', 0)
         centers = [batch['center'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
-        pred_scores = [logits_to_edl_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
+        pred_scores = [pred_to_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
         cls_tgt = multi_apply(self.cls_assigner.assign,
                               centers, gt_boxes, gt_labels, pred_scores, **kwargs)
         cls_tgt = torch.cat(cls_tgt, dim=0)

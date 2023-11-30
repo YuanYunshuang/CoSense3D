@@ -3,10 +3,15 @@ from torch import nn
 
 
 class BaseLoss(nn.Module):
-    def __init__(self, reduction='mean', loss_weight=1.0):
+    def __init__(self, reduction='mean', activation='none', loss_weight=1.0):
         super().__init__()
         self.reduction = reduction
         self.loss_weight = loss_weight
+        self.activation = activation
+
+    @property
+    def name(self):
+        return self.__class__.__name__
 
     def loss(self, *args, **kwargs):
         raise NotImplementedError

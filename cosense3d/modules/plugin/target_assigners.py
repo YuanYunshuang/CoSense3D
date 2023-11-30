@@ -19,7 +19,7 @@ from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
 from cosense3d.modules.utils.common import pad_r
 from cosense3d.ops.utils import points_in_boxes_gpu
-from cosense3d.modules.losses import logits_to_edl_conf_unc
+from cosense3d.modules.losses import pred_to_conf_unc
 from cosense3d.utils.misc import PI
 
 
@@ -50,8 +50,8 @@ def sample_mining(scores, labels, dists=None, sample_mining_thr=0.5, max_sample_
     assert scores.shape == labels.shape
     pred_pos = scores > sample_mining_thr
     if dists is not None:
-        # only mine points that are far from real positive samples
-        pred_pos[dists < 8] = False
+        # only mine points that are not too close to the real positive samples
+        pred_pos[dists < 3] = False
     not_cared = labels == -1
     sample_inds = torch.where(torch.logical_and(pred_pos, not_cared))[0]
     n_pos = (labels > 0).sum()
@@ -594,6 +594,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                  class_names_each_head,
                  center_threshold,
                  box_coder,
+                 edl_activation='relu'
                  ):
         super().__init__()
         self.voxel_size = voxel_size
@@ -601,6 +602,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         self.meter_per_pixel = (voxel_size[0] * stride, voxel_size[1] * stride)
         self.csb = csb.get(detection_benchmark)
         self.class_names_each_head = class_names_each_head
+        self.edl_activation = edl_activation
         self.center_threshold = center_threshold
         self.box_coder = build_box_coder(**box_coder)
 
@@ -659,7 +661,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         confs = []
         for h, center_cls in enumerate(preds['cls']):
             if center_cls.ndim > 2:
-                conf, _ = logits_to_edl_conf_unc(center_cls.permute(0, 2, 3, 1))
+                conf, _ = pred_to_conf_unc(center_cls.permute(0, 2, 3, 1), self.edl_activation)
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
                 center_indices = torch.stack(torch.where(center_mask), dim=0)
                 centers = self.indices_to_pts(center_indices[1:]).T
@@ -667,7 +669,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                 cur_reg = {k: preds['reg'][k][h].permute(0, 2, 3, 1)[center_mask]
                            for k in ['box', 'dir', 'scr']}
             else:
-                conf, _ = logits_to_edl_conf_unc(center_cls)
+                conf, _ = pred_to_conf_unc(center_cls, self.edl_activation)
                 centers = preds['center']
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
                 cur_centers = centers[center_mask]
@@ -692,6 +694,17 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             roi['lbl'].append(cur_lbl)
             roi['idx'].append(center_indices)
             confs.append(conf)
+
+            # from cosense3d.utils.vislib import draw_points_boxes_plt
+            # points = centers[:, 1:].detach().cpu().numpy()
+            # boxes = cur_box[:, 1:].detach().cpu().numpy()
+            # draw_points_boxes_plt(
+            #     pc_range=self.lidar_range,
+            #     boxes_pred=boxes,
+            #     points=points,
+            #     filename="/home/yuan/Pictures/tmp.png"
+            # )
+
         # merge detections from all heads
         roi['box'] = torch.cat(roi['box'], dim=0)
         roi['scr'] = torch.cat(roi['scr'], dim=0)
@@ -790,7 +803,7 @@ class BEVPointAssigner(BaseAssigner):
                  max_mining_ratio=3,
                  annealing_step=None,
                  topk_sampling=False,
-                 annealing_sampling=False
+                 annealing_sampling=False,
                  ):
         super().__init__()
         self.sample_mining_thr = sample_mining_thr
@@ -865,6 +878,10 @@ class BEVPointAssigner(BaseAssigner):
         tgt_label = tgt_label[mask]
 
         return tgt_pts, tgt_label, mask
+
+    def get_predictions(self, x, edl=True, activation='none'):
+        conf, unc = pred_to_conf_unc(x, activation, edl)
+        return conf, unc
 
 
 class RoIBox3DAssigner(BaseAssigner):

@@ -3,7 +3,7 @@ from collections import OrderedDict
 # point_cloud_range = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 # point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
-point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 3.0]
+point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
 voxel_size = [0.4, 0.4, 6]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
@@ -116,7 +116,7 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range,
+    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range_test,
          width=10, height=4, nrows=1, ncols=1,
          data_keys=['bev']),
     dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1,

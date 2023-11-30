@@ -46,7 +46,6 @@ shared_modules = OrderedDict(
         convs=dict(p2=dict(kernels=[5, 5, 3], in_dim=128, out_dim=128))
     ),
 
-
     bev_head = dict(
         type='heads.bev.BEV',
         gather_keys=['fused_neck_feat'],
@@ -56,7 +55,7 @@ shared_modules = OrderedDict(
         stride=out_stride,
         in_dim=128,
         target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=50, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=40, n_cls=2, loss_weight=1.0),
     ),
 
     detection_head = dict(
@@ -92,7 +91,7 @@ shared_modules = OrderedDict(
             center_threshold=0.5,
             box_coder=dict(type='CenterBoxCoder'),
         ),
-        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=20, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=1.0),
         loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 )

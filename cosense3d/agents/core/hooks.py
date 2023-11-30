@@ -71,7 +71,7 @@ class TrainTimerHook(BaseHook):
         time_per_iter = self.elapsed_time / total_run_iter
         estimated_time = time_per_iter * runner.total_iter * runner.total_epochs
         time_remain = estimated_time - self.elapsed_time
-        runner.logger.update(time_remain=time_remain)
+        runner.logger.update(t_remain=time_remain, t_used=self.elapsed_time)
 
 
 class CheckPointsHook(BaseHook):
@@ -173,6 +173,16 @@ class DetectionNMSHook(BaseHook):
                     'idx': indices[keep],
                 })
             preds.append(out)
+
+            # from cosense3d.utils.vislib import draw_points_boxes_plt
+            # points = out['ctr'].detach().cpu().numpy()
+            # boxes = out['box'].detach().cpu().numpy()
+            # draw_points_boxes_plt(
+            #     pc_range=[-140.8, -38.4, -3.0, 140.8, 38.4, 1.0],
+            #     boxes_pred=boxes,
+            #     points=points,
+            #     filename="/home/yuan/Pictures/tmp.png"
+            # )
 
         runner.controller.data_manager.scatter(cav_ids, {self.det_key: preds})
 
@@ -283,7 +293,7 @@ class EvalDetectionHook(BaseHook):
         else:
             centers = boxes[:, :3]
         for i in range(3):
-            mask = mask & (centers[:, i] > self.pc_range[1]) & (centers[:, i] < self.pc_range[i + 3])
+            mask = mask & (centers[:, i] > self.pc_range[i]) & (centers[:, i] < self.pc_range[i + 3])
         boxes = boxes[mask]
         if scores is not None:
             scores = scores[mask]
