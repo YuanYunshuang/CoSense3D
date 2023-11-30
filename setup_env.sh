@@ -22,9 +22,12 @@ echo - e "${GREEN}[INFO] Installing MinkowskiEngine...${NC}"
 #pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
 #    --install-option="--blas_include_dirs=${CONDA_PREFIX}/include" \
 #    --install-option="--blas=openblas"
+#pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
+#    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include" \
+#    --global-option="--blas=openblas"
 pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
-    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include" \
-    --global-option="--blas=openblas"
+    --config-settings="--blas_include_dirs=${CONDA_PREFIX}/include" \
+    --config-settings="--blas=openblas"
 
 echo -e "${GREEN}[INFO] Installing cuda_ops...${NC}"
 cd cosense3d/ops && pip install . && cd ../..

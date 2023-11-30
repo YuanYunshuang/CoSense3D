@@ -145,6 +145,6 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='DenseDetectionCanvas', width=10, height=4, nrows=1, ncols=1,
+    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1,
          data_keys=['detection', 'global_labels'])
 ]
