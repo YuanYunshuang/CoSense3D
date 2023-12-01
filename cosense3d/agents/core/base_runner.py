@@ -42,7 +42,10 @@ class BaseRunner:
 
     @property
     def logdir(self):
-        return self.logger.logdir
+        if hasattr(self, 'logger'):
+            return self.logger.logdir
+        else:
+            return None
 
     def run(self):
         raise NotImplementedError

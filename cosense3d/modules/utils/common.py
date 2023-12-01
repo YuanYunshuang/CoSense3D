@@ -5,7 +5,7 @@ from torch import nn
 import numpy as np
 
 from torch.distributions.multivariate_normal import _batch_mahalanobis
-from cosense3d.model.utils.me_utils import metric2indices
+from cosense3d.modules.utils.me_utils import metric2indices
 
 pi = 3.141592653
 

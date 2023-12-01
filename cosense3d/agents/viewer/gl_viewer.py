@@ -14,8 +14,8 @@ from PyQt5.QtGui import QPen, QBrush, QColor
 import pyqtgraph.opengl as gl
 from OpenGL.GL import *
 from OpenGL import GLU
-from interface.view.utils import depth_min
-from interface.view.graph_items import LineBoxItem
+from cosense3d.agents.viewer.utils import depth_min
+from cosense3d.agents.viewer.items.graph_items import LineBoxItem
 
 SIZE_OF_FLOAT = ctypes.sizeof(ctypes.c_float)
 TRANSLATION_FACTOR = 0.03

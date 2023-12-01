@@ -3,8 +3,6 @@ import random
 import torch
 import torch_scatter
 
-from cosense3d.model.pre_process import PreProcess
-from cosense3d.model.post_process import PostProcess
 from cosense3d.ops.utils import points_in_boxes_gpu
 
 

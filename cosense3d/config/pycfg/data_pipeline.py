@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 train_pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     LoadMultiViewImg=dict(),
     LoadAnnotations=dict(load2d=True, load3d_local=True, load3d_global=True,
                          min_num_pts=0, with_velocity=True),
@@ -22,19 +22,20 @@ train_pipeline_cpu = OrderedDict(
 
 
 test_pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     LoadMultiViewImg=dict(),
-    LoadAnnotations=dict(with_velocity=True),
+    LoadAnnotations=dict(load2d=True, load3d_local=True, load3d_global=True,
+                         min_num_pts=0, with_velocity=True),
     ResizeCropFlipRotImage=dict(
         training=False,
         data_aug_conf=dict(
-            resize_lim=[0.55, 0.7],
-            final_dim=[256, 512],
+            resize_lim=[0.8, 1.0],
+            final_dim=[384, 768],
             bot_pct_lim=[0.0, 0.0],
             rot_lim=[0.0, 0.0],
             H=600,
             W=800,
-            rand_flip=False,
+            rand_flip=True,
         )
     ),
     Format2D=dict(),

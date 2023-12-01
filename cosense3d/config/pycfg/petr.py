@@ -9,6 +9,40 @@ data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 img_size = (384, 768)
 num_classes = 1
 
+pipeline_cpu = OrderedDict(
+    LoadMultiViewImg=dict(),
+    LoadAnnotations=dict(load2d=True, load3d_global=True,
+                         min_num_pts=3, with_velocity=True),
+    ResizeCropFlipRotImage=dict(
+        training=True,
+        data_aug_conf=dict(
+            resize_lim=[0.8, 1.0],
+            final_dim=[384, 768],
+            bot_pct_lim=[0.0, 0.0],
+            rot_lim=[0.0, 0.0],
+            H=600,
+            W=800,
+            rand_flip=True,
+        )
+    ),
+    Format2D=dict(),
+)
+
+inference_pipeline_cpu = OrderedDict(
+    LoadMultiViewImg=dict(),
+)
+
+data_manager = dict(
+    train=dict(
+        aug=dict(
+            rot_range=[-1.57, 1.57],
+            flip='xy',
+            scale_ratio_range=[0.95, 1.05],
+        )
+    ),
+    test=dict()
+)
+
 """
 gather_keys: 
     keys to gather data from cavs, key order is important, should match the forward input arguments order.
@@ -20,7 +54,7 @@ shared_modules = OrderedDict(
         type='backbone2d.resnet_encoder.ResnetEncoder',
         gather_keys=['img'],
         scatter_keys=['img_feat', 'img_coor'],
-        num_layers=18,
+        num_layers=34,
         feat_indices=(3, 4),
         out_index=3,
         img_size=img_size,
