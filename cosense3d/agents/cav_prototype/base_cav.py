@@ -96,3 +96,8 @@ class BaseCAV:
         """Update memory after each forward run of a single frame."""
         pass
 
+
+class OPV2VtCAV(BaseCAV):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prepare_data_keys = ['points', 'annos_global']

@@ -12,9 +12,9 @@ class LoadLidarPoints:
 
     def __init__(self,
                  coop_mode=True,
-                 use_intensity=True):
+                 load_attributes=['xyz', 'intensity']):
         self.coop_mode = coop_mode
-        self.use_intensity = use_intensity
+        self.load_attributes = load_attributes
 
     def read_pcd(self, pts_filename):
         with open(pts_filename, "r") as pcd_file:
@@ -91,17 +91,16 @@ class LoadLidarPoints:
             lidar_dict.update(data)
         else:
             raise NotImplementedError
-
+        # reshape for cat
+        for k, v in lidar_dict.items():
+            if v.ndim == 1:
+                lidar_dict[k] = v.reshape(-1, 1)
         return lidar_dict
 
     def _load_single(self, pts_filename):
         lidar_dict = self._load_points(pts_filename)
-        if self.use_intensity:
-            points = np.concatenate([lidar_dict['xyz'],
-                                     lidar_dict['intensity']],
-                                    axis=1)
-        else:
-            points = lidar_dict['xyz']
+        points = np.concatenate(
+            [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
 
         return points
 
@@ -119,6 +118,7 @@ class LoadLidarPoints:
             points = self._load_single(filename)
 
         data_dict['points'] = points
+        data_dict['points_attributes'] = self.load_attributes
 
         return data_dict
 
@@ -322,17 +322,22 @@ class LoadAnnotations:
 
     def _load_anno3d_global(self, data_dict):
         frame_meta = data_dict['sample_info']['meta']
-        global_box_num_pts = np.array(frame_meta['num_pts'])
         boxes = np.array(frame_meta['bbx_center_global'])
-        mask = global_box_num_pts > self.min_num_pts
-        global_bboxes_3d = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)[mask]
-        global_labels_3d = boxes[:, 1].astype(int)[mask]
+        global_bboxes_3d = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
+        global_labels_3d = boxes[:, 1].astype(int)
+
+        if self.with_velocity:
+            global_velocity = np.array(frame_meta['bbx_velo_global']).astype(np.float32) / 3.6
+            global_bboxes_3d = np.concatenate([global_bboxes_3d, global_velocity], axis=-1)
+
+        if 'num_pts' in frame_meta and self.min_num_pts > 0:
+            global_box_num_pts = np.array(frame_meta['num_pts'])
+            mask = global_box_num_pts > self.min_num_pts
+            global_bboxes_3d = global_bboxes_3d[mask]
+            global_labels_3d = global_labels_3d[mask]
+
         # TODO: currently only support car
         global_names = ['car' for _ in global_labels_3d]
-        global_velocity = np.array(frame_meta['bbx_velo_global']).astype(np.float32) / 3.6
-        global_velocity = global_velocity[mask]
-        if self.with_velocity:
-            global_bboxes_3d = np.concatenate([global_bboxes_3d, global_velocity], axis=-1)
         data_dict.update({
             'global_bboxes_3d': global_bboxes_3d,
             'global_labels_3d': global_labels_3d,

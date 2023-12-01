@@ -1,0 +1,37 @@
+DATASET:
+  name: opv2vt
+  dataset: temporal_cosense
+  meta_path: /koko/cosense3d/opv2v_temporal
+  data_path: /koko/OPV2V/temporal
+  DetectionBenchmark: Car
+  data_info: &data_info
+    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+  batch_size_train: 1
+  batch_size_test: 1
+  n_workers: 4
+
+  max_num_cavs: 7
+  seq_len: &seq_len 1
+  train_pipeline: 'pycfg.data_opv2vt.train_pipeline_cpu'
+  test_pipeline: 'pycfg.data_opv2vt.test_pipeline_cpu'
+
+
+CONTROLLER:
+  num_loss_frame: 1
+  data_manager: 'pycfg.data_opv2vt.data_manager'
+  shared_modules: {}
+  cav_manager:
+    prototype: base_cav.OPV2VtCAV
+    memory_len: *seq_len
+
+VISUALIZATION:
+  output_viewer:
+    plots: []
+
+
+
+
+
+
+

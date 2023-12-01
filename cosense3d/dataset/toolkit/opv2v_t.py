@@ -214,10 +214,10 @@ def vis_frame_data():
 
 
 if __name__=="__main__":
-    # opv2vt_to_cosense(
-    #     "/koko/OPV2V/temporal_dump",
-    #     "test",
-    #     "/koko/OPV2V/temporal",
-    #     "/home/data/cosense3d/opv2v_temporal"
-    # )
-    vis_frame_data()
+    opv2vt_to_cosense(
+        "/koko/OPV2V/temporal_dump",
+        "test",
+        "/koko/OPV2V/temporal",
+        "/koko/cosense3d/opv2v_temporal"
+    )
+    # vis_frame_data()
