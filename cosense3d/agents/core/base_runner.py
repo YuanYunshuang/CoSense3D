@@ -40,6 +40,10 @@ class BaseRunner:
     def set_logdir(self, logdir):
         self.logger.log_path = logdir
 
+    @property
+    def logdir(self):
+        return self.logger.logdir
+
     def run(self):
         raise NotImplementedError
 

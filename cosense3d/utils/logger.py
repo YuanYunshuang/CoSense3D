@@ -78,7 +78,7 @@ class LogMeter(object):
     def __init__(self, total_iter, log_path, delimiter="\t", log_every=20, wandb_project=None):
         self.meters = defaultdict(partial(SmoothedValue, fmt="{avg:.4f}"))
         file_name = datetime.now().strftime("%d_%m_%H_%M_%S") + ".log"
-        self.log_path = log_path
+        self.logdir = log_path
         if not isinstance(log_path, pathlib.Path):
             log_path = pathlib.Path(log_path)
         self.log_fh = (log_path / file_name).open('a')

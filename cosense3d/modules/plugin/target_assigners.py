@@ -585,6 +585,161 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         return roi
 
 
+class BoxSparseAnchorAssigner(BaseAssigner, torch.nn.Module):
+    def __init__(self,
+                 box_size,
+                 dirs,
+                 voxel_size,
+                 lidar_range,
+                 stride,
+                 box_coder,
+                 me_coor=True,
+                 pos_threshold=0.6,
+                 neg_threshold=0.45,
+                 score_thrshold=0.25,
+                 ):
+        super().__init__()
+        self.voxel_size = voxel_size
+        self.lidar_range = lidar_range
+        self.num_anchors = len(dirs)
+        self.stride = stride
+        self.pos_threshold = pos_threshold
+        self.neg_threshold = neg_threshold
+        self.score_thrshold = score_thrshold
+        self.box_coder = build_box_coder(**box_coder)
+        anchors, standup_anchors = self.get_anchor_template(box_size, dirs)
+        self.anchors = nn.Parameter(anchors, requires_grad=False)
+        self.standup_anchors = nn.Parameter(standup_anchors, requires_grad=False)
+        if me_coor:
+            lr = lidar_range
+            res_x, res_y = stride * voxel_size[0], stride * voxel_size[1]
+            self.size_x = round((lr[3] - lr[0]) / res_x)
+            self.size_y = round((lr[4] - lr[1]) / res_y)
+            self.offset_sz_x = round(lr[0] / res_x)
+            self.offset_sz_y = round(lr[1] / res_y)
+            self.coor_to_inds = self.me_coor_to_grid_indices
+        else:
+            raise NotImplementedError
+
+    def me_coor_to_grid_indices(self, coor):
+        inds = coor / self.stride
+        inds[:, 0] -= self.offset_sz_x
+        inds[:, 1] -= self.offset_sz_y
+        in_range_mask = (inds >= 0).all(dim=-1) & (inds[:, 0] < self.size_x) & (inds[:, 1] < self.size_y)
+        return inds[in_range_mask].long(), in_range_mask
+
+    def get_anchor_template(self, box_size, dirs):
+        pix_x = self.voxel_size[0] * self.stride
+        pix_y = self.voxel_size[1] * self.stride
+        x = torch.arange(self.lidar_range[0], self.lidar_range[3], pix_x) + pix_x * 0.5
+        y = torch.arange(self.lidar_range[1], self.lidar_range[4], pix_y) + pix_y * 0.5
+        xys = torch.stack(torch.meshgrid(x, y, indexing='ij'), dim=-1)
+        xys = xys.unsqueeze(2).repeat(1, 1, self.num_anchors, 1)
+        zs = - torch.ones_like(xys[..., :1])
+        h, w = xys.shape[:2]
+        lwh = torch.tensor(box_size).reshape(
+            1, 1, 1, -1).repeat(h, w, self.num_anchors, 1)
+        rs = torch.deg2rad(torch.tensor(dirs)).reshape(
+            1, 1, -1, 1).repeat(h, w, 1, 1)
+        # (w, h, num_anchor, 7) --> (whn, 7)
+        anchors = torch.cat([xys, zs, lwh, rs], dim=-1)
+        standup_anchors = boxes3d_to_standup_bboxes(
+            anchors.view(-1, 7)).reshape(h, w, self.num_anchors, 4)
+        return anchors, standup_anchors
+
+    def assign(self, centers, gt_boxes):
+        """
+
+        Parameters
+        ----------
+        centers Tensor(N, 2): [x, y]
+        gt_boxes Tensor(M, 7): [x, y, z, l, w, h, r]
+
+        Returns
+        -------
+        labels Tensor(N, num_anchors): box regression targets
+        reg_tgt Tensor(N, num_anchors, code_size): box regression targets
+        dir_score Tensor(N, num_anchors, 4) or None: direction score target
+        """
+        if len(gt_boxes) == 0:
+            labels = gt_boxes.new_full((self.standup_anchors.shape[0],), -1)
+            reg_tgt = gt_boxes.new_zeros((0, self.box_coder.code_size))
+            dir_scores = gt_boxes.new_zeros((0, 4))
+            # Todo dir_score, gt_boxes, correct shape
+            return labels, reg_tgt, dir_scores
+        inds, in_range_mask = self.coor_to_inds(centers)
+        gt_standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
+        standup_anchors = self.standup_anchors[inds[:, 0], inds[:, 1]].view(-1, 4)
+        ious = self.box_overlaps(standup_anchors, gt_standup_boxes)
+        iou_max, max_inds = ious.max(dim=1)
+        top1_inds = torch.argmax(ious, dim=0)
+
+        pos = iou_max > self.pos_threshold
+        pos_inds = torch.cat([top1_inds, torch.where(pos)[0]]).unique()
+        neg = iou_max < self.neg_threshold
+        neg[pos_inds] = False
+
+        labels = gt_boxes.new_full((ious.shape[0],), -1)
+        labels[neg] = 0
+        labels[pos_inds] = 1
+
+        aligned_gt_boxes = gt_boxes[max_inds[pos_inds]]
+        aligned_anchors = self.anchors[inds[:, 0], inds[:, 1]].view(-1, self.box_coder.code_size)[pos_inds]
+        reg_tgt, dir_score = self.box_coder.encode(aligned_anchors, aligned_gt_boxes)
+
+        labels_final = gt_boxes.new_full((in_range_mask.shape[0], self.num_anchors), -1)
+        labels_final[in_range_mask] = labels.view(-1, self.num_anchors)
+        return labels_final.view(-1), reg_tgt, dir_score
+
+    def box_overlaps(self, boxes1, boxes2):
+        areas1 = (boxes1[:, 2] - boxes1[:, 0] + 1) * \
+                 (boxes1[:, 3] - boxes1[:, 1] + 1)
+        areas2 = (boxes2[:, 2] - boxes2[:, 0] + 1) * \
+                 (boxes2[:, 3] - boxes2[:, 1] + 1)
+
+        boxes1_mat = boxes1.unsqueeze(1).repeat(1, boxes2.shape[0], 1)
+        boxes2_mat = boxes2.unsqueeze(0).repeat(boxes1.shape[0], 1, 1)
+        x_extend = torch.minimum(boxes1_mat[..., 2], boxes2_mat[..., 2]) - \
+            torch.maximum(boxes1_mat[..., 0], boxes2_mat[..., 0]) + 1
+        y_extend = torch.minimum(boxes1_mat[..., 3], boxes2_mat[..., 3]) - \
+            torch.maximum(boxes1_mat[..., 1], boxes2_mat[..., 1]) + 1
+
+        overlaps = torch.zeros_like(boxes1_mat[..., 0])
+
+        pos = torch.logical_and(x_extend > 0, y_extend > 0)
+        intersection = x_extend[pos] * y_extend[pos]
+        union = (areas1.unsqueeze(1) + areas2.unsqueeze(0))[pos] - intersection
+        overlaps[pos] = intersection / union
+
+        return overlaps
+
+    def get_predictions(self, preds):
+        # roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
+        roi = {}
+        B = len(preds['cls'])
+        pred_cls = preds['cls'].sigmoid().permute(0, 3, 2, 1).reshape(B, -1)
+        pred_reg = preds['reg'].permute(0, 3, 2, 1).reshape(B, -1, 7)
+        indices = torch.stack([torch.ones_like(pred_cls[0]) * i for i in range(B)], dim=0)
+
+        anchors = self.anchors.unsqueeze(0).repeat(B, 1, 1)
+        pos = pred_cls > self.score_thrshold
+
+        boxes_dec = self.box_coder.decode(anchors, pred_reg)
+        # remove abnormal boxes
+        mask = (boxes_dec[..., 3:6] > 0.1) & (boxes_dec[..., 3:6] < 10)
+        pos = torch.logical_and(pos, mask.all(dim=-1))
+
+        pred_cls = pred_cls[pos]
+        pred_box = boxes_dec[pos]
+        roi['scr'] = pred_cls
+        roi['box'] = pred_box
+        # TODO currently only support class car
+        roi['lbl'] = torch.zeros_like(pred_cls)
+        roi['idx'] = indices[pos]
+
+        return roi
+
+
 class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
     def __init__(self,
                  voxel_size,

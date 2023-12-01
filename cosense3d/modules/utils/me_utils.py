@@ -63,6 +63,18 @@ def update_me_essentials(self, data_info, stride=None):
         setattr(self, 'offset_sz_y', round(lr[1] / self.res[1]))
 
 
+def me_coor_to_grid_indices(lr, voxel_size, stride, coor):
+    res_x, res_y = stride * voxel_size[0], stride * voxel_size[1]
+    size_x = round((lr[3] - lr[0]) / res_x)
+    size_y = round((lr[4] - lr[1]) / res_y)
+    offset_sz_x = round(lr[0] / res_x)
+    offset_sz_y = round(lr[1] / res_y)
+    inds = coor.clone()
+    inds[:, 0] -= offset_sz_x
+    inds[:, 1] -= offset_sz_y
+    in_range_mask = (inds >= 0).all(dim=-1) & inds[:, 0] < size_x & inds[:, 1] < size_y
+    return inds, in_range_mask
+
 def bev_sparse_to_dense(self, preds):
     conf, unc = preds['conf'], preds['unc'],
     ctrs = preds['centers'][:, :3]  # N 2

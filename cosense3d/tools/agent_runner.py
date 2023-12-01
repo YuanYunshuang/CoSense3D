@@ -87,4 +87,5 @@ if __name__ == "__main__":
     seed_everything(2023)
     cfgs = load_config(args)
     agent_runner = AgentRunner(args, cfgs)
+    save_config(cfgs, agent_runner.runner.logdir)
     agent_runner.run()
