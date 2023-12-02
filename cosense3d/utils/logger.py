@@ -75,13 +75,13 @@ class SmoothedValue(object):
 
 
 class LogMeter(object):
-    def __init__(self, total_iter, log_path, delimiter="\t", log_every=20, wandb_project=None):
+    def __init__(self, total_iter, logdir, delimiter="\t", log_every=20, wandb_project=None):
         self.meters = defaultdict(partial(SmoothedValue, fmt="{avg:.4f}"))
         file_name = datetime.now().strftime("%d_%m_%H_%M_%S") + ".log"
-        self.logdir = log_path
-        if not isinstance(log_path, pathlib.Path):
-            log_path = pathlib.Path(log_path)
-        self.log_fh = (log_path / file_name).open('a')
+        self.logdir = logdir
+        if not isinstance(logdir, pathlib.Path):
+            logdir = pathlib.Path(logdir)
+        self.log_fh = (logdir / file_name).open('a')
         self.delimiter = delimiter
         self.log_every = log_every
         self.log_msg = self.delimiter.join([

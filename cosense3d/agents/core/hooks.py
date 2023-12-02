@@ -87,7 +87,7 @@ class CheckPointsHook(BaseHook):
             if (self.epoch_every is None or not
             (runner.epoch - self.max_ckpt) % self.epoch_every == 0):
                 filename = os.path.join(
-                    runner.logger.log_path,
+                    runner.logger.logdir,
                     f'epoch{runner.epoch - self.max_ckpt}.pth')
                 if os.path.exists(filename):
                     os.remove(filename)
@@ -97,7 +97,7 @@ class CheckPointsHook(BaseHook):
             self.save(runner, f'latest.pth')
 
     def save(self, runner, name):
-        save_path = os.path.join(runner.logger.log_path, name)
+        save_path = os.path.join(runner.logger.logdir, name)
         print(f'Saving checkpoint to {save_path}.')
         torch.save({
             'epoch': runner.epoch,
