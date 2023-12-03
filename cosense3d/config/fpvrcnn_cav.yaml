@@ -43,7 +43,7 @@ CONTROLLER:
   cav_manager:
     prototype: fpvrcnn_cav.FpvrcnnCAV
     memory_len: *seq_len
-    all_grad: true
+    all_grad: false
 
 VISUALIZATION:
   output_viewer:
