@@ -84,11 +84,12 @@ shared_modules = OrderedDict(
     ),
 
     memory_updater = dict(
-        type='necks.memory_updater.LidarRoiUpdater',
+        type='fusion.temporal_fuison.TemporalFusion',
         gather_keys=['rois', 'bev_feat', 'memory'],
         scatter_keys=['memory'],
         in_channels=256,
         feature_stride=2,
+        lidar_range=point_cloud_range,
         transformer=dict(
             type='transformer.PETRTransformer',
             decoder=dict(

@@ -3,27 +3,30 @@ import torch.nn as nn
 
 from cosense3d.modules import BaseModule, plugin
 from cosense3d.modules.utils.misc import SELayer_Linear, MLN
-from cosense3d.modules.utils.positional_encoding import pos2posemb3d
+from cosense3d.modules.utils.positional_encoding import pos2posemb2d
 
 
-class LidarRoiUpdater(BaseModule):
+class LidarPETRHead(BaseModule):
     def __init__(self,
                  in_channels,
                  transformer,
                  feature_stride,
+                 lidar_range,
                  topk=2048,
+                 memory_len=256,
                  num_query=644,
                  **kwargs):
         super().__init__(**kwargs)
         self.transformer = plugin.build_plugin_module(transformer)
         self.embed_dims = self.transformer.embed_dims
         self.num_pose_feat = 64
-        self.pos_dim = 3
+        self.pos_dim = 2
         self.in_channels = in_channels
         self.feature_stride = feature_stride
         self.topk = topk
         self.num_query = num_query
 
+        self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
         self.reference_points = nn.Embedding(self.num_query, self.pos_dim)
 
         self._init_layers()
@@ -59,12 +62,14 @@ class LidarRoiUpdater(BaseModule):
     def forward(self, rois, bev_feat, memory, **kwargs):
         feat, ctr = self.gather_topk(rois, bev_feat)
 
-        pos_emb = self.position_embeding(ctr)
+        pos = ((ctr - self.lidar_range[:2]) /
+               (self.lidar_range[3:5] - self.lidar_range[:2]))
+        pos_emb = self.position_embeding(pos2posemb2d(pos, self.num_pose_feat))
         memory = self.memory_embed(feat)
         pos_emb = self.featurized_pe(pos_emb, memory)
 
         reference_points = (self.reference_points.weight).unsqueeze(0).repeat(memory.shape[0], 1, 1)
-        query_pos = self.query_embedding(pos2posemb3d(reference_points, self.num_pose_feat))
+        query_pos = self.query_embedding(pos2posemb2d(reference_points, self.num_pose_feat))
         tgt = torch.zeros_like(query_pos)
         outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb)
 
