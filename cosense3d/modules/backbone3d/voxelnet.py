@@ -10,6 +10,7 @@ class VoxelNet(BaseModule):
                  voxel_generator,
                  voxel_encoder,
                  cml,
+                 neck=None,
                  bev_compressor=None,
                  **kwargs):
         super(VoxelNet, self).__init__(**kwargs)
@@ -18,6 +19,8 @@ class VoxelNet(BaseModule):
         self.grid_size = self.voxel_generator.grid_size
         self.cml = plugin.build_plugin_module(cml)
 
+        if neck is not None:
+            self.neck = plugin.build_plugin_module(neck)
         if bev_compressor is not None:
             self.bev_compressor = plugin.build_plugin_module(bev_compressor)
 
@@ -33,6 +36,8 @@ class VoxelNet(BaseModule):
 
         # 3d to 2d feature
         bev_feat = voxel_features.flatten(1, 2)
+        if hasattr(self, 'neck'):
+            bev_feat = self.neck(bev_feat)
         if hasattr(self, 'bev_compressor'):
             bev_feat = self.bev_compressor(bev_feat)
 

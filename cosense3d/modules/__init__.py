@@ -94,22 +94,26 @@ class BaseModule(nn.Module):
         coor = cat_coor_with_idx(coor)
         feat = [stensor[f'p{stride}']['feat'] for stensor in stensor_list]
         feat = torch.cat(feat, dim=0)
-        return coor, feat
+        ctr = [stensor[f'p{stride}']['ctr'] for stensor in stensor_list]
+        ctr = torch.cat(ctr, dim=0)
+        return coor, feat, ctr
 
     def decompose_stensor(self, res, N):
         # decompose batch
         for k, v in res.items():
             if isinstance(v, ME.SparseTensor):
                 coor, feat = v.decomposed_coordinates_and_features
+                ctr = None
             elif isinstance(v, dict):
-                coor, feat = [], []
+                coor, feat, ctr = [], [], []
                 for i in range(N):
                     mask = v['coor'][:, 0] == i
                     coor.append(v['coor'][mask, 1:])
                     feat.append(v['feat'][mask])
+                    ctr.append(v['ctr'][mask])
             else:
                 raise NotImplementedError
-            res[k] = {'coor': coor, 'feat': feat}
+            res[k] = {'coor': coor, 'feat': feat, 'ctr': ctr}
 
         # compose result list
         res_list = self.compose_result_list(res, N)
@@ -130,7 +134,8 @@ class BaseModule(nn.Module):
                 if isinstance(v, dict):
                     cur_res[k] = {
                         'coor': v['coor'][i],
-                        'feat': v['feat'][i]
+                        'feat': v['feat'][i],
+                        'ctr': v['ctr'][i]
                     }
                 elif isinstance(v, list) or isinstance(v, torch.Tensor):
                     cur_res[k] = v[i]

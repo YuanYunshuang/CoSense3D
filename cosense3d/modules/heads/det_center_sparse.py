@@ -143,7 +143,7 @@ class DetCenterSparse(BaseModule):
     def forward(self, stensor_list, **kwargs):
         self.temp += 1
         B = len(stensor_list)
-        coor, feat = self.format_input(stensor_list)
+        coor, feat, ctr = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
 
         out_dict = {

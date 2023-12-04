@@ -119,7 +119,10 @@ class MinkUnet(BaseModule):
                  f"Unique z coords: {','.join([str(x.item()) for x in out_tensor.C[:, 3].unique()])}")
             if self.to_dense:
                 out_tensor = self.stensor_to_dense(out_tensor).permute(0, 3, 1, 2)
-            res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F}
+                res[f'p{stride}'] = out_tensor
+            else:
+                ctr = indices2metric(out_tensor.C, self.voxel_size)
+                res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F, 'ctr': ctr[:, 1:]}
         return res
 
     def format_output(self, res, N):

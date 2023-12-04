@@ -1,0 +1,59 @@
+DATASET:
+  name: opv2v
+  dataset: temporal_cosense
+  meta_path: /koko/cosense3d/opv2v_full
+  data_path: /koko/OPV2V
+  DetectionBenchmark: Car
+  data_info: &data_info
+    lidar_range: [-140.8, -41.6, -3, 140.8, 41.6, 1]
+    voxel_size: &voxel_size [ 0.4, 0.4, 0.4 ]
+  batch_size_train: 1
+  n_workers: 4
+
+  max_num_cavs: 7
+  seq_len: &seq_len 1
+  train_pipeline: 'pycfg.voxelnet_late_fusion.pipeline_cpu'
+  test_pipeline: 'pycfg.voxelnet_late_fusion.pipeline_cpu'
+
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 10
+  max_epoch: 50
+  gpus: 1
+  resume: true
+  hooks: 'pycfg.voxelnet_late_fusion.train_hooks'
+  optimizer:
+    lr: 0.002
+    weight_decay: 1e-4
+    betas: [0.95, 0.999]
+    milestones: [25, 40]
+    gamma: 0.1
+  lr_scheduler:
+    policy: 'MultiStepLR'
+    milestones: [15, 30]
+    gamma: 0.1
+
+TEST:
+  hooks: 'pycfg.voxelnet_late_fusion.test_hooks'
+
+
+CONTROLLER:
+  num_loss_frame: 1
+  data_manager: 'pycfg.data_pipeline_lidar.data_manager'
+  shared_modules: 'pycfg.voxelnet_late_fusion.shared_modules'
+  cav_manager:
+    prototype: lidardet_cav.LidarDetCAVLateFusion
+    memory_len: *seq_len
+    all_grad: true
+
+VISUALIZATION:
+  output_viewer:
+    plots: 'pycfg.voxelnet_late_fusion.plots'
+
+
+
+
+
+
+

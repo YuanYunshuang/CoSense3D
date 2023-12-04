@@ -15,8 +15,12 @@ class DataManager:
         self.pre_process = pre_process
 
     def apply_preprocess(self):
-        for p in self.pre_process:
-            getattr(self, p)()
+        if isinstance(self.pre_process, list):
+            for p in self.pre_process:
+                getattr(self, p)()
+        elif isinstance(self.pre_process, dict):
+            for p, args in self.pre_process.items():
+                getattr(self, p)(**args)
 
     def remove_empty_boxes(self):
         for cavs in self.cav_manager.cavs:
@@ -30,6 +34,24 @@ class DataManager:
             mask = num_pts > 3
             cavs[0].data['global_bboxes_3d'] = global_boxes[mask]
             cavs[0].data['global_labels_3d'] = cavs[0].data['global_labels_3d'][mask]
+
+    def remove_global_empty_boxes(self):
+        self.remove_empty_boxes()
+
+    def remove_local_empty_boxes(self, ego_only=False):
+        for cavs in self.cav_manager.cavs:
+            for cav in cavs:
+                if not cav.is_ego and ego_only:
+                    continue
+                points = cav.data['points']
+                local_boxes = cav.data['local_bboxes_3d']
+                box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3], local_boxes.unsqueeze(0))[0]
+                box_idx = box_idx[box_idx > -1]
+                num_pts = torch.zeros_like(local_boxes[:, 0]).long()
+                torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+                mask = num_pts > 3
+                cav.data['local_bboxes_3d'] = local_boxes[mask]
+                cav.data['local_labels_3d'] = cav.data['local_labels_3d'][mask]
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []

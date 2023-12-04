@@ -33,7 +33,7 @@ class BEV(BaseModule):
                                                class_names_each_head)
 
     def forward(self, stensor_list, **kwargs):
-        coor, feat = self.format_input(stensor_list)
+        coor, feat, ctr = self.format_input(stensor_list)
 
         if self.training:
             coor, feat = self.down_sample(coor, feat)

@@ -11,8 +11,7 @@ class BaseCAV:
         self.lidar_range = lidar_range
         self.memory_len = memery_len
         self.all_grad = all_grad
-        self.data = {}
-        self.memory = []  # FIFO
+        self.data = {'memory': []} # memory FIFO
         self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
 
     def update(self, lidar_pose):
@@ -63,9 +62,11 @@ class BaseCAV:
 
     def forward(self, tasks, training_mode):
         self.prepare_data()
+        self.pre_update_memory()
         self.forward_local(tasks, training_mode)
         self.forward_fusion(tasks, training_mode)
         self.forward_head(tasks, training_mode)
+        self.post_update_memory()
         return tasks
 
     def forward_local(self, tasks, training_mode):

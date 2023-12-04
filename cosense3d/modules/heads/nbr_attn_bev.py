@@ -37,7 +37,7 @@ class NbrAttentionBEV(BaseModule):
                                                class_names_each_head)
 
     def forward(self, stensor_list, **kwargs):
-        coor, feat = self.format_input(stensor_list)
+        coor, feat, ctr = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
         reference_points = self.generate_reference_points(centers)
         out = self.nbr_attn(feat, coor, reference_points, len(stensor_list))

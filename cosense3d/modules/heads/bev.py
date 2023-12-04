@@ -30,7 +30,7 @@ class BEV(BaseModule):
         self.loss_cls = build_loss(**loss_cls)
 
     def forward(self, stensor_list, **kwargs):
-        coor, feat = self.format_input(stensor_list)
+        coor, feat, ctr = self.format_input(stensor_list)
 
         if self.training:
             coor, feat = self.down_sample(coor, feat)
@@ -133,7 +133,7 @@ class ContinuousBEV(BaseModule):
         raise NotImplementedError
 
     def forward(self, stensor_list, gt_boxes, gt_labels, **kwargs):
-        coor, feat = self.format_input(stensor_list)
+        coor, feat, ctr = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
         ref_pts, ref_label = self.sample_reference_points(
             centers, gt_boxes, gt_labels)

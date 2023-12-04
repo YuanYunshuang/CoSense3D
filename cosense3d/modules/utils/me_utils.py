@@ -4,6 +4,7 @@ import MinkowskiEngine as ME
 from MinkowskiEngine.MinkowskiKernelGenerator import KernelGenerator
 
 
+@torch.no_grad()
 def metric2indices(coor, voxel_size):
     """"Round towards floor"""
     indices = coor.clone()
@@ -12,6 +13,7 @@ def metric2indices(coor, voxel_size):
     return torch.floor(indices).long()
 
 
+@torch.no_grad()
 def indices2metric(indices, voxel_size):
     """Voxel indices to voxel center in meter"""
     coor = indices.clone().float()
@@ -20,6 +22,7 @@ def indices2metric(indices, voxel_size):
     return coor
 
 
+@torch.no_grad()
 def mink_coor_limit(lidar_range, voxel_size, stride):
     if not isinstance(voxel_size, list):
         voxel_size = [voxel_size, voxel_size]
@@ -63,6 +66,7 @@ def update_me_essentials(self, data_info, stride=None):
         setattr(self, 'offset_sz_y', round(lr[1] / self.res[1]))
 
 
+@torch.no_grad()
 def me_coor_to_grid_indices(lr, voxel_size, stride, coor):
     res_x, res_y = stride * voxel_size[0], stride * voxel_size[1]
     size_x = round((lr[3] - lr[0]) / res_x)
@@ -75,6 +79,8 @@ def me_coor_to_grid_indices(lr, voxel_size, stride, coor):
     in_range_mask = (inds >= 0).all(dim=-1) & inds[:, 0] < size_x & inds[:, 1] < size_y
     return inds, in_range_mask
 
+
+@torch.no_grad()
 def bev_sparse_to_dense(self, preds):
     conf, unc = preds['conf'], preds['unc'],
     ctrs = preds['centers'][:, :3]  # N 2

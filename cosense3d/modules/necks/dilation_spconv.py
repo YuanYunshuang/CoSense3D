@@ -2,7 +2,7 @@ import functools
 import torch
 
 from cosense3d.modules import BaseModule, nn
-from cosense3d.modules.utils.me_utils import mink_coor_limit, minkconv_conv_block, ME
+from cosense3d.modules.utils.me_utils import mink_coor_limit, minkconv_conv_block, ME, indices2metric
 
 
 class DilationSpconv(BaseModule):
@@ -30,7 +30,7 @@ class DilationSpconv(BaseModule):
         out_dict = {}
         for k in self.convs:
             stride = int(k[1])
-            coor, feat = self.compose_stensor(stensor_list, stride)
+            coor, feat, ctr = self.compose_stensor(stensor_list, stride)
             stensor2d = ME.SparseTensor(
                 coordinates=coor[:, :3].contiguous(),
                 features=feat,
@@ -46,10 +46,12 @@ class DilationSpconv(BaseModule):
 
             coor = stensor2d.C[mask]
             feat = stensor2d.F[mask]
+            ctr = indices2metric(coor, self.voxel_size)[:, 1:]
 
             out_dict[k] = {
                 'coor': coor,
-                'feat': feat
+                'feat': feat,
+                'ctr': ctr
             }
         return self.format_output(out_dict, len(stensor_list))
 

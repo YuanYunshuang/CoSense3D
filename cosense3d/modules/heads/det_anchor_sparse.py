@@ -17,11 +17,13 @@ class DetAnchorSparse(BaseModule):
                  num_classes=1,
                  target_assigner=None,
                  get_boxes_when_training=False,
+                 get_roi_scores=False,
                  **kwargs):
         super(DetAnchorSparse, self).__init__(**kwargs)
         assert num_classes == 1, 'currently only support binary classification.'
         self.num_classes = num_classes
         self.get_boxes_when_training = get_boxes_when_training
+        self.get_roi_scores = get_roi_scores
         self.target_assigner = plugin.build_plugin_module(target_assigner)
         self.num_anchors = self.target_assigner.num_anchors
         self.code_size = self.target_assigner.box_coder.code_size
@@ -37,11 +39,14 @@ class DetAnchorSparse(BaseModule):
         self._is_init = True
 
     def forward(self, stensor_list, **kwargs):
-        coor, feat = self.compose_stensor(stensor_list, self.target_assigner.stride)
+        coor, feat, ctr = self.compose_stensor(stensor_list, self.target_assigner.stride)
         cls = self.cls_head(feat)
         reg = self.reg_head(feat)
 
         out = {'cls': cls, 'reg': reg}
+
+        if self.get_roi_scores:
+            out['scr'] = cls.sigmoid().max(dim=-1).values
 
         if self.get_boxes_when_training or not self.training:
             out['preds'] = self.predictions(out)
@@ -96,6 +101,9 @@ class DetAnchorSparse(BaseModule):
         labels = pos_mask.new_full((len(pos_mask), ), self.num_classes, dtype=torch.long)
         labels[pos_mask] = 0
 
+        if len(cared) != len(pred_cls):
+            print([x['cls'].shape for x in preds])
+            print(cared.shape)
         loss_cls = self.loss_cls(pred_cls[cared], labels[cared],
                                  avg_factor=avg_factor)
 
