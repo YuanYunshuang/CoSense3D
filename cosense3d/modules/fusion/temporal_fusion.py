@@ -63,7 +63,7 @@ class TemporalFusion(BaseModule):
         )
 
         # encoding ego pose
-        pose_nerf_dim = (self.pos_dim + 12) * 6
+        pose_nerf_dim = (3 + 3 * 4) * 12
         self.ego_pose_pe = MLN(pose_nerf_dim, f_dim=self.embed_dims)
         self.ego_pose_memory = MLN(pose_nerf_dim, f_dim=self.embed_dims)
 
@@ -87,9 +87,10 @@ class TemporalFusion(BaseModule):
         query_pos = self.query_embedding(pos2posemb2d(reference_points, self.num_pose_feat))
         tgt = torch.zeros_like(query_pos)
 
-        tgt, query_pos, reference_points, temp_memory, temp_pos, rec_ego_pose = \
+        tgt, query_pos, reference_points, temp_memory, temp_pos, rec_pose = \
             self.temporal_alignment(query_pos, tgt, reference_points, mem_dict)
-        outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb, None, temp_memory, temp_pos)
+        mask_dict = [None, None]
+        outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb, mask_dict, temp_memory, temp_pos)
 
         outs = [
             {
@@ -149,7 +150,7 @@ class TemporalFusion(BaseModule):
 
         # Get ego motion-aware tgt and query_pos for the current frame
         rec_motion = torch.cat(
-            [torch.zeros_like(ref_pts[..., :self.pos_dim]),
+            [torch.zeros_like(tgt[..., :3]),
              rec_pose[..., :3, :].flatten(-2)], dim=-1)
         rec_motion = nerf_positional_encoding(rec_motion)
         tgt = self.ego_pose_memory(tgt, rec_motion)
@@ -157,23 +158,24 @@ class TemporalFusion(BaseModule):
 
         # get ego motion-aware reference points embeddings and memory for past frames
         memory_ego_motion = torch.cat(
-            [mem_dict['velo'], mem_dict['timestamp'], mem_dict['pose'][..., :3, :].flatten(-2)], dim=-1).float()
+            [mem_dict['velo'], mem_dict['timestamp'],
+             mem_dict['pose'][..., :3, :].flatten(-2)], dim=-1).float()
         memory_ego_motion = nerf_positional_encoding(memory_ego_motion)
         temp_pos = self.ego_pose_pe(temp_pos, memory_ego_motion)
         temp_memory = self.ego_pose_memory(temp_memory, memory_ego_motion)
 
         # get time-aware pos embeddings
-        query_pos += self.time_embedding(pos2posemb1d(torch.zeros_like(ref_pts[...,:1])))
-        temp_pos += self.time_embedding(pos2posemb1d(self.memory_timestamp).float())
+        query_pos += self.time_embedding(pos2posemb1d(torch.zeros_like(ref_pts[...,:1]), self.embed_dims))
+        temp_pos += self.time_embedding(pos2posemb1d(mem_dict['timestamp'], self.embed_dims).float())
 
-        tgt = torch.cat([tgt, temp_memory[:, :self.num_propagated]], dim=1)
-        query_pos = torch.cat([query_pos, temp_pos[:, :self.num_propagated]], dim=1)
-        ref_pts = torch.cat([ref_pts, temp_ref_pts[:, :self.num_propagated]], dim=1)
+        tgt = torch.cat([tgt, temp_memory[:, 0]], dim=1)
+        query_pos = torch.cat([query_pos, temp_pos[:, 0]], dim=1)
+        ref_pts = torch.cat([ref_pts, temp_ref_pts[:, 0]], dim=1)
         rec_pose = torch.eye(
-            4, device=query_pos.device).unsqueeze(0).unsqueeze(0).repeat(
-            B, query_pos.shape[1] + self.num_propagated, 1, 1)
-        temp_memory = temp_memory[:, self.num_propagated:]
-        temp_pos = temp_pos[:, self.num_propagated:]
+            4, device=query_pos.device).reshape(1, 1, 4, 4).repeat(
+            B, query_pos.shape[1] + temp_pos[:, 0].shape[1], 1, 1)
+        temp_memory = temp_memory[:, 1:].flatten(1, 2)
+        temp_pos = temp_pos[:, 1:].flatten(1, 2)
 
         return tgt, query_pos, ref_pts, temp_memory, temp_pos, rec_pose
 

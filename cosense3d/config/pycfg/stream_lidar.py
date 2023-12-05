@@ -91,7 +91,7 @@ shared_modules = OrderedDict(
         feature_stride=2,
         lidar_range=point_cloud_range,
         transformer=dict(
-            type='transformer.PETRTransformer',
+            type='transformer.PETRTemporalTransformer',
             decoder=dict(
                 type='TransformerDecoder',
                 return_intermediate=True,
@@ -99,11 +99,18 @@ shared_modules = OrderedDict(
                 transformerlayers=dict(
                     type='TransformerDecoderLayer',
                     attn_cfgs=[
-                        dict(type='MultiheadAttention',  # fp16 for 2080Ti training (save GPU memory).
-                             embed_dims=128,
-                             num_heads=8,
-                             dropout=0.1)
-                    ],
+                        dict(
+                            type='MultiheadAttention', #fp16 for 2080Ti training (save GPU memory).
+                            embed_dims=128,
+                            num_heads=8,
+                            dropout=0.1,
+                            fp16=False),
+                        dict(
+                            type='MultiheadFlashAttention',
+                            embed_dims=128,
+                            num_heads=8,
+                            dropout=0.1),
+                        ],
                     ffn_cfgs=dict(
                         type='FFN',
                         embed_dims=128,
@@ -115,7 +122,8 @@ shared_modules = OrderedDict(
                     feedforward_channels=1024,
                     ffn_dropout=0.1,
                     with_cp=False,  ###use checkpoint to save memory
-                    operation_order=('cross_attn', 'norm', 'ffn', 'norm')),
+                    operation_order=('self_attn', 'norm', 'cross_attn', 'norm',
+                                     'ffn', 'norm')),
             )
         ),
 

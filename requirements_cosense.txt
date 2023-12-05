@@ -10,3 +10,4 @@ open3d
 plyfile
 einops
 timm
+flash-attn==0.2.2
