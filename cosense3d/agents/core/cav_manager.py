@@ -7,6 +7,7 @@ class CAVManager:
         self.lidar_range = torch.tensor(lidar_range)
         self.memory_len = memory_len
         self.all_grad = all_grad
+        self.kwargs = kwargs
         self.cavs = []
         self.cav_dict = {}
         assert prototype is not None, "CAV prototype should be defined."
@@ -35,7 +36,7 @@ class CAVManager:
                 if not cav:
                     cav = self.prototype(cav_id, i, is_ego, lidar_poses[b][i],
                                          self.lidar_range, self.memory_len,
-                                         all_grad=self.all_grad)
+                                         all_grad=self.all_grad, **self.kwargs)
                 else:
                     cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)

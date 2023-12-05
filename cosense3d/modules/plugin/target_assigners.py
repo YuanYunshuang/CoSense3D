@@ -647,12 +647,12 @@ class BoxSparseAnchorAssigner(BaseAssigner, torch.nn.Module):
             anchors.view(-1, 7)).reshape(h, w, self.num_anchors, 4)
         return anchors, standup_anchors
 
-    def assign(self, centers, gt_boxes):
+    def assign(self, coors, gt_boxes):
         """
 
         Parameters
         ----------
-        centers Tensor(N, 2): [x, y]
+        coors Tensor(N, 2): mink coor [x, y]
         gt_boxes Tensor(M, 7): [x, y, z, l, w, h, r]
 
         Returns
@@ -662,12 +662,12 @@ class BoxSparseAnchorAssigner(BaseAssigner, torch.nn.Module):
         dir_score Tensor(N, num_anchors, 4) or None: direction score target
         """
         if len(gt_boxes) == 0:
-            labels = gt_boxes.new_full((centers.shape[0] * self.num_anchors,), -1)
+            labels = gt_boxes.new_full((coors.shape[0] * self.num_anchors,), -1)
             reg_tgt = gt_boxes.new_zeros((0, self.box_coder.code_size))
             dir_scores = gt_boxes.new_zeros((0, 4))
             # Todo dir_score, gt_boxes, correct shape
             return labels, reg_tgt, dir_scores
-        inds, in_range_mask = self.coor_to_inds(centers)
+        inds, in_range_mask = self.coor_to_inds(coors)
         gt_standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
         standup_anchors = self.standup_anchors[inds[:, 0], inds[:, 1]].view(-1, 4)
         ious = self.box_overlaps(standup_anchors, gt_standup_boxes)
@@ -713,29 +713,44 @@ class BoxSparseAnchorAssigner(BaseAssigner, torch.nn.Module):
 
         return overlaps
 
-    def get_predictions(self, preds):
+    def get_predictions(self, coors, preds):
+        """
+
+        Args:
+             coors Tensor(N, 3): mink coor [batch_idx, x, y]
+            preds:
+
+        Returns:
+
+        """
         # roi = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
         roi = {}
-        B = len(preds['cls'])
-        pred_cls = preds['cls'].sigmoid().permute(0, 3, 2, 1).reshape(B, -1)
-        pred_reg = preds['reg'].permute(0, 3, 2, 1).reshape(B, -1, 7)
-        indices = torch.stack([torch.ones_like(pred_cls[0]) * i for i in range(B)], dim=0)
+        inds, in_range_mask = self.coor_to_inds(coors[:, 1:])
+        pred_cls = preds['cls'][in_range_mask].sigmoid().reshape(-1)
+        pred_reg = preds['reg'][in_range_mask].reshape(-1, 7)
+        indices = coors[:, 0:1][in_range_mask].repeat(1, self.num_anchors).reshape(-1)
 
-        anchors = self.anchors.unsqueeze(0).repeat(B, 1, 1)
+        anchors = self.anchors[inds[:, 0], inds[:, 1]].view(-1, self.box_coder.code_size)
         pos = pred_cls > self.score_thrshold
+        anchors = anchors[pos]
+        pred_cls = pred_cls[pos]
+        pred_reg = pred_reg[pos]
+        indices = indices[pos]
 
         boxes_dec = self.box_coder.decode(anchors, pred_reg)
+
         # remove abnormal boxes
         mask = (boxes_dec[..., 3:6] > 0.1) & (boxes_dec[..., 3:6] < 10)
-        pos = torch.logical_and(pos, mask.all(dim=-1))
+        mask = mask.all(dim=-1)
+        pred_cls = pred_cls[mask]
+        pred_box = boxes_dec[mask]
+        indices = indices[mask]
 
-        pred_cls = pred_cls[pos]
-        pred_box = boxes_dec[pos]
         roi['scr'] = pred_cls
         roi['box'] = pred_box
         # TODO currently only support class car
         roi['lbl'] = torch.zeros_like(pred_cls)
-        roi['idx'] = indices[pos]
+        roi['idx'] = indices
 
         return roi
 

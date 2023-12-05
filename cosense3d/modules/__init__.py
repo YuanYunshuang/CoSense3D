@@ -85,6 +85,14 @@ class BaseModule(nn.Module):
                 out_dict[k].extend(d[k])
         return out_dict
 
+    def stack_dict_list(self, d_list: List[Dict]):
+        out_dict = {k:[] for k in d_list[0].keys()}
+        for k in d_list[0].keys():
+            for d in d_list:
+                out_dict[k].append(d[k])
+            out_dict[k] = torch.stack(out_dict[k], dim=0)
+        return out_dict
+
     def compose_imgs(self, img_list):
         imgs = [img for x in img_list for img in x]
         return torch.stack(imgs, dim=0)
@@ -94,8 +102,11 @@ class BaseModule(nn.Module):
         coor = cat_coor_with_idx(coor)
         feat = [stensor[f'p{stride}']['feat'] for stensor in stensor_list]
         feat = torch.cat(feat, dim=0)
-        ctr = [stensor[f'p{stride}']['ctr'] for stensor in stensor_list]
-        ctr = torch.cat(ctr, dim=0)
+        if 'ctr' in stensor_list[0][f'p{stride}']:
+            ctr = [stensor[f'p{stride}']['ctr'] for stensor in stensor_list]
+            ctr = torch.cat(ctr, dim=0)
+        else:
+            ctr = None
         return coor, feat, ctr
 
     def decompose_stensor(self, res, N):

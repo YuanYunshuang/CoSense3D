@@ -3,7 +3,7 @@ from collections import OrderedDict
 # point_cloud_range = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 # point_cloud_range_enlarged = [-102.4, -38.4, -5.0, 102.4, 38.4, 3.0]
 point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
-point_cloud_range_test = [-140.8, -40, -3, 140.8, 40, 1]
+point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
 voxel_size = [0.2, 0.2, 0.2]
 data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
@@ -80,13 +80,13 @@ train_hooks = [
 test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
         dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test, metrics=['OPV2V', 'CoSense3D']),
-        dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
-        dict(type="EvalDenseBEVHook", thr=0.5)
+        # dict(type="BEVSparseToDenseHook", lidar_range=point_cloud_range_test, voxel_size=voxel_size, stride=4),
+        # dict(type="EvalDenseBEVHook", thr=0.5)
     ]
 
 plots = [
-    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
-         data_keys=['bev', 'global_labels']),
+    # dict(title='BEVSparseCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
+    #      data_keys=['bev', 'global_labels']),
     dict(title='DetectionCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
          data_keys=['detection', 'global_labels'])
 ]

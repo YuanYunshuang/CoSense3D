@@ -77,6 +77,7 @@ def pos2posemb1d(pos, num_pos_feats=256, temperature=10000):
 
     return pos_x
 
+
 def nerf_positional_encoding(
     tensor, num_encoding_functions=6, include_input=False, log_sampling=True
 ) -> torch.Tensor:

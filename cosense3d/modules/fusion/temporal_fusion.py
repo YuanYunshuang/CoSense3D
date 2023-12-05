@@ -31,7 +31,6 @@ class TemporalFusion(BaseModule):
         self.memory_len = memory_len
 
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
-        self.reference_points = nn.Embedding(self.num_query, self.pos_dim)
 
         self._init_layers()
 
@@ -56,6 +55,7 @@ class TemporalFusion(BaseModule):
         # can be replaced with MLN
         self.featurized_pe = SELayer_Linear(self.embed_dims)
 
+        self.reference_points = nn.Embedding(self.num_query, self.pos_dim)
         self.pseudo_reference_points = nn.Embedding(self.num_propagated, self.pos_dim)
         self.time_embedding = nn.Sequential(
             nn.Linear(self.embed_dims, self.embed_dims),
@@ -63,8 +63,9 @@ class TemporalFusion(BaseModule):
         )
 
         # encoding ego pose
-        self.ego_pose_pe = MLN(180)
-        self.ego_pose_memory = MLN(180)
+        pose_nerf_dim = (self.pos_dim + 12) * 6
+        self.ego_pose_pe = MLN(pose_nerf_dim, f_dim=self.embed_dims)
+        self.ego_pose_memory = MLN(pose_nerf_dim, f_dim=self.embed_dims)
 
     def init_weights(self):
         # follow the official DETR to init parameters
@@ -73,7 +74,7 @@ class TemporalFusion(BaseModule):
                 nn.utils.init.xavier_uniform_(m)
         self._is_init = True
 
-    def forward(self, rois, bev_feat, mem_dict, pose, **kwargs):
+    def forward(self, rois, bev_feat, mem_dict, **kwargs):
         feat, ctr = self.gather_topk(rois, bev_feat)
 
         pos = ((ctr - self.lidar_range[:2]) /
@@ -87,7 +88,7 @@ class TemporalFusion(BaseModule):
         tgt = torch.zeros_like(query_pos)
 
         tgt, query_pos, reference_points, temp_memory, temp_pos, rec_ego_pose = \
-            self.temporal_alignment(query_pos, tgt, reference_points, mem_dict, pose)
+            self.temporal_alignment(query_pos, tgt, reference_points, mem_dict)
         outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb, None, temp_memory, temp_pos)
 
         outs = [
@@ -128,31 +129,27 @@ class TemporalFusion(BaseModule):
         topk_feat = torch.stack(topk_feat, dim=0)
         return topk_feat, topk_ctr
 
-    def temporal_alignment(self, query_pos, tgt, ref_pts, mem_dict, pose):
+    def temporal_alignment(self, query_pos, tgt, ref_pts, mem_dict):
         B = ref_pts.shape[0]
-        if len(mem_dict['ref_pts']) == 0:
-            temp_ref_pts = self.pseudo_reference_points.weight
-            temp_ref_pts = temp_ref_pts.unsqueeze(0).repeat(B, 1, 1)
-            temp_memory = ref_pts.new_zeros(B, self.memory_len, self.embed_dims)
-            timestamp = ref_pts.new_zeros(B, self.memory_len, 1)
-            pose = ref_pts.new_zeros(B, self.memory_len, 4, 4)
-            velo = ref_pts.new_zeros(B, self.memory_len, 2)
-        else:
-            temp_ref_pts = ((mem_dict['ref_pts'] - self.lidar_range[:2]) /
-                            (self.lidar_range[3:5] - self.lidar_range[:2]))
-            temp_memory = mem_dict['embedding']
-            timestamp = mem_dict['timestamp']
-            pose = mem_dict['pose']
-            velo = mem_dict['velo']
+        mem_dict = self.stack_dict_list(mem_dict)
+        x = mem_dict['prev_exists'].view(-1)
+        # metric coords --> normalized coords
+        temp_ref_pts = ((mem_dict['ref_pts'] - self.lidar_range[:self.pos_dim]) /
+                        (self.lidar_range[3:3+self.pos_dim] - self.lidar_range[:self.pos_dim]))
+        if not x.all():
+            # pad the recent memory ref pts with pseudo points
+            pseudo_ref_pts = self.pseudo_reference_points.weight.unsqueeze(0).repeat(B, 1, 1)
+            temp_ref_pts[:, 0] = temp_ref_pts[:, 0] * x + pseudo_ref_pts * (1 - x)
 
-        temp_pos = self.query_embedding(pos2posemb2d(temp_ref_pts))
+        temp_pos = self.query_embedding(pos2posemb2d(temp_ref_pts, self.num_pose_feat))
+        temp_memory = mem_dict['embeddings']
         rec_pose = torch.eye(
-            4, device=query_pos.device).unsqueeze(0).unsqueeze(0).repeat(
+            4, device=query_pos.device).reshape(1, 1, 4, 4).repeat(
             B, query_pos.size(1), 1, 1)
 
         # Get ego motion-aware tgt and query_pos for the current frame
         rec_motion = torch.cat(
-            [torch.zeros_like(ref_pts[..., :3]),
+            [torch.zeros_like(ref_pts[..., :self.pos_dim]),
              rec_pose[..., :3, :].flatten(-2)], dim=-1)
         rec_motion = nerf_positional_encoding(rec_motion)
         tgt = self.ego_pose_memory(tgt, rec_motion)
@@ -160,7 +157,7 @@ class TemporalFusion(BaseModule):
 
         # get ego motion-aware reference points embeddings and memory for past frames
         memory_ego_motion = torch.cat(
-            [self.memory_velo, self.memory_timestamp, self.memory_egopose[..., :3, :].flatten(-2)], dim=-1).float()
+            [mem_dict['velo'], mem_dict['timestamp'], mem_dict['pose'][..., :3, :].flatten(-2)], dim=-1).float()
         memory_ego_motion = nerf_positional_encoding(memory_ego_motion)
         temp_pos = self.ego_pose_pe(temp_pos, memory_ego_motion)
         temp_memory = self.ego_pose_memory(temp_memory, memory_ego_motion)

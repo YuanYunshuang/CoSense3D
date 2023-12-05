@@ -83,10 +83,10 @@ shared_modules = OrderedDict(
         loss_box = dict(type='SmoothL1Loss', loss_weight=2.0),
     ),
 
-    memory_updater = dict(
-        type='fusion.temporal_fuison.TemporalFusion',
+    temp_fusion = dict(
+        type='fusion.temporal_fusion.TemporalFusion',
         gather_keys=['rois', 'bev_feat', 'memory'],
-        scatter_keys=['memory'],
+        scatter_keys=['temp_fusion_feat'],
         in_channels=256,
         feature_stride=2,
         lidar_range=point_cloud_range,
@@ -119,6 +119,27 @@ shared_modules = OrderedDict(
             )
         ),
 
+    ),
+
+    petr_head = dict(
+        type='heads.petr_head.PETRHead',
+        gather_keys=['temp_fusion_feat'],
+        scatter_keys=['petr_out'],
+        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+        embed_dims=128,
+        pc_range=point_cloud_range,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+        num_classes=1,
+        box_assigner=dict(
+            type='target_assigners.HungarianAssigner3D',
+            cls_cost=dict(type='focal_loss', weight=2.),
+            reg_cost=dict(type='l1', weight=.25),
+            iou_cost=dict(type='iou', weight=0.0),
+        ),
+        loss_cls=dict(type='FocalLoss', use_sigmoid=True,
+                      gamma=2.0, alpha=0.25, loss_weight=2.0),
+        loss_bbox=dict(type='L1Loss', loss_weight=0.25),
+        # loss_iou=dict(type='GIoULoss', loss_weight=0.0),
     )
 
 )

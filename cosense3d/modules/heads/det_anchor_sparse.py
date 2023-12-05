@@ -49,7 +49,7 @@ class DetAnchorSparse(BaseModule):
             out['scr'] = cls.sigmoid().max(dim=-1).values
 
         if self.get_boxes_when_training or not self.training:
-            out['preds'] = self.predictions(out)
+            out['preds'] = self.predictions(coor, out)
 
         return self.format(out, coor, len(stensor_list))
 
@@ -130,8 +130,8 @@ class DetAnchorSparse(BaseModule):
                             boxes2[..., dim + 1:]], dim=-1)
         return boxes1, boxes2
 
-    def predictions(self, preds):
-        return self.target_assigner.get_predictions(preds)
+    def predictions(self, coors, preds):
+        return self.target_assigner.get_predictions(coors, preds)
 
 
 

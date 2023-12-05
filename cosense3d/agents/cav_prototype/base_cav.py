@@ -3,14 +3,16 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 
 
 class BaseCAV:
-    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range, memery_len, all_grad=False):
+    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range, memory_len, all_grad=False, **kwargs):
         self.id = id
         self.mapped_id = mapped_id
         self.is_ego = is_ego
         self.lidar_pose = lidar_pose
         self.lidar_range = lidar_range
-        self.memory_len = memery_len
+        self.memory_len = memory_len
         self.all_grad = all_grad
+        for k, v in kwargs.items():
+            setattr(self, k, v)
         self.data = {'memory': []} # memory FIFO
         self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
 
@@ -62,11 +64,9 @@ class BaseCAV:
 
     def forward(self, tasks, training_mode):
         self.prepare_data()
-        self.pre_update_memory()
         self.forward_local(tasks, training_mode)
         self.forward_fusion(tasks, training_mode)
         self.forward_head(tasks, training_mode)
-        self.post_update_memory()
         return tasks
 
     def forward_local(self, tasks, training_mode):
@@ -85,7 +85,7 @@ class BaseCAV:
         """To be overloaded."""
         return tasks
 
-    def reset_data(self):
+    def reset_data(self, *args, **kwargs):
         del self.data
         self.data = {}
 

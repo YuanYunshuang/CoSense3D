@@ -45,6 +45,9 @@ CONTROLLER:
   cav_manager:
     prototype: stream_lidar.StreamLidarCAV
     memory_len: *seq_len
+    memory_emb_dims: 128
+    memory_num_propagated: 256
+    ref_pts_dim: 2
     all_grad: true
 
 VISUALIZATION:
