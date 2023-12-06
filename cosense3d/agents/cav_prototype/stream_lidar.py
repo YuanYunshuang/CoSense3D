@@ -62,6 +62,7 @@ class StreamLidarCAV(BaseCAV):
 
     def loss(self, tasks):
         if self.is_ego:
+            tasks['loss'].append((self.id, '21:roi_head', {}))
             tasks['loss'].append((self.id, '22:detection_head', {}))
         return tasks
 

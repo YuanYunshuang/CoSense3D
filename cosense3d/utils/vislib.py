@@ -1,3 +1,4 @@
+import random
 import sys
 import os
 import time
@@ -35,7 +36,10 @@ COLOR_PALETTES = {
         'truck': [0, 0, 0],
         'motorcycle': [100, 200, 0],
         'bus': [100, 100, 0]
-    }
+    },
+    'random': {i: [random.randint(0, 255),
+                   random.randint(0, 255),
+                   random.randint(0, 255)] for i in range(20)}
 }
 
 
@@ -272,7 +276,7 @@ def o3d_draw_pcds_bbxs(pcds: list,
             assert pcds_colors[i].shape == points[:, :3].shape
             pcd.colors = o3d.utility.Vector3dVector(pcds_colors[i])
         else:
-            colors = get_palette_colors('calm_afternoon')
+            colors = get_palette_colors('random')
             pcd.paint_uniform_color(colors[i])
         pcds_vis.append(pcd)
     o3d.visualization.draw_geometries(pcds_vis + linsets)

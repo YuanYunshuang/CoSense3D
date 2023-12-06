@@ -101,4 +101,4 @@ class BaseCAV:
 class OPV2VtCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prepare_data_keys = ['points', 'annos_global']
+        self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
