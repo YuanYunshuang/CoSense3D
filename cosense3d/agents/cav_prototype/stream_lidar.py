@@ -23,9 +23,10 @@ class StreamLidarCAV(BaseCAV):
         else:
             for k, v in self.data['memory'].items():
                 self.data['memory'][k] = self.data['memory'][k][:self.memory_len] * x
-
-        self.data['memory']['pose'] = self.data['memory']['pose'] + \
-                                      torch.eye(4, device=x.device).reshape(1, 1, 4, 4)
+        if not x:
+            # pose will all become zeros after refreshing, recover recent pose to eye
+            self.data['memory']['pose'][0] = self.data['memory']['pose'][0] + \
+                                          torch.eye(4, device=x.device).unsqueeze(0)
         self.data['memory']['prev_exists'] = x
 
     def prepare_data(self):
@@ -55,8 +56,8 @@ class StreamLidarCAV(BaseCAV):
         return tasks
 
     def forward_head(self, tasks, training_mode):
-        # if self.is_ego:
-        #     tasks['with_grad'].append((self.id, '12:detection_head', {}))
+        if self.is_ego:
+            tasks['with_grad'].append((self.id, '12:detection_head', {}))
         return tasks
 
     def loss(self, tasks):
@@ -69,27 +70,54 @@ class StreamLidarCAV(BaseCAV):
         if not self.is_ego:
             return
         if self.data['memory'] is not None:
-            if 'timestamp' in self.data:
-                timestamp = self.data['timestamp']
-            else:
-                timestamp = float(self.data['frame']) * 0.1
+
             pose_inv = self.lidar_pose.inverse()
 
-            self.data['memory']['timestamp'] += timestamp
+            self.data['memory']['timestamp'] += self.timestamp
             self.data['memory']['pose'] = pose_inv @ self.data['memory']['pose']
-            self.data['memory']['ref_pts'] = self.transform_ref_pts(self.data['memory']['ref_pts'], pose_inv)
+            self.data['memory']['ref_pts'] = self.transform_ref_pts(
+                self.data['memory']['ref_pts'], pose_inv)
 
         self.refresh_memory(self.data['prev_exists'])
 
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
-        pass
+        x = self.data['petr_out']
+        scores = x['all_cls_scores'][-1].sigmoid().topk(1, dim=-1).values[..., 0]
+        topk = torch.topk(scores, k=self.memory_num_propagated).indices
+
+        ref_pts = x['all_bbox_preds'][-1][:, :self.ref_pts_dim]
+        velo = x['all_bbox_preds'][-1][:, -2:]
+        embeddings = self.data['temp_fusion_feat']['outs_dec'][-1]
+        timestamp = torch.zeros_like(scores).view(-1, 1)
+        pose = torch.eye(4, device=ref_pts.device).unsqueeze(0).repeat(
+            timestamp.shape[0], 1, 1)
+
+        vars = locals()
+        for k, v in self.data['memory'].items():
+            if k == 'prev_exists':
+                continue
+            rec_topk = vars[k][topk].unsqueeze(0)
+            self.data['memory'][k] = torch.cat([rec_topk, v], dim=0)
+
+        self.data['memory']['ref_pts'] = self.transform_ref_pts(
+            self.data['memory']['ref_pts'], self.lidar_pose)
+        self.data['memory']['timestamp'] -= self.timestamp
+        self.data['memory']['pose'] = self.lidar_pose[(None,)*2] @ self.data['memory']['pose']
 
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(
             [reference_points, torch.ones_like(reference_points[..., 0:1])], dim=-1)
-        reference_points = (matrix @ reference_points.T)[:3].T
-        return reference_points
+        reference_points = matrix.unsqueeze(0) @ reference_points.permute(0, 2, 1)
+        return reference_points.permute(0, 2, 1)[..., :3]
+
+    @property
+    def timestamp(self):
+        if 'timestamp' in self.data:
+            timestamp = self.data['timestamp']
+        else:
+            timestamp = float(self.data['frame']) * 0.1
+        return timestamp
 
 
 

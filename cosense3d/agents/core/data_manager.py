@@ -27,7 +27,8 @@ class DataManager:
             points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             assert cavs[0].is_ego
             global_boxes = cavs[0].data['global_bboxes_3d']
-            box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3], global_boxes.unsqueeze(0))[0]
+            box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3],
+                                          global_boxes.unsqueeze(0)[..., :7])[0]
             box_idx = box_idx[box_idx > -1]
             num_pts = torch.zeros_like(global_boxes[:, 0]).long()
             torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
@@ -45,7 +46,8 @@ class DataManager:
                     continue
                 points = cav.data['points']
                 local_boxes = cav.data['local_bboxes_3d']
-                box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3], local_boxes.unsqueeze(0))[0]
+                box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3],
+                                              local_boxes.unsqueeze(0)[..., :7])[0]
                 box_idx = box_idx[box_idx > -1]
                 num_pts = torch.zeros_like(local_boxes[:, 0]).long()
                 torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)

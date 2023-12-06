@@ -9,7 +9,7 @@ out_stride = 2
 
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(),
-    LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
+    LoadAnnotations=dict(load3d_global=True, load3d_local=True, with_velocity=True, min_num_pts=3),
 )
 
 inference_pipeline_cpu = OrderedDict(
@@ -129,7 +129,7 @@ shared_modules = OrderedDict(
 
     ),
 
-    petr_head = dict(
+    detection_head = dict(
         type='heads.petr_head.PETRHead',
         gather_keys=['temp_fusion_feat'],
         scatter_keys=['petr_out'],

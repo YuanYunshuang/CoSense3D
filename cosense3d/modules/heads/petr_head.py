@@ -73,9 +73,10 @@ class PETRHead(BaseModule):
                 nn.utils.init.xavier_uniform_(m)
         self._is_init = True
 
-    def forward(self, petr_feat, **kwargs):
-        outs_dec = self.stack_data_from_list(petr_feat, 'outs_dec').permute(1, 0, 2, 3)
-        reference_points = self.stack_data_from_list(petr_feat, 'ref_pts')
+    def forward(self, feat_in, **kwargs):
+        outs_dec = self.stack_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2, 3)
+        reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
+        pos_dim = reference_points.shape[-1]
         outputs_classes = []
         outputs_coords = []
         for lvl in range(len(outs_dec)):
@@ -86,15 +87,15 @@ class PETRHead(BaseModule):
             pred_reg = self.reg_branches[lvl](out_dec)
 
             if self.use_logits:
-                # reference = reference_points.clone()
                 reference = inverse_sigmoid(reference_points.clone())
-                pred_reg[..., :reference.shape[-1]] += reference
+                pred_reg[..., :pos_dim] += reference
                 pred_reg[..., :3] = pred_reg[..., :3].sigmoid()
             else:
                 reference = reference_points.clone()
-                reference[..., :3] = reference[..., :3] * (
-                        self.pc_range[3:6] - self.pc_range[0:3]) + self.pc_range[0:3]
-                pred_reg[..., :reference.shape[-1]] = pred_reg[..., :reference.shape[-1]] + reference
+                reference[..., :pos_dim] = (reference[..., :pos_dim] * (
+                        self.pc_range[3:3+pos_dim] - self.pc_range[0:pos_dim])
+                                            + self.pc_range[0:pos_dim])
+                pred_reg[..., :pos_dim] = pred_reg[..., :pos_dim] + reference
 
             outputs_classes.append(pred_cls)
             outputs_coords.append(pred_reg)
@@ -109,16 +110,16 @@ class PETRHead(BaseModule):
             {
                 'all_cls_scores': all_cls_scores[:, i],
                 'all_bbox_preds': all_bbox_preds[:, i],
-            } for i in range(len(petr_feat))
+            } for i in range(len(feat_in))
         ]
 
         return {self.scatter_keys[0]: outs}
 
-    def loss(self, petr_out, local_boxes, local_labels, **kwargs):
+    def loss(self, petr_out, gt_boxes, gt_labels, **kwargs):
         cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
         bbox_preds = self.stack_data_from_list(petr_out, 'all_bbox_preds').flatten(0, 1)
-        gt_boxes = [boxes for boxes in local_boxes for _ in range(self.num_pred)]
-        gt_labels = [labels for labels in local_labels for _ in range(self.num_pred)]
+        gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
+        gt_labels = [labels for labels in gt_labels for _ in range(self.num_pred)]
         code_weights = [self.code_weights] * len(gt_labels)
 
         num_gts, assigned_gt_inds, assigned_labels = multi_apply(

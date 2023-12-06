@@ -47,7 +47,7 @@ CONTROLLER:
     memory_len: *seq_len
     memory_emb_dims: 128
     memory_num_propagated: 256
-    ref_pts_dim: 2
+    ref_pts_dim: 3
     all_grad: true
 
 VISUALIZATION:
