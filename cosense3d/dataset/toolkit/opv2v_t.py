@@ -1,14 +1,18 @@
+import os.path
 import random
 
+import numpy as np
 import torch
 from plyfile import PlyData
 from matplotlib import colormaps
 from multiprocessing import Pool
 import torch_scatter
+from functools import partial
 
 from cosense3d.dataset.toolkit.opv2v import *
 from cosense3d.utils.vislib import o3d_draw_pcds_bbxs
-from cosense3d.utils.pclib import save_cosense_ply
+from cosense3d.utils.pclib import save_cosense_ply, pose_to_transformation
+from cosense3d.utils.box_utils import transform_boxes_3d
 from cosense3d.utils.misc import load_json, update_dict
 from cosense3d.ops.utils import points_in_boxes_gpu
 from cosense3d.modules.utils.common import cat_coor_with_idx
@@ -59,17 +63,10 @@ def get_local_boxes3d(objects_dict, ref_pose, order):
         if 'velo' in object_content and object_content['velo'] is not None:
             velos.append(object_content['velo'].tolist())
             # TODO adapt velos
+        else:
+            velos.append([0., 0.])
 
     return boxes_local, velos
-
-
-def fdict_update_local_boxes(fdict, cav_id, local_boxes):
-    boxes = [v['box'] for v in local_boxes.values()]
-    velos = [v['velo'] for v in local_boxes.values()]
-    num_pts = [v['num_pts'] for v in local_boxes.values()]
-    cs.update_agent(fdict, cav_id, gt_boxes=boxes)
-    cs.update_agent(fdict, cav_id, velos=velos)
-    cs.update_agent(fdict, cav_id, num_pts=num_pts)
 
 
 def read_ply_to_dict(f):
@@ -83,16 +80,40 @@ def read_ply_to_dict(f):
 
 def read_sub_frame(f):
     pcd_dict = read_ply_to_dict(f + '.ply')
-    params_ = load_yaml(f + '_objects.yaml')
-    params = load_yaml(f + '.yaml')
-    update_dict(params, params_)
+    params = load_yaml(f + '_objects.yaml')
+    # params = load_yaml(f + '.yaml')
+    # update_dict(params, params_)
     gt_boxes, velos = get_local_boxes3d(params['vehicles'],
                                         params['lidar_pose'], 'lwh')
     gt_boxes = np.array(gt_boxes)
-    velos = np.array(velos)
+    # velos = np.array(velos)
     points = np.stack([pcd_dict[x] for x in 'xyz'], axis=-1)
     points = points[pcd_dict['ObjTag'] == 10]
-    return gt_boxes, velos, pcd_dict, points
+    return gt_boxes, pcd_dict, points
+
+
+def get_velos(boxes, speeds, frame):
+    for b in boxes:
+        box_id = str(int(b[0]))
+        try:
+            speed = np.array([speeds[box_id][frame] for b in boxes])
+        except:
+            times_speed = np.array([[float(k), v] for k, v in speeds[box_id].items()])
+
+    theta = boxes[:, -1]
+    velos = np.stack([speed * np.cos(theta), speed * np.sin(theta)], axis=-1)
+    return velos
+
+
+def pad_box_result(res, out_len):
+    if len(res[0]) == out_len:
+        return res
+    box = np.zeros((out_len,) + res[0].shape[1:], dtype=res[0].dtype)
+    box[:res[0].shape[0]] = res[0]
+    # set id index to -1 to indicate it is padded
+    box[res[0].shape[0]:, 0] = -1
+    box[res[0].shape[0]:, 4] = 100
+    return box, res[1], res[2]
 
 
 def parse_sub_frame(f):
@@ -146,14 +167,16 @@ def read_frame_plys_boxes(path, frame, prev_frame=None, time_offset=0, parse_box
 
     with Pool(5) as p:
         res = p.map(read_sub_frame, files)
+    max_len = max([len(x[0]) for x in res])
+    with Pool(5) as p:
+        res = p.starmap(pad_box_result, zip(res, [max_len] * len(res)))
 
-    pcd_dict = {k: np.concatenate([d[2][k] for d in res], axis=0) for k in res[0][2]}
-    boxes_tensor = cat_coor_with_idx([torch.from_numpy(x[0]) for x in res])
-    points_tensor = cat_coor_with_idx([torch.from_numpy(x[3]) for x in res])
-    velos = np.stack([x[1] for x in res], axis=0)
+    pcd_dict = {k: np.concatenate([d[1][k] for d in res], axis=0) for k in res[0][1]}
+    boxes_tensor = cat_coor_with_idx([torch.from_numpy(x[0]) for x in res]).float()
+    points_tensor = cat_coor_with_idx([torch.from_numpy(x[2]) for x in res]).float()
 
-    _, pts_idx_of_box = points_in_boxes_gpu(points_tensor.float().cuda(),
-                                            boxes_tensor[:, [0, 3, 4, 5, 6, 7, 8, 11]].float().cuda(),
+    _, pts_idx_of_box = points_in_boxes_gpu(points_tensor.cuda(),
+                                            boxes_tensor[:, [0, 3, 4, 5, 6, 7, 8, 11]].cuda(),
                                             batch_size=len(res))
 
     pts_idx_of_box = pts_idx_of_box[pts_idx_of_box >= 0]
@@ -164,10 +187,12 @@ def read_frame_plys_boxes(path, frame, prev_frame=None, time_offset=0, parse_box
     num_pts = num_pts_in_box.sum(dim=0)
     boxes_tensor = boxes_tensor.view(10, -1, boxes_tensor.shape[-1])[..., 1:]
     max_inds = num_pts_in_box.max(dim=0).indices
-    boxes_selected = boxes_tensor[max_inds, torch.arange(len(max_inds))]
-    velos = velos[max_inds.numpy(), np.arange(velos.shape[1])]
+    boxes_selected = boxes_tensor[max_inds, torch.arange(len(max_inds))].numpy()
+    boxes_selected = boxes_selected[boxes_selected[:, 0] >= 0]
 
-    return pcd_dict, boxes_selected, velos, num_pts
+    # o3d_draw_pcds_bbxs([points_tensor[:, 1:].numpy()], [boxes_selected])
+
+    return pcd_dict, boxes_selected, num_pts
 
 
 def load_frame_data(scene_dir, cavs, frame):
@@ -209,10 +234,11 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
         sdict = {}
         cavs = sorted([x for x in os.listdir(scene_dir)
                        if os.path.isdir(os.path.join(scene_dir, x))])
+        speeds = load_json(os.path.join(scene_dir, 'speeds.json'))
         ego_id = cavs[0]
         frames = sorted([x.split(".")[0] for x in os.listdir(
             os.path.join(scene_dir, cavs[0])) if '.0.ply' in x])
-        for i, f in tqdm.tqdm(enumerate(frames[1:-1])):
+        for i, f in tqdm.tqdm(enumerate(frames[1:11])):
             frame_mid_time = int(f) * 0.05 + 0.05
             fdict = cs.fdict_template()
             ego_lidar_pose = None
@@ -238,6 +264,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
                 # save lidar files
                 data, local_boxes, num_pts = read_frame_plys_boxes(os.path.join(scene_dir, cav_id), f,
                                        prev_frame=frames[i], time_offset=time_offsets[s][cav_id])
+                velos = get_velos(local_boxes, speeds, f)
                 save_cosense_ply(data, os.path.join(cur_data_out_dir, f'{f}.ply'))
 
                 objects_dict = params['vehicles']
@@ -245,7 +272,10 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
                 glob_ref_pose = ego_lidar_pose
                 local_ref_pose = params['lidar_pose']
 
-                fdict_update_local_boxes(fdict, cav_id, local_boxes)
+                 # update_local_boxes
+                cs.update_agent(fdict, cav_id, gt_boxes=local_boxes.tolist())
+                cs.update_agent(fdict, cav_id, velos=velos.tolist())
+                cs.update_agent(fdict, cav_id, num_pts=num_pts.tolist())
                 # update_2d_bboxes(fdict, cav_id, params['lidar_pose'], data_dir)
 
                 # add gt boxes in ego coordinates as global boxes of cosense3d format
@@ -284,8 +314,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
             fdict['meta']['ego_id'] = ego_id
             fdict['meta']['ego_lidar_pose'] = opv2v_pose_to_cosense(ego_lidar_pose)
             fdict['meta']['global_bbox_time'] = np.full(len(cosense_bbx_center), frame_mid_time).tolist()
-            if len(object_velo_stack) == len(object_stack):
-                fdict['meta']['bbx_velo_global'] = object_velo_stack.tolist()
+            fdict['meta']['bbx_velo_global'] = get_velos(cosense_bbx_center, speeds, f)
 
             sdict[f] = fdict
 
@@ -308,6 +337,128 @@ def vis_frame_data():
                            pcds_colors=[colors])
 
 
+def parse_speed_from_yamls(scene_dir):
+    cavs = sorted([x for x in os.listdir(scene_dir)
+                   if os.path.isdir(os.path.join(scene_dir, x))])
+    vehicle_dict = {}
+    for cav in cavs:
+        cav_dir = os.path.join(scene_dir, cav)
+        yamls = sorted(glob(os.path.join(cav_dir, '*5_objects.yaml')))
+        for yaml in tqdm.tqdm(yamls):
+            frame = int(os.path.basename(yaml).split('.')[0])
+            params = load_yaml(yaml)
+            for k, v in params['vehicles'].items():
+                if k not in vehicle_dict:
+                    vehicle_dict[k] = {'frames': [], 'locations': []}
+                if frame not in vehicle_dict[k]['frames']:
+                    vehicle_dict[k]['frames'].append(frame)
+                    vehicle_dict[k]['locations'].append(v['location'])
+
+    # vehicle_dict = load_json(os.path.join(scene_dir, 'vehicles.json'))
+    velo_dict = {}
+    for veh_id, veh_info in vehicle_dict.items():
+        times = np.array(veh_info['frames']) * 0.05
+        sort_inds = np.argsort(times)
+        times = times[sort_inds]
+        locations = np.array(veh_info['locations'])
+        locations = locations[sort_inds]
+        time_offsets = times[1:] - times[:-1]
+        loc_offsets = np.linalg.norm(locations[1:] - locations[:-1], axis=-1)
+        speeds = loc_offsets / time_offsets
+        velo_dict[veh_id] = {f'{f:06d}': speed for f, speed in zip(veh_info['frames'][:-1], speeds)}
+        velo_dict[veh_id][f"{veh_info['frames'][-1]:06}"] = velo_dict[veh_id][f"{veh_info['frames'][-2]:06}"]
+    save_json(velo_dict, os.path.join(scene_dir, 'speeds.json'))
+
+
+def update_velo(scenario_meta_file):
+    meta = load_json(scenario_meta_file)
+    frames = sorted(list(meta.keys()))
+    objects = {}
+
+    # find all global objects
+    for f in frames:
+        fdict = meta[f]
+        boxes = fdict['meta']['bbx_center_global']
+        for box in boxes:
+            box_id = int(box[0])
+            if box_id not in objects:
+                objects[box_id] = {'frames': [], 'box': []}
+            objects[box_id]['frames'].append(int(f))
+            objects[box_id]['boxes'].append(box)
+
+    def cal_velos(cur_gt_boxes, next_gt_boxes, cur_pose, next_pose, meta_last):
+        cur_gt_boxes_dict = {int(box[0]): box for box in cur_gt_boxes}
+        next_gt_boxes_np = np.array(next_gt_boxes)
+        cur_pose = pose_to_transformation(cur_pose)
+        next_pose = pose_to_transformation(next_pose)
+        transf_next_to_cur = np.linalg.inv(cur_pose) @ next_pose
+        next_gt_boxes_np = transform_boxes_3d(next_gt_boxes_np, transf_next_to_cur)
+        next_gt_boxes_dict = {int(box[0]): box.tolist() for box in next_gt_boxes_np}
+        velos = {}
+        for k, v in cur_gt_boxes_dict.items():
+            if k not in next_gt_boxes_dict:
+                if k in meta_last:
+                    velos[k] = meta_last[k]
+                else:
+                    velos[k] = [0, 0]
+                continue
+            velo = [(next_gt_boxes_dict[k][2] - v[2]) * 10, (next_gt_boxes_dict[k][3] - v[3]) * 10]  # m/s
+            velos[k] = velo
+        velos = [velos[int(box[0])] for box in cur_gt_boxes]
+        return velos
+
+    for i, f in enumerate(frames[:-1]):
+        fdict = meta[f]
+        global_ids = sorted([int(box[0]) for box in fdict['meta']['bbx_center_global']])
+        global_ids = set(global_ids)
+        local_ids = []
+        for a, adict in fdict['agents'].items():
+            local_ids.extend([int(box[0]) for box in adict['gt_boxes']])
+        local_ids = set(local_ids)
+        next_fdict = meta[frames[i + 1]]
+        last_fdict = meta[frames[max(i-1, 0)]]
+
+        if i == 0:
+            meta_last = {}
+        else:
+            meta_last = {int(box[0]): last_fdict['meta']['bbx_velo_global'][i] \
+                         for i, box in enumerate(last_fdict['meta']['bbx_center_global'])}
+        meta[f]['meta']['bbx_velo_global'] = cal_velos(
+            fdict['meta']['bbx_center_global'],
+            next_fdict['meta']['bbx_center_global'],
+            fdict['meta']['ego_lidar_pose'],
+            next_fdict['meta']['ego_lidar_pose'],
+            meta_last
+        )
+        for a, adict in fdict['agents'].items():
+            if i == 0:
+                meta_last = {}
+            else:
+                meta_last = {int(box[0]): last_fdict['agents'][a]['velos'][i] \
+                             for i, box in enumerate(last_fdict['agents'][a]['gt_boxes'])}
+            velos = cal_velos(
+                adict['gt_boxes'], next_fdict['agents'][a]['gt_boxes'],
+                adict['lidar']['0']['pose'], next_fdict['agents'][a]['lidar']['0']['pose'],
+                meta_last
+            )
+            meta[f]['agents'][a]['velos'] = velos
+    save_json(meta, scenario_meta_file)
+
+
+def vis_cosense_scenario(scenario_meta_file, data_dir):
+    meta = load_json(scenario_meta_file)
+    for f, fdict in meta.items():
+        global_boxes = np.array(fdict['meta']['bbx_center_global'])
+        for a, adict in fdict['agents'].items():
+            lidar_file = os.path.join(data_dir, adict['lidar']['0']['filename'])
+            pcd_dict = read_ply(lidar_file)
+            points = np.stack([pcd_dict[x] for x in 'xyz'], axis=-1)
+            boxes = np.array(adict['gt_boxes'])
+
+            o3d_draw_pcds_bbxs([points], [boxes, global_boxes],
+                               bbxs_colors=[[0, 255, 0], [255, 0, 0]])
+
+
 def gen_time_offsets(data_dir):
     out_dict = {}
     for split in ['train', 'test']:
@@ -327,11 +478,19 @@ def gen_time_offsets(data_dir):
 
 
 if __name__=="__main__":
-    # gen_time_offsets("/koko/OPV2V/temporal")
+    # gen_time_offsets("/media/yuan/luna/data/OPV2Vt")
+    # parse_speed_from_yamls("/media/yuan/luna/data/OPV2Vt/tmp/2021_08_16_22_26_54")
     opv2vt_to_cosense(
-        "/koko/OPV2V/temporal_dump",
-        "train",
-        "/koko/OPV2V/temporal",
-        "/koko/cosense3d/opv2v_temporal"
+        "/media/yuan/luna/data/OPV2Vt",
+        "tmp",
+        "/media/yuan/luna/data/OPV2Vt/temporal",
+        "/media/yuan/luna/data/OPV2Vt/meta"
     )
     # vis_frame_data()
+    # vis_cosense_scenario(
+    #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
+    #     "/media/yuan/luna/data/OPV2Vt/train"
+    # )
+    # update_velo(
+    #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
+    # )

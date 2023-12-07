@@ -139,9 +139,9 @@ train_hooks = [
 
 test_hooks = [
         # dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection_local'),
-        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection_local'),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection'),
         dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test,
-             metrics=['OPV2V', 'CoSense3D'], det_key='detection_local', gt_key='local_bboxes_3d'),
+             metrics=['OPV2V', 'CoSense3D'], det_key='detection', gt_key='global_bboxes_3d'),
     ]
 
 plots = [

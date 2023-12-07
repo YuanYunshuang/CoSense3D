@@ -347,6 +347,29 @@ def bbox_xyxy_to_cxcywh(bbox):
     return torch.cat(bbox_new, dim=-1)
 
 
+def transform_boxes_3d(boxes_in, transform, mode=7):
+    """
+
+    Args:
+        boxes_in: (N, 7)
+        transform: (4, 4)
+
+    Returns:
+
+    """
+    if mode == 11:
+        boxes = boxes_in[:, [2, 3, 4, 5, 6, 7, 10]]
+    else:
+        boxes = boxes_in
+    boxes_corner = boxes_to_corners_3d(boxes[:, :7])  # (N, 8, 3)
+    boxes_corner = boxes_corner.reshape(-1, 3).T  # (N*8, 3)
+    boxes_corner = np.concatenate([boxes_corner, np.ones_like(boxes_corner[:1])], axis=0)
+    # rotate bbx to augmented coords
+    boxes_corner = (transform @ boxes_corner)[:3].T.reshape(len(boxes), 8, 3)
+    boxes = corners_to_boxes_3d(boxes_corner, mode=mode)
+    return boxes
+
+
 def normalize_bbox(bboxes):
     cx = bboxes[..., 0:1]
     cy = bboxes[..., 1:2]
