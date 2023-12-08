@@ -28,8 +28,6 @@ TRAIN:
     lr: 0.001
     weight_decay: 1e-2
     betas: [0.95, 0.999]
-    milestones: [25, 40]
-    gamma: 0.1
   lr_scheduler:
     policy: 'MultiStepLR'
     milestones: [10, 20]
@@ -46,7 +44,7 @@ CONTROLLER:
   cav_manager:
     prototype: sp3d_cav.Sp3DCAV
     memory_len: *seq_len
-    all_grad: true
+    all_grad: false
 
 VISUALIZATION:
   output_viewer:
