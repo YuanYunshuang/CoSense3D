@@ -80,7 +80,7 @@ def read_ply_to_dict(f):
 
 def read_sub_frame(f):
     pcd_dict = read_ply_to_dict(f + '.ply')
-    params = load_yaml(f + '_objects.yaml')
+    params = load_yaml(f + '_objects.yaml', cloader=True)
     # params = load_yaml(f + '.yaml')
     # update_dict(params, params_)
     gt_boxes, velos = get_local_boxes3d(params['vehicles'],
@@ -92,16 +92,33 @@ def read_sub_frame(f):
     return gt_boxes, pcd_dict, points
 
 
+def get_box_velo(box, speeds, frame):
+    box_id = str(int(box[0]))
+    try:
+        speed = speeds[box_id][frame]
+    except:
+        if box_id not in speeds:
+            speed = 0.0
+        elif frame not in speeds[box_id]:
+            frames = list(speeds[box_id].keys())
+            nearst_frame_idx = (np.array(frames).astype(int) - int(frame)).argmax()
+            speed = speeds[box_id][frames[nearst_frame_idx]]
+        else:
+            raise NotImplementedError
+    return speed
+
+
 def get_velos(boxes, speeds, frame):
-    for b in boxes:
-        box_id = str(int(b[0]))
-        try:
-            speed = np.array([speeds[box_id][frame] for b in boxes])
-        except:
-            times_speed = np.array([[float(k), v] for k, v in speeds[box_id].items()])
+    with Pool(16) as pool:
+        out_speeds = pool.map(
+            partial(get_box_velo, speeds=speeds, frame=frame),
+            boxes
+        )
+    out_speeds = np.array(out_speeds)
 
     theta = boxes[:, -1]
-    velos = np.stack([speed * np.cos(theta), speed * np.sin(theta)], axis=-1)
+    velos = np.stack([out_speeds * np.cos(theta),
+                      out_speeds * np.sin(theta)], axis=-1)
     return velos
 
 
@@ -165,11 +182,10 @@ def read_frame_plys_boxes(path, frame, prev_frame=None, time_offset=0, parse_box
     files = [os.path.join(path, f) for f in files]
     boxes = {}
 
-    with Pool(5) as p:
-        res = p.map(read_sub_frame, files)
-    max_len = max([len(x[0]) for x in res])
-    with Pool(5) as p:
-        res = p.starmap(pad_box_result, zip(res, [max_len] * len(res)))
+    with Pool(10) as pool:
+        res = pool.map(read_sub_frame, files)
+        max_len = max([len(x[0]) for x in res])
+        res = pool.starmap(pad_box_result, zip(res, [max_len] * len(res)))
 
     pcd_dict = {k: np.concatenate([d[1][k] for d in res], axis=0) for k in res[0][1]}
     boxes_tensor = cat_coor_with_idx([torch.from_numpy(x[0]) for x in res]).float()
@@ -225,7 +241,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
     order = 'lwh'
     time_offsets = load_json(os.path.join(data_out_dir, 'time_offsets.json'))
     split_dir = os.path.join(data_dir, split)
-    scenes = sorted(os.listdir(split_dir))
+    scenes = sorted(os.listdir(split_dir))[:1]
     with open(os.path.join(meta_out_dir, f'{split}.txt'), 'w') as fh:
         fh.write('\n'.join(scenes))
     for s in scenes:
@@ -234,11 +250,14 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
         sdict = {}
         cavs = sorted([x for x in os.listdir(scene_dir)
                        if os.path.isdir(os.path.join(scene_dir, x))])
-        speeds = load_json(os.path.join(scene_dir, 'speeds.json'))
+        if os.path.exists(os.path.join(scene_dir, 'speeds.json')):
+            speeds = load_json(os.path.join(scene_dir, 'speeds.json'))
+        else:
+            speeds = parse_speed_from_yamls(scene_dir)
         ego_id = cavs[0]
         frames = sorted([x.split(".")[0] for x in os.listdir(
             os.path.join(scene_dir, cavs[0])) if '.0.ply' in x])
-        for i, f in tqdm.tqdm(enumerate(frames[1:11])):
+        for i, f in tqdm.tqdm(enumerate(frames[1:-1])):
             frame_mid_time = int(f) * 0.05 + 0.05
             fdict = cs.fdict_template()
             ego_lidar_pose = None
@@ -249,7 +268,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
                 cur_data_out_dir = os.path.join(data_out_dir, split, s, cav_id)
                 os.makedirs(cur_data_out_dir, exist_ok=True)
                 yaml_file = os.path.join(scene_dir, cav_id, f'{f}.5.yaml')
-                params = load_yaml(yaml_file)
+                params = load_yaml(yaml_file, cloader=True)
                 cs.update_agent(fdict, cav_id, agent_type='cav', agent_pose=params['true_ego_pos'])
                 # update_cam_params(params, fdict, cav_id, s, f)
 
@@ -314,7 +333,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
             fdict['meta']['ego_id'] = ego_id
             fdict['meta']['ego_lidar_pose'] = opv2v_pose_to_cosense(ego_lidar_pose)
             fdict['meta']['global_bbox_time'] = np.full(len(cosense_bbx_center), frame_mid_time).tolist()
-            fdict['meta']['bbx_velo_global'] = get_velos(cosense_bbx_center, speeds, f)
+            fdict['meta']['bbx_velo_global'] = get_velos(cosense_bbx_center, speeds, f).tolist()
 
             sdict[f] = fdict
 
@@ -346,7 +365,7 @@ def parse_speed_from_yamls(scene_dir):
         yamls = sorted(glob(os.path.join(cav_dir, '*5_objects.yaml')))
         for yaml in tqdm.tqdm(yamls):
             frame = int(os.path.basename(yaml).split('.')[0])
-            params = load_yaml(yaml)
+            params = load_yaml(yaml, cloader=True)
             for k, v in params['vehicles'].items():
                 if k not in vehicle_dict:
                     vehicle_dict[k] = {'frames': [], 'locations': []}
@@ -363,11 +382,33 @@ def parse_speed_from_yamls(scene_dir):
         locations = np.array(veh_info['locations'])
         locations = locations[sort_inds]
         time_offsets = times[1:] - times[:-1]
+        interp_inds = np.where(time_offsets > 0.15)[0]
         loc_offsets = np.linalg.norm(locations[1:] - locations[:-1], axis=-1)
         speeds = loc_offsets / time_offsets
-        velo_dict[veh_id] = {f'{f:06d}': speed for f, speed in zip(veh_info['frames'][:-1], speeds)}
-        velo_dict[veh_id][f"{veh_info['frames'][-1]:06}"] = velo_dict[veh_id][f"{veh_info['frames'][-2]:06}"]
+
+        # interpolate missed frames
+        speeds_interp = []
+        times_interp = []
+        last_idx = 0
+        for idx in interp_inds:
+            speeds_interp.extend(speeds[last_idx:idx])
+            times_interp.extend(times[last_idx:idx])
+            steps = int(round(time_offsets[idx] * 10))
+            if idx == 0:
+                interp_s = [speeds[0]] * (steps - 1)
+                interp_t = [times[0]] * (steps - 1)
+            else:
+                interp_s = np.linspace(speeds[idx-1], speeds[idx], steps + 1)[1:-1].tolist()
+                interp_t = np.linspace(times[idx-1], times[idx], steps + 1)[1:-1].tolist()
+            speeds_interp.extend(interp_s)
+            times_interp.extend(interp_t)
+            last_idx = idx
+        speeds_interp.extend(speeds[last_idx:])
+        times_interp.extend(times[last_idx:])
+
+        velo_dict[veh_id] = {f'{round(t*20):06d}': speed for t, speed in zip(times_interp, speeds_interp)}
     save_json(velo_dict, os.path.join(scene_dir, 'speeds.json'))
+    return velo_dict
 
 
 def update_velo(scenario_meta_file):
@@ -479,18 +520,18 @@ def gen_time_offsets(data_dir):
 
 if __name__=="__main__":
     # gen_time_offsets("/media/yuan/luna/data/OPV2Vt")
-    # parse_speed_from_yamls("/media/yuan/luna/data/OPV2Vt/tmp/2021_08_16_22_26_54")
-    opv2vt_to_cosense(
-        "/media/yuan/luna/data/OPV2Vt",
-        "tmp",
-        "/media/yuan/luna/data/OPV2Vt/temporal",
-        "/media/yuan/luna/data/OPV2Vt/meta"
-    )
-    # vis_frame_data()
-    # vis_cosense_scenario(
-    #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
-    #     "/media/yuan/luna/data/OPV2Vt/train"
+    # parse_speed_from_yamls("/home/data/OPV2V/temporal_dump/train/2021_08_16_22_26_54")
+    # opv2vt_to_cosense(
+    #     "/home/data/OPV2V/temporal_dump",
+    #     "train",
+    #     "/home/data/OPV2V/temporal",
+    #     "/home/data/cosense3d/opv2v_temporal"
     # )
+    # vis_frame_data()
+    vis_cosense_scenario(
+        "/home/data/cosense3d/opv2v_temporal/2021_08_16_22_26_54.json",
+        "/home/data/OPV2V/temporal/train"
+    )
     # update_velo(
     #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
     # )

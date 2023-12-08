@@ -99,6 +99,8 @@ class LoadLidarPoints:
 
     def _load_single(self, pts_filename):
         lidar_dict = self._load_points(pts_filename)
+        if 'intensity' in self.load_attributes and 'intensity' not in lidar_dict:
+            lidar_dict['intensity'] = np.ones_like(lidar_dict['xyz'][:, :1])
         points = np.concatenate(
             [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
 

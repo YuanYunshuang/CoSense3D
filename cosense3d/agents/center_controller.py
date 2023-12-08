@@ -94,6 +94,7 @@ class CenterController:
 
         # process ego cav data and fuse data from coop cav with grad if training
         self.forward_runner(batched_tasks[1]['with_grad'], with_grad=training_mode, **kwargs)
+        self.forward_runner(batched_tasks[1]['no_grad'], with_grad=False, **kwargs)
         self.cav_manager.apply_cav_function('post_update_memory')
 
         frame_loss_dict = {}

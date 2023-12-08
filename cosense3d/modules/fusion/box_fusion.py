@@ -16,30 +16,39 @@ class BoxFusion(BaseModule):
         self.lidar_range = lidar_range
 
     def forward(self, ego_preds, coop_preds, **kwargs):
-        out_dict = {'boxes': [], 'scores': []}
+        out_dict = {'box': [], 'scr': [], 'lbl': [], 'idx': []}
         for ego_pred, coop_pred in zip(ego_preds, coop_preds):
-            boxes = [ego_pred['boxes']]
-            scores = [ego_pred['scores']]
+            boxes = [ego_pred['preds']['box']]
+            scores = [ego_pred['preds']['scr']]
+            labels = [ego_pred['preds']['lbl']]
             for cppred in coop_pred.values():
-                boxes.append(cppred['preds']['boxes'])
-                scores.append(cppred['preds']['scores'])
-            clusters_boxes, clusters_scores = self.clustering(boxes, scores)
-            boxes_fused, scores_fused = self.cluster_fusion(clusters_boxes, clusters_scores)
-            out_dict['boxes'].append(boxes_fused)
-            out_dict['scores'].append(scores_fused)
+                boxes.append(cppred['detection']['preds']['box'])
+                scores.append(cppred['detection']['preds']['scr'])
+                labels.append(cppred['detection']['preds']['lbl'])
+            clusters_boxes, clusters_scores, cluster_labels = \
+                self.clustering(boxes, scores, labels)
+            boxes_fused, scores_fused, labels_fused = self.cluster_fusion(
+                clusters_boxes, clusters_scores, cluster_labels)
+            out_dict['box'].append(boxes_fused)
+            out_dict['scr'].append(scores_fused)
+            out_dict['lbl'].append(labels_fused)
+            out_dict['idx'].append(torch.zeros_like(labels_fused))
 
-        return {self.scatter_keys[0]: self.compose_result_list(out_dict, len(ego_preds))}
+        out_list = self.compose_result_list(out_dict, len(ego_preds))
+        return {self.scatter_keys[0]: [{'preds': x} for x in out_list]}
 
-    def clustering(self, boxes, scores):
+    def clustering(self, boxes, scores, labels):
         pred_boxes_cat = torch.cat(boxes, dim=0)
         pred_boxes_cat[:, -1] = limit_period(pred_boxes_cat[:, -1])
         pred_scores_cat = torch.cat(scores, dim=0)
+        pred_labels_cat = torch.cat(labels, dim=0)
 
         if len(pred_scores_cat) == 0:
             clusters = [torch.Tensor([0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.57]).
                                   to(boxes[0].device).view(1, 7)]
             scores= [torch.Tensor([0.01]).to(boxes[0].device).view(-1)]
-            return clusters, scores
+            labels = [torch.Tensor([-1]).to(boxes[0].device).view(-1)]
+            return clusters, scores, labels
 
         ious = boxes_iou3d_gpu(pred_boxes_cat, pred_boxes_cat)
         cluster_indices = torch.zeros(len(ious)).int()  # gt assignments of preds
@@ -51,21 +60,26 @@ class BoxFusion(BaseModule):
             cur_cluster_id += 1
         clusters = []
         scores = []
+        labels = []
         for j in range(1, cur_cluster_id):
             clusters.append(pred_boxes_cat[cluster_indices == j])
             scores.append(pred_scores_cat[cluster_indices == j])
+            labels.append(pred_labels_cat[cluster_indices == j])
 
-        return clusters, scores
+        return clusters, scores, labels
 
     @torch.no_grad()
-    def cluster_fusion(self, clusters, scores):
+    def cluster_fusion(self, clusters, scores, labels):
         """
         Merge boxes in each cluster with scores as weights for merging
         """
-        for i, (c, s) in enumerate(zip(clusters, scores)):
+        for i, (c, s, l) in enumerate(zip(clusters, scores, labels)):
             assert len(c) == len(s)
             if len(c) == 1:
+                labels[i] = l[0]
                 continue
+            uniq_lbls, cnt = l.mode(keepdim=True)
+            labels[i] = uniq_lbls[cnt.argmax()]
             # reverse direction for non-dominant direction of boxes
             dirs = c[:, -1]
             max_score_idx = torch.argmax(s)
@@ -95,6 +109,6 @@ class BoxFusion(BaseModule):
             s_fused = torch.tensor([min(s_fused, 1.0)], device=s.device)
             scores[i] = s_fused
 
-        return torch.cat(clusters, dim=0), torch.cat(scores)
+        return torch.cat(clusters, dim=0), torch.cat(scores), torch.stack(labels)
 
 

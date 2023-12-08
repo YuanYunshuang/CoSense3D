@@ -88,7 +88,7 @@ def save_json(data, filename):
         json.dump(data, fh, indent=3)
 
 
-def load_yaml(filename):
+def load_yaml(filename, cloader=False):
     """
     Load yaml file into dictionary.
 
@@ -103,24 +103,31 @@ def load_yaml(filename):
         A dictionary that contains defined parameters.
     """
     with open(filename, 'r') as stream:
-        loader = yaml.Loader
-        loader.add_implicit_resolver(
-            u'tag:yaml.org,2002:float',
-            re.compile(u'''^(?:
-             [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
-            |[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
-            |\\.[0-9_]+(?:[eE][-+][0-9]+)?
-            |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
-            |[-+]?\\.(?:inf|Inf|INF)
-            |\\.(?:nan|NaN|NAN))$''', re.X),
-            list(u'-+0123456789.'))
+        if cloader:
+            loader = yaml.CLoader
+        else:
+            loader = yaml.Loader
+            loader.add_implicit_resolver(
+                u'tag:yaml.org,2002:float',
+                re.compile(u'''^(?:
+                 [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*(?:[eE][-+]?[0-9]+)?
+                |[-+]?(?:[0-9][0-9_]*)(?:[eE][-+]?[0-9]+)
+                |\\.[0-9_]+(?:[eE][-+][0-9]+)?
+                |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
+                |[-+]?\\.(?:inf|Inf|INF)
+                |\\.(?:nan|NaN|NAN))$''', re.X),
+                list(u'-+0123456789.'))
         params = yaml.load(stream, Loader=loader)
     return params
 
 
-def save_yaml(data, filename):
+def save_yaml(data, filename, cdumper=False):
     with open(filename, 'w') as fid:
-        yaml.dump(data, fid, default_flow_style=False)
+        if cdumper:
+            yaml.dump(data, fid, Dumper=yaml.CDumper,
+                      default_flow_style=False)
+        else:
+            yaml.dump(data, fid, default_flow_style=False)
 
 
 def ensure_dir(path):

@@ -5,11 +5,14 @@ class TaskManager:
         pass
 
     def summarize_tasks(self, tasks):
-        tasks_out = {0: {'no_grad': [], 'with_grad': []}, 1: {'with_grad': []}, 2: {'loss': []}}
+        tasks_out = {0: {'no_grad': [], 'with_grad': []},
+                     1: {'no_grad': [], 'with_grad': []},
+                     2: {'loss': []}}
         no_grad0, no_grad1, _ = self.reformat_tasks(tasks['no_grad'])
         with_grad0, with_grad1, _ = self.reformat_tasks(tasks['with_grad'])
         tasks_out[0]['no_grad'] = no_grad0
         tasks_out[0]['with_grad'] = with_grad0
+        tasks_out[1]['no_grad'] = no_grad1
         tasks_out[1]['with_grad'] = with_grad1
         tasks_out[2]['loss'] = self.reformat_tasks(tasks['loss'])[2]
         return tasks_out

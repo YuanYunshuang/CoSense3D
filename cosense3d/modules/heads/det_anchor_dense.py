@@ -16,6 +16,7 @@ class DetAnchorDense(BaseModule):
                  num_classes=1,
                  target_assigner=None,
                  get_boxes_when_training=False,
+                 box_stamper=None,
                  **kwargs):
         super(DetAnchorDense, self).__init__(**kwargs)
         assert num_classes == 1, 'currently only support binary classification.'
@@ -28,6 +29,8 @@ class DetAnchorDense(BaseModule):
         self.reg_head = nn.Conv2d(in_channels, self.code_size * self.num_anchors, kernel_size=1)
         self.loss_cls = build_loss(**loss_cls)
         self.loss_box = build_loss(**loss_box)
+        if box_stamper is not None:
+            self.box_stamper = plugin.build_plugin_module(box_stamper)
 
     def init_weights(self):
         # follow the official DETR to init parameters
@@ -36,7 +39,7 @@ class DetAnchorDense(BaseModule):
                 nn.utils.init.xavier_uniform_(m)
         self._is_init = True
 
-    def forward(self, bev_feat_list, **kwargs):
+    def forward(self, bev_feat_list, points=None, **kwargs):
         bev_feat = torch.stack(bev_feat_list, dim=0)
         cls = self.cls_head(bev_feat)
         reg = self.reg_head(bev_feat)
@@ -44,7 +47,11 @@ class DetAnchorDense(BaseModule):
         out = {'cls': cls, 'reg': reg}
 
         if self.get_boxes_when_training or not self.training:
-            out['preds'] = self.predictions(out)
+            preds = self.predictions(out)
+            if hasattr(self, 'box_stamper'):
+                assert points is not None
+                preds = self.box_stamper(preds, points)
+            out['preds'] = preds
 
         return self.format_output(out, len(bev_feat))
 

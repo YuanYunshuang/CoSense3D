@@ -9,12 +9,12 @@ data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
 
 pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
     LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
 )
 
 inference_pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
 )
 
 data_manager = dict(
@@ -64,10 +64,11 @@ shared_modules = OrderedDict(
 
     detection_head = dict(
         type='heads.det_anchor_dense.DetAnchorDense',
-        gather_keys=['bev_feat'],
+        gather_keys=['bev_feat', 'points'],
         scatter_keys=['detection'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
         in_channels=768,
+        box_stamper=dict(type='box_stamper.BoxTimeStamper'),
         target_assigner=dict(
             type='target_assigners.BoxAnchorAssigner',
             box_size=[3.9, 1.6, 1.56],
@@ -87,7 +88,7 @@ shared_modules = OrderedDict(
 
     fusion = dict(
         type='fusion.box_fusion.BoxFusion',
-        gather_keys=['detection'],
+        gather_keys=['detection', 'received_response'],
         scatter_keys=['detection'],
         lidar_range=point_cloud_range
     )
@@ -109,6 +110,6 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='DenseDetectionCanvas', width=10, height=4, nrows=1, ncols=1,
+    dict(title='DetectionCanvas', width=10, height=4, nrows=1, ncols=1,
          data_keys=['detection', 'global_labels'])
 ]
