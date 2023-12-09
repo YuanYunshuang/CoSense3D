@@ -43,7 +43,7 @@ CONTROLLER:
   data_manager: 'pycfg.data_pipeline_lidar.data_manager'
   shared_modules: 'pycfg.fcooper.shared_modules'
   cav_manager:
-    prototype: fcooper_cav.FCooperCAV
+    prototype: lidardet_cav.LidarDetCAV
     memory_len: *seq_len
     all_grad: true
 

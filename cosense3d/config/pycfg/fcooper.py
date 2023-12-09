@@ -48,7 +48,7 @@ shared_modules = OrderedDict(
     ),
 
     fusion = dict(
-        type='fusion.dense_bev_fusion.BEVMaxoutFusion',
+        type='fusion.maxout_fusion.BEVMaxoutFusion',
         gather_keys=['bev_feat', 'received_response'],
         scatter_keys=['bev_feat_fused'],
     ),
