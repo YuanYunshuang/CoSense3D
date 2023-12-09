@@ -8,7 +8,7 @@ class BEVMaxoutFusion(BaseModule):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def forward(self, ego_feats, coop_feats):
+    def forward(self, ego_feats, coop_feats, **kwargs):
         out_feat = []
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             feat = [ego_feat]
