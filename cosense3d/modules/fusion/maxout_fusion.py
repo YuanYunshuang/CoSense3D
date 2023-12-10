@@ -13,7 +13,7 @@ class BEVMaxoutFusion(BaseModule):
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             feat = [ego_feat]
             for cpfeat in coop_feat.values():
-                if 'pts_feat' not in cpfeat:
+                if 'bev_feat' not in cpfeat:
                     continue
                 feat.append(cpfeat['bev_feat'])
             feat = torch.stack(feat, dim=0).max(dim=0).values

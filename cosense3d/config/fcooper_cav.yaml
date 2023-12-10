@@ -5,8 +5,8 @@ DATASET:
   data_path: /koko/OPV2V
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
-    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 1]
+    voxel_size:  &voxel_size [0.4, 0.4, 6]
   batch_size_train: 2
   batch_size_test: 1
   n_workers: 4

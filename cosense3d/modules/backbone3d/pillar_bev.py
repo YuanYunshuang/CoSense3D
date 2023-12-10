@@ -134,15 +134,18 @@ class PillarBEV(BaseModule):
         return out_dict
 
     def to_dense_bev(self, coor, feat, N):
-        bev_feat = torch.zeros(N, self.grid_size[1],
+        bev_feat = torch.zeros(N,
+                               self.grid_size[2],
+                               self.grid_size[1],
                                self.grid_size[0],
                                feat.shape[-1],
                                dtype=feat.dtype,
                                device=feat.device)
         coor = coor.long()
-        bev_feat[coor[:, 0], coor[:, 1], coor[:, 2]] = feat
-
-        return bev_feat.permute(0, 3, 1, 2)
+        bev_feat[coor[:, 0], coor[:, 1], coor[:, 2], coor[:, 3]] = feat
+        bev_feat = bev_feat.permute(0, 4, 1, 2, 3)
+        assert bev_feat.shape[2] == 1
+        return bev_feat.squeeze(dim=2)
 
 
 

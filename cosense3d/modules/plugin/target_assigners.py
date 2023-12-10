@@ -495,7 +495,9 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         rs = torch.deg2rad(torch.tensor(dirs)).reshape(
             1, 1, -1, 1).repeat(h, w, 1, 1)
         # (w, h, num_anchor, 7) --> (whn, 7)
-        anchors = torch.cat([xys, zs, lwh, rs], dim=-1).view(-1, 7)
+        anchors = torch.cat([xys, zs, lwh, rs], dim=-1)
+        self.anchor_shape = anchors.shape
+        anchors = anchors.view(-1, 7)
         standup_anchors = boxes3d_to_standup_bboxes(anchors)
         return anchors, standup_anchors
 

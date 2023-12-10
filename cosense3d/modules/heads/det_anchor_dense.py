@@ -41,6 +41,7 @@ class DetAnchorDense(BaseModule):
 
     def forward(self, bev_feat_list, points=None, **kwargs):
         bev_feat = torch.stack(bev_feat_list, dim=0)
+
         cls = self.cls_head(bev_feat)
         reg = self.reg_head(bev_feat)
 
