@@ -20,7 +20,7 @@ class FpvrcnnCAV(BaseCAV):
         return cpm
 
     def forward_local(self, tasks, training_mode):
-        if (self.is_ego or self.all_grad) and training_mode:
+        if (self.is_ego or self.require_grad) and training_mode:
             tasks['with_grad'].append((self.id, '01:pts_backbone', {}))
             tasks['with_grad'].append((self.id, '02:detection_head_local', {}))
             tasks['with_grad'].append((self.id, '03:keypoint_composer', {}))

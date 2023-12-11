@@ -3,10 +3,11 @@ import torch
 from cosense3d.agents.cav_prototype import get_prototype
 
 class CAVManager:
-    def __init__(self, lidar_range, prototype=None, memory_len=1, all_grad=False, **kwargs):
+    def __init__(self, lidar_range, prototype=None, memory_len=1, all_grad=False, num_grad_cav=1, **kwargs):
         self.lidar_range = torch.tensor(lidar_range)
         self.memory_len = memory_len
         self.all_grad = all_grad
+        self.num_grad_cav = num_grad_cav
         self.kwargs = kwargs
         self.cavs = []
         self.cav_dict = {}
@@ -30,13 +31,14 @@ class CAVManager:
             batch_cavs = []
             for i, cav_id in enumerate(valid_agent_ids[b]):
                 is_ego = True if i==0 else False  # assume the first car is ego car
+                require_grad = True if (i < self.num_grad_cav or self.all_grad) else False
                 # pad id with batch idx to avoid duplicated ids across different batches
                 cav_id = f'{b}.{cav_id}'
                 cav = self.get_cav_with_id(cav_id)
                 if not cav:
                     cav = self.prototype(cav_id, i, is_ego, lidar_poses[b][i],
                                          self.lidar_range, self.memory_len,
-                                         all_grad=self.all_grad, **self.kwargs)
+                                         require_grad=require_grad, **self.kwargs)
                 else:
                     cav.update(lidar_poses[b][i])
                 batch_cavs.append(cav)

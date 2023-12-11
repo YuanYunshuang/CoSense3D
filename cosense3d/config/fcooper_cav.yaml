@@ -46,7 +46,7 @@ CONTROLLER:
   cav_manager:
     prototype: lidardet_cav.LidarDetCAV
     memory_len: *seq_len
-    all_grad: false
+    num_grad_cav: 2
 
 VISUALIZATION:
   output_viewer:

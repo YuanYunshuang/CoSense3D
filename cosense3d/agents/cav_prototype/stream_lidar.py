@@ -41,7 +41,7 @@ class StreamLidarCAV(BaseCAV):
         return cpm
 
     def forward_local(self, tasks, training_mode):
-        if (self.is_ego or self.all_grad) and training_mode:
+        if (self.is_ego or self.require_grad) and training_mode:
             grad_mode = 'with_grad'
         else:
             grad_mode = 'no_grad'
