@@ -20,7 +20,7 @@ TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
   log_every: 10
-  max_epoch: 50
+  max_epoch: 60
   gpus: 1
   resume: true
   hooks: 'pycfg.fcooper.train_hooks'
@@ -28,8 +28,6 @@ TRAIN:
     lr: 0.001
     weight_decay: 1e-2
     betas: [0.95, 0.999]
-    milestones: [25, 40]
-    gamma: 0.1
   lr_scheduler:
     policy: 'MultiStepLR'
     milestones: [10, 20]
@@ -47,6 +45,7 @@ CONTROLLER:
     prototype: lidardet_cav.LidarDetCAV
     memory_len: *seq_len
     num_grad_cav: 2
+    all_grad: false
 
 VISUALIZATION:
   output_viewer:

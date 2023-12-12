@@ -241,7 +241,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
     order = 'lwh'
     time_offsets = load_json(os.path.join(data_out_dir, 'time_offsets.json'))
     split_dir = os.path.join(data_dir, split)
-    scenes = sorted(os.listdir(split_dir))
+    scenes = sorted(os.listdir(split_dir))[:2]
     with open(os.path.join(meta_out_dir, f'{split}.txt'), 'w') as fh:
         fh.write('\n'.join(scenes))
     for s in scenes:
@@ -284,7 +284,7 @@ def opv2vt_to_cosense(data_dir, split, data_out_dir, meta_out_dir):
                 data, local_boxes, num_pts = read_frame_plys_boxes(os.path.join(scene_dir, cav_id), f,
                                        prev_frame=frames[i], time_offset=time_offsets[s][cav_id])
                 velos = get_velos(local_boxes, speeds, f)
-                save_cosense_ply(data, os.path.join(cur_data_out_dir, f'{f}.ply'))
+                # save_cosense_ply(data, os.path.join(cur_data_out_dir, f'{f}.ply'))
 
                 objects_dict = params.get('vehicles', {})
                 output_dict = {}
@@ -522,17 +522,17 @@ if __name__=="__main__":
     # gen_time_offsets("/media/yuan/luna/data/OPV2Vt")
     # parse_speed_from_yamls("/home/data/OPV2V/temporal_dump/train/2021_08_16_22_26_54")
     opv2vt_to_cosense(
-        "/home/data/OPV2V/temporal_dump",
+        "/media/yuan/luna/data/OPV2Vt/temporal_dump",
         "train",
-        "/home/data/OPV2V/temporal",
-        "/home/data/cosense3d/opv2v_temporal"
+        "/koko/OPV2V/temporal",
+        "/koko/cosense3d/opv2v_temporal"
     )
-    opv2vt_to_cosense(
-        "/home/data/OPV2V/temporal_dump",
-        "test",
-        "/home/data/OPV2V/temporal",
-        "/home/data/cosense3d/opv2v_temporal"
-    )
+    # opv2vt_to_cosense(
+    #     "/home/data/OPV2V/temporal_dump",
+    #     "test",
+    #     "/home/data/OPV2V/temporal",
+    #     "/home/data/cosense3d/opv2v_temporal"
+    # )
     # vis_frame_data()
     # vis_cosense_scenario(
     #     "/home/data/cosense3d/opv2v_temporal/2021_08_16_22_26_54.json",

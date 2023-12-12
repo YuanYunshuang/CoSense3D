@@ -44,7 +44,7 @@ CONTROLLER:
   cav_manager:
     prototype: sp3d_cav.Sp3DCAV
     memory_len: *seq_len
-    all_grad: false
+    all_grad: true
 
 VISUALIZATION:
   output_viewer:

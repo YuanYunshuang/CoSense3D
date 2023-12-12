@@ -82,8 +82,9 @@ class LidarDetCAVLateFusion(BaseCAV):
             tasks['loss'].append((self.id, '22:detection_head', {}))
         return tasks
 
-    def reset_data(self):
-        del self.data
-        self.data = {}
+    def post_update_memory(self):
+        detection = self.data['detection']
+        if 'memory' not in self.data:
+            self.data['memory'] = {}
 
 
