@@ -19,7 +19,7 @@ class ImgViewer(FigureCanvasQTAgg):
         self.mean = np.array(mean) if mean is not None else None
         self.std = np.array(std) if std is not None else None
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if len(data['img']) == 0:
             return
         self.fig.clear()

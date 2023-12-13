@@ -42,7 +42,7 @@ class ImgCobevtCAV(BaseCAV):
             tasks['no_grad'].append((self.id, '01:img_backbone', {}))
             tasks['no_grad'].append((self.id, '02:img2bev', {}))
         if not self.is_ego:
-            tasks['no_grad'].append((self.id, '03:spatial_transform', {}))
+            tasks['with_grad'].append((self.id, '03:spatial_transform', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
@@ -51,7 +51,7 @@ class ImgCobevtCAV(BaseCAV):
 
     def forward_head(self, tasks, training_mode):
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '11:bev_head', {}))
+            tasks['with_grad'].append((self.id, '12:bev_head', {}))
         return tasks
 
     def loss(self, tasks):

@@ -41,7 +41,7 @@ class FpvrcnnCAV(BaseCAV):
 
     def loss(self, tasks):
         if self.is_ego:
-            tasks['loss'].append((self.id, '22:detection_head_local', {}))
+            tasks['loss'].append((self.id, '21:detection_head_local', {}))
             tasks['loss'].append((self.id, '22:detection_head_global', {}))
         return tasks
 

@@ -10,7 +10,7 @@ out_stride = 2
 
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
-    LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
+    LoadAnnotations=dict(load3d_global=True, load3d_local=True, load_global_time=True, min_num_pts=3),
 )
 
 inference_pipeline_cpu = OrderedDict(
@@ -65,7 +65,7 @@ shared_modules = OrderedDict(
     detection_head = dict(
         type='heads.det_anchor_dense.DetAnchorDense',
         gather_keys=['bev_feat', 'points'],
-        scatter_keys=['detection'],
+        scatter_keys=['detection_local'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
         in_channels=768,
         box_stamper=dict(type='box_stamper.BoxTimeStamper'),
@@ -88,7 +88,7 @@ shared_modules = OrderedDict(
 
     fusion = dict(
         type='fusion.box_fusion.BoxFusion',
-        gather_keys=['detection', 'received_response'],
+        gather_keys=['detection_local', 'received_response', 'memory', 'global_time'],
         scatter_keys=['detection'],
         lidar_range=point_cloud_range
     )
@@ -103,8 +103,8 @@ train_hooks = [
 
 
 test_hooks = [
-        # dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection_local'),
-        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection'),
+        dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection_local'),
+        # dict(type="DetectionNMSHook", nms_thr=0.15, pre_max_size=500, det_key='detection'),
         dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test,
              metrics=['OPV2V', 'CoSense3D'], det_key='detection', gt_key='global_bboxes_3d'),
     ]

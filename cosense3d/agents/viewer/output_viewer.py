@@ -34,7 +34,7 @@ class BEVSparseCanvas(MplCanvas):
         self.pred_key = self.data_keys[0]
         # self.gt_key = self.data_keys[1]
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if 'bev' not in data:
             return
         for cav_id, data_dict in data['bev'].items():
@@ -61,7 +61,7 @@ class BEVDenseCanvas(MplCanvas):
         self.pred_key = self.data_keys[0]
         self.gt_key = self.data_keys[1]
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if self.pred_key not in data and self.gt_key not in data:
             return
         gt_bev = data.get(self.gt_key, False)
@@ -84,7 +84,7 @@ class SparseDetectionCanvas(MplCanvas):
         self.pred_key = self.data_keys[0]
         self.gt_key = self.data_keys[1]
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if self.pred_key not in data:
             return
         for cav_id, det_dict in data[self.pred_key].items():
@@ -129,7 +129,7 @@ class DetectionCanvas(MplCanvas):
         self.pred_key = self.data_keys[0]
         self.gt_key = self.data_keys[1]
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if self.pred_key not in data:
             return
         for cav_id, det_dict in data[self.pred_key].items():
@@ -180,7 +180,7 @@ class OutputViewer(QtWidgets.QWidget):
             self.gather_data_keys = self.gather_data_keys + plot.data_keys
         self.gather_data_keys = list(set(self.gather_data_keys))
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         for plot in self.plots:
             plot.refresh(data)
 

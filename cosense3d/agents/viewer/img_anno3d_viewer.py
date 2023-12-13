@@ -17,7 +17,7 @@ class ImgAnno3DViewer(FigureCanvasQTAgg):
         self.fig = Figure(dpi=dpi)
         super(ImgAnno3DViewer, self).__init__(self.fig)
 
-    def refresh(self, data):
+    def refresh(self, data, **kwargs):
         if len(data['img']) == 0:
             return
         self.fig.clear()

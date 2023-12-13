@@ -49,6 +49,7 @@ class LidarDetCAVLateFusion(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
+        self.data['memory'] = {}
 
     def prepare_data(self):
         self.apply_transform()
@@ -56,7 +57,7 @@ class LidarDetCAVLateFusion(BaseCAV):
 
     def get_response_cpm(self):
         cpm = {}
-        for k in ['detection']:
+        for k in ['detection_local']:
             if k in self.data:
                 cpm[k] = self.data[k]
         return cpm
@@ -83,8 +84,7 @@ class LidarDetCAVLateFusion(BaseCAV):
         return tasks
 
     def post_update_memory(self):
-        detection = self.data['detection']
-        if 'memory' not in self.data:
-            self.data['memory'] = {}
+        if self.is_ego:
+            self.data['memory'] = {'preds': self.data['detection']['preds']}
 
 

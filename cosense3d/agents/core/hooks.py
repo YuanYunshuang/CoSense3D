@@ -256,8 +256,10 @@ class EvalDetectionHook(BaseHook):
         gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_key)
 
         for i, (cav_id, preds) in enumerate(detection.items()):
-            preds['box'], preds['scr'], preds['lbl'], preds['idx'] = \
-            self.filter_box_ranges(preds['box'], preds['scr'], preds['lbl'], preds['idx'])
+            if 'preds' in preds:
+                preds = preds['preds']
+            preds['box'], preds['scr'], preds['lbl'], preds['idx'], preds['time'] = \
+            self.filter_box_ranges(preds['box'], preds['scr'], preds['lbl'], preds['idx'], preds.get('time', None))
             cur_gt_boxes = self.filter_box_ranges(gt_boxes[cav_id])[0]
             cur_points = runner.controller.data_manager.gather_batch(i, 'points')
 
@@ -286,7 +288,7 @@ class EvalDetectionHook(BaseHook):
                     result_dict[iou]['gt'] += len(cur_gt_boxes)
                     result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
 
-    def filter_box_ranges(self, boxes, scores=None, labels=None, indices=None):
+    def filter_box_ranges(self, boxes, scores=None, labels=None, indices=None, times=None):
         mask = boxes.new_ones((len(boxes),)).bool()
         if boxes.ndim == 3:
             centers = boxes.mean(dim=1)
@@ -301,7 +303,9 @@ class EvalDetectionHook(BaseHook):
             labels = labels[mask]
         if indices is not None:
             indices = indices[mask]
-        return boxes, scores, labels, indices
+        if times is not None:
+            times = times[mask]
+        return boxes, scores, labels, indices, times
 
     def post_epoch(self, runner, **kwargs):
         fmt_str = ("################\n"

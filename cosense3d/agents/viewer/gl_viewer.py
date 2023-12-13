@@ -100,7 +100,7 @@ class GLViewer(gl.GLViewWidget):
         # # add the axes to the view
         # self.addItem(self.axes)
 
-    def updatePCDs(self, pcds, *args):
+    def updatePCDs(self, pcds, color_mode='united', **kwargs):
         self.pcds = pcds
         for lidar_id, pcd in pcds.items():
             item = gl.GLScatterPlotItem(
@@ -113,7 +113,7 @@ class GLViewer(gl.GLViewWidget):
             self.pcd_items[lidar_id] = item
             self.addItem(item)
 
-    def updateLabel(self, local_labels, global_labels, pred_labels, predecessor=None):
+    def updateLabel(self, local_labels, global_labels, local_pred, global_pred, predecessor=None):
         self.boxes = []
         if local_labels is not None:
             for agent_id, labels in local_labels.items():
@@ -131,8 +131,17 @@ class GLViewer(gl.GLViewWidget):
                                    status='gt', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
-        if pred_labels is not None:
-            for id, label in pred_labels.items():
+        if local_pred is not None:
+            for agent_id, labels in local_pred.items():
+                self.local_boxes[agent_id] = []
+                for id, label in labels.items():
+                    item = LineBoxItem(box=[id, ] + label, last_pose=None,
+                                       status='pred', line_width=2)
+                    item.setVisible(self.visibility.get(f'{agent_id}.0', True))
+                    self.local_boxes[agent_id].append(item)
+                    self.addItem(item)
+        if global_pred is not None:
+            for id, label in global_pred.items():
                 item = LineBoxItem(box=[id, ] + label, last_pose=None,
                                    status='pred', line_width=2)
                 self.boxes.append(item)
@@ -141,40 +150,49 @@ class GLViewer(gl.GLViewWidget):
     def updateFrameData(self, pcds,
                         local_label=None,
                         global_label=None,
-                        pred_label=None,
-                        predecessor=None):
+                        local_pred=None,
+                        global_pred=None,
+                        predecessor=None,
+                        pcd_color='united'):
         self.clear()
         self.draw_axes()
         self.updatePCDs(pcds)
         self.updateLabel(local_label,
                          global_label,
-                         pred_label,
+                         local_pred,
+                         global_pred,
                          predecessor)
         self.update()
 
-    def refresh(self, data_dict):
+    def refresh(self, data_dict, visible_keys=['global_gt'], color_mode='united', **kwargs):
         pcds = data_dict.get('points', {})
-        global_labels = data_dict.get('global_labels', {})
-        local_labels = data_dict.get('local_labels', {})
-        if pcds is None or global_labels is {} or local_labels is None:
+        local_labels, global_labels, local_pred, global_pred = None, None, None, None
+        if 'global_gt' in visible_keys:
+            global_labels = data_dict.get('global_labels', {})
+            ego_id = list(global_labels.keys())[0]
+            global_labels = global_labels[ego_id]
+        if 'local_gt' in visible_keys:
+            local_labels = data_dict.get('local_labels', {})
+            ego_id = list(local_labels.keys())[0]
+        if pcds is None and global_labels is {} and local_labels is None:
             return
-        labels = local_labels if global_labels is {} else global_labels
-        ego_id = list(labels.keys())[0]
-        k = False
-        pred_label = None
-        if 'detection' in data_dict:
-            k = 'detection'
-        elif 'detection_global' in data_dict:
-            k = 'detection_global'
-        elif 'detection_local' in data_dict:
-            k = 'detection_local'
 
-        if k and ego_id in data_dict[k]:
-            # pred_label = {k: v['labels'] for k, v in data_dict[k].items()}
-            pred_label = data_dict[k][ego_id]['labels']
+        if 'local_pred' in visible_keys:
+            if 'detection_local' in data_dict:
+                local_pred = {k: v['labels'] for k, v in data_dict['detection_local'].items()}
+        if 'global_pred' in visible_keys:
+            if 'detection' in data_dict:
+                global_pred = data_dict.get('detection', {})
+            else:
+                global_pred = data_dict.get('detection_global', {})
+            global_pred = global_pred.get(ego_id, {'labels': {}})['labels']
+
         self.updateFrameData(pcds,
-                             pred_label=pred_label,
-                             global_label=labels[ego_id])
+                             local_label=local_labels,
+                             global_label=global_labels,
+                             local_pred=local_pred,
+                             global_pred=global_pred,
+                             pcd_color=color_mode)
 
     def addBox(self):
         if self.rectangle is not None:

@@ -12,7 +12,7 @@ DATASET:
   n_workers: 4
 
   max_num_cavs: 7
-  seq_len: &seq_len 2
+  seq_len: &seq_len 1
   train_pipeline: 'pycfg.voxelnet_late_fusion.pipeline_cpu'
   test_pipeline: 'pycfg.voxelnet_late_fusion.pipeline_cpu'
 

@@ -153,6 +153,13 @@ class DataManager:
             data[cavs[0].id] = d
         return data
 
+    def gather_cav_data(self, key):
+        data = {}
+        for cavs in self.cav_manager.cavs:
+            for cav in cavs:
+                data[cav.id] = cav.data[key]
+        return data
+
     def boxes_to_vis_format(self, boxes, labels):
         boxes_vis = {}
         gt_labels = labels.tolist()
@@ -175,13 +182,20 @@ class DataManager:
                 ref_coor = k.split('_')[0]
                 gather_dict[f'{ref_coor}_labels'] = (
                     self.get_gt_boxes_as_vis_format(batch_idx, ref_coor))
-            elif 'detection' in k:
+            elif k == 'detection' or k == 'detection_global':
                 detection = self.gather_ego_data(k)
                 for cav_id, det in detection.items():
                     if 'preds' in det:
                         det = det['preds'] # todo: without nms hook, keywork preds is not removed
                     detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
-                gather_dict[k] = detection
+                gather_dict['detection'] = detection
+            elif k == 'detection_local':
+                detection = self.gather_cav_data(k)
+                for cav_id, det in detection.items():
+                    if 'preds' in det:
+                        det = det['preds']
+                    detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+                gather_dict['detection_local'] = detection
             else:
                 gather_dict[k] = self.gather_batch(batch_idx, k, True)
         return gather_dict

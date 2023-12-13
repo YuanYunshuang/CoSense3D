@@ -1,3 +1,4 @@
+import functools
 import os
 import time
 
@@ -21,7 +22,9 @@ class GUI(QtWidgets.QMainWindow):
         self.data_keys = [
             'scenario', 'frame',
             'points', 'img', 'bboxes2d', 'lidar2img',
-            'global_labels', 'local_labels']
+            'global_labels', 'local_labels',
+            'detection', 'detection_local'
+        ]
         self.setupUI(cfg)
         self.setWindowTitle("Cosense3D")
 
@@ -33,6 +36,11 @@ class GUI(QtWidgets.QMainWindow):
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.step)
         self.data = None
+        self.local_gt_visible = False
+        self.global_gt_visible = True
+        self.local_pred_visible = False
+        self.global_pred_visible = True
+        self.colo_mode = 'united'
 
     def setupUI(self, cfg):
         self.tabs = QtWidgets.QTabWidget()
@@ -62,8 +70,9 @@ class GUI(QtWidgets.QMainWindow):
 
     def get_toolbar(self):
         self.toolbar = self.addToolBar("Toolbar")
-        self.infos = ['scene', 'frame']
+        self.infos = ['scene', 'frame', 'PCDcolor']
         self.tools = ['start', 'stop', 'step']
+        self.visible_objects = ['local_pred', 'global_pred', 'local_gt', 'global_gt']
         # add label combo pairs
         for name in self.infos:
             qlabel = QtWidgets.QLabel(f' {name[0].upper()}{name[1:]}:')
@@ -71,13 +80,16 @@ class GUI(QtWidgets.QMainWindow):
             qlabel.setMinimumWidth(w1 + 25)
             qlabel.setMaximumWidth(w1 + 50)
             qcombo = QtWidgets.QComboBox()
-            qcombo.addItem('---------')
             w2 = qcombo.sizeHint().width()
             qcombo.setMinimumWidth(w2 + 25)
             qcombo.setMaximumWidth(w2 + 50)
-            # if not name=='type':
-            #     css_file = f"{self.css_dir}/combobox.css"
-            #     qcombo.setStyleSheet(open(css_file, "r").read())
+            if name=='PCDcolor':
+                qcombo.addItem('united')
+                qcombo.addItem('height')
+                qcombo.addItem('cav')
+                qcombo.addItem('time')
+            else:
+                qcombo.addItem('---------')
             setattr(self, f'label_{name}', qlabel)
             setattr(self, f'combo_{name}', qcombo)
             setattr(self, f'cur_{name}', None)
@@ -95,11 +107,40 @@ class GUI(QtWidgets.QMainWindow):
             setattr(self, f'button_{name}', qbutton)
             self.toolbar.addWidget(getattr(self, f'button_{name}'))
 
+        for name in self.visible_objects:
+            bname = f'{name[0].upper()}{name[1:]}'
+            qbutton = QtWidgets.QPushButton()
+            qbutton.setText(bname)
+            w = qbutton.sizeHint().width() + 1
+            qbutton.setMaximumWidth(w)
+            setattr(self, f'button_{name}', qbutton)
+            self.toolbar.addWidget(getattr(self, f'button_{name}'))
+
+    def change_visible(self, name):
+        button = getattr(self, f'button_{name}')
+        current_color = button.palette().button().color()
+        if current_color != QtGui.QColor('lightblue'):
+            button.setStyleSheet("background-color: lightblue")
+            setattr(self, f"{name}_visible", True)
+        else:
+            button.setStyleSheet("background-color: #efefef")
+            setattr(self, f"{name}_visible", False)
+        self.refresh()
+
+    def change_color_mode(self):
+        self.colo_mode = self.combo_PCDcolor.currentText()
+
     def connect_events_to_funcs(self):
+        self.combo_PCDcolor.currentIndexChanged.connect(self.change_visible)
         self.button_step.clicked.connect(self.step)
         self.button_start.clicked.connect(self.start)
         self.button_stop.clicked.connect(self.stop)
         self.tabs.currentChanged.connect(self.refresh)
+        for name in self.visible_objects:
+            if getattr(self, f"{name.lower()}_visible"):
+                self.change_visible(name)
+            getattr(self, f'button_{name}').clicked.connect(
+                functools.partial(self.change_visible, name=name))
 
     def step(self):
         self.runner.step()
@@ -110,7 +151,8 @@ class GUI(QtWidgets.QMainWindow):
 
     def refresh(self):
         if self.data is not None:
-            self.tabs.currentWidget().refresh(self.data)
+            visible_keys = [k for k in self.visible_objects if getattr(self, f"{k.lower()}_visible")]
+            self.tabs.currentWidget().refresh(self.data, visible_keys=visible_keys, color_mode=self.colo_mode)
             scene = list(self.data['scenario'].values())[0]
             frame = list(self.data['frame'].values())[0]
             # todo adapt scenario and frame selection

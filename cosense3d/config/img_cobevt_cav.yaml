@@ -8,7 +8,7 @@ DATASET:
     lidar_range: [-50, -50, -3, 50, 50, 1]
     voxel_size: &voxel_size [ 0.4, 0.4]
   drop_scenarios: ['2021_09_09_13_20_58']
-  batch_size_train: 2
+  batch_size_train: 1
   n_workers: 4
 
   max_num_cavs: 5
@@ -27,6 +27,7 @@ TRAIN:
   optimizer:
     lr: 2e-4
     weight_decay: 1e-2
+    betas: [0.95, 0.999]
     eps: 1e-10
   lr_scheduler:
     policy: 'CosineAnnealingWarm'
@@ -46,7 +47,7 @@ CONTROLLER:
   cav_manager:
     prototype: img_cobevt_cav.ImgCobevtCAV
     memory_len: *seq_len
-    all_grad: false
+    all_grad: true
 
 VISUALIZATION:
   img_viewer:
