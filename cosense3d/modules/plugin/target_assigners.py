@@ -663,6 +663,7 @@ class BoxSparseAnchorAssigner(BaseAssigner, torch.nn.Module):
         reg_tgt Tensor(N, num_anchors, code_size): box regression targets
         dir_score Tensor(N, num_anchors, 4) or None: direction score target
         """
+        gt_boxes = gt_boxes[:, :7]
         if len(gt_boxes) == 0:
             labels = gt_boxes.new_full((coors.shape[0] * self.num_anchors,), -1)
             reg_tgt = gt_boxes.new_zeros((0, self.box_coder.code_size))

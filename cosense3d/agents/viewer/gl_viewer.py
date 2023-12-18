@@ -12,6 +12,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 import pyqtgraph as pg
 from PyQt5.QtGui import QPen, QBrush, QColor
 import pyqtgraph.opengl as gl
+from matplotlib import colormaps
 from OpenGL.GL import *
 from OpenGL import GLU
 from cosense3d.agents.viewer.utils import depth_min
@@ -19,6 +20,7 @@ from cosense3d.agents.viewer.items.graph_items import LineBoxItem
 
 SIZE_OF_FLOAT = ctypes.sizeof(ctypes.c_float)
 TRANSLATION_FACTOR = 0.03
+jet = colormaps['jet']
 
 
 # Main widget for presenting the point cloud and bounding boxes
@@ -103,8 +105,22 @@ class GLViewer(gl.GLViewWidget):
     def updatePCDs(self, pcds, color_mode='united', **kwargs):
         self.pcds = pcds
         for lidar_id, pcd in pcds.items():
+            if color_mode == 'united':
+                colors = [[1.0, 1.0, 1.0, 0.5]]
+            elif color_mode == 'height':
+                height_norm = (pcd[:, 2] - pcd[:, 2].min()) / (pcd[:, 2].max() - pcd[:, 2].min())
+                colors = jet(height_norm)
+            elif color_mode == 'cav':
+                colors = np.random.random(4)
+                colors[-1] = 0.5
+                colors = colors.reshape(1, 4).repeat(len(pcd), 0)
+            elif color_mode == 'time':
+                time_norm = (pcd[:, -1] - pcd[:, -1].min()) / (pcd[:, -1].max() - pcd[:, -1].min())
+                colors = jet(time_norm)
+            else:
+                raise NotImplementedError
             item = gl.GLScatterPlotItem(
-                pos=pcd[:, :3], size=1, glOptions='opaque'
+                pos=pcd[:, :3], size=1, glOptions='opaque', color=colors
             )
             if lidar_id in self.visibility:
                 item.setVisible(self.visibility[lidar_id])
@@ -156,7 +172,7 @@ class GLViewer(gl.GLViewWidget):
                         pcd_color='united'):
         self.clear()
         self.draw_axes()
-        self.updatePCDs(pcds)
+        self.updatePCDs(pcds, color_mode=pcd_color)
         self.updateLabel(local_label,
                          global_label,
                          local_pred,

@@ -131,7 +131,7 @@ class GUI(QtWidgets.QMainWindow):
         self.colo_mode = self.combo_PCDcolor.currentText()
 
     def connect_events_to_funcs(self):
-        self.combo_PCDcolor.currentIndexChanged.connect(self.change_visible)
+        self.combo_PCDcolor.currentIndexChanged.connect(self.change_color_mode)
         self.button_step.clicked.connect(self.step)
         self.button_start.clicked.connect(self.start)
         self.button_stop.clicked.connect(self.stop)
