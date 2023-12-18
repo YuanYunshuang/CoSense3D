@@ -53,6 +53,31 @@ class BEVSparseCanvas(MplCanvas):
             break
 
 
+class DetectionScoreMap(MplCanvas):
+    def __init__(self, lidar_range=None, s=4, **kwargs):
+        super().__init__(**kwargs)
+        self.lidar_range = lidar_range
+        self.s = s
+        self.pred_key = self.data_keys[0]
+        # self.gt_key = self.data_keys[1]
+
+    def refresh(self, data, **kwargs):
+        if self.pred_key not in data:
+            return
+        for cav_id, det_dict in data[self.pred_key].items():
+            assert 'ctr' in det_dict and 'scr' in det_dict
+            centers = det_dict['ctr'].cpu().numpy()
+            conf = det_dict['scr'].cpu().numpy()
+            self.axes.clear()
+            self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
+            self.scatter = self.axes.scatter(centers[:, 0], centers[:, 1],
+                                             cmap='jet', c=conf, s=self.s, vmin=0, vmax=1)
+            # self.scatter.set_array(conf)
+            # self.scatter.set_offsets(centers)
+            self.draw()
+            break
+
+
 class BEVDenseCanvas(MplCanvas):
     def __init__(self, lidar_range=None, **kwargs):
         super().__init__(**kwargs)
@@ -78,9 +103,10 @@ class BEVDenseCanvas(MplCanvas):
 
 
 class SparseDetectionCanvas(MplCanvas):
-    def __init__(self, lidar_range=None, **kwargs):
+    def __init__(self, lidar_range=None, topk_ctr=0, **kwargs):
         super().__init__(**kwargs)
         self.lidar_range = lidar_range
+        self.topk_ctr = topk_ctr
         self.pred_key = self.data_keys[0]
         self.gt_key = self.data_keys[1]
 
@@ -101,10 +127,16 @@ class SparseDetectionCanvas(MplCanvas):
             # plot centers
             if 'ctr' in det_dict:
                 centers = det_dict['ctr'].detach().cpu().numpy()
-                conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
-                mask = conf > 0.5
-                centers = centers[mask]
-                conf = conf[mask]
+                if self.topk_ctr > 0:
+                    topk_inds = det_dict['scr'].topk(self.topk_ctr).indices
+                    conf = det_dict['scr'][topk_inds]
+                    centers = centers[topk_inds]
+                elif 'conf' in det_dict:
+                    conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
+                    mask = conf > 0.5
+                    centers = centers[mask]
+                    conf = conf[mask]
+
                 self.axes.scatter(centers[:, 0], centers[:, 1],
                                   cmap='jet', c=conf, s=1, vmin=0, vmax=1)
             # plot pcds and boxes
@@ -123,9 +155,10 @@ class SparseDetectionCanvas(MplCanvas):
 
 
 class DetectionCanvas(MplCanvas):
-    def __init__(self, lidar_range=None, **kwargs):
+    def __init__(self, lidar_range=None, topk_ctr=0, **kwargs):
         super().__init__(**kwargs)
         self.lidar_range = lidar_range
+        self.topk_ctr = topk_ctr
         self.pred_key = self.data_keys[0]
         self.gt_key = self.data_keys[1]
 
@@ -143,18 +176,31 @@ class DetectionCanvas(MplCanvas):
                     ax=self.axes,
                     # return_ax=True
                 )
+
             # plot centers
             if 'ctr' in det_dict:
-                centers = det_dict['ctr'].detach().cpu().numpy()
-                conf = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
-                mask = conf > 0.5
-                centers = centers[mask]
-                conf = conf[mask]
+                if self.topk_ctr > 0:
+                    topk_inds = det_dict['scr'].topk(self.topk_ctr).indices
+                    scr = det_dict['scr'][topk_inds].detach().cpu().numpy()
+                    centers = det_dict['ctr'][topk_inds].detach().cpu().numpy()
+                else:
+                    centers = det_dict['ctr'].detach().cpu().numpy()
+                    if 'scr' in det_dict:
+                        scr = det_dict['scr'].detach().cpu().numpy()
+                    elif 'conf' in det_dict:
+                        scr = det_dict['conf'][:, 0, 1].detach().cpu().numpy()
+                    else:
+                        break
+                    mask = scr > 0.5
+                    centers = centers[mask]
+                    scr = scr[mask]
                 self.axes.scatter(centers[:, 0], centers[:, 1],
-                                  cmap='jet', c=conf, s=.1, vmin=0, vmax=1)
+                                  cmap='jet', c=scr, s=.1, vmin=0, vmax=1)
             # plot pcds and boxes
             gt_boxes = list(data[self.gt_key][cav_id].values())
             gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
+            if 'preds' in det_dict:
+                det_dict = det_dict['preds']
             pred_boxes = det_dict['box'].detach().cpu().numpy()
             draw_points_boxes_plt(
                 pc_range=self.lidar_range,

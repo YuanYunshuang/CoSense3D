@@ -391,6 +391,7 @@ def normalize_bbox(bboxes):
         )
     return normalized_bboxes
 
+
 def denormalize_bbox(normalized_bboxes):
     # rotation
     rot_sine = normalized_bboxes[..., 6:7]

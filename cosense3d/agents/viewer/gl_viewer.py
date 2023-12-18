@@ -106,7 +106,7 @@ class GLViewer(gl.GLViewWidget):
         self.pcds = pcds
         for lidar_id, pcd in pcds.items():
             if color_mode == 'united':
-                colors = [[1.0, 1.0, 1.0, 0.5]]
+                colors = [1.0, 1.0, 1.0, 1.0]
             elif color_mode == 'height':
                 height_norm = (pcd[:, 2] - pcd[:, 2].min()) / (pcd[:, 2].max() - pcd[:, 2].min())
                 colors = jet(height_norm)

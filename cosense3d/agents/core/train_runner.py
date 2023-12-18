@@ -95,7 +95,8 @@ class TrainRunner(BaseRunner):
 
         total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch)
         total_loss.backward()
-        # grad_norm = clip_grads(self.controller.parameters)
+        grad_norm = clip_grads(self.controller.parameters)
+        loss_dict['grad_norm'] = grad_norm
         # Updating parameters
         self.optimizer.step()
 

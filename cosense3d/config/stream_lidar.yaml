@@ -31,16 +31,18 @@ TRAIN:
     milestones: [25, 40]
     gamma: 0.1
   lr_scheduler:
-    policy: 'MultiStepLR'
-    milestones: [10, 20]
-    gamma: 0.1
+    policy: 'CosineAnnealingWarm'
+    epochs: 50
+    warmup_lr: 2e-4
+    warmup_epochs: 5
+    lr_min: 5e-6
 
 TEST:
   hooks: 'pycfg.stream_lidar.test_hooks'
 
 
 CONTROLLER:
-  num_loss_frame: 1
+  num_loss_frame: 2
   data_manager: 'pycfg.stream_lidar.data_manager'
   shared_modules: 'pycfg.stream_lidar.shared_modules'
   cav_manager:

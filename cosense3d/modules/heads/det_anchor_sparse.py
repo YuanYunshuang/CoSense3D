@@ -43,7 +43,7 @@ class DetAnchorSparse(BaseModule):
         cls = self.cls_head(feat)
         reg = self.reg_head(feat)
 
-        out = {'cls': cls, 'reg': reg}
+        out = {'cls': cls, 'reg': reg, 'ctr': ctr}
 
         if self.get_roi_scores:
             out['scr'] = cls.sigmoid().max(dim=-1).values

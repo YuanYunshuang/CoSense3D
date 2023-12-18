@@ -48,7 +48,7 @@ class StreamLidarCAV(BaseCAV):
         tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
         tasks[grad_mode].append((self.id, '02:backbone_neck', {}))
         tasks[grad_mode].append((self.id, '03:roi_head', {}))
-        tasks[grad_mode].append((self.id, '04:temp_fusion', {}))
+        tasks[grad_mode].append((self.id, '04:temporal_fusion', {}))
 
     def forward_fusion(self, tasks, training_mode):
         # if self.is_ego:

@@ -7,7 +7,7 @@ from cosense3d.modules import BaseModule
 from cosense3d.modules.plugin import build_plugin_module
 from cosense3d.modules.utils.common import inverse_sigmoid
 from cosense3d.utils.misc import multi_apply
-from cosense3d.utils.box_utils import normalize_bbox
+from cosense3d.utils.box_utils import normalize_bbox, denormalize_bbox
 from cosense3d.modules.losses import build_loss
 
 
@@ -44,6 +44,7 @@ class PETRHead(BaseModule):
             self.loss_iou = build_loss(**loss_iou)
 
         self._init_layers()
+        self.init_weights()
 
     def _init_layers(self):
         cls_branch = []
@@ -67,10 +68,12 @@ class PETRHead(BaseModule):
             [reg_branch for _ in range(self.num_pred)])
 
     def init_weights(self):
+        for m in self.cls_branches:
+            nn.init.constant_(m[-1].bias, 2.0)
         # follow the official DETR to init parameters
         for m in self.modules():
             if hasattr(m, 'weight') and m.weight.dim() > 1:
-                nn.utils.init.xavier_uniform_(m)
+                nn.init.xavier_uniform_(m.weight)
         self._is_init = True
 
     def forward(self, feat_in, **kwargs):
@@ -110,12 +113,13 @@ class PETRHead(BaseModule):
             {
                 'all_cls_scores': all_cls_scores[:, i],
                 'all_bbox_preds': all_bbox_preds[:, i],
+                'ref_pts': reference_points[i]
             } for i in range(len(feat_in))
         ]
 
         return {self.scatter_keys[0]: outs}
 
-    def loss(self, petr_out, gt_boxes, gt_labels, **kwargs):
+    def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
         cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
         bbox_preds = self.stack_data_from_list(petr_out, 'all_bbox_preds').flatten(0, 1)
         gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
@@ -146,6 +150,32 @@ class PETRHead(BaseModule):
             labels[pos_mask] = gt_labels[i][pos_inds]
             aligned_labels.append(labels)
 
+            # # plot
+            # ref_pts = petr_out[0]['ref_pts']
+            # ref_pts = (ref_pts * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3])
+            # ref_pts_pos = ref_pts[pos_mask].detach().cpu().numpy()
+            # ref_pts = ref_pts.detach().cpu().numpy()
+            # scores = cls_scores[i][pos_mask].sigmoid().squeeze().detach().cpu().numpy()
+            # gt_boxes_vis = gt_boxes[i][pos_inds].detach().cpu().numpy()
+            # pred_boxes_vis = denormalize_bbox(boxes).detach().cpu().numpy()
+            # det_ctr = det[0]['ctr'].detach().cpu().numpy()
+            # det_scr = det[0]['scr'].detach().cpu().numpy()
+            # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+            # fig = plt.figure(figsize=(12, 5))
+            # ax = fig.add_subplot()
+            # # ax.scatter(det_ctr[:, 0], det_ctr[:, 1], c=det_scr, vmin=0, vmax=0.5, s=1)
+            # ax.scatter(ref_pts_pos[:, 0], ref_pts_pos[:, 1], c='r')
+            # ax.scatter(ref_pts[:, 0], ref_pts[:, 1], c='k', s=1)
+            # ax = draw_points_boxes_plt(
+            #     pc_range=self.pc_range.tolist(),
+            #     boxes_pred=pred_boxes_vis[:, :7],
+            #     boxes_gt=gt_boxes_vis[:, :7],
+            #     ax=ax,
+            #     return_ax=True
+            # )
+            # plt.show()
+            # plt.close()
+
         cared_pred_boxes = torch.cat(cared_pred_boxes, dim=0)
         aligned_bboxes_gt = torch.cat(aligned_bboxes_gt, dim=0)
         aligned_labels = torch.cat(aligned_labels, dim=0)
@@ -162,6 +192,7 @@ class PETRHead(BaseModule):
         loss_box = self.loss_bbox(cared_pred_boxes[isnotnan],
                                   normalized_bbox_targets[isnotnan],
                                   bbox_weights[isnotnan])
+        pred_boxes_vis = bbox_preds[:sum(num_gts[:3])].reshape(3, -1, 10)[-1]
         return {
             'petr_cls_loss': loss_cls,
             'petr_box_loss': loss_box

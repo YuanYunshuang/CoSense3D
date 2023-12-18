@@ -1,3 +1,5 @@
+from typing import Mapping, Any
+
 import torch
 import torch.nn as nn
 
@@ -34,6 +36,7 @@ class TemporalFusion(BaseModule):
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
 
         self._init_layers()
+        self.init_weights()
 
     def _init_layers(self):
         self.position_embeding = nn.Sequential(
@@ -69,11 +72,10 @@ class TemporalFusion(BaseModule):
         self.ego_pose_memory = MLN(pose_nerf_dim, f_dim=self.embed_dims)
 
     def init_weights(self):
-        # follow the official DETR to init parameters
-        for m in self.modules():
-            if hasattr(m, 'weight') and m.weight.dim() > 1:
-                nn.utils.init.xavier_uniform_(m)
-        self._is_init = True
+        nn.init.uniform_(self.reference_points.weight.data, 0, 1)
+        nn.init.uniform_(self.pseudo_reference_points.weight.data, 0, 1)
+        self.pseudo_reference_points.weight.requires_grad = False
+        self.transformer.init_weights()
 
     def forward(self, rois, bev_feat, mem_dict, **kwargs):
         feat, ctr = self.gather_topk(rois, bev_feat)
@@ -117,6 +119,7 @@ class TemporalFusion(BaseModule):
                 topk_feat.append(feat[topk_inds])
         topk_ctr = torch.stack(topk_ctr, dim=0)
         topk_feat = torch.stack(topk_feat, dim=0)
+        # pad 2d coordinates to 3d if needed
         if topk_ctr.shape[-1] < self.pos_dim:
             pad_dim = self.pos_dim - topk_ctr.shape[-1]
             topk_ctr = torch.cat([topk_ctr, torch.zeros_like(topk_ctr[..., :pad_dim])], dim=-1)

@@ -62,7 +62,7 @@ shared_modules = OrderedDict(
     roi_head = dict(
         type='heads.det_anchor_sparse.DetAnchorSparse',
         gather_keys=['bev_feat'],
-        scatter_keys=['rois'],
+        scatter_keys=['detection_local'],
         gt_keys=['bev_feat', 'local_bboxes_3d', 'local_labels_3d'],
         in_channels=256,
         get_roi_scores=True,
@@ -83,9 +83,9 @@ shared_modules = OrderedDict(
         loss_box = dict(type='SmoothL1Loss', loss_weight=2.0),
     ),
 
-    temp_fusion = dict(
+    temporal_fusion = dict(
         type='fusion.temporal_fusion.TemporalFusion',
-        gather_keys=['rois', 'bev_feat', 'memory'],
+        gather_keys=['detection_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
         feature_stride=2,
@@ -133,7 +133,7 @@ shared_modules = OrderedDict(
         type='heads.petr_head.PETRHead',
         gather_keys=['temp_fusion_feat'],
         scatter_keys=['petr_out'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+        gt_keys=['global_bboxes_3d', 'global_labels_3d', 'detection_local'],
         embed_dims=128,
         pc_range=point_cloud_range,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
@@ -165,6 +165,8 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='DetectionCanvas', lidar_range=point_cloud_range, width=10, height=4, nrows=1, ncols=1,
-         data_keys=['detection', 'global_labels'])
+    dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection_local']),
+    dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection_local', 'global_labels'], topk_ctr=2048)
 ]
