@@ -15,10 +15,12 @@ class BEV(BaseModule):
                  target_assigner,
                  loss_cls,
                  class_names_each_head=None,
+                 down_sample_tgt=True,
                  **kwargs):
         super(BEV, self).__init__(**kwargs)
         self.in_dim = in_dim
         self.class_names_each_head = class_names_each_head
+        self.down_sample_tgt = down_sample_tgt
         self.stride = stride
         for k, v in data_info.items():
             setattr(self, k, v)
@@ -32,7 +34,7 @@ class BEV(BaseModule):
     def forward(self, stensor_list, **kwargs):
         coor, feat, ctr = self.format_input(stensor_list)
 
-        if self.training:
+        if self.training and self.down_sample_tgt:
             coor, feat = self.down_sample(coor, feat)
 
         centers = indices2metric(coor, self.voxel_size)
@@ -41,7 +43,7 @@ class BEV(BaseModule):
         conf, unc = self.tgt_assigner.get_predictions(reg, is_edl, self.loss_cls.activation)
 
         out = {
-            'center': centers,
+            'ctr': centers,
             'reg': reg,
             'conf': conf,
             'unc': unc
@@ -56,8 +58,8 @@ class BEV(BaseModule):
         # decompose batch
         output_new = {k: [] for k in output.keys()}
         for i in range(B):
-            mask = output['center'][:, 0] == i
-            output_new['center'].append(output['center'][mask, 1:])
+            mask = output['ctr'][:, 0] == i
+            output_new['ctr'].append(output['ctr'][mask, 1:])
             output_new['reg'].append(output['reg'][mask])
             output_new['conf'].append(output['conf'][mask])
             output_new['unc'].append(output['unc'][mask])
@@ -72,11 +74,11 @@ class BEV(BaseModule):
         return coor, feat
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
-        tgt_pts = self.cat_data_from_list(batch_list, 'center', pad_idx=True)
+        tgt_pts = self.cat_data_from_list(batch_list, 'ctr', pad_idx=True)
         gt_boxes = self.cat_data_from_list(gt_boxes, pad_idx=True)
         conf = self.cat_data_from_list(batch_list, 'conf')
         tgt_pts, tgt_label, valid = self.tgt_assigner.assign(
-            tgt_pts, gt_boxes, len(batch_list), conf, **kwargs)
+            tgt_pts, gt_boxes[:, :8], len(batch_list), conf, **kwargs)
         epoch_num = kwargs.get('epoch', 0)
         reg = self.cat_data_from_list(batch_list, 'reg')
         # avg_factor = max(tgt_label.sum(), 1)

@@ -782,7 +782,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
     def pts_to_indices(self, bev_pts):
         """
         Args:
-            bev_pts: (N, 2+),
+            bev_pts: (N, 3+), 1st column should be batch index.
         """
         x = (bev_pts[:, 1] - self.meter_per_pixel[0] * 0.5 - self.lidar_range[0]) \
                   / self.meter_per_pixel[0]
@@ -796,18 +796,19 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         box_names = [self.csb[c.item()][0] for c in gt_labels]
 
         # cal regression targets
-        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': []}
+        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': [], 'aux': []}
         for h, cur_cls_names in enumerate(self.class_names_each_head):
             center_indices = self.pts_to_indices(centers).T
             box_mask = [n in cur_cls_names for n in box_names]
             cur_boxes = gt_boxes[box_mask]
-            reg_box, reg_dir, dir_score, valid = self.box_coder.encode(
+            reg_box, reg_dir, dir_score, valid, reg_aux = self.box_coder.encode(
                 centers, cur_boxes, self.meter_per_pixel)
             reg_tgt['idx'].append(center_indices[:, valid])
             reg_tgt['valid_mask'].append(valid)
             reg_tgt['box'].append(reg_box)
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
+            reg_tgt['aux'].append(reg_aux)
         return reg_tgt
 
     def get_predictions(self, preds):
@@ -907,7 +908,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
         self.merge_all_classes = merge_all_classes
 
     def get_labels_single_head(self, centers, gt_boxes, pred_scores=None, **kwargs):
-        dists = torch.norm(centers.unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0), dim=-1)
+        dists = torch.norm(centers[:, :2].unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0), dim=-1)
         dists_min = dists.min(dim=1).values
         labels = (dists_min < self.min_radius).float()
 

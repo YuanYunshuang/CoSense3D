@@ -60,32 +60,21 @@ shared_modules = OrderedDict(
     ),
 
     roi_head = dict(
-        type='heads.det_anchor_sparse.DetAnchorSparse',
+        type='heads.bev.BEV',
         gather_keys=['bev_feat'],
-        scatter_keys=['detection_local'],
-        gt_keys=['bev_feat', 'local_bboxes_3d', 'local_labels_3d'],
-        in_channels=256,
-        get_roi_scores=True,
-        target_assigner=dict(
-            type='target_assigners.BoxSparseAnchorAssigner',
-            box_size=[3.9, 1.6, 1.56],
-            dirs=[0, 90],
-            voxel_size=voxel_size,
-            lidar_range=point_cloud_range,
-            stride=2,
-            pos_threshold=0.6,
-            neg_threshold=0.45,
-            score_thrshold=0.25,
-            box_coder=dict(type='ResidualBoxCoder', mode='simple_dist')
-        ),
-        loss_cls = dict(type='FocalLoss', use_sigmoid=True,
-                        gamma=2.0, alpha=0.25, loss_weight=1.0),
-        loss_box = dict(type='SmoothL1Loss', loss_weight=2.0),
+        scatter_keys=['bevseg_local'],
+        gt_keys=['local_bboxes_3d', 'local_labels_3d'],
+        data_info=data_info,
+        stride=out_stride,
+        down_sample_tgt=False,
+        in_dim=256,
+        target_assigner=dict(type='target_assigners.BEVPointAssigner'),
+        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=40, n_cls=2, loss_weight=1.0),
     ),
 
     temporal_fusion = dict(
         type='fusion.temporal_fusion.TemporalFusion',
-        gather_keys=['detection_local', 'bev_feat', 'memory'],
+        gather_keys=['bevseg_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
         feature_stride=2,
@@ -95,25 +84,25 @@ shared_modules = OrderedDict(
             decoder=dict(
                 type='TransformerDecoder',
                 return_intermediate=True,
-                num_layers=3,
+                num_layers=1,
                 transformerlayers=dict(
                     type='TransformerDecoderLayer',
                     attn_cfgs=[
                         dict(
                             type='MultiheadAttention', #fp16 for 2080Ti training (save GPU memory).
-                            embed_dims=128,
+                            embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
                             fp16=False),
                         dict(
                             type='MultiheadFlashAttention',
-                            embed_dims=128,
+                            embed_dims=256,
                             num_heads=8,
                             dropout=0.1),
                         ],
                     ffn_cfgs=dict(
                         type='FFN',
-                        embed_dims=128,
+                        embed_dims=256,
                         feedforward_channels=1024,
                         num_fcs=2,
                         dropout=0.,
@@ -130,25 +119,35 @@ shared_modules = OrderedDict(
     ),
 
     detection_head = dict(
-        type='heads.petr_head.PETRHead',
+        type='heads.query_guided_petr_head.QueryGuidedPETRHead',
         gather_keys=['temp_fusion_feat'],
         scatter_keys=['petr_out'],
-        gt_keys=['global_bboxes_3d', 'global_labels_3d', 'detection_local'],
-        embed_dims=128,
+        gt_keys=['local_bboxes_3d', 'local_labels_3d', 'bevseg_local'],
+        embed_dims=256,
         pc_range=point_cloud_range,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
-        num_classes=1,
-        box_assigner=dict(
-            type='target_assigners.HungarianAssigner3D',
-            cls_cost=dict(type='focal_loss', weight=2.),
-            reg_cost=dict(type='l1', weight=.25),
-            iou_cost=dict(type='iou', weight=0.0),
+        num_classes=2,
+        reg_channels=['box:6', 'dir:8', 'scr:4', 'vel:2'],
+        cls_assigner=dict(
+            type='target_assigners.BEVHardCenternessAssigner',
+            n_cls=1,
+            min_radius=1.0,
+            pos_neg_ratio=0,
+            mining_thr=0,
         ),
-        loss_cls=dict(type='FocalLoss', use_sigmoid=True,
-                      gamma=2.0, alpha=0.25, loss_weight=2.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=0.25),
-        # loss_iou=dict(type='GIoULoss', loss_weight=0.0),
-    )
+        box_assigner=dict(
+            type='target_assigners.BoxCenterAssigner',
+            voxel_size=voxel_size,
+            lidar_range=point_cloud_range,
+            stride=out_stride,
+            detection_benchmark='Car',
+            class_names_each_head=[['vehicle.car']],
+            center_threshold=0.5,
+            box_coder=dict(type='CenterBoxCoder'),
+        ),
+        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=10.0),
+        loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
+    ),
 
 )
 
@@ -165,8 +164,10 @@ test_hooks = [
     ]
 
 plots = [
-    dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
-         data_keys=['detection_local']),
-    dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
-         data_keys=['detection_local', 'global_labels'], topk_ctr=2048)
+    dict(title='BEVSparseCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['bevseg_local', 'local_labels']),
+    # dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+    #      data_keys=['detection_local']),
+    # dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+    #      data_keys=['detection_local', 'local_labels'], topk_ctr=2048)
 ]

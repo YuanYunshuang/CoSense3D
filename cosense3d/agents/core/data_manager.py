@@ -157,7 +157,7 @@ class DataManager:
         data = {}
         for cavs in self.cav_manager.cavs:
             for cav in cavs:
-                data[cav.id] = cav.data[key]
+                data[cav.id] = cav.data.get(key, {})
         return data
 
     def boxes_to_vis_format(self, boxes, labels):
@@ -192,6 +192,8 @@ class DataManager:
             elif k == 'detection_local':
                 detection = self.gather_cav_data(k)
                 for cav_id, det in detection.items():
+                    if len(det) == 0:
+                        continue
                     if 'preds' in det:
                         det = det['preds']
                     detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])

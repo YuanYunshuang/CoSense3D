@@ -7,7 +7,7 @@ DATASET:
   data_info: &data_info
     lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
     voxel_size:  &voxel_size [0.2, 0.2, 0.2]
-  batch_size_train: 2
+  batch_size_train: 4
   batch_size_test: 1
   n_workers: 4
 
@@ -48,7 +48,7 @@ CONTROLLER:
   cav_manager:
     prototype: stream_lidar.StreamLidarCAV
     memory_len: *seq_len
-    memory_emb_dims: 128
+    memory_emb_dims: 256
     memory_num_propagated: 256
     ref_pts_dim: 3
     all_grad: true

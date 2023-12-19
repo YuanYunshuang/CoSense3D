@@ -30,6 +30,7 @@ class StreamLidarCAV(BaseCAV):
         self.data['memory']['prev_exists'] = x
 
     def prepare_data(self):
+        DOP.adaptive_free_space_augmentation(self.data)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 

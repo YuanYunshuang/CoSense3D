@@ -127,8 +127,8 @@ class ResidualBoxCoder(object):
 
 
 class CenterBoxCoder(object):
-    def __init__(self):
-        pass
+    def __init__(self, with_velo=False):
+        self.with_velo = with_velo
 
     @staticmethod
     def encode(centers, gt_boxes, meter_per_pixel):
@@ -150,7 +150,7 @@ class CenterBoxCoder(object):
             valid = torch.zeros_like(centers[:, 0]).bool()
             return None, None, None, valid
         # match centers and gt_boxes
-        dist_ctr_to_box = torch.norm(centers[:, 1:].unsqueeze(1)
+        dist_ctr_to_box = torch.norm(centers[:, 1:3].unsqueeze(1)
                                      - gt_boxes[:, 1:3].unsqueeze(0), dim=-1)
         cc, bb = torch.meshgrid(centers[:, 0], gt_boxes[:, 0], indexing='ij')
         dist_ctr_to_box[cc != bb] = 1000
@@ -186,7 +186,11 @@ class CenterBoxCoder(object):
 
         reg_box = torch.cat([xt, yt, zt, lt, wt, ht], dim=1)  # N 6
         reg_dir = torch.cat([rtx, rty], dim=1)  # N 8
-        return reg_box, reg_dir, dir_score, valid
+
+        if valid_box.shape[-1] > 8:
+            return reg_box, reg_dir, dir_score, valid, valid_box[:, 8:]
+        else:
+            return reg_box, reg_dir, dir_score, valid
 
     @staticmethod
     def decode(centers, reg):

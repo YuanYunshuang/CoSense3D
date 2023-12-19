@@ -32,16 +32,20 @@ class BEVSparseCanvas(MplCanvas):
         self.lidar_range = lidar_range
         self.s = s
         self.pred_key = self.data_keys[0]
-        # self.gt_key = self.data_keys[1]
+        self.gt_key = None
+        if len(self.data_keys) > 1:
+            self.gt_key = self.data_keys[1]
 
     def refresh(self, data, **kwargs):
-        if 'bev' not in data:
+        if self.pred_key not in data:
             return
-        for cav_id, data_dict in data['bev'].items():
-            if 'center' in data_dict:
-                centers = data_dict['center'].cpu().numpy()
+        for cav_id, data_dict in data[self.pred_key].items():
+            if 'ctr' in data_dict:
+                centers = data_dict['ctr'].cpu().numpy()
             elif 'ref_pts' in data_dict:
                 centers = data_dict['ref_pts'].cpu().numpy()
+            else:
+                raise NotImplementedError(f'only ctr or ref_pts are supported.')
             conf = data_dict['conf'][:, 1:].detach().max(dim=-1).values.cpu().numpy()
             self.axes.clear()
             self.axes.set_title(f"{data['scenario'][cav_id]}.{data['frame'][cav_id]}")
@@ -49,6 +53,15 @@ class BEVSparseCanvas(MplCanvas):
                                              cmap='jet', c=conf, s=self.s, vmin=0, vmax=1)
             # self.scatter.set_array(conf)
             # self.scatter.set_offsets(centers)
+            if self.gt_key is not None:
+                gt_boxes = list(data[self.gt_key][cav_id].values())
+                gt_boxes = np.array(gt_boxes)[:, [1, 2, 3, 4, 5, 6, 9]]
+                self.axes = draw_points_boxes_plt(
+                    self.lidar_range,
+                    boxes_gt=gt_boxes,
+                    ax=self.axes,
+                    return_ax=True
+                )
             self.draw()
             break
 
@@ -229,5 +242,7 @@ class OutputViewer(QtWidgets.QWidget):
     def refresh(self, data, **kwargs):
         for plot in self.plots:
             plot.refresh(data)
+
+
 
 

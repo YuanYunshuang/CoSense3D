@@ -11,23 +11,31 @@ from cosense3d.utils.box_utils import normalize_bbox, denormalize_bbox
 from cosense3d.modules.losses import build_loss
 
 
-class PETRHead(BaseModule):
+class QueryGuidedPETRHead(BaseModule):
     def __init__(self,
                  embed_dims,
                  pc_range,
                  code_weights,
                  num_classes,
+                 cls_assigner,
                  box_assigner,
                  loss_cls,
-                 loss_bbox,
-                 loss_iou=None,
-                 num_reg_fcs=2,
-                 num_pred=3,
-                 use_logits=True,
+                 loss_box,
+                 num_reg_fcs=1,
+                 num_pred=1,
+                 use_logits=False,
+                 reg_channels=None,
                  **kwargs):
         super().__init__(**kwargs)
         self.embed_dims = embed_dims
-        self.code_size = 10
+        self.reg_channels = {}
+        if reg_channels is None:
+            self.code_size = 10
+        else:
+            for c in reg_channels:
+                name, channel = c.split(':')
+                self.reg_channels[name] = int(channel)
+            self.code_size = sum(self.reg_channels.values()) + 2
         self.num_classes = num_classes
         self.num_reg_fcs = num_reg_fcs
         self.num_pred = num_pred
@@ -37,11 +45,10 @@ class PETRHead(BaseModule):
         self.code_weights = nn.Parameter(torch.tensor(code_weights), requires_grad=False)
 
         self.box_assigner = build_plugin_module(box_assigner)
+        self.cls_assigner = build_plugin_module(cls_assigner)
 
         self.loss_cls = build_loss(**loss_cls)
-        self.loss_bbox = build_loss(**loss_bbox)
-        if loss_iou is not None:
-            self.loss_iou = build_loss(**loss_iou)
+        self.loss_box = build_loss(**loss_box)
 
         self._init_layers()
         self.init_weights()
@@ -93,12 +100,6 @@ class PETRHead(BaseModule):
                 reference = inverse_sigmoid(reference_points.clone())
                 pred_reg[..., :pos_dim] += reference
                 pred_reg[..., :3] = pred_reg[..., :3].sigmoid()
-            else:
-                reference = reference_points.clone()
-                reference[..., :pos_dim] = (reference[..., :pos_dim] * (
-                        self.pc_range[3:3+pos_dim] - self.pc_range[0:pos_dim])
-                                            + self.pc_range[0:pos_dim])
-                pred_reg[..., :pos_dim] = pred_reg[..., :pos_dim] + reference
 
             outputs_classes.append(pred_cls)
             outputs_coords.append(pred_reg)
@@ -120,85 +121,61 @@ class PETRHead(BaseModule):
         return {self.scatter_keys[0]: outs}
 
     def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
+        epoch = kwargs.get('epoch', 0)
         cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
         bbox_preds = self.stack_data_from_list(petr_out, 'all_bbox_preds').flatten(0, 1)
+        ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
+            1, self.num_pred, 1, 1).flatten(0, 1)
         gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
+        # gt_velos = [boxes[:, 7:] for boxes in gt_boxes for _ in range(self.num_pred)]
         gt_labels = [labels for labels in gt_labels for _ in range(self.num_pred)]
-        code_weights = [self.code_weights] * len(gt_labels)
 
-        num_gts, assigned_gt_inds, assigned_labels = multi_apply(
-            self.box_assigner.assign,
-            bbox_preds,
-            cls_scores,
-            gt_boxes,
-            gt_labels,
-            code_weights
+        # cls loss
+        cls_tgt = multi_apply(self.cls_assigner.assign,
+                              ref_pts, gt_boxes, gt_labels, **kwargs)
+        cls_src = cls_scores.view(-1, self.num_classes)
+        cls_tgt = torch.cat(cls_tgt, dim=0)
+
+        cared = (cls_tgt >= 0).any(dim=-1)
+        cls_src = cls_src[cared]
+        cls_tgt = cls_tgt[cared]
+
+        # convert one-hot to labels
+        cur_labels = torch.zeros_like(cls_tgt[..., 0]).long()
+        lbl_inds, cls_inds = torch.where(cls_tgt)
+        cur_labels[lbl_inds] = cls_inds + 1
+
+        loss_cls = self.loss_cls(
+            cls_src,
+            cur_labels,
+            temp=epoch,
         )
 
-        cared_pred_boxes = []
-        aligned_bboxes_gt = []
-        aligned_labels = []
-        mask = []
-        for i in range(len(cls_scores)):
-            pos_mask = assigned_gt_inds[i] > 0
-            mask.append(pos_mask)
-            pos_inds = assigned_gt_inds[i][pos_mask] - 1
-            boxes = bbox_preds[i][pos_mask]
-            cared_pred_boxes.append(boxes)
-            aligned_bboxes_gt.append(gt_boxes[i][pos_inds])
-            labels = pos_mask.new_full((len(pos_mask), ), self.num_classes, dtype=torch.long)
-            labels[pos_mask] = gt_labels[i][pos_inds]
-            # ignore part of negative samples, set labels of them to -1
-            inds = torch.where(labels == self.num_classes)[0]
-            inds = inds[torch.randperm(len(inds))][pos_mask.sum() * 5]
-            labels[inds] = -1
-            aligned_labels.append(labels)
+        # box loss
+        # pad ref pts with batch index
+        box_tgt = self.box_assigner.assign(
+            self.cat_data_from_list(ref_pts, pad_idx=True),
+            self.cat_data_from_list(gt_boxes, pad_idx=True),
+            self.cat_data_from_list(gt_labels)
+        )
+        ind = box_tgt['idx'][0]  # only one head
+        loss_box = 0
+        bbox_preds = bbox_preds.view(-1, self.code_size)
+        if ind.shape[1] > 0:
+            ptr = 0
+            for reg_name, reg_dim in self.reg_channels.items():
+                pred_reg = bbox_preds[:, ptr:ptr+reg_dim].contiguous()
+                if reg_name == 'scr':
+                    pred_reg = pred_reg.sigmoid()
+                cur_reg_src = pred_reg[box_tgt['valid_mask'][0]]
+                if reg_name == 'vel':
+                    cur_reg_tgt = box_tgt['aux'][0] * 0.1
+                else:
+                    cur_reg_tgt = box_tgt[reg_name][0]  # N, C
+                cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)
 
-            # # plot
-            # if i > 0:
-            #     continue
-            # ref_pts = petr_out[0]['ref_pts']
-            # ref_pts = (ref_pts * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3])
-            # ref_pts_pos = ref_pts[pos_mask].detach().cpu().numpy()
-            # ref_pts = ref_pts.detach().cpu().numpy()
-            # scores = cls_scores[i].sigmoid().squeeze().detach().cpu().numpy()
-            # gt_boxes_vis = gt_boxes[i][pos_inds].detach().cpu().numpy()
-            # pred_boxes_vis = denormalize_bbox(boxes).detach().cpu().numpy()
-            # det_ctr = det[0]['ctr'].detach().cpu().numpy()
-            # det_scr = det[0]['scr'].detach().cpu().numpy()
-            # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
-            # fig = plt.figure(figsize=(12, 5))
-            # ax = fig.add_subplot()
-            # # ax.scatter(det_ctr[:, 0], det_ctr[:, 1], c=det_scr, vmin=0, vmax=0.5, s=1)
-            # ax.scatter(ref_pts_pos[:, 0], ref_pts_pos[:, 1], c='r')
-            # ax.scatter(ref_pts[:, 0], ref_pts[:, 1], c=scores, s=2)
-            # ax = draw_points_boxes_plt(
-            #     pc_range=self.pc_range.tolist(),
-            #     boxes_pred=pred_boxes_vis[:, :7],
-            #     boxes_gt=gt_boxes_vis[:, :7],
-            #     ax=ax,
-            #     return_ax=True
-            # )
-            # plt.savefig("/mars/projects20/CoSense3D/cosense3d/logs/stream_lidar/tmp.png")
-            # plt.close()
-
-        cared_pred_boxes = torch.cat(cared_pred_boxes, dim=0)
-        aligned_bboxes_gt = torch.cat(aligned_bboxes_gt, dim=0)
-        aligned_labels = torch.cat(aligned_labels, dim=0)
-        mask = torch.cat(mask, dim=0)
-
-        cls_avg_factor = max(sum(num_gts), 1)
-        cared = aligned_labels >= 0
-        loss_cls = self.loss_cls(cls_scores.reshape(-1, cls_scores.shape[-1])[cared],
-                                 aligned_labels[cared],  avg_factor=cls_avg_factor)
-
-        bbox_preds = bbox_preds.reshape(-1, bbox_preds.size(-1))[mask]
-        normalized_bbox_targets = normalize_bbox(aligned_bboxes_gt)
-        isnotnan = torch.isfinite(bbox_preds).all(dim=-1)
-        bbox_weights = torch.ones_like(cared_pred_boxes) * self.code_weights
-        loss_box = self.loss_bbox(cared_pred_boxes[isnotnan],
-                                  normalized_bbox_targets[isnotnan],
-                                  bbox_weights[isnotnan])
+                loss_box = loss_box + cur_loss
+                ptr += reg_dim
 
         return {
             'petr_cls_loss': loss_cls,
