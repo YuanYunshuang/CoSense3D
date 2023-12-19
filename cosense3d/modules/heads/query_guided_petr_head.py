@@ -105,15 +105,18 @@ class QueryGuidedPETRHead(BaseModule):
             outputs_coords.append(pred_reg)
 
         all_cls_scores = torch.stack(outputs_classes)
-        all_bbox_preds = torch.stack(outputs_coords)
+        all_bbox_reg = torch.stack(outputs_coords)
         if self.use_logits:
-            all_bbox_preds[..., :3] = (all_bbox_preds[..., :3] * (
+            all_bbox_reg[..., :3] = (all_bbox_reg[..., :3] * (
                     self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3])
+
+        preds = self.get_predictions(all_cls_scores, all_bbox_reg, reference_points)
 
         outs = [
             {
                 'all_cls_scores': all_cls_scores[:, i],
-                'all_bbox_preds': all_bbox_preds[:, i],
+                'all_bbox_reg': all_bbox_reg[:, i],
+                'all_bbox_preds': preds[:, i],
                 'ref_pts': reference_points[i]
             } for i in range(len(feat_in))
         ]
@@ -123,7 +126,7 @@ class QueryGuidedPETRHead(BaseModule):
     def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
         epoch = kwargs.get('epoch', 0)
         cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
-        bbox_preds = self.stack_data_from_list(petr_out, 'all_bbox_preds').flatten(0, 1)
+        bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
         ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
             1, self.num_pred, 1, 1).flatten(0, 1)
         gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
@@ -134,8 +137,27 @@ class QueryGuidedPETRHead(BaseModule):
         cls_tgt = multi_apply(self.cls_assigner.assign,
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
-        cls_tgt = torch.cat(cls_tgt, dim=0)
 
+        # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        # points = ref_pts[0].detach().cpu().numpy()
+        # boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
+        # ax = draw_points_boxes_plt(
+        #     pc_range=self.pc_range.tolist(),
+        #     points=points,
+        #     boxes_gt=boxes,
+        #     return_ax=True
+        # )
+        # ax = draw_points_boxes_plt(
+        #     pc_range=self.pc_range.tolist(),
+        #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
+        #     points_c="r",
+        #     ax=ax,
+        #     return_ax=True
+        # )
+        # plt.savefig("/home/data/logs/tmp.png")
+        # plt.close()
+
+        cls_tgt = torch.cat(cls_tgt, dim=0)
         cared = (cls_tgt >= 0).any(dim=-1)
         cls_src = cls_src[cared]
         cls_tgt = cls_tgt[cared]
@@ -160,11 +182,11 @@ class QueryGuidedPETRHead(BaseModule):
         )
         ind = box_tgt['idx'][0]  # only one head
         loss_box = 0
-        bbox_preds = bbox_preds.view(-1, self.code_size)
+        bbox_reg = bbox_reg.view(-1, self.code_size)
         if ind.shape[1] > 0:
             ptr = 0
             for reg_name, reg_dim in self.reg_channels.items():
-                pred_reg = bbox_preds[:, ptr:ptr+reg_dim].contiguous()
+                pred_reg = bbox_reg[:, ptr:ptr+reg_dim].contiguous()
                 if reg_name == 'scr':
                     pred_reg = pred_reg.sigmoid()
                 cur_reg_src = pred_reg[box_tgt['valid_mask'][0]]
@@ -182,5 +204,16 @@ class QueryGuidedPETRHead(BaseModule):
             'petr_box_loss': loss_box
         }
 
+    def get_predictions(self, cls_scores, bbox_preds, ref_pts):
+        b, l, n = cls_scores.shape[:3]
+        reg = {}
+
+        ptr = 0
+        for reg_name, reg_dim in self.reg_channels.items():
+            reg[reg_name] = bbox_preds[..., ptr:ptr + reg_dim].contiguous()
+            ptr += reg_dim
+
+        boxes = self.box_assigner.box_coder.decode(ref_pts[None], reg)
+        return torch.cat([boxes, reg['vel']], dim=-1)
 
 

@@ -198,18 +198,21 @@ class CenterBoxCoder(object):
 
         Parameters
         ----------
-        centers: Tensor (N, 3),
+        centers: Tensor (N, 3) or (B, N, 2+),
         reg: dict,
-            box - (N, 6)
-            dir - (N, 8)
-            scr - (N, 4)
+            box - (N, 6) or (B, N, 6)
+            dir - (N, 8) or (B, N, 8)
+            scr - (N, 4) or (B, N, 4)
         meter_per_pixel: float
 
         Returns
         -------
 
         """
-        xc, yc = torch.split(centers[:, 1:3], 1, dim=-1)
+        if centers.ndim > 2:
+            xc, yc = torch.split(centers[..., 0:2], 1, dim=-1)
+        else:
+            xc, yc = torch.split(centers[..., 1:3], 1, dim=-1)
         xt, yt, zt, lt, wt, ht = torch.split(reg['box'], 1, dim=-1)
 
         xo = xt + xc
@@ -222,12 +225,17 @@ class CenterBoxCoder(object):
 
         # decode box directions
         scr_max, max_idx = reg['scr'].max(dim=-1)
+        shape = max_idx.shape
+        max_idx = max_idx.view(-1)
         ii = torch.arange(len(max_idx))
         ra = max_idx.float() * 0.5 * math.pi
-        ct = reg['dir'][:, :4][ii, max_idx] + torch.cos(ra)
-        st = reg['dir'][:, 4:][ii, max_idx] + torch.sin(ra)
-        ro = torch.atan2(st, ct).unsqueeze(-1)
+        ct = reg['dir'][..., :4].view(-1, 4)[ii, max_idx] + torch.cos(ra)
+        st = reg['dir'][..., 4:].view(-1, 4)[ii, max_idx] + torch.sin(ra)
+        ro = torch.atan2(st.view(*shape), ct.view(*shape)).unsqueeze(-1)
 
-        ret = torch.cat([centers[:, :1], xo, yo, zo, lo, wo, ho, ro], dim=-1)
+        if centers.ndim > 2:
+            ret = torch.cat([xo, yo, zo, lo, wo, ho, ro], dim=-1)
+        else:
+            ret = torch.cat([centers[..., :1], xo, yo, zo, lo, wo, ho, ro], dim=-1)
 
         return ret

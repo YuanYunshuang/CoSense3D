@@ -844,7 +844,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                            for k in ['box', 'dir', 'scr']}
             else:
                 conf, _ = pred_to_conf_unc(center_cls, self.edl_activation)
-                centers = preds['center']
+                centers = preds['ctr']
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
                 cur_centers = centers[center_mask]
                 center_indices = self.pts_to_indices(cur_centers)

@@ -12,7 +12,7 @@ DATASET:
   n_workers: 4
 
   max_num_cavs: 1
-  seq_len: &seq_len 4
+  seq_len: &seq_len 1
   train_pipeline: 'pycfg.stream_lidar.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar.pipeline_cpu'
 
@@ -42,7 +42,7 @@ TEST:
 
 
 CONTROLLER:
-  num_loss_frame: 2
+  num_loss_frame: 1
   data_manager: 'pycfg.stream_lidar.data_manager'
   shared_modules: 'pycfg.stream_lidar.shared_modules'
   cav_manager:
