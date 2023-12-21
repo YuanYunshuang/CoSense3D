@@ -973,6 +973,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
 
 class BEVPointAssigner(BaseAssigner):
     def __init__(self,
+                 down_sample=True,
                  sample_mining_thr=0.,
                  max_mining_ratio=3,
                  annealing_step=None,
@@ -980,6 +981,7 @@ class BEVPointAssigner(BaseAssigner):
                  annealing_sampling=False,
                  ):
         super().__init__()
+        self.down_sample = down_sample
         self.sample_mining_thr = sample_mining_thr
         self.max_mining_ratio = max_mining_ratio
         self.annealing_step = annealing_step
@@ -1012,7 +1014,7 @@ class BEVPointAssigner(BaseAssigner):
         boxes[:, 3] = 0
         pts = pad_r(tgt_pts)
 
-        if not down_sample:
+        if not down_sample or not self.down_sample:
             _, box_idx_of_pts = points_in_boxes_gpu(
                 pts, boxes, batch_size=B
             )

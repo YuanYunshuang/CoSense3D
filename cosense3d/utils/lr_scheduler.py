@@ -21,6 +21,7 @@ class LRUpdater:
             warmup_lr = kwargs['warmup_lr']
             warmup_steps = kwargs['warmup_epochs'] * total_iter
             lr_min = kwargs['lr_min']
+            decay_rate = kwargs.get('decay_rate', 0.5)
 
             self.lr_scheduler = CosineLRScheduler(
                 optimizer,
@@ -30,6 +31,7 @@ class LRUpdater:
                 warmup_t=warmup_steps,
                 cycle_limit=1,
                 t_in_epochs=False,
+                cycle_decay=decay_rate
             )
         else:
             raise NotImplementedError

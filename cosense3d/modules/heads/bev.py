@@ -46,7 +46,8 @@ class BEV(BaseModule):
             'ctr': centers,
             'reg': reg,
             'conf': conf,
-            'unc': unc
+            'unc': unc,
+            'feat_max': [feat.max()] * len(stensor_list)
         }
 
         return self.format_output(out, len(stensor_list))
@@ -63,6 +64,7 @@ class BEV(BaseModule):
             output_new['reg'].append(output['reg'][mask])
             output_new['conf'].append(output['conf'][mask])
             output_new['unc'].append(output['unc'][mask])
+        output_new['feat_max'] = output['feat_max']
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
@@ -75,20 +77,48 @@ class BEV(BaseModule):
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         tgt_pts = self.cat_data_from_list(batch_list, 'ctr', pad_idx=True)
+        boxes_vis = gt_boxes[0][:, :7].detach().cpu().numpy()
         gt_boxes = self.cat_data_from_list(gt_boxes, pad_idx=True)
         conf = self.cat_data_from_list(batch_list, 'conf')
         tgt_pts, tgt_label, valid = self.tgt_assigner.assign(
             tgt_pts, gt_boxes[:, :8], len(batch_list), conf, **kwargs)
         epoch_num = kwargs.get('epoch', 0)
         reg = self.cat_data_from_list(batch_list, 'reg')
-        # avg_factor = max(tgt_label.sum(), 1)
-        loss_cls = self.loss_cls(
-            reg[valid],
-            tgt_label,
-            temp=epoch_num,
-            # avg_factor=avg_factor
-        )
+
+        # if kwargs['itr'] % 50 == 0:
+        #     from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        #     from matplotlib import colormaps
+        #     jet = colormaps['jet']
+        #     points = batch_list[0]['ctr'].detach().cpu().numpy()
+        #     scores = batch_list[0]['conf'][:, 1].detach().cpu().numpy()
+        #     ax = draw_points_boxes_plt(
+        #         pc_range=[-144, -41.6, -3.0, 144, 41.6, 1.0],
+        #         # points=points,
+        #         boxes_gt=boxes_vis,
+        #         return_ax=True
+        #     )
+        #     ax.scatter(points[:, 0], points[:, 1], c=scores, cmap=jet, s=3, marker='s')
+        #     plt.savefig("/mars/projects20/CoSense3D/cosense3d/logs/stream_lidar/tmp1.png")
+        #     plt.close()
+
+        if valid is None:
+            # targets are not down-sampled
+            avg_factor = max(tgt_label.sum(), 1)
+            loss_cls = self.loss_cls(
+                reg,
+                tgt_label,
+                temp=epoch_num,
+                avg_factor=avg_factor
+            )
+        else:
+            # negative targets are not down-sampled to a ratio to the positive samples
+            loss_cls = self.loss_cls(
+                reg[valid],
+                tgt_label,
+                temp=epoch_num,
+            )
         loss_dict = {'bev_loss': loss_cls}
+        loss_dict['bev_feat_max'] = batch_list[0]['feat_max']
         return loss_dict
 
 

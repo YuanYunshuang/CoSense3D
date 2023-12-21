@@ -9,7 +9,7 @@ def relu_evidence(y):
 
 
 def exp_evidence(y):
-    return torch.exp(torch.clamp(y, -10, 10))
+    return torch.exp(torch.clamp(y, -6, 6))
 
 
 def softplus_evidence(y):
@@ -121,7 +121,9 @@ def evidence_to_conf_unc(evidence, edl=True):
 
 
 def pred_to_conf_unc(preds, activation='relu', edl=True):
-    if activation == 'relu':
+    if callable(activation):
+        evidence = activation(preds)
+    elif activation == 'relu':
         evidence = relu_evidence(preds)
     elif activation == 'exp':
         evidence = exp_evidence(preds)

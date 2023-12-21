@@ -9,6 +9,7 @@ from cosense3d.modules.utils.common import inverse_sigmoid
 from cosense3d.utils.misc import multi_apply
 from cosense3d.utils.box_utils import normalize_bbox, denormalize_bbox
 from cosense3d.modules.losses import build_loss
+from cosense3d.modules.losses.edl import evidence_to_conf_unc
 
 
 class QueryGuidedPETRHead(BaseModule):
@@ -138,24 +139,34 @@ class QueryGuidedPETRHead(BaseModule):
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
-        # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
-        # points = ref_pts[0].detach().cpu().numpy()
-        # boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
-        # ax = draw_points_boxes_plt(
-        #     pc_range=self.pc_range.tolist(),
-        #     points=points,
-        #     boxes_gt=boxes,
-        #     return_ax=True
-        # )
-        # ax = draw_points_boxes_plt(
-        #     pc_range=self.pc_range.tolist(),
-        #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
-        #     points_c="r",
-        #     ax=ax,
-        #     return_ax=True
-        # )
-        # plt.savefig("/home/data/logs/tmp.png")
-        # plt.close()
+        if kwargs['itr'] % 500 == 0:
+            from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+            points = ref_pts[0].detach().cpu().numpy()
+            boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
+            scores = evidence_to_conf_unc(cls_scores[0].exp())[0]
+            scores = scores[:, 1].detach().cpu().numpy()
+            ax = draw_points_boxes_plt(
+                pc_range=self.pc_range.tolist(),
+                points=points,
+                boxes_gt=boxes,
+                return_ax=True
+            )
+            ax = draw_points_boxes_plt(
+                pc_range=self.pc_range.tolist(),
+                points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
+                points_c="green",
+                ax=ax,
+                return_ax=True
+            )
+            ax = draw_points_boxes_plt(
+                pc_range=self.pc_range.tolist(),
+                points=points[scores > 0.5],
+                points_c="magenta",
+                ax=ax,
+                return_ax=True
+            )
+            plt.savefig("/mars/projects20/CoSense3D/cosense3d/logs/stream_lidar/tmp.png")
+            plt.close()
 
         cls_tgt = torch.cat(cls_tgt, dim=0)
         cared = (cls_tgt >= 0).any(dim=-1)
@@ -167,10 +178,12 @@ class QueryGuidedPETRHead(BaseModule):
         lbl_inds, cls_inds = torch.where(cls_tgt)
         cur_labels[lbl_inds] = cls_inds + 1
 
+        avg_factor = max((cur_labels > 0).sum(), 1)
         loss_cls = self.loss_cls(
             cls_src,
             cur_labels,
             temp=epoch,
+            avg_factor=avg_factor
         )
 
         # box loss
@@ -201,7 +214,8 @@ class QueryGuidedPETRHead(BaseModule):
 
         return {
             'petr_cls_loss': loss_cls,
-            'petr_box_loss': loss_box
+            'petr_box_loss': loss_box,
+            'petr_cls_max': evidence_to_conf_unc(cls_src.exp())[0][..., 1].max()
         }
 
     def get_predictions(self, cls_scores, bbox_preds, ref_pts):

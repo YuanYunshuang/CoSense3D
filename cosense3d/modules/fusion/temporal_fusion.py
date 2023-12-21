@@ -259,11 +259,16 @@ class TemporalFusion(BaseModule):
         query_pos = self.query_embedding(self.embed_pos(reference_points))
         tgt = torch.zeros_like(query_pos)
 
-        tgt, query_pos, reference_points, temp_memory, temp_pos = \
+        tgt, query_pos, reference_points, temp_memory, temp_pos, pseudo_inds = \
             self.temporal_alignment(query_pos, tgt, reference_points, mem_dict)
         mask_dict = [None, None]
+        temp_memory, temp_pos = None, None
         outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb,
                                        mask_dict, temp_memory, temp_pos)
+
+        local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
+        local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
+        outs_dec = local_feat + outs_dec
 
         outs = [
             {
@@ -305,10 +310,12 @@ class TemporalFusion(BaseModule):
         # metric coords --> normalized coords
         temp_ref_pts = ((mem_dict['ref_pts'] - self.lidar_range[:self.pos_dim]) /
                         (self.lidar_range[3:3+self.pos_dim] - self.lidar_range[:self.pos_dim]))
+        pseudo_inds = None
         if not x.all():
             # pad the recent memory ref pts with pseudo points
-            pseudo_ref_pts = ref_pts[:, torch.randperm(self.topk)[:self.num_propagated]]
-            pseudo_ref_pts = pseudo_ref_pts + torch.rand_like(pseudo_ref_pts)
+            pseudo_inds = torch.randperm(self.topk)[:self.num_propagated]
+            pseudo_ref_pts = ref_pts[:, pseudo_inds]
+            # pseudo_ref_pts = pseudo_ref_pts + torch.rand_like(pseudo_ref_pts)
             x = x.view(*((-1,) + (1,) * (pseudo_ref_pts.ndim - 1)))
             temp_ref_pts[:, 0] = temp_ref_pts[:, 0] * x + pseudo_ref_pts * (1 - x)
 
@@ -349,7 +356,7 @@ class TemporalFusion(BaseModule):
         temp_memory = temp_memory[:, 1:].flatten(1, 2)
         temp_pos = temp_pos[:, 1:].flatten(1, 2)
 
-        return tgt, query_pos, ref_pts, temp_memory, temp_pos
+        return tgt, query_pos, ref_pts, temp_memory, temp_pos, pseudo_inds
 
 
 

@@ -205,7 +205,7 @@ def prepare_input_data(points_list, voxel_size, QMODE, floor_height, dim=3):
     return x
 
 
-def voxelize_with_centroids(x: ME.TensorField, enc_mlp):
+def voxelize_with_centroids(x: ME.TensorField, enc_mlp, pc_range):
     cm = x.coordinate_manager
     features = x.F
     coords = x.C[:, 1:]
@@ -219,6 +219,7 @@ def voxelize_with_centroids(x: ME.TensorField, enc_mlp):
         print('d')
     norm_features = normalize_points(features, features_p1, tensor_map)
 
+    features[:, :3] = (features[:, :3] - pc_range[:3]) / (pc_range[3:] - pc_range[:3])
     voxel_embs = enc_mlp(torch.cat([features, norm_features], dim=1))
     down_voxel_embs = downsample_embeddings(voxel_embs, tensor_map, size, mode="avg")
     out = ME.SparseTensor(down_voxel_embs,

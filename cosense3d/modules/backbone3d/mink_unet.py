@@ -25,6 +25,7 @@ class MinkUnet(BaseModule):
         self.to_dense = to_dense
         self.height_compression = height_compression
         self.d = d
+        self.lidar_range_tensor = nn.Parameter(torch.Tensor(self.lidar_range), requires_grad=False)
         if cache_strides is None:
             self.cache_strides = [stride]
             self.max_resolution = stride
@@ -34,9 +35,10 @@ class MinkUnet(BaseModule):
         self._init_unet_layers()
         if height_compression is not None:
             self._init_height_compression_layers(height_compression)
+        self.init_weights()
 
     def _init_unet_layers(self):
-        self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32])
+        self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32], norm='LN')
         kernel = [3,] * min(self.d, 3)
         if self.d == 4:
             kernel = kernel + [1,]
@@ -71,6 +73,14 @@ class MinkUnet(BaseModule):
             layers = nn.Sequential(*layers)
             setattr(self, f'{k}_compression', layers)
 
+    def init_weights(self):
+        for n, p in self.named_parameters():
+            if ('mlp' in n and 'weight' in n) or 'kernel' in n:
+                if p.ndim == 1:
+                    continue
+                nn.init.xavier_uniform_(p)
+
+
     def forward(self, points: list, **kwargs):
         res = self.forward_unet(points)
 
@@ -85,7 +95,8 @@ class MinkUnet(BaseModule):
         points = [torch.cat([torch.ones_like(pts[:, :1]) * i, pts], dim=-1
                             ) for i, pts in enumerate(points)]
         x = prepare_input_data(points, self.voxel_size, self.QMODE, self.floor_height, self.d)
-        x1, norm_points_p1, points_p1, count_p1, pos_embs = voxelize_with_centroids(x, self.enc_mlp)
+        x1, norm_points_p1, points_p1, count_p1, pos_embs = voxelize_with_centroids(
+            x, self.enc_mlp, self.lidar_range_tensor)
 
         # convs
         x1 = self.conv1(x1)
