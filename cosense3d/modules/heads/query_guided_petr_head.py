@@ -1,5 +1,5 @@
 from typing import List
-
+import os
 import torch
 from torch import nn
 
@@ -171,7 +171,7 @@ class QueryGuidedPETRHead(BaseModule):
                 ax=ax,
                 return_ax=True
             )
-            plt.savefig("/home/yys/Downloads/tmp.jpg")
+            plt.savefig(f"{os.environ['HOME']}/Downloads/tmp.jpg")
             plt.close()
 
         cls_tgt = torch.cat(cls_tgt, dim=0)
