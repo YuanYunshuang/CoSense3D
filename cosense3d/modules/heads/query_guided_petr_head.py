@@ -9,7 +9,7 @@ from cosense3d.modules.utils.common import inverse_sigmoid
 from cosense3d.utils.misc import multi_apply
 from cosense3d.utils.box_utils import normalize_bbox, denormalize_bbox
 from cosense3d.modules.losses import build_loss
-from cosense3d.modules.losses.edl import evidence_to_conf_unc
+from cosense3d.modules.losses.edl import pred_to_conf_unc
 
 
 class QueryGuidedPETRHead(BaseModule):
@@ -111,16 +111,22 @@ class QueryGuidedPETRHead(BaseModule):
             all_bbox_reg[..., :3] = (all_bbox_reg[..., :3] * (
                     self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3])
 
-        preds = self.get_predictions(all_cls_scores, all_bbox_reg, reference_points)
+        reference_points = reference_points * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]
+        pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
 
         outs = [
             {
                 'all_cls_scores': all_cls_scores[:, i],
                 'all_bbox_reg': all_bbox_reg[:, i],
-                'all_bbox_preds': preds[:, i],
-                'ref_pts': reference_points[i]
+                'ref_pts': reference_points[i],
+                'all_bbox_preds': pred_boxes[:, i],
             } for i in range(len(feat_in))
         ]
+
+        if not self.training:
+            dets = self.get_predictions(all_cls_scores, pred_boxes)
+            for i, out in enumerate(outs):
+                out['preds'] = dets[i]
 
         return {self.scatter_keys[0]: outs}
 
@@ -143,7 +149,7 @@ class QueryGuidedPETRHead(BaseModule):
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
-            scores = evidence_to_conf_unc(cls_scores[0].exp())[0]
+            scores = pred_to_conf_unc(cls_scores[0], 'exp')[0]
             scores = scores[:, 1].detach().cpu().numpy()
             ax = draw_points_boxes_plt(
                 pc_range=self.pc_range.tolist(),
@@ -165,7 +171,7 @@ class QueryGuidedPETRHead(BaseModule):
                 ax=ax,
                 return_ax=True
             )
-            plt.savefig("/mars/projects20/CoSense3D/cosense3d/logs/stream_lidar/tmp.png")
+            plt.savefig("/home/yys/Downloads/tmp.jpg")
             plt.close()
 
         cls_tgt = torch.cat(cls_tgt, dim=0)
@@ -215,11 +221,10 @@ class QueryGuidedPETRHead(BaseModule):
         return {
             'petr_cls_loss': loss_cls,
             'petr_box_loss': loss_box,
-            'petr_cls_max': evidence_to_conf_unc(cls_src.exp())[0][..., 1].max()
+            'petr_cls_max': pred_to_conf_unc(cls_src, 'exp')[0][..., 1].max()
         }
 
-    def get_predictions(self, cls_scores, bbox_preds, ref_pts):
-        b, l, n = cls_scores.shape[:3]
+    def get_pred_boxes(self, bbox_preds, ref_pts):
         reg = {}
 
         ptr = 0
@@ -229,5 +234,22 @@ class QueryGuidedPETRHead(BaseModule):
 
         boxes = self.box_assigner.box_coder.decode(ref_pts[None], reg)
         return torch.cat([boxes, reg['vel']], dim=-1)
+
+    def get_predictions(self, cls_scores, bbox_preds):
+        l, b, n = cls_scores.shape[:3]
+        conf = pred_to_conf_unc(cls_scores[-1], 'exp')[0]
+        scores = conf[..., 1:].sum(dim=-1)
+        labels = conf[..., 1:].argmax(dim=-1)
+        pos = scores > self.box_assigner.center_threshold
+
+        dets = []
+        for i in range(b):
+            dets.append({
+                'box': bbox_preds[-1][i][pos[i]],
+                'scr': scores[i][pos[i]],
+                'lbl': labels[i][pos[i]],
+                'idx': torch.ones_like(labels[i][pos[i]]) * i
+            })
+        return dets
 
 

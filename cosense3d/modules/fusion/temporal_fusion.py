@@ -255,7 +255,7 @@ class TemporalFusion(BaseModule):
         memory = self.memory_embed(feat)
         pos_emb = self.featurized_pe(pos_emb, memory)
 
-        reference_points = ctr.clone()
+        reference_points = pos.clone()
         query_pos = self.query_embedding(self.embed_pos(reference_points))
         tgt = torch.zeros_like(query_pos)
 
