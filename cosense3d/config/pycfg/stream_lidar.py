@@ -69,7 +69,7 @@ shared_modules = OrderedDict(
         down_sample_tgt=False,
         in_dim=256,
         target_assigner=dict(type='target_assigners.BEVPointAssigner', down_sample=False),
-        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=1, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=1, n_cls=2, loss_weight=1.0),
     ),
 
     temporal_fusion = dict(
@@ -145,7 +145,7 @@ shared_modules = OrderedDict(
             center_threshold=0.5,
             box_coder=dict(type='CenterBoxCoder'),
         ),
-        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=1, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=1, n_cls=2, loss_weight=1.0),
         loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 

@@ -92,7 +92,7 @@ class QueryGuidedPETRHead(BaseModule):
         outputs_coords = []
         for lvl in range(len(outs_dec)):
             out_dec = outs_dec[lvl]
-            out_dec = torch.nan_to_num(out_dec)
+            # out_dec = torch.nan_to_num(out_dec)
 
             pred_cls = self.cls_branches[lvl](out_dec)
             pred_reg = self.reg_branches[lvl](out_dec)
@@ -149,7 +149,7 @@ class QueryGuidedPETRHead(BaseModule):
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
-            scores = pred_to_conf_unc(cls_scores[0], 'exp')[0]
+            scores = pred_to_conf_unc(cls_scores[0], self.loss_cls.activation)[0]
             scores = scores[:, 1].detach().cpu().numpy()
             ax = draw_points_boxes_plt(
                 pc_range=self.pc_range.tolist(),
@@ -237,7 +237,7 @@ class QueryGuidedPETRHead(BaseModule):
 
     def get_predictions(self, cls_scores, bbox_preds):
         l, b, n = cls_scores.shape[:3]
-        conf = pred_to_conf_unc(cls_scores[-1], 'exp')[0]
+        conf = pred_to_conf_unc(cls_scores[-1], self.loss_cls.activation)[0]
         scores = conf[..., 1:].sum(dim=-1)
         labels = conf[..., 1:].argmax(dim=-1)
         pos = scores > self.box_assigner.center_threshold
