@@ -189,7 +189,7 @@ class TemporalFusion(BaseModule):
                  feature_stride,
                  lidar_range,
                  pos_dim=3,
-                 num_pose_feat=64,
+                 num_pose_feat=128,
                  topk=1024,
                  num_propagated=256,
                  memory_len=1024,
@@ -216,17 +216,20 @@ class TemporalFusion(BaseModule):
         self.position_embeding = nn.Sequential(
             nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims * 4),
             nn.ReLU(),
+            nn.LayerNorm(self.embed_dims * 4),
             nn.Linear(self.embed_dims * 4, self.embed_dims),
         )
         self.memory_embed = nn.Sequential(
             nn.Linear(self.in_channels, self.embed_dims),
             nn.ReLU(),
+            nn.LayerNorm(self.embed_dims),
             nn.Linear(self.embed_dims, self.embed_dims),
         )
 
         self.query_embedding = nn.Sequential(
             nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims),
             nn.ReLU(),
+            nn.LayerNorm(self.embed_dims),
             nn.Linear(self.embed_dims, self.embed_dims),
         )
 
@@ -262,13 +265,12 @@ class TemporalFusion(BaseModule):
         tgt, query_pos, reference_points, temp_memory, temp_pos, pseudo_inds = \
             self.temporal_alignment(query_pos, tgt, reference_points, mem_dict)
         mask_dict = [None, None]
-        temp_memory, temp_pos = None, None
         outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb,
                                        mask_dict, temp_memory, temp_pos)
 
-        local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
-        local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
-        outs_dec = local_feat + outs_dec
+        # local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
+        # local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
+        # outs_dec = local_feat + outs_dec
 
         outs = [
             {

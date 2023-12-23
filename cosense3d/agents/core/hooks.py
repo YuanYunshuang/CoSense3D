@@ -161,7 +161,7 @@ class DetectionNMSHook(BaseHook):
                 })
             else:
                 keep = self.nms(
-                    boxes,
+                    boxes[..., :7],
                     scores,
                     thresh=self.nms_thr,
                     pre_maxsize=self.pre_max_size
@@ -277,12 +277,12 @@ class EvalDetectionHook(BaseHook):
                 if 'OPV2V' in self.metrics:
                     result_dict = getattr(self, f'opv2v_result')
                     self.eval_funcs.caluclate_tp_fp(
-                        preds['box'], preds['scr'], cur_gt_boxes, result_dict, iou
+                        preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
                     )
                 if 'CoSense3D' in self.metrics:
                     result_dict = getattr(self, f'cosense3d_result')
                     tp = self.eval_funcs.ops_cal_tp(
-                        preds['box'].detach(), cur_gt_boxes.detach(), IoU_thr=iou
+                        preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
                     )
                     result_dict[iou]['tp'].append(tp.cpu())
                     result_dict[iou]['gt'] += len(cur_gt_boxes)

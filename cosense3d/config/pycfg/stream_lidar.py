@@ -18,11 +18,11 @@ inference_pipeline_cpu = OrderedDict(
 
 data_manager = dict(
     train=dict(
-        aug=dict(
-            rot_range=[-1.57, 1.57],
-            flip='xy',
-            scale_ratio_range=[0.95, 1.05],
-        ),
+        # aug=dict(
+        #     rot_range=[-1.57, 1.57],
+        #     flip='xy',
+        #     scale_ratio_range=[0.95, 1.05],
+        # ),
         pre_process=['remove_local_empty_boxes',
                      'remove_global_empty_boxes']
     ),
@@ -47,7 +47,7 @@ shared_modules = OrderedDict(
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 256, 256], steps=[5, 2]))
+        height_compression=OrderedDict(p2=dict(channels=[128, 256, 512], steps=[5, 2]))
     ),
 
     backbone_neck = dict(
@@ -56,7 +56,7 @@ shared_modules = OrderedDict(
         scatter_keys=['bev_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=256, out_dim=256))
+        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=512, out_dim=512))
     ),
 
     roi_head = dict(
@@ -67,7 +67,7 @@ shared_modules = OrderedDict(
         data_info=data_info,
         stride=out_stride,
         down_sample_tgt=False,
-        in_dim=256,
+        in_dim=512,
         target_assigner=dict(type='target_assigners.BEVPointAssigner', down_sample=False),
         loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=1, n_cls=2, loss_weight=1.0),
     ),
@@ -76,7 +76,7 @@ shared_modules = OrderedDict(
         type='fusion.temporal_fusion.TemporalFusion',
         gather_keys=['bevseg_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
-        in_channels=256,
+        in_channels=512,
         feature_stride=2,
         lidar_range=point_cloud_range,
         transformer=dict(
@@ -90,19 +90,19 @@ shared_modules = OrderedDict(
                     attn_cfgs=[
                         dict(
                             type='MultiheadAttention', #fp16 for 2080Ti training (save GPU memory).
-                            embed_dims=256,
+                            embed_dims=512,
                             num_heads=8,
                             dropout=0.1,
                             fp16=False),
                         dict(
                             type='MultiheadFlashAttention',
-                            embed_dims=256,
+                            embed_dims=512,
                             num_heads=8,
                             dropout=0.1),
                         ],
                     ffn_cfgs=dict(
                         type='FFN',
-                        embed_dims=256,
+                        embed_dims=512,
                         feedforward_channels=1024,
                         num_fcs=2,
                         dropout=0.,
@@ -111,7 +111,7 @@ shared_modules = OrderedDict(
                     feedforward_channels=1024,
                     ffn_dropout=0.1,
                     with_cp=False,  ###use checkpoint to save memory
-                    operation_order=('norm', 'self_attn', 'norm',
+                    operation_order=('self_attn', 'norm',
                                      'cross_attn', 'norm',
                                      'ffn', 'norm')),
             )
@@ -122,9 +122,9 @@ shared_modules = OrderedDict(
     detection_head = dict(
         type='heads.query_guided_petr_head.QueryGuidedPETRHead',
         gather_keys=['temp_fusion_feat'],
-        scatter_keys=['petr_out'],
+        scatter_keys=['detection'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d', 'bevseg_local'],
-        embed_dims=256,
+        embed_dims=512,
         pc_range=point_cloud_range,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
         num_classes=2,
@@ -169,6 +169,6 @@ plots = [
          data_keys=['bevseg_local', 'local_labels']),
     # dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
     #      data_keys=['detection_local']),
-    # dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
-    #      data_keys=['detection_local', 'local_labels'], topk_ctr=2048)
+    dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
+         data_keys=['detection', 'local_labels'])
 ]

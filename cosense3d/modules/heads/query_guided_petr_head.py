@@ -106,7 +106,7 @@ class QueryGuidedPETRHead(BaseModule):
             outputs_classes.append(pred_cls)
             outputs_coords.append(pred_reg)
 
-        all_cls_scores = torch.stack(outputs_classes)
+        all_cls_logits = torch.stack(outputs_classes)
         all_bbox_reg = torch.stack(outputs_coords)
         if self.use_logits:
             all_bbox_reg[..., :3] = (all_bbox_reg[..., :3] * (
@@ -114,18 +114,20 @@ class QueryGuidedPETRHead(BaseModule):
 
         reference_points = reference_points * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]
         pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
+        cls_scores = pred_to_conf_unc(all_cls_logits, self.loss_cls.activation)[0]
 
         outs = [
             {
-                'all_cls_scores': all_cls_scores[:, i],
+                'all_cls_logits': all_cls_logits[:, i],
                 'all_bbox_reg': all_bbox_reg[:, i],
                 'ref_pts': reference_points[i],
+                'all_cls_scores': cls_scores[:, i],
                 'all_bbox_preds': pred_boxes[:, i],
             } for i in range(len(feat_in))
         ]
 
         if not self.training:
-            dets = self.get_predictions(all_cls_scores, pred_boxes)
+            dets = self.get_predictions(cls_scores, pred_boxes)
             for i, out in enumerate(outs):
                 out['preds'] = dets[i]
 
@@ -133,7 +135,7 @@ class QueryGuidedPETRHead(BaseModule):
 
     def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
         epoch = kwargs.get('epoch', 0)
-        cls_scores = self.stack_data_from_list(petr_out, 'all_cls_scores').flatten(0, 1)
+        cls_scores = self.stack_data_from_list(petr_out, 'all_cls_logits').flatten(0, 1)
         bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
         ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
             1, self.num_pred, 1, 1).flatten(0, 1)
@@ -222,7 +224,7 @@ class QueryGuidedPETRHead(BaseModule):
         return {
             'petr_cls_loss': loss_cls,
             'petr_box_loss': loss_box,
-            'petr_cls_max': pred_to_conf_unc(cls_src, 'exp')[0][..., 1].max()
+            'petr_cls_max': pred_to_conf_unc(cls_src, self.loss_cls.activation)[0][..., 1].max()
         }
 
     def get_pred_boxes(self, bbox_preds, ref_pts):
@@ -238,9 +240,8 @@ class QueryGuidedPETRHead(BaseModule):
 
     def get_predictions(self, cls_scores, bbox_preds):
         l, b, n = cls_scores.shape[:3]
-        conf = pred_to_conf_unc(cls_scores[-1], self.loss_cls.activation)[0]
-        scores = conf[..., 1:].sum(dim=-1)
-        labels = conf[..., 1:].argmax(dim=-1)
+        scores = cls_scores[-1][..., 1:].sum(dim=-1)
+        labels = cls_scores[-1].argmax(dim=-1)
         pos = scores > self.box_assigner.center_threshold
 
         dets = []

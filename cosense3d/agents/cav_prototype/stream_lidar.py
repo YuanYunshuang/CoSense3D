@@ -76,16 +76,31 @@ class StreamLidarCAV(BaseCAV):
             pose_inv = self.lidar_pose.inverse()
 
             self.data['memory']['timestamp'] += self.timestamp
-            self.data['memory']['pose'] = pose_inv @ self.data['memory']['pose']
+            self.data['memory']['pose'] = pose_inv @ self.data['memory']['pose']  # local t-1 --> t
             self.data['memory']['ref_pts'] = self.transform_ref_pts(
-                self.data['memory']['ref_pts'], pose_inv)
+                self.data['memory']['ref_pts'], pose_inv)  # global -> local t
+
+            # import matplotlib.pyplot as plt
+            # from cosense3d.utils.vislib import draw_points_boxes_plt
+            # pcd = self.data['points'][:, :3].detach().cpu().numpy()
+            # ref_pts = self.data['memory']['ref_pts'].detach().cpu().numpy()
+            # gt_boxes = self.data['local_bboxes_3d'].detach().cpu().numpy()
+            # ax = draw_points_boxes_plt(
+            #     pc_range=self.lidar_range.tolist(),
+            #     boxes_gt=gt_boxes[:, :7],
+            #     points=pcd,
+            #     return_ax=True,
+            # )
+            # ax.plot(ref_pts[0, :, 0], ref_pts[0, :, 1], ".r", markersize=2)
+            # plt.show()
+            # plt.close()
 
         self.refresh_memory(self.data['prev_exists'])
 
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
-        x = self.data['petr_out']
-        scores = x['all_cls_scores'][-1].sigmoid().topk(1, dim=-1).values[..., 0]
+        x = self.data['detection']
+        scores = x['all_cls_scores'][-1][..., 1:].topk(1, dim=-1).values[..., 0]
         topk = torch.topk(scores, k=self.memory_num_propagated).indices
 
         ref_pts = x['all_bbox_preds'][-1][:, :self.ref_pts_dim]
@@ -102,10 +117,25 @@ class StreamLidarCAV(BaseCAV):
             rec_topk = vars[k][topk].unsqueeze(0)
             self.data['memory'][k] = torch.cat([rec_topk, v], dim=0)
 
+        # import matplotlib.pyplot as plt
+        # from cosense3d.utils.vislib import draw_points_boxes_plt
+        # pcd = self.data['points'][:, :3].detach().cpu().numpy()
+        # ref_pts = self.data['memory']['ref_pts'][0].detach().cpu().numpy()
+        # gt_boxes = self.data['local_bboxes_3d'].detach().cpu().numpy()
+        # ax = draw_points_boxes_plt(
+        #     pc_range=self.lidar_range.tolist(),
+        #     boxes_gt=gt_boxes[:, :7],
+        #     points=pcd,
+        #     return_ax=True,
+        # )
+        # plt.plot(ref_pts[:, 0], ref_pts[:, 1], ".r", markersize=2)
+        # plt.show()
+        # plt.close()
+
         self.data['memory']['ref_pts'] = self.transform_ref_pts(
-            self.data['memory']['ref_pts'], self.lidar_pose)
+            self.data['memory']['ref_pts'], self.lidar_pose)  # to global coor
         self.data['memory']['timestamp'] -= self.timestamp
-        self.data['memory']['pose'] = self.lidar_pose[(None,)*2] @ self.data['memory']['pose']
+        self.data['memory']['pose'] = self.lidar_pose[(None,)*2] @ self.data['memory']['pose'] # local-->global
 
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(
