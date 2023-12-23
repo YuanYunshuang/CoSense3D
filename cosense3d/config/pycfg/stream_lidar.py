@@ -111,7 +111,8 @@ shared_modules = OrderedDict(
                     feedforward_channels=1024,
                     ffn_dropout=0.1,
                     with_cp=False,  ###use checkpoint to save memory
-                    operation_order=('self_attn', 'norm', 'cross_attn', 'norm',
+                    operation_order=('norm', 'self_attn', 'norm',
+                                     'cross_attn', 'norm',
                                      'ffn', 'norm')),
             )
         ),
