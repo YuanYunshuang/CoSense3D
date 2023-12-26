@@ -47,7 +47,7 @@ shared_modules = OrderedDict(
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 256, 512], steps=[5, 2]))
+        height_compression=OrderedDict(p2=dict(channels=[128, 256, 384], steps=[5, 2]))
     ),
 
     backbone_neck = dict(
@@ -56,7 +56,7 @@ shared_modules = OrderedDict(
         scatter_keys=['bev_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=512, out_dim=512))
+        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=384, out_dim=256))
     ),
 
     roi_head = dict(
@@ -67,7 +67,7 @@ shared_modules = OrderedDict(
         data_info=data_info,
         stride=out_stride,
         down_sample_tgt=False,
-        in_dim=512,
+        in_dim=256,
         num_cls=1,
         target_assigner=dict(type='target_assigners.BEVPointAssigner', down_sample=False),
         loss_cls=dict(type='FocalLoss', use_sigmoid=True, bg_idx=0,
@@ -78,7 +78,7 @@ shared_modules = OrderedDict(
         type='fusion.temporal_fusion.TemporalFusion',
         gather_keys=['bevseg_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
-        in_channels=512,
+        in_channels=256,
         feature_stride=2,
         lidar_range=point_cloud_range,
         transformer=dict(
@@ -92,19 +92,19 @@ shared_modules = OrderedDict(
                     attn_cfgs=[
                         dict(
                             type='MultiheadAttention', #fp16 for 2080Ti training (save GPU memory).
-                            embed_dims=512,
+                            embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
                             fp16=False),
                         dict(
                             type='MultiheadFlashAttention',
-                            embed_dims=512,
+                            embed_dims=256,
                             num_heads=8,
                             dropout=0.1),
                         ],
                     ffn_cfgs=dict(
                         type='FFN',
-                        embed_dims=512,
+                        embed_dims=256,
                         feedforward_channels=1024,
                         num_fcs=2,
                         dropout=0.,
@@ -126,7 +126,7 @@ shared_modules = OrderedDict(
         gather_keys=['temp_fusion_feat'],
         scatter_keys=['detection'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d', 'bevseg_local'],
-        embed_dims=512,
+        embed_dims=256,
         pc_range=point_cloud_range,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
         num_classes=2,
