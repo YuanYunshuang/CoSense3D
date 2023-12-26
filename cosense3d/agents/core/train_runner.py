@@ -80,7 +80,7 @@ class TrainRunner(BaseRunner):
                 self.hooks(self, 'pre_epoch')
                 self.run_epoch()
                 self.hooks(self, 'post_epoch')
-                self.lr_scheduler.step(i)
+                self.lr_scheduler.step_epoch(i)
                 self.epoch += 1
                 self.iter = 1
 
@@ -104,9 +104,11 @@ class TrainRunner(BaseRunner):
         # loss_dict['grad_norm'] = grad_norm
         # Updating parameters
         self.optimizer.step()
+        self.lr_scheduler.step_itr(self.iter + self.epoch * self.total_iter)
 
         if self.logger is not None:
-            rec_lr = self.lr_scheduler.optimizer.param_groups[0]['lr']
+            # rec_lr = self.lr_scheduler.optimizer.param_groups[0]['lr']
+            rec_lr = self.lr_scheduler.get_last_lr()
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
 
         del data
