@@ -190,10 +190,12 @@ class TemporalFusion(BaseModule):
                  lidar_range,
                  pos_dim=3,
                  num_pose_feat=128,
-                 topk=1024,
+                 topk_ref_pts=1024,
+                 topk_feat=512,
                  num_propagated=256,
                  memory_len=1024,
-                 num_query=644,
+                 ref_pts_stride=2,
+                 transformer_itrs=1,
                  **kwargs):
         super().__init__(**kwargs)
         self.transformer = plugin.build_plugin_module(transformer)
@@ -202,10 +204,12 @@ class TemporalFusion(BaseModule):
         self.pos_dim = pos_dim
         self.in_channels = in_channels
         self.feature_stride = feature_stride
-        self.topk = topk
-        self.num_query = num_query
+        self.topk_ref_pts = topk_ref_pts
+        self.topk_feat = topk_feat
+        self.ref_pts_stride = ref_pts_stride
         self.num_propagated = num_propagated
         self.memory_len = memory_len
+        self.transformer_itrs = transformer_itrs
 
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
 
@@ -250,27 +254,33 @@ class TemporalFusion(BaseModule):
         self.transformer.init_weights()
 
     def forward(self, rois, bev_feat, mem_dict, **kwargs):
-        feat, ctr = self.gather_topk(rois, bev_feat)
+        ref_feat, ref_ctr = self.gather_topk(rois, bev_feat, self.ref_pts_stride, self.topk_ref_pts)
+        mem_feat, mem_ctr = self.gather_topk(rois, bev_feat, self.feature_stride, self.topk_feat)
 
-        pos = ((ctr - self.lidar_range[:self.pos_dim]) /
-               (self.lidar_range[3:self.pos_dim + 3] - self.lidar_range[:self.pos_dim]))
-        pos_emb = self.position_embeding(self.embed_pos(pos))
-        memory = self.memory_embed(feat)
-        pos_emb = self.featurized_pe(pos_emb, memory)
+        ref_pos = ((ref_ctr - self.lidar_range[:self.pos_dim]) /
+                  (self.lidar_range[3:self.pos_dim + 3] - self.lidar_range[:self.pos_dim]))
+        mem_pos = ((mem_ctr - self.lidar_range[:self.pos_dim]) /
+                  (self.lidar_range[3:self.pos_dim + 3] - self.lidar_range[:self.pos_dim]))
+        mem_pos_emb = self.position_embeding(self.embed_pos(mem_pos))
+        memory = self.memory_embed(mem_feat)
+        pos_emb = self.featurized_pe(mem_pos_emb, memory)
 
-        reference_points = pos.clone()
+        reference_points = ref_pos.clone()
         query_pos = self.query_embedding(self.embed_pos(reference_points))
         tgt = torch.zeros_like(query_pos)
 
-        tgt, query_pos, reference_points, temp_memory, temp_pos, pseudo_inds = \
-            self.temporal_alignment(query_pos, tgt, reference_points, mem_dict)
+        tgt, query_pos, reference_points, temp_memory, temp_pos, ext_feat = \
+            self.temporal_alignment(query_pos, tgt, reference_points, ref_feat, mem_dict)
         mask_dict = [None, None]
-        outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb,
-                                       mask_dict, temp_memory, temp_pos)
-
-        # local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
-        # local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
-        # outs_dec = local_feat + outs_dec
+        global_feat = []
+        for _ in range(self.transformer_itrs):
+            tgt = self.transformer(memory, tgt, query_pos, pos_emb,
+                                   mask_dict, temp_memory, temp_pos)[0][-1]
+            global_feat.append(tgt)
+        global_feat = torch.stack(global_feat, dim=0)
+        local_feat = torch.cat([ref_feat, ext_feat], dim=1)
+        local_feat = local_feat[None].repeat(global_feat.shape[0], 1, 1, 1)
+        outs_dec = local_feat + global_feat
 
         outs = [
             {
@@ -281,18 +291,21 @@ class TemporalFusion(BaseModule):
 
         return {self.scatter_keys[0]: outs}
 
-    def gather_topk(self, rois, bev_feats):
+    def gather_topk(self, rois, bev_feats, stride, topk):
         topk_feat, topk_ctr = [], []
         for roi, bev_feat in zip(rois, bev_feats):
-            ctr = bev_feat[f'p{self.feature_stride}']['ctr']
-            feat = bev_feat[f'p{self.feature_stride}']['feat']
-            scores = roi['conf'][:, roi['reg'].shape[-1] - 1:].sum(dim=-1)
-            if scores.shape[0] < self.topk:
-                raise NotImplementedError
-            else:
-                topk_inds = torch.topk(scores, k=self.topk).indices
-                topk_ctr.append(ctr[topk_inds])
-                topk_feat.append(feat[topk_inds])
+            ctr = bev_feat[f'p{stride}']['ctr']
+            feat = bev_feat[f'p{stride}']['feat']
+            scores = roi[f'p{stride}']['conf'][:,
+                     roi[f'p{stride}']['reg'].shape[-1] - 1:].sum(dim=-1)
+            sort_inds = scores.argsort(descending=True)
+            if scores.shape[0] < topk:
+                n_repeat = topk // len(scores) + 1
+                sort_inds = torch.cat([sort_inds] * n_repeat, dim=0)
+
+            topk_inds = sort_inds[:topk]
+            topk_ctr.append(ctr[topk_inds])
+            topk_feat.append(feat[topk_inds])
         topk_ctr = torch.stack(topk_ctr, dim=0)
         topk_feat = torch.stack(topk_feat, dim=0)
         # pad 2d coordinates to 3d if needed
@@ -305,24 +318,28 @@ class TemporalFusion(BaseModule):
         dim = self.num_pose_feat if dim is None else dim
         return getattr(PE, f'pos2posemb{pos.shape[-1]}d')(pos, dim)
 
-    def temporal_alignment(self, query_pos, tgt, ref_pts, mem_dict):
+    def temporal_alignment(self, query_pos, tgt, ref_pts, ref_feat, mem_dict):
         B = ref_pts.shape[0]
         mem_dict = self.stack_dict_list(mem_dict)
         x = mem_dict['prev_exists'].view(-1)
         # metric coords --> normalized coords
         temp_ref_pts = ((mem_dict['ref_pts'] - self.lidar_range[:self.pos_dim]) /
                         (self.lidar_range[3:3+self.pos_dim] - self.lidar_range[:self.pos_dim]))
-        pseudo_inds = None
+        temp_memory = mem_dict['embeddings']
+
         if not x.all():
             # pad the recent memory ref pts with pseudo points
-            pseudo_inds = torch.randperm(self.topk)[:self.num_propagated]
-            pseudo_ref_pts = ref_pts[:, pseudo_inds]
+            ext_inds = torch.randperm(self.topk_ref_pts)[:self.num_propagated]
+            ext_ref_pts = ref_pts[:, ext_inds]
+            ext_feat = ref_feat[:, ext_inds]
             # pseudo_ref_pts = pseudo_ref_pts + torch.rand_like(pseudo_ref_pts)
-            x = x.view(*((-1,) + (1,) * (pseudo_ref_pts.ndim - 1)))
-            temp_ref_pts[:, 0] = temp_ref_pts[:, 0] * x + pseudo_ref_pts * (1 - x)
+            x = x.view(*((-1,) + (1,) * (ext_ref_pts.ndim - 1)))
+            temp_ref_pts[:, 0] = temp_ref_pts[:, 0] * x + ext_ref_pts * (1 - x)
+            ext_feat = temp_memory[:, 0] * x + ext_feat * (1 - x)
+        else:
+            ext_feat = temp_memory[:, 0]
 
         temp_pos = self.query_embedding(self.embed_pos(temp_ref_pts))
-        temp_memory = mem_dict['embeddings']
         rec_pose = torch.eye(
             4, device=query_pos.device).reshape(1, 1, 4, 4).repeat(
             B, query_pos.size(1), 1, 1)
@@ -358,7 +375,7 @@ class TemporalFusion(BaseModule):
         temp_memory = temp_memory[:, 1:].flatten(1, 2)
         temp_pos = temp_pos[:, 1:].flatten(1, 2)
 
-        return tgt, query_pos, ref_pts, temp_memory, temp_pos, pseudo_inds
+        return tgt, query_pos, ref_pts, temp_memory, temp_pos, ext_feat
 
 
 

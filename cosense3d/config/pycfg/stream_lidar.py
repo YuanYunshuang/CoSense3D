@@ -42,12 +42,16 @@ shared_modules = OrderedDict(
         gather_keys=['points'],
         scatter_keys=['bev_feat'],
         d=3,
-        cache_strides=[2],
+        cache_strides=[2, 8],
+        kernel_size_layer1=5,
         in_dim=4,
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=OrderedDict(p2=dict(channels=[128, 256, 384], steps=[5, 2]))
+        height_compression=OrderedDict(
+            p2=dict(channels=[128, 256, 384], steps=[5, 2]),
+            p8=dict(channels=[128, 256], steps=[2])
+        )
     ),
 
     backbone_neck = dict(
@@ -56,16 +60,20 @@ shared_modules = OrderedDict(
         scatter_keys=['bev_feat'],
         data_info=data_info,
         d=2,
-        convs=dict(p2=dict(kernels=[3, 3, 3], in_dim=384, out_dim=256))
+        convs=dict(
+            p2=dict(kernels=[3, 3, 3], in_dim=384, out_dim=256),
+            p8=dict(kernels=[3, 3, 3], in_dim=256, out_dim=256)
+        )
     ),
 
     roi_head = dict(
-        type='heads.bev.BEV',
+        type='heads.bev.BEVMultiResolution',
         gather_keys=['bev_feat'],
         scatter_keys=['bevseg_local'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
         data_info=data_info,
-        stride=out_stride,
+        strides=[2, 8],
+        strides_for_loss=[2],
         down_sample_tgt=False,
         in_dim=256,
         num_cls=1,
@@ -79,7 +87,9 @@ shared_modules = OrderedDict(
         gather_keys=['bevseg_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
-        feature_stride=2,
+        ref_pts_stride=2,
+        feature_stride=8,
+        transformer_itrs=1,
         lidar_range=point_cloud_range,
         transformer=dict(
             type='transformer.PETRTemporalTransformer',
@@ -127,6 +137,8 @@ shared_modules = OrderedDict(
         scatter_keys=['detection'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d', 'bevseg_local'],
         embed_dims=256,
+        num_reg_fcs=1,
+        num_pred=1,
         pc_range=point_cloud_range,
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
         num_classes=2,
