@@ -12,6 +12,7 @@ class MinkUnet(BaseModule):
                  stride,
                  in_dim,
                  d=3,
+                 kernel_size_layer1=3,
                  cache_strides=None,
                  floor_height=0,
                  height_compression=None,
@@ -37,9 +38,9 @@ class MinkUnet(BaseModule):
             self._init_height_compression_layers(height_compression)
         self.init_weights()
 
-    def _init_unet_layers(self):
+    def _init_unet_layers(self, kernel_size_layer1=3):
         self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32], norm='LN')
-        kernel_conv1 = [5,] * min(self.d, 3)
+        kernel_conv1 = [kernel_size_layer1,] * min(self.d, 3)
         kernel = [3,] * min(self.d, 3)
         if self.d == 4:
             kernel = kernel + [1,]

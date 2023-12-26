@@ -43,6 +43,7 @@ shared_modules = OrderedDict(
         scatter_keys=['bev_feat'],
         d=3,
         cache_strides=[2, 8],
+        kernel_size_layer1=5,
         in_dim=4,
         stride=out_stride,
         floor_height=point_cloud_range[2],
