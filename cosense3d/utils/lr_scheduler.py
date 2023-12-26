@@ -75,7 +75,7 @@ class LRUpdater:
 
     def step_itr(self, itr):
         if self.policy == 'TransformerAdaptiveScheduler':
-            self.lr_scheduler.step(itr)
+            self.lr_scheduler.step()
 
 
     def state_dict(self):
