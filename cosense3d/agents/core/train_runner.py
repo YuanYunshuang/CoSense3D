@@ -108,7 +108,7 @@ class TrainRunner(BaseRunner):
 
         if self.logger is not None:
             # rec_lr = self.lr_scheduler.optimizer.param_groups[0]['lr']
-            rec_lr = self.lr_scheduler.get_last_lr()
+            rec_lr = self.lr_scheduler.get_last_lr()[0]
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
 
         del data
