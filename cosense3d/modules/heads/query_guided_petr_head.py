@@ -148,7 +148,7 @@ class QueryGuidedPETRHead(BaseModule):
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
-        if kwargs['itr'] % 10 == 0:
+        if kwargs['itr'] % 100 == 0:
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()

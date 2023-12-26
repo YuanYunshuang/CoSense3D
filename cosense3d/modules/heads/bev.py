@@ -91,7 +91,7 @@ class BEV(BaseModule):
         epoch_num = kwargs.get('epoch', 0)
         reg = self.cat_data_from_list(batch_list, 'reg')
 
-        if kwargs['itr'] % 10 == 0:
+        if kwargs['itr'] % 100 == 0:
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             from matplotlib import colormaps
             jet = colormaps['jet']
