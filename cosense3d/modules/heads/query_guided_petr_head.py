@@ -22,8 +22,8 @@ class QueryGuidedPETRHead(BaseModule):
                  box_assigner,
                  loss_cls,
                  loss_box,
-                 num_reg_fcs=1,
-                 num_pred=1,
+                 num_reg_fcs=3,
+                 num_pred=3,
                  use_logits=False,
                  reg_channels=None,
                  **kwargs):
@@ -153,14 +153,14 @@ class QueryGuidedPETRHead(BaseModule):
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
             scores = pred_to_conf_unc(cls_scores[0], self.loss_cls.activation)[0]
-            scores = scores[:, 1].detach().cpu().numpy()
+            scores = scores[:, self.num_classes - 1:].squeeze().detach().cpu().numpy()
             ax = draw_points_boxes_plt(
                 pc_range=self.pc_range.tolist(),
                 points=points,
                 boxes_gt=boxes,
                 return_ax=True
             )
-            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3)
+            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, vmin=0.0, vmax=1.0)
             # ax = draw_points_boxes_plt(
             #     pc_range=self.pc_range.tolist(),
             #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
@@ -225,7 +225,8 @@ class QueryGuidedPETRHead(BaseModule):
         return {
             'petr_cls_loss': loss_cls,
             'petr_box_loss': loss_box,
-            'petr_cls_max': pred_to_conf_unc(cls_src, self.loss_cls.activation)[0][..., 1].max()
+            'petr_cls_max': pred_to_conf_unc(
+                cls_src, self.loss_cls.activation)[0][..., self.num_classes - 1:].max()
         }
 
     def get_pred_boxes(self, bbox_preds, ref_pts):

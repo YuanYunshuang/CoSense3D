@@ -12,6 +12,7 @@ class DilationSpconv(BaseModule):
         self.lidar_range = data_info.get('lidar_range', False)
         self.voxel_size = data_info['voxel_size']
         self.d = d
+        self.conv_args = convs
         self.convs = []
         for k, conv_args in convs.items():
             self.convs.append(k)

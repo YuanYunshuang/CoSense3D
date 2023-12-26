@@ -128,6 +128,34 @@ class BEV(BaseModule):
         return loss_dict
 
 
+class BEVMultiResolution(BaseModule):
+    def __init__(self, strides, strides_for_loss, **kwargs):
+        super().__init__(**kwargs)
+        self.strides = strides
+        self.strides_for_loss = strides_for_loss
+        for s in strides:
+            kwargs['stride'] = s
+            setattr(self, f'head_p{s}', BEV(**kwargs))
+
+    def forward(self, stensor_list, *args, **kwargs):
+        out_list = [{} for b in range(len(stensor_list))]
+        for s in self.strides:
+            out = getattr(self, f'head_p{s}')(stensor_list)[self.scatter_keys[0]]
+            for i, x in enumerate(out):
+                out_list[i][f'p{s}'] = x
+
+        return {self.scatter_keys[0]: out_list}
+
+    def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        loss_dict = {}
+        for s in self.strides_for_loss:
+            ldict = getattr(self, f'head_p{s}').loss(
+                [l[f'p{s}'] for l in batch_list], gt_boxes, gt_labels, **kwargs)
+            for k, v in ldict.items():
+                loss_dict[f'{k}_s{s}'] = v
+        return loss_dict
+
+
 class ContinuousBEV(BaseModule):
     def __init__(self,
                  out_channels,

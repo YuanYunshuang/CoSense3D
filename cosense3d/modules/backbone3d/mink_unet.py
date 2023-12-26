@@ -39,10 +39,12 @@ class MinkUnet(BaseModule):
 
     def _init_unet_layers(self):
         self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32], norm='LN')
+        kernel_conv1 = [5,] * min(self.d, 3)
         kernel = [3,] * min(self.d, 3)
         if self.d == 4:
             kernel = kernel + [1,]
-        self.conv1 = minkconv_conv_block(32, 32, kernel, 1, self.d, 0.1)
+            kernel_conv1 = kernel + [1,]
+        self.conv1 = minkconv_conv_block(32, 32, kernel_conv1, 1, self.d, 0.1)
         self.conv2 = get_conv_block([32, 32, 32], kernel, d=self.d)
         self.conv3 = get_conv_block([32, 64, 64], kernel, d=self.d)
         self.conv4 = get_conv_block([64, 128, 128], kernel, d=self.d)
@@ -103,6 +105,7 @@ class MinkUnet(BaseModule):
         x2 = self.conv2(x1)
         x4 = self.conv3(x2)
         p8 = self.conv4(x4)
+        p8_cat = p8
 
         # transposed convs
         if self.max_resolution <= 4:
