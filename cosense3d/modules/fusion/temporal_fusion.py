@@ -286,7 +286,7 @@ class TemporalFusion(BaseModule):
         for roi, bev_feat in zip(rois, bev_feats):
             ctr = bev_feat[f'p{self.feature_stride}']['ctr']
             feat = bev_feat[f'p{self.feature_stride}']['feat']
-            scores = roi['conf'][:, 1:].sum(dim=-1)
+            scores = roi['conf'][:, roi['reg'].shape[-1] - 1:].sum(dim=-1)
             if scores.shape[0] < self.topk:
                 raise NotImplementedError
             else:
