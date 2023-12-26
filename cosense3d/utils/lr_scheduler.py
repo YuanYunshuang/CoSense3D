@@ -11,13 +11,15 @@ class TransformerAdaptiveScheduler(torch_lr._LRScheduler):
                  optimizer: Optimizer,
                  dim_embed: int,
                  warmup_steps: int,
+                 itrs_per_epoch: int,
                  last_epoch: int = -1,
                  verbose: bool = False) -> None:
         self.dim_embed = dim_embed
         self.warmup_steps = warmup_steps
         self.num_param_groups = len(optimizer.param_groups)
-
         super().__init__(optimizer, last_epoch, verbose)
+        if last_epoch > 0:
+            self._step_count = itrs_per_epoch * last_epoch
 
     def get_lr(self) -> float:
         lr = self.calc_lr(self._step_count, self.dim_embed, self.warmup_steps)
@@ -56,20 +58,71 @@ class LRUpdater:
                 cycle_decay=decay_rate
             )
         elif policy == 'TransformerAdaptiveScheduler':
-            TransformerAdaptiveScheduler(optimizer, **kwargs)
+            kwargs['itrs_per_epoch'] = total_iter
+            self.lr_scheduler = TransformerAdaptiveScheduler(optimizer, **kwargs)
         else:
             raise NotImplementedError
 
         self.optimizer = self.lr_scheduler.optimizer
 
-    def step(self, epoch):
-        if self.policy in ['CosineAnnealingWarm',]:
+    def step_epoch(self, epoch):
+        if self.policy == 'TransformerAdaptiveScheduler':
+            pass
+        elif self.policy in ['CosineAnnealingWarm',]:
             self.lr_scheduler.step(epoch)
         else:
             self.lr_scheduler.step()
+
+    def step_itr(self, itr):
+        if self.policy == 'TransformerAdaptiveScheduler':
+            self.lr_scheduler.step(itr)
+
 
     def state_dict(self):
         return self.lr_scheduler.state_dict()
 
     def load_state_dict(self, state_dict):
         self.lr_scheduler.load_state_dict(state_dict)
+
+    def get_last_lr(self):
+        return self.lr_scheduler.get_last_lr()
+
+
+if __name__=="__main__":
+    import torch
+    import matplotlib.pyplot as plt
+    params = torch.nn.Parameter(torch.rand(10, 10))
+    optimizer = torch.optim.AdamW([params],
+                                  lr=0.001,
+                                  weight_decay=1e-2,
+                                  betas=(0.9, 0.98),
+                                  eps=1.0e-9,
+                                  # init_lr=0.001,
+                                  )
+    lr_scheduler = TransformerAdaptiveScheduler(
+        optimizer,
+        dim_embed=256,
+        warmup_steps=4000,
+        itrs_per_epoch=2000,
+        last_epoch=-1,
+    )
+
+    torch.save(optimizer.state_dict(), 'optimizer_checkpoint.pth')
+    optimizer.load_state_dict(torch.load('optimizer_checkpoint.pth'))
+    lr_scheduler = TransformerAdaptiveScheduler(
+        optimizer,
+        dim_embed=256,
+        warmup_steps=4000,
+        itrs_per_epoch=2000,
+        last_epoch=3,
+    )
+
+    lrs = []
+    for epoch in range(50 * 2000):
+        lrs.append(lr_scheduler.get_lr()[0])
+        optimizer.step()
+        lr_scheduler.step()
+
+    plt.plot(torch.arange(len(lrs)).numpy(), lrs)
+    plt.show()
+    plt.close()

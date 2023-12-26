@@ -83,7 +83,6 @@ class MinkUnet(BaseModule):
                     continue
                 nn.init.xavier_uniform_(p)
 
-
     def forward(self, points: list, **kwargs):
         res = self.forward_unet(points)
 
