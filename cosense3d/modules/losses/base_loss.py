@@ -16,7 +16,10 @@ class BaseLoss(nn.Module):
     def loss(self, *args, **kwargs):
         raise NotImplementedError
 
-    def forward(self, preds, targets, weight=None, avg_factor=None, reduction_override=None, **kwargs):
+    def forward(self, preds, targets,
+                weight=None, avg_factor=None,
+                reduction_override=None,
+                *args, **kwargs):
         """
 
         Parameters
@@ -30,7 +33,7 @@ class BaseLoss(nn.Module):
                 Defaults to None.
 
         """
-        loss = self.loss(preds, targets, **kwargs)
+        loss = self.loss(preds, targets, *args, **kwargs)
         # if weight is specified, apply element-wise weight
         if weight is not None:
             loss = loss * weight

@@ -1,3 +1,5 @@
+import os
+
 from cosense3d.modules import BaseModule
 from cosense3d.modules.utils.me_utils import *
 from cosense3d.modules.utils.common import pad_r, linear_last, cat_coor_with_idx
@@ -14,6 +16,7 @@ class BEV(BaseModule):
                  stride,
                  target_assigner,
                  loss_cls,
+                 num_cls=1,
                  class_names_each_head=None,
                  down_sample_tgt=True,
                  **kwargs):
@@ -22,14 +25,16 @@ class BEV(BaseModule):
         self.class_names_each_head = class_names_each_head
         self.down_sample_tgt = down_sample_tgt
         self.stride = stride
+        self.num_cls = num_cls
         for k, v in data_info.items():
             setattr(self, k, v)
         update_me_essentials(self, data_info, self.stride)
 
-        self.reg_layer = linear_last(in_dim, 32, 2, bias=True)
+        self.reg_layer = linear_last(in_dim, 32, num_cls, bias=True)
 
         self.tgt_assigner = build_plugin_module(target_assigner)
         self.loss_cls = build_loss(**loss_cls)
+        self.is_edl = True if 'edl' in self.loss_cls.name.lower() else False
 
     def forward(self, stensor_list, **kwargs):
         coor, feat, ctr = self.format_input(stensor_list)
@@ -39,8 +44,9 @@ class BEV(BaseModule):
 
         centers = indices2metric(coor, self.voxel_size)
         reg = self.reg_layer(feat)
-        is_edl = True if 'edl' in self.loss_cls.name.lower() else False
-        conf, unc = self.tgt_assigner.get_predictions(reg, is_edl, self.loss_cls.activation)
+
+        conf, unc = self.tgt_assigner.get_predictions(
+            reg, self.is_edl, getattr(self.loss_cls, 'activation'))
 
         out = {
             'ctr': centers,
@@ -85,21 +91,21 @@ class BEV(BaseModule):
         epoch_num = kwargs.get('epoch', 0)
         reg = self.cat_data_from_list(batch_list, 'reg')
 
-        # if kwargs['itr'] % 50 == 0:
-        #     from cosense3d.utils.vislib import draw_points_boxes_plt, plt
-        #     from matplotlib import colormaps
-        #     jet = colormaps['jet']
-        #     points = batch_list[0]['ctr'].detach().cpu().numpy()
-        #     scores = batch_list[0]['conf'][:, 1].detach().cpu().numpy()
-        #     ax = draw_points_boxes_plt(
-        #         pc_range=[-144, -41.6, -3.0, 144, 41.6, 1.0],
-        #         # points=points,
-        #         boxes_gt=boxes_vis,
-        #         return_ax=True
-        #     )
-        #     ax.scatter(points[:, 0], points[:, 1], c=scores, cmap=jet, s=3, marker='s')
-        #     plt.savefig("/mars/projects20/CoSense3D/cosense3d/logs/stream_lidar/tmp1.png")
-        #     plt.close()
+        if kwargs['itr'] % 100 == 0:
+            from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+            from matplotlib import colormaps
+            jet = colormaps['jet']
+            points = batch_list[0]['ctr'].detach().cpu().numpy()
+            scores = batch_list[0]['conf'][:, self.num_cls - 1:].detach().cpu().numpy()
+            ax = draw_points_boxes_plt(
+                pc_range=[-144, -41.6, -3.0, 144, 41.6, 1.0],
+                # points=points,
+                boxes_gt=boxes_vis,
+                return_ax=True
+            )
+            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap=jet, s=3, marker='s')
+            plt.savefig(f"{os.environ['HOME']}/Downloads/tmp1.jpg")
+            plt.close()
 
         if valid is None:
             # targets are not down-sampled

@@ -268,9 +268,9 @@ class TemporalFusion(BaseModule):
         outs_dec, _ = self.transformer(memory, tgt, query_pos, pos_emb,
                                        mask_dict, temp_memory, temp_pos)
 
-        local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
-        local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
-        outs_dec = local_feat + outs_dec
+        # local_feat = torch.cat([feat, feat[:, pseudo_inds]], dim=1)
+        # local_feat = local_feat[None].repeat(outs_dec.shape[0], 1, 1, 1)
+        # outs_dec = local_feat + outs_dec
 
         outs = [
             {

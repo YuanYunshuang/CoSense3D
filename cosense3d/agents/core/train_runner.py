@@ -46,15 +46,20 @@ class TrainRunner(BaseRunner):
         if resume_from is not None or load_from is not None:
             load_path = resume_from if resume_from is not None else load_from
             assert os.path.exists(load_path), f'resume/load path does not exist: {resume_from}.'
-            ckpts = glob.glob(os.path.join(load_path, 'epoch*.pth'))
-            if len(ckpts) > 0:
-                epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
-                max_idx = epochs.index(max(epochs))
-                ckpt = ckpts[max_idx]
-            elif os.path.exists(os.path.join(load_path, 'last.pth')):
-                ckpt = os.path.join(load_path, 'last.pth')
+            if os.path.isdir(load_path):
+                ckpts = glob.glob(os.path.join(load_path, 'epoch*.pth'))
+                if len(ckpts) > 0:
+                    epochs = [int(os.path.basename(ckpt)[5:-4]) for ckpt in ckpts]
+                    max_idx = epochs.index(max(epochs))
+                    ckpt = ckpts[max_idx]
+                elif os.path.exists(os.path.join(load_path, 'last.pth')):
+                    ckpt = os.path.join(load_path, 'last.pth')
+                else:
+                    raise IOError(f'No checkpoint found in directory {load_path}.')
+            elif os.path.isfile(load_path):
+                ckpt = load_path
             else:
-                raise IOError('No checkpoint found.')
+                raise IOError(f'Failed to load checkpoint from {load_path}.')
             logging.info(f"Resuming the model from checkpoint: {ckpt}")
             ckpt = torch.load(ckpt)
             load_model_dict(self.forward_runner, ckpt['model'])

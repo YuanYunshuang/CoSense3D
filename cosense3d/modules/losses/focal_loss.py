@@ -242,6 +242,7 @@ class FocalLoss(BaseLoss):
                  gamma=2.0,
                  alpha=0.25,
                  activated=False,
+                 bg_idx=None,
                  **kwargs):
         """`Focal Loss <https://arxiv.org/abs/1708.02002>`_
 
@@ -260,6 +261,7 @@ class FocalLoss(BaseLoss):
                 If True, it means the input has been activated and can be
                 treated as probabilities. Else, it should be treated as logits.
                 Defaults to False.
+            bg_idx (int, optional): background class index
         """
         super(FocalLoss, self).__init__(**kwargs)
         assert use_sigmoid is True, 'Only sigmoid focal loss supported now.'
@@ -267,8 +269,13 @@ class FocalLoss(BaseLoss):
         self.gamma = gamma
         self.alpha = alpha
         self.activated = activated
+        self.bg_idx = bg_idx
+        if use_sigmoid:
+            self.activation = 'sigmoid'
+        elif activated is False:
+            self.activation = 'softmax'
 
-    def loss(self, pred, target):
+    def loss(self, pred, target, *args, **kwargs):
         """Forward function.
 
         Args:
@@ -291,7 +298,10 @@ class FocalLoss(BaseLoss):
             else:
                 num_classes = pred.size(1)
                 target = F.one_hot(target, num_classes=num_classes + 1)
-                target = target[:, :num_classes]
+                if self.bg_idx is None:
+                    target = target[:, :num_classes]
+                else:
+                    target = target[:, [c for c in range(num_classes + 1) if c != self.bg_idx]]
                 calculate_loss_func = py_sigmoid_focal_loss
 
             loss_cls = calculate_loss_func(
