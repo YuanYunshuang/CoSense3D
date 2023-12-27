@@ -100,7 +100,8 @@ class StreamLidarCAV(BaseCAV):
     def post_update_memory(self):
         """Update memory after each forward run of a single frame."""
         x = self.data['detection']
-        scores = x['all_cls_scores'][-1][..., 1:].topk(1, dim=-1).values[..., 0]
+        scores = x['all_cls_scores'][-1][...,
+                 min(x['all_cls_scores'][-1].shape[-1] - 1, 1):].topk(1, dim=-1).values[..., 0]
         topk = torch.topk(scores, k=self.memory_num_propagated).indices
 
         ref_pts = x['all_bbox_preds'][-1][:, :self.ref_pts_dim]
