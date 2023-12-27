@@ -149,7 +149,7 @@ class QueryGuidedPETRHead(BaseModule):
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
-        if kwargs['itr'] % 1 == 0:
+        if kwargs['itr'] % 100 == 0:
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
@@ -228,7 +228,7 @@ class QueryGuidedPETRHead(BaseModule):
             'petr_cls_loss': loss_cls,
             'petr_box_loss': loss_box,
             'petr_cls_max': pred_to_conf_unc(
-                cls_src, self.loss_cls.activation)[0][..., self.num_classes - 1:].max()
+                cls_src, self.loss_cls.activation, self.is_edl)[0][..., self.num_classes - 1:].max()
         }
 
     def get_pred_boxes(self, bbox_preds, ref_pts):
