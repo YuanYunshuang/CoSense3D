@@ -50,6 +50,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         self.loss_cls = build_loss(**loss_cls)
         self.loss_box = build_loss(**loss_box)
+        self.is_edl = True if 'edl' in self.loss_cls.name.lower() else False
 
         self._init_layers()
         self.init_weights()
@@ -77,7 +78,7 @@ class QueryGuidedPETRHead(BaseModule):
 
     def init_weights(self):
         for m in self.cls_branches:
-            nn.init.constant_(m[-1].bias, 2.0)
+            nn.init.xavier_uniform_(m[-1].weight)
         # follow the official DETR to init parameters
         for m in self.modules():
             if hasattr(m, 'weight') and m.weight.dim() > 1:
@@ -148,19 +149,20 @@ class QueryGuidedPETRHead(BaseModule):
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
-        if kwargs['itr'] % 100 == 0:
+        if kwargs['itr'] % 1 == 0:
             from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             points = ref_pts[0].detach().cpu().numpy()
             boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
-            scores = pred_to_conf_unc(cls_scores[0], self.loss_cls.activation)[0]
+            scores = pred_to_conf_unc(
+                cls_scores[0], getattr(self.loss_cls, 'activation'), edl=self.is_edl)[0]
             scores = scores[:, self.num_classes - 1:].squeeze().detach().cpu().numpy()
             ax = draw_points_boxes_plt(
                 pc_range=self.pc_range.tolist(),
-                points=points,
+                # points=points,
                 boxes_gt=boxes,
                 return_ax=True
             )
-            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, vmin=0.0, vmax=1.0)
+            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, marker='s', vmin=0.0, vmax=1.0)
             # ax = draw_points_boxes_plt(
             #     pc_range=self.pc_range.tolist(),
             #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
