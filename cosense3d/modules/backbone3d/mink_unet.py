@@ -96,7 +96,8 @@ class MinkUnet(BaseModule):
         N = len(points)
         points = [torch.cat([torch.ones_like(pts[:, :1]) * i, pts], dim=-1
                             ) for i, pts in enumerate(points)]
-        x = prepare_input_data(points, self.voxel_size, self.QMODE, self.floor_height, self.d)
+        x = prepare_input_data(points, self.voxel_size, self.QMODE, self.floor_height,
+                               self.d, self.in_dim)
         x1, norm_points_p1, points_p1, count_p1, pos_embs = voxelize_with_centroids(
             x, self.enc_mlp, self.lidar_range_tensor)
 

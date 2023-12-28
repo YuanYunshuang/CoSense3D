@@ -150,7 +150,7 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=20, alpha=0.05):
+    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=20, alpha=0.05, time_idx=None):
         """
         Add free space points according to the distance of points to the origin.
 
@@ -177,6 +177,7 @@ class DataOnlineProcessor:
         min_h: mininum sample height relative to lidar origin
         steps: number of points to be sampled for each lidar ray
         alpha: average angle offset between two neighboring lidar casting rays
+        time_idx: if provided, time will be copied from the original points to free space points
 
         Returns
         -------
@@ -185,15 +186,18 @@ class DataOnlineProcessor:
         lidar = data['points']
         # get point lower than z_min=1.5m
         m = lidar[:, 2] < min_h
-        points = lidar[m][:, :3]
+        points = lidar[m]
 
         # generate free space points based on points
         dn = torch.norm(points[:, :2], dim=1).view(-1, 1)
         dn1 = - points[:, 2:3] * torch.tan(torch.atan2(dn, -points[:, 2:3]) - alpha)
         delta_d = dn - dn1
-        steps = torch.linspace(0, 1, steps + 1)[:-1].view(1, steps).to(delta_d.device)
-        tmp = (dn - steps * delta_d) / dn  # Nxsteps
-        xyz_new = points[:, None, :] * tmp[:, :, None]  # Nxstepsx3
+        steps_arr = torch.linspace(0, 1, steps + 1)[:-1].view(1, steps).to(delta_d.device)
+        tmp = (dn - steps_arr * delta_d) / dn  # Nxsteps
+        xyz_new = points[:, None, :3] * tmp[:, :, None]  # Nxstepsx3
+        if time_idx is not None:
+            times = points[:, time_idx].view(-1, 1, 1).repeat(1, steps, 1)
+            xyz_new = torch.cat([xyz_new, times], dim=-1)
 
         # 1.remove free space points with negative distances to lidar center
         # 2.remove free space points higher than z_min
@@ -201,11 +205,11 @@ class DataOnlineProcessor:
         xyz_new = xyz_new[tmp > 0]
         # xyz_new = xyz_new[(xyz_new[..., 2] < min_h)]
         xyz_new = xyz_new[torch.randperm(len(xyz_new))]
-        selected = torch.unique(torch.floor(xyz_new / 2).long(), return_inverse=True, dim=0)[1]
+        selected = torch.unique(torch.floor(xyz_new[..., :3] / 2).long(), return_inverse=True, dim=0)[1]
         xyz_new = scatter_mean(src=xyz_new, index=selected, dim=0)
 
         # pad free space point intensity as -1
-        xyz_new = torch.cat([xyz_new, - torch.ones_like(xyz_new[:, :1])], dim=-1)
+        xyz_new = torch.cat([xyz_new[:, :3], - torch.ones_like(xyz_new[:, :1]), xyz_new[:, 3:]], dim=-1)
         data['points'] = torch.cat([lidar, xyz_new], dim=0)
 
 

@@ -196,6 +196,7 @@ class TemporalFusion(BaseModule):
                  memory_len=1024,
                  ref_pts_stride=2,
                  transformer_itrs=1,
+                 global_ref_time=0,
                  **kwargs):
         super().__init__(**kwargs)
         self.transformer = plugin.build_plugin_module(transformer)
@@ -210,6 +211,7 @@ class TemporalFusion(BaseModule):
         self.num_propagated = num_propagated
         self.memory_len = memory_len
         self.transformer_itrs = transformer_itrs
+        self.global_ref_time = global_ref_time
 
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
 
@@ -253,7 +255,7 @@ class TemporalFusion(BaseModule):
     def init_weights(self):
         self.transformer.init_weights()
 
-    def forward(self, rois, bev_feat, mem_dict, **kwargs):
+    def forward(self, rois, bev_feat, mem_dict, time_scale=None, **kwargs):
         ref_feat, ref_ctr = self.gather_topk(rois, bev_feat, self.ref_pts_stride, self.topk_ref_pts)
         mem_feat, mem_ctr = self.gather_topk(rois, bev_feat, self.feature_stride, self.topk_feat)
 
@@ -265,12 +267,18 @@ class TemporalFusion(BaseModule):
         memory = self.memory_embed(mem_feat)
         pos_emb = self.featurized_pe(mem_pos_emb, memory)
 
+        if time_scale is not None:
+            ref_time = torch.rad2deg(torch.arctan2(ref_ctr[..., 1:2], ref_ctr[..., 0:1])) + 180
+            ref_time = torch.stack([ts[inds.long()] for inds, ts in zip(ref_time, time_scale)], dim=0)
+        else:
+            ref_time = None
         reference_points = ref_pos.clone()
         query_pos = self.query_embedding(self.embed_pos(reference_points))
         tgt = torch.zeros_like(query_pos)
 
         tgt, query_pos, reference_points, temp_memory, temp_pos, ext_feat = \
-            self.temporal_alignment(query_pos, tgt, reference_points, ref_feat, mem_dict)
+            self.temporal_alignment(query_pos, tgt, reference_points,
+                                    ref_feat, mem_dict, ref_time)
         mask_dict = [None, None]
         global_feat = []
 
@@ -334,7 +342,7 @@ class TemporalFusion(BaseModule):
         dim = self.num_pose_feat if dim is None else dim
         return getattr(PE, f'pos2posemb{pos.shape[-1]}d')(pos, dim)
 
-    def temporal_alignment(self, query_pos, tgt, ref_pts, ref_feat, mem_dict):
+    def temporal_alignment(self, query_pos, tgt, ref_pts, ref_feat, mem_dict, ref_time=None):
         B = ref_pts.shape[0]
         mem_dict = self.stack_dict_list(mem_dict)
         x = mem_dict['prev_exists'].view(-1)
@@ -377,8 +385,9 @@ class TemporalFusion(BaseModule):
         temp_memory = self.ego_pose_memory(temp_memory, memory_ego_motion)
 
         # get time-aware pos embeddings
-        query_pos += self.time_embedding(
-            self.embed_pos(torch.zeros_like(ref_pts[..., :1]), self.embed_dims))
+        if ref_time is None:
+            ref_time = torch.zeros_like(ref_pts[..., :1]) + self.global_ref_time
+        query_pos += self.time_embedding(self.embed_pos(ref_time, self.embed_dims))
         temp_pos += self.time_embedding(
             self.embed_pos(mem_dict['timestamp'], self.embed_dims).float())
 
