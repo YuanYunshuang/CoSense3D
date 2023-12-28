@@ -273,6 +273,22 @@ class TemporalFusion(BaseModule):
             self.temporal_alignment(query_pos, tgt, reference_points, ref_feat, mem_dict)
         mask_dict = [None, None]
         global_feat = []
+
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure(figsize=(20, 6))
+        # axs = fig.subplots(2, 6)
+        # params = {}
+        # cnt = 0
+        # for n, p in self.transformer.named_parameters():
+        #     if 'attention' in n or 'ffn' in n:
+        #         params[n] = p
+        #         axs[cnt // 6, cnt % 6].hist(p.view(-1).detach().cpu().numpy(), bins=10)
+        #         axs[cnt // 6, cnt % 6].set_title('.'.join(n.split('.')[3:]))
+        #         cnt += 1
+        # plt.tight_layout()
+        # plt.savefig("/home/yys/Downloads/tmp1.jpg")
+        # plt.close()
+
         for _ in range(self.transformer_itrs):
             tgt = self.transformer(memory, tgt, query_pos, pos_emb,
                                    mask_dict, temp_memory, temp_pos)[0][-1]

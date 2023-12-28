@@ -59,11 +59,12 @@ class FlashAttention(nn.Module):
                            (default: 0.1)
     """
 
-    def __init__(self, softmax_scale=None, attention_dropout=0.0, device=None, dtype=None):
+    def __init__(self, softmax_scale=None, attention_dropout=0.0, return_attn_weights=False, device=None, dtype=None):
         super().__init__()
         self.softmax_scale = softmax_scale
         self.dropout_p = attention_dropout
         self.fp16_enabled = True
+        self.return_attn_weights = return_attn_weights
 
     def forward(self, q, kv,
                 causal=False,
@@ -88,7 +89,7 @@ class FlashAttention(nn.Module):
                                         device=q.device)
             cu_seqlens_k = torch.arange(0, (batch_size + 1) * seqlen_k, step=seqlen_k, dtype=torch.int32,
                                         device=kv.device)
-            if self.training:
+            if self.training or not self.return_attn_weights:
                 output = flash_attn_unpadded_kvpacked_func(
                     q, kv, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk,
                     self.dropout_p if self.training else 0.0,

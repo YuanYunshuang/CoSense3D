@@ -32,7 +32,10 @@ class TrainRunner(BaseRunner):
 
     def setup_logger(self, resume_from, run_name, log_dir, use_wandb):
         if resume_from is not None:
-            log_path = resume_from
+            if os.path.isfile(resume_from):
+                log_path = os.path.dirname(resume_from)
+            else:
+                log_path = resume_from
         else:
             now = datetime.now().strftime('%m-%d-%H-%M-%S')
             run_name = run_name + '_' + now

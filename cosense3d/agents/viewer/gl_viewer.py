@@ -195,7 +195,7 @@ class GLViewer(gl.GLViewWidget):
 
         if 'local_pred' in visible_keys:
             if 'detection_local' in data_dict:
-                local_pred = {k: v['labels'] for k, v in data_dict['detection_local'].items()}
+                local_pred = {k: v.get('labels', {}) for k, v in data_dict['detection_local'].items()}
         if 'global_pred' in visible_keys:
             if 'detection' in data_dict:
                 global_pred = data_dict.get('detection', {})
