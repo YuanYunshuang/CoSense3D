@@ -115,7 +115,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         reference_points = reference_points * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]
         pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
-        cls_scores = pred_to_conf_unc(all_cls_logits, self.loss_cls.activation)[0]
+        cls_scores = pred_to_conf_unc(all_cls_logits, self.loss_cls.activation, self.is_edl)[0]
 
         outs = [
             {
@@ -244,7 +244,10 @@ class QueryGuidedPETRHead(BaseModule):
 
     def get_predictions(self, cls_scores, bbox_preds):
         l, b, n = cls_scores.shape[:3]
-        scores = cls_scores[-1][..., 1:].sum(dim=-1)
+        if self.is_edl:
+            scores = cls_scores[-1][..., 1:].sum(dim=-1)
+        else:
+            scores = cls_scores[-1].sum(dim=-1)
         labels = cls_scores[-1].argmax(dim=-1)
         pos = scores > self.box_assigner.center_threshold
 
