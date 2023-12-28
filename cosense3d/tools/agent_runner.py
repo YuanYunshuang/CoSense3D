@@ -87,8 +87,12 @@ if __name__ == "__main__":
     seed_everything(2023)
     cfgs = load_config(args)
     if not os.path.exists(cfgs['DATASET']['data_path']):
-        cfgs['DATASET']['data_path'] = "/koko/OPV2V"
-        cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_full"
+        if 'temporal' in cfgs['DATASET']['data_path']:
+            cfgs['DATASET']['data_path'] = "/koko/OPV2V/temporal"
+            cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_temporal"
+        else:
+            cfgs['DATASET']['data_path'] = "/koko/OPV2V"
+            cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_full"
     agent_runner = AgentRunner(args, cfgs)
     if args.mode == "train":
         save_config(cfgs, agent_runner.runner.logdir)

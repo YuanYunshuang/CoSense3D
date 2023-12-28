@@ -182,7 +182,8 @@ def sparse_to_dense(stensor, voxel_size, det_r):
     return dtensor
 
 
-def prepare_input_data(points_list, voxel_size, QMODE, floor_height, dim=3):
+def prepare_input_data(points_list, voxel_size, QMODE, floor_height,
+                       coor_dim=3, feat_dim=3):
     coords = []
     features = []
     vs = torch.tensor(voxel_size).reshape(1, 3).cuda()
@@ -191,14 +192,14 @@ def prepare_input_data(points_list, voxel_size, QMODE, floor_height, dim=3):
         if floor_height is not None:
             pts[:, 3] -= floor_height
         pts[:, 1:4] = pts[:, 1:4] / vs
-        features.append(points[:, 1:])
+        features.append(points[:, 1:feat_dim + 1])
         coords.append(pts)
     coords = torch.cat(coords, dim=0)
     features = torch.cat(features, dim=0)
 
     x = ME.TensorField(
         features=features.contiguous(),
-        coordinates=coords[:, :dim + 1].contiguous(),
+        coordinates=coords[:, :coor_dim + 1].contiguous(),
         quantization_mode=QMODE
     )
     # ME rounds to the floor when casting coords to integer

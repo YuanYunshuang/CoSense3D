@@ -1,6 +1,0 @@
-DATASET:
-  data_path_train: "/koko/OPV2V/train"
-  data_path_test: "/koko/OPV2V/test"
-  meta_path: "/koko/cosense3d/opv2v"
-
-
