@@ -33,7 +33,7 @@ class StreamLidarCAV(BaseCAV):
     def prepare_data(self):
         # hash time
         azi = torch.arctan2(self.data['points'][:, 1], self.data['points'][:, 0])
-        azi, inds = (torch.rad2deg(azi) + 180).long().unique(return_inverse=True)
+        azi, inds = (torch.rad2deg(azi) + 180).floor().long().unique(return_inverse=True)
         times = torch.zeros_like(azi).float()
         torch_scatter.scatter_mean(self.data['points'][:, -1], inds, dim=0, out=times)
         self.data['time_scale'] = times
@@ -118,35 +118,38 @@ class StreamLidarCAV(BaseCAV):
         embeddings = self.data['temp_fusion_feat']['outs_dec'][-1]
         # timestamp = torch.zeros_like(ref_pts[..., :1])
         timestamp = torch.rad2deg(torch.arctan2(ref_pts[:, 1], ref_pts[:, 0])) + 180
-        timestamp = - self.data['time_scale'][timestamp.long()].unsqueeze(-1)
+        timestamp = - self.data['time_scale'][(timestamp % 360).floor().long()].unsqueeze(-1)
         pose = torch.eye(4, device=ref_pts.device).unsqueeze(0).repeat(
             timestamp.shape[0], 1, 1)
+        try:
+            vars = locals()
+            for k, v in self.data['memory'].items():
+                if k == 'prev_exists':
+                    continue
+                rec_topk = vars[k][topk].unsqueeze(0)
+                self.data['memory'][k] = torch.cat([rec_topk, v], dim=0)
 
-        vars = locals()
-        for k, v in self.data['memory'].items():
-            if k == 'prev_exists':
-                continue
-            rec_topk = vars[k][topk].unsqueeze(0)
-            self.data['memory'][k] = torch.cat([rec_topk, v], dim=0)
+            # import matplotlib.pyplot as plt
+            # from cosense3d.utils.vislib import draw_points_boxes_plt
+            # pcd = self.data['points'][:, :3].detach().cpu().numpy()
+            # ref_pts = self.data['memory']['ref_pts'][0].detach().cpu().numpy()
+            # gt_boxes = self.data['local_bboxes_3d'].detach().cpu().numpy()
+            # ax = draw_points_boxes_plt(
+            #     pc_range=self.lidar_range.tolist(),
+            #     boxes_gt=gt_boxes[:, :7],
+            #     points=pcd,
+            #     return_ax=True,
+            # )
+            # plt.plot(ref_pts[:, 0], ref_pts[:, 1], ".r", markersize=2)
+            # plt.show()
+            # plt.close()
 
-        # import matplotlib.pyplot as plt
-        # from cosense3d.utils.vislib import draw_points_boxes_plt
-        # pcd = self.data['points'][:, :3].detach().cpu().numpy()
-        # ref_pts = self.data['memory']['ref_pts'][0].detach().cpu().numpy()
-        # gt_boxes = self.data['local_bboxes_3d'].detach().cpu().numpy()
-        # ax = draw_points_boxes_plt(
-        #     pc_range=self.lidar_range.tolist(),
-        #     boxes_gt=gt_boxes[:, :7],
-        #     points=pcd,
-        #     return_ax=True,
-        # )
-        # plt.plot(ref_pts[:, 0], ref_pts[:, 1], ".r", markersize=2)
-        # plt.show()
-        # plt.close()
-
-        self.data['memory']['ref_pts'] = self.transform_ref_pts(
+            self.data['memory']['ref_pts'] = self.transform_ref_pts(
             self.data['memory']['ref_pts'], self.lidar_pose)  # to global coor
-        self.data['memory']['timestamp'][1:] -= self.timestamp / 2
+
+            self.data['memory']['timestamp'][1:] -= self.timestamp / 2
+        except:
+          print('d')
         self.data['memory']['pose'] = self.lidar_pose[(None,)*2] @ self.data['memory']['pose'] # local-->global
 
     def transform_ref_pts(self, reference_points, matrix):
