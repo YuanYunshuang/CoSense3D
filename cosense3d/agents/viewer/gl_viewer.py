@@ -182,7 +182,7 @@ class GLViewer(gl.GLViewWidget):
 
     def refresh(self, data_dict, visible_keys=['global_gt'], color_mode='united', **kwargs):
         pcds = data_dict.get('points', {})
-        local_labels, global_labels, local_pred, global_pred = None, None, None, None
+        local_labels, global_labels, local_pred, global_pred, ego_id = None, None, None, None, None
         if 'global_gt' in visible_keys:
             global_labels = data_dict.get('global_labels', {})
             ego_id = list(global_labels.keys())[0]

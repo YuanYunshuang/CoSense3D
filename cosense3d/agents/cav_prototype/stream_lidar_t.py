@@ -38,8 +38,8 @@ class StreamLidarCAV(BaseCAV):
         torch_scatter.scatter_mean(self.data['points'][:, -1], inds, dim=0, out=times)
         self.data['time_scale'] = times
         self.data['time_scale_reduced'] = times - self.timestamp / 2
-        self.data['points'] = self.data['points'][:, :-1]
-        DOP.adaptive_free_space_augmentation(self.data)
+        # self.data['points'] = self.data['points'][:, :-1]
+        DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 

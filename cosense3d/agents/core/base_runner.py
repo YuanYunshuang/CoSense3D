@@ -61,6 +61,8 @@ class BaseRunner:
     def vis_data(self, keys=None, **kwargs):
         if keys is None:
             keys = ['points', 'imgs', 'bboxes2d', 'lidar2img', 'global_labels', 'local_labels']
+        else:
+            keys = list(set(keys))
         return self.controller.data_manager.gather_vis_data(keys=keys)
 
 

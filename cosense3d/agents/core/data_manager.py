@@ -79,7 +79,8 @@ class DataManager:
                     elif k == 'augment_params':
                         cavs[b][j].data[k] = v[b]
                         global_data[k] = v[b]
-                    elif cavs[b][j].is_ego:
+                    # elif cavs[b][j].is_ego:
+                    else:
                         cavs[b][j].data[k] = v[b]
             global_data_list.append(global_data)
         return global_data_list

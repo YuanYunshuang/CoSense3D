@@ -187,5 +187,5 @@ plots = [
     # dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
     #      data_keys=['detection_local']),
     dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
-         data_keys=['detection', 'local_labels'])
+         data_keys=['detection', 'global_labels'])
 ]
