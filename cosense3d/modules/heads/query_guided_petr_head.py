@@ -26,6 +26,7 @@ class QueryGuidedPETRHead(BaseModule):
                  num_pred=3,
                  use_logits=False,
                  reg_channels=None,
+                 sparse=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.embed_dims = embed_dims
@@ -41,6 +42,7 @@ class QueryGuidedPETRHead(BaseModule):
         self.num_reg_fcs = num_reg_fcs
         self.num_pred = num_pred
         self.use_logits = use_logits
+        self.sparse = sparse
 
         self.pc_range = nn.Parameter(torch.tensor(pc_range), requires_grad=False)
         self.code_weights = nn.Parameter(torch.tensor(code_weights), requires_grad=False)
@@ -86,10 +88,18 @@ class QueryGuidedPETRHead(BaseModule):
         self._is_init = True
 
     def forward(self, feat_in, **kwargs):
-        outs_dec = self.stack_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2, 3)
+        if self.sparse:
+            outs_dec = self.cat_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2)
+            reference_points = self.cat_data_from_list(feat_in, 'ref_pts', pad_idx=True)
+            reference_inds = reference_points[..., 0]
+            reference_points = reference_points[..., 1:]
+        else:
+            outs_dec = self.stack_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2, 3)
+            reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
+            reference_inds = None
         assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
-        reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
         pos_dim = reference_points.shape[-1]
+
         outputs_classes = []
         outputs_coords = []
         for lvl in range(len(outs_dec)):
@@ -117,18 +127,32 @@ class QueryGuidedPETRHead(BaseModule):
         pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
         cls_scores = pred_to_conf_unc(all_cls_logits, self.loss_cls.activation, self.is_edl)[0]
 
-        outs = [
-            {
-                'all_cls_logits': all_cls_logits[:, i],
-                'all_bbox_reg': all_bbox_reg[:, i],
-                'ref_pts': reference_points[i],
-                'all_cls_scores': cls_scores[:, i],
-                'all_bbox_preds': pred_boxes[:, i],
-            } for i in range(len(feat_in))
-        ]
+        if self.sparse:
+            outs = []
+            for i in range(len(feat_in)):
+                mask = reference_inds == i
+                outs.append(
+                    {
+                        'all_cls_logits': all_cls_logits[:, mask],
+                        'all_bbox_reg': all_bbox_reg[:, mask],
+                        'ref_pts': reference_points[mask],
+                        'all_cls_scores': cls_scores[:, mask],
+                        'all_bbox_preds': pred_boxes[:, mask],
+                    }
+                )
+        else:
+            outs = [
+                {
+                    'all_cls_logits': all_cls_logits[:, i],
+                    'all_bbox_reg': all_bbox_reg[:, i],
+                    'ref_pts': reference_points[i],
+                    'all_cls_scores': cls_scores[:, i],
+                    'all_bbox_preds': pred_boxes[:, i],
+                } for i in range(len(feat_in))
+            ]
 
         if not self.training:
-            dets = self.get_predictions(cls_scores, pred_boxes)
+            dets = self.get_predictions(cls_scores, pred_boxes, batch_inds=reference_inds)
             for i, out in enumerate(outs):
                 out['preds'] = dets[i]
 
@@ -136,10 +160,15 @@ class QueryGuidedPETRHead(BaseModule):
 
     def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
         epoch = kwargs.get('epoch', 0)
-        cls_scores = self.stack_data_from_list(petr_out, 'all_cls_logits').flatten(0, 1)
-        bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
-        ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
-            1, self.num_pred, 1, 1).flatten(0, 1)
+        if self.sparse:
+            cls_scores = torch.cat([x for out in petr_out for x in out['all_cls_logits']], dim=0)
+            bbox_reg = torch.cat([x for out in petr_out for x in out['all_bbox_reg']], dim=0)
+            ref_pts = [x['ref_pts'] for x in petr_out for _ in range(self.num_pred)]
+        else:
+            cls_scores = self.stack_data_from_list(petr_out, 'all_cls_logits').flatten(0, 1)
+            bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
+            ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
+                1, self.num_pred, 1, 1).flatten(0, 1)
         gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
         # gt_velos = [boxes[:, 7:] for boxes in gt_boxes for _ in range(self.num_pred)]
         gt_labels = [labels for labels in gt_labels for _ in range(self.num_pred)]
@@ -149,36 +178,36 @@ class QueryGuidedPETRHead(BaseModule):
                               ref_pts, gt_boxes, gt_labels, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
-        if kwargs['itr'] % 100 == 0:
-            from cosense3d.utils.vislib import draw_points_boxes_plt, plt
-            points = ref_pts[0].detach().cpu().numpy()
-            boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
-            scores = pred_to_conf_unc(
-                cls_scores[0], getattr(self.loss_cls, 'activation'), edl=self.is_edl)[0]
-            scores = scores[:, self.num_classes - 1:].squeeze().detach().cpu().numpy()
-            ax = draw_points_boxes_plt(
-                pc_range=self.pc_range.tolist(),
-                # points=points,
-                boxes_gt=boxes,
-                return_ax=True
-            )
-            ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, marker='s', vmin=0.0, vmax=1.0)
-            # ax = draw_points_boxes_plt(
-            #     pc_range=self.pc_range.tolist(),
-            #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
-            #     points_c="green",
-            #     ax=ax,
-            #     return_ax=True
-            # )
-            # ax = draw_points_boxes_plt(
-            #     pc_range=self.pc_range.tolist(),
-            #     points=points[scores > 0.5],
-            #     points_c="magenta",
-            #     ax=ax,
-            #     return_ax=True
-            # )
-            plt.savefig(f"{os.environ['HOME']}/Downloads/tmp.jpg")
-            plt.close()
+        # if kwargs['itr'] % 100 == 0:
+        #     from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        #     points = ref_pts[0].detach().cpu().numpy()
+        #     boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
+        #     scores = pred_to_conf_unc(
+        #         cls_scores[0], getattr(self.loss_cls, 'activation'), edl=self.is_edl)[0]
+        #     scores = scores[:, self.num_classes - 1:].squeeze().detach().cpu().numpy()
+        #     ax = draw_points_boxes_plt(
+        #         pc_range=self.pc_range.tolist(),
+        #         # points=points,
+        #         boxes_gt=boxes,
+        #         return_ax=True
+        #     )
+        #     ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, marker='s', vmin=0.0, vmax=1.0)
+        #     # ax = draw_points_boxes_plt(
+        #     #     pc_range=self.pc_range.tolist(),
+        #     #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
+        #     #     points_c="green",
+        #     #     ax=ax,
+        #     #     return_ax=True
+        #     # )
+        #     # ax = draw_points_boxes_plt(
+        #     #     pc_range=self.pc_range.tolist(),
+        #     #     points=points[scores > 0.5],
+        #     #     points_c="magenta",
+        #     #     ax=ax,
+        #     #     return_ax=True
+        #     # )
+        #     plt.savefig(f"{os.environ['HOME']}/Downloads/tmp.jpg")
+        #     plt.close()
 
         cls_tgt = torch.cat(cls_tgt, dim=0)
         cared = (cls_tgt >= 0).any(dim=-1)
@@ -225,9 +254,9 @@ class QueryGuidedPETRHead(BaseModule):
                 ptr += reg_dim
 
         return {
-            'petr_cls_loss': loss_cls,
-            'petr_box_loss': loss_box,
-            'petr_cls_max': pred_to_conf_unc(
+            'cls_loss': loss_cls,
+            'box_loss': loss_box,
+            'cls_max': pred_to_conf_unc(
                 cls_src, self.loss_cls.activation, self.is_edl)[0][..., self.num_classes - 1:].max()
         }
 
@@ -242,8 +271,7 @@ class QueryGuidedPETRHead(BaseModule):
         boxes = self.box_assigner.box_coder.decode(ref_pts[None], reg)
         return torch.cat([boxes, reg['vel']], dim=-1)
 
-    def get_predictions(self, cls_scores, bbox_preds):
-        l, b, n = cls_scores.shape[:3]
+    def get_predictions(self, cls_scores, bbox_preds, batch_inds=None):
         if self.is_edl:
             scores = cls_scores[-1][..., 1:].sum(dim=-1)
         else:
@@ -252,13 +280,27 @@ class QueryGuidedPETRHead(BaseModule):
         pos = scores > self.box_assigner.center_threshold
 
         dets = []
-        for i in range(b):
-            dets.append({
-                'box': bbox_preds[-1][i][pos[i]],
-                'scr': scores[i][pos[i]],
-                'lbl': labels[i][pos[i]],
-                'idx': torch.ones_like(labels[i][pos[i]]) * i
-            })
+        if batch_inds is None:
+            inds = range(cls_scores.shape[1])
+            for i in inds:
+                dets.append({
+                    'box': bbox_preds[-1][i][pos[i]],
+                    'scr': scores[i][pos[i]],
+                    'lbl': labels[i][pos[i]],
+                    'idx': torch.ones_like(labels[i][pos[i]]) * i
+                })
+        else:
+            inds = batch_inds.unique()
+            for i in inds:
+                mask = batch_inds == i
+                pos_mask = pos[mask]
+                dets.append({
+                    'box': bbox_preds[-1][mask][pos_mask],
+                    'scr': scores[mask][pos_mask],
+                    'lbl': labels[mask][pos_mask],
+                    'idx': batch_inds[mask].long()
+                })
+
         return dets
 
 

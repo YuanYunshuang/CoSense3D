@@ -11,7 +11,7 @@ DATASET:
   batch_size_test: 1
   n_workers: 4
 
-  max_num_cavs: 1
+  max_num_cavs: 7
   seq_len: &seq_len 4
   train_pipeline: 'pycfg.stream_lidar_st.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar_st.pipeline_cpu'
@@ -46,7 +46,7 @@ CONTROLLER:
     memory_emb_dims: 256
     memory_num_propagated: 256
     ref_pts_dim: 3
-    all_grad: true
+    all_grad: false
 
 VISUALIZATION:
   output_viewer:

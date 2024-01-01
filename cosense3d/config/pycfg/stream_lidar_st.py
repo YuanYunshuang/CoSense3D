@@ -84,7 +84,7 @@ shared_modules = OrderedDict(
     ),
 
     temporal_fusion = dict(
-        type='fusion.spatial_temporal_fusion.SpatialTemporalFusion',
+        type='fusion.temporal_fusion.TemporalFusion',
         gather_keys=['bevseg_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
@@ -133,11 +133,56 @@ shared_modules = OrderedDict(
 
     ),
 
-    detection_head = dict(
+    spatial_fusion = dict(
+        type='fusion.spatial_query_fusion.SpatialQueryFusion',
+        gather_keys=['temp_fusion_feat', 'received_response'],
+        scatter_keys=['spatial_fusion_feat'],
+        in_channels=256,
+        pc_range=point_cloud_range,
+        resolution=0.8
+    ),
+
+    det1_head = dict(
         type='heads.query_guided_petr_head.QueryGuidedPETRHead',
         gather_keys=['temp_fusion_feat'],
+        scatter_keys=['detection_local'],
+        gt_keys=['global_bboxes_3d', 'global_labels_3d', 'bevseg_local'],
+        sparse=False,
+        embed_dims=256,
+        num_reg_fcs=1,
+        num_pred=1,
+        pc_range=point_cloud_range,
+        code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
+        num_classes=1,
+        reg_channels=['box:6', 'dir:8', 'scr:4', 'vel:2'],
+        cls_assigner=dict(
+            type='target_assigners.BEVHardCenternessAssigner',
+            n_cls=1,
+            min_radius=1.0,
+            pos_neg_ratio=0,
+            mining_thr=0,
+        ),
+        box_assigner=dict(
+            type='target_assigners.BoxCenterAssigner',
+            voxel_size=voxel_size,
+            lidar_range=point_cloud_range,
+            stride=out_stride,
+            detection_benchmark='Car',
+            class_names_each_head=[['vehicle.car']],
+            center_threshold=0.5,
+            box_coder=dict(type='CenterBoxCoder'),
+        ),
+        loss_cls=dict(type='FocalLoss', use_sigmoid=True, bg_idx=0,
+                      gamma=2.0, alpha=0.25, loss_weight=2.0),
+        loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
+    ),
+
+    det2_head=dict(
+        type='heads.query_guided_petr_head.QueryGuidedPETRHead',
+        gather_keys=['spatial_fusion_feat'],
         scatter_keys=['detection'],
         gt_keys=['global_bboxes_3d', 'global_labels_3d', 'bevseg_local'],
+        sparse=True,
         embed_dims=256,
         num_reg_fcs=1,
         num_pred=1,

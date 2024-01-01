@@ -43,7 +43,9 @@ class ForwardRunner(nn.Module):
             cav_ids = self.gather_cav_ids(task_list)
             data = self.data_manager.gather(cav_ids, module.scatter_keys + module.gt_keys)
             ldict = module.loss(*data, **kwargs)
-            loss_dict.update(ldict)
+            for k, v in ldict.items():
+                prefix = task_name.replace('_head', '')
+                loss_dict[f'{prefix}.{k}'] = v
         return loss_dict
 
 

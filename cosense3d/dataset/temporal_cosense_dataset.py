@@ -33,10 +33,10 @@ class TemporalCosenseDataset(CosenseDataset):
                 for tk in input_dict['scene_tokens']:
                     prev_agents.append(tk.split('.')[-1])
                     if prev_scene_token is not None and tk in prev_scene_token:
-                        prev_exists.append(True)
+                        prev_exists.append(np.array([True]))
                     else:
-                        prev_exists.append(False)
-                input_dict.update(dict(prev_exists=np.array(prev_exists)))
+                        prev_exists.append(np.array([False]))
+                input_dict.update(dict(prev_exists=prev_exists))
                 prev_scene_token = input_dict['scene_tokens']
 
             queue.append(input_dict)

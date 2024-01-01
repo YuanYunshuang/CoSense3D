@@ -2,6 +2,7 @@ import os, random, copy
 from collections import OrderedDict
 
 import numpy as np
+import torch
 from plyfile import PlyData
 import cv2
 
@@ -308,6 +309,9 @@ class LoadAnnotations:
             adict = agents[ai]
             boxes = np.array(adict['gt_boxes']).reshape(-1, 11)
             mask = np.array(adict['num_pts']) > self.min_num_pts
+            if len(boxes) != len(mask):
+                # TODO: update num pts in meta
+                mask = np.ones_like(boxes[..., 0]).astype(bool)
             boxes = boxes[mask]
             local_boxes = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
             local_labels = boxes[:, 1].astype(int)
