@@ -44,6 +44,7 @@ class CenterController:
         loss_dict = {}
         for i in range(self.seq_len):
             with_loss = i >= self.seq_len - self.num_loss_frame
+            kwargs['seq_idx'] = i
             frame_loss_dict = self.run_frame(seq_data[i], with_loss, training_mode=True, **kwargs)
             for k, v in frame_loss_dict.items():
                 if 'loss' in k:
@@ -82,6 +83,7 @@ class CenterController:
         batched_tasks = self.task_manager.summarize_tasks(tasks)
         # preprocess after transformation to ego frame
         self.data_manager.apply_preprocess()
+        # self.data_manager.vis_global_data_plt(['vis_ref_pts', 'vis_poses'], kwargs['seq_idx'] + 1)
 
         # process local cav data
         if len(batched_tasks[0]['no_grad']) > 0:

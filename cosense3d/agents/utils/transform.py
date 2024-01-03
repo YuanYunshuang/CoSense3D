@@ -100,19 +100,28 @@ def filter_range_mask(points, lidar_range, eps=1e-4):
 class DataOnlineProcessor:
 
     @staticmethod
+    def update_transform_with_aug(transform, aug_params):
+        if 'rot' in aug_params:
+            transform = add_rotate(transform, aug_params['rot'])
+        if 'flip' in aug_params:
+            transform = add_flip(transform, **aug_params['flip'])
+        if 'scale' in aug_params:
+            transform = add_scale(transform, aug_params['scale'])
+        return transform
+
+    @staticmethod
+    def apply_transform(data, transform, apply_to=['points']):
+        for k in apply_to:
+            apply_transform(data, transform, k)
+
+    @staticmethod
     def cav_aug_transform(data, transform, aug_params,
                           apply_to=['points', 'imgs', 'annos_global']):
         # augmentation
         if aug_params is not None:
-            if 'rot' in aug_params:
-                transform = add_rotate(transform, aug_params['rot'])
-            if 'flip' in aug_params:
-                transform = add_flip(transform, **aug_params['flip'])
-            if 'scale' in aug_params:
-                transform = add_scale(transform, aug_params['scale'])
+            transform = DataOnlineProcessor.update_transform_with_aug(transform, aug_params)
 
-        for k in apply_to:
-            apply_transform(data, transform, k)
+        DataOnlineProcessor.apply_transform(data, transform, apply_to)
 
     @staticmethod
     def filter_range(data, lidar_range, apply_to):

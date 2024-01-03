@@ -1,5 +1,7 @@
+import os
 import random
 
+import matplotlib.pyplot as plt
 import torch
 import torch_scatter
 
@@ -260,6 +262,16 @@ class DataManager:
             'scenario': self.gather_batch(batch_idx, 'scenario'),
             'frame': self.gather_batch(batch_idx, 'frame')
         }
+
+    def vis_global_data_plt(self, vis_funcs, seq_len=1):
+        for func in vis_funcs:
+            ax = None
+            for cav in self.cav_manager.cavs[0]:
+                ax = getattr(cav, func)(ax, his_len=seq_len)
+            plt.savefig(f"{os.environ['HOME']}/Pictures/{func}_{seq_len}.png")
+            plt.close()
+
+
 
 
 
