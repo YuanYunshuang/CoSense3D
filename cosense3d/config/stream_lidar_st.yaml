@@ -24,7 +24,7 @@ TRAIN:
   gpus: 1
   hooks: 'pycfg.stream_lidar_st.train_hooks'
   optimizer:
-    lr: 0.001
+    lr: 0.0002
     weight_decay: 1e-2
     betas: [0.9, 0.98]
   lr_scheduler:
