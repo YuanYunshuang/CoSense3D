@@ -1,10 +1,15 @@
 import copy
-import random
+import os, random
 
 import numpy as np
 import torch
 from torch.nn.utils.clip_grad import clip_grad_norm_
+from torch.distributed import init_process_group
 
+
+def ddp_setup():
+    init_process_group(backend="nccl")
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -52,13 +57,13 @@ def build_lr_scheduler(optimizer, cfg, steps_per_epoch):
     return lr_scheduler
 
 
-def is_tensor_to_cuda(data):
+def is_tensor_to_cuda(data, device='cuda:0'):
     if isinstance(data, dict):
         for k, v in data.items():
             data[k] = is_tensor_to_cuda(v)
         return data
     elif isinstance(data, torch.Tensor):
-        return data.cuda()
+        return data.to(device)
     elif isinstance(data, list) or isinstance(data, tuple):
         data_t = []
         for i in range(len(data)):
@@ -68,13 +73,13 @@ def is_tensor_to_cuda(data):
         return data
 
 
-def load_tensors_to_gpu(batch_dict):
+def load_tensors_to_gpu(batch_dict, device='cuda:0'):
     """
     Load all tensors in batch_dict to gpu
     """
 
     for k, v in batch_dict.items():
-        batch_dict[k] = is_tensor_to_cuda(v)
+        batch_dict[k] = is_tensor_to_cuda(v, device=device)
 
 
 def load_model_dict(model, pretrained_dict):

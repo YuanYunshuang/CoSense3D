@@ -1,6 +1,9 @@
 import os, glob, logging, warnings
 from datetime import datetime
 
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+
 from cosense3d.utils.train_utils import *
 from cosense3d.utils.lr_scheduler import build_lr_scheduler
 from cosense3d.utils.logger import LogMeter
@@ -13,6 +16,7 @@ class TrainRunner(BaseRunner):
                  max_epoch,
                  optimizer,
                  lr_scheduler,
+                 gpus=1,
                  resume_from=None,
                  load_from=None,
                  run_name='default',
@@ -21,6 +25,11 @@ class TrainRunner(BaseRunner):
                  **kwargs
                  ):
         super().__init__(**kwargs)
+        self.gpus = gpus
+        self.gpu_id = int(os.environ["LOCAL_RANK"])
+        self.forward_runner.to(self.gpu_id)
+        if gpus > 0:
+            self.forward_runner = DDP(self.forward_runner, device_ids=[self.gpu_id])
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
                                                len(self.dataloader))
@@ -98,7 +107,7 @@ class TrainRunner(BaseRunner):
             self.hooks(self, 'post_iter')
 
     def run_itr(self, data):
-        load_tensors_to_gpu(data)
+        load_tensors_to_gpu(data, self.gpu_id)
         self.optimizer.zero_grad()
 
         total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch, itr=self.iter)

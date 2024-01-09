@@ -2,12 +2,10 @@ import logging
 import torch
 import importlib
 
-# from .custom_nuscenes_dataset import CustomNuscenesDataset
-# register mmdet plugin pipelines
-# import cosense3d.dataset.pipelines
+from torch.utils.data.distributed import DistributedSampler
 
 
-def get_dataloader(cfgs, mode='train'):
+def get_dataloader(cfgs, mode='train', distributed=False):
     name = cfgs['dataset']
     module = importlib.import_module(f'cosense3d.dataset.{name.lower()}_dataset')
     dataset_full_name = ''.join([n[:1].upper() + n[1:] for n in name.split('_')]) + 'Dataset'
@@ -15,11 +13,18 @@ def get_dataloader(cfgs, mode='train'):
     module_class = getattr(module, dataset_full_name)
     dataset = module_class(cfgs, mode)
     shuffle = cfgs.get('shuffle', True) if mode=='train' else False
+    if distributed > 0:
+        shuffle = False
+        sampler = DistributedSampler(dataset)
+    else:
+        sampler = None
     dataloader = torch.utils.data.DataLoader(dataset,
                                              batch_size=cfgs[f'batch_size_{mode}'],
-                                             sampler=None, num_workers=cfgs['n_workers'],
+                                             sampler=sampler,
+                                             num_workers=cfgs['n_workers'],
                                              shuffle=shuffle,
                                              collate_fn=dataset.collate_batch,
+                                             pin_memory=True,
                                              drop_last=True)
     return dataloader
 

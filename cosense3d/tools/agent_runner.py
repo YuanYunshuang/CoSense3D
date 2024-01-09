@@ -2,6 +2,8 @@ import os, sys
 import argparse
 import logging
 
+from cosense3d.utils.train_utils import ddp_setup
+from torch.distributed import destroy_process_group
 from cosense3d.dataset import get_dataloader
 from cosense3d.utils.misc import setup_logger
 from cosense3d.config import load_config, save_config
@@ -16,6 +18,10 @@ class AgentRunner:
     def __init__(self, args, cfgs):
         self.visualize = args.visualize or 'vis' in args.mode
         self.mode = args.mode
+        if args.gpus > 0:
+            self.dist = True
+        else:
+            self.dist = False
         if self.visualize:
             from cosense3d.agents.core.gui import GUI
             from PyQt5.QtWidgets import QApplication
@@ -25,7 +31,11 @@ class AgentRunner:
         self.build_runner(args, cfgs)
 
     def build_runner(self, args, cfgs):
-        dataloader = get_dataloader(cfgs['DATASET'], args.mode.replace('vis_', ''))
+        if self.dist:
+            ddp_setup()
+        dataloader = get_dataloader(cfgs['DATASET'],
+                                    args.mode.replace('vis_', ''),
+                                    self.dist)
         center_controller = CenterController(cfgs['CONTROLLER'], dataloader)
         if args.mode == 'train':
             self.runner = TrainRunner(dataloader=dataloader,
@@ -58,10 +68,14 @@ class AgentRunner:
         sys.exit(self.app.exec_())
 
     def run(self):
-        if self.visualize:
-            self.visible_run()
-        else:
-            self.runner.run()
+        try:
+            if self.visualize:
+                self.visible_run()
+            else:
+                self.runner.run()
+        finally:
+            if self.dist:
+                destroy_process_group()
 
 
 if __name__ == "__main__":
@@ -76,6 +90,7 @@ if __name__ == "__main__":
     parser.add_argument("--run_name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--gpus", type=int, default=0)
     args = parser.parse_args()
 
     setup_logger(args.run_name, args.debug)

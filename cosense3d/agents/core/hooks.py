@@ -83,6 +83,8 @@ class CheckPointsHook(BaseHook):
 
     def post_epoch(self, runner, **kwargs):
         self.save(runner, f'epoch{runner.epoch}.pth')
+        if runner.gpu_id != 0:
+            return
         if runner.epoch > self.max_ckpt:
             if (self.epoch_every is None or not
             (runner.epoch - self.max_ckpt) % self.epoch_every == 0):
@@ -93,6 +95,8 @@ class CheckPointsHook(BaseHook):
                     os.remove(filename)
 
     def post_iter(self, runner, **kwargs):
+        if runner.gpu_id != 0:
+            return
         if self.iter_every is not None and runner.iter % self.iter_every == 0:
             self.save(runner, f'latest.pth')
 
