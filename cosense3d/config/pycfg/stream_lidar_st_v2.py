@@ -76,7 +76,7 @@ det_head_cfg = dict(
         center_threshold=0.5,
         box_coder=dict(type='CenterBoxCoder'),
     ),
-    loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=1.0),
+    loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=5.0),
     loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
 )
 
