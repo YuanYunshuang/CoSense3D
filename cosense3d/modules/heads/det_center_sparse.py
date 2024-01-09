@@ -108,12 +108,14 @@ class DetCenterSparse(BaseModule):
                  loss_cls,
                  loss_box,
                  center_threshold=0.5,
+                 generate_roi_scr=False,
                  **kwargs):
         super(DetCenterSparse, self).__init__(**kwargs)
         update_me_essentials(self, data_info, stride)
         self.center_threshold = center_threshold
         self.n_heads = len(class_names_each_head)
         self.class_names_each_head = class_names_each_head
+        self.generate_roi_scr = generate_roi_scr
         self.reg_heads = []
 
         self.cls_head = globals()[cls_head_cfg['name']](
@@ -145,13 +147,22 @@ class DetCenterSparse(BaseModule):
         B = len(stensor_list)
         coor, feat, ctr = self.format_input(stensor_list)
         centers = indices2metric(coor, self.voxel_size)
+        cls = self.cls_head(feat)
+        reg = self.reg_head(feat)
 
         out_dict = {
             'center': centers,
-            'cls': self.cls_head(feat),
-            'reg': self.reg_head(feat)
+            'cls': cls,
+            'reg': reg,
         }
 
+        if self.generate_roi_scr:
+            conf = [pred_to_conf_unc(x, self.loss_cls.activation)[0] for x in cls]
+            conf = torch.stack(conf, dim=0).max(dim=0).values
+            if 'edl' in self.loss_cls.name.lower():
+                out_dict['scr'] = conf[:, 1:].max(dim=-1).values
+            else:
+                out_dict['scr'] = conf.max(dim=-1).values
         if not self.training:
             out_dict['preds'], out_dict['conf'] = self.predictions(out_dict)
 
@@ -170,6 +181,8 @@ class DetCenterSparse(BaseModule):
             output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
             if 'conf' in output:
                 output_new['conf'].append(output['conf'][mask])
+            if 'scr' in output:
+                output_new['scr'].append(output['scr'][mask])
             if 'preds' in output:
                 mask = output['preds']['idx'][:, 0] == i
                 preds = {}
@@ -219,14 +232,16 @@ class DetCenterSparse(BaseModule):
             lbl_inds, cls_inds = torch.where(cur_cls_tgt)
             cur_labels[lbl_inds] = cls_inds + 1
 
-            avg_factor = max((cur_labels > 0).sum(), 1)
-
+            if self.cls_assigner.pos_neg_ratio:
+                avg_factor = len(cur_labels)
+            else:
+                avg_factor = max((cur_labels > 0).sum(), 1)
             lcenter = self.loss_cls(
                 cur_cls_src,
                 cur_labels,
                 temp=epoch,
                 n_cls_override=n_classes[h] + 1,
-                # avg_factor=avg_factor
+                avg_factor=avg_factor
             )
             loss_cls = loss_cls + lcenter
 

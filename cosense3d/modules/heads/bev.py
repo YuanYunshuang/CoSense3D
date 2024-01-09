@@ -19,6 +19,7 @@ class BEV(BaseModule):
                  num_cls=1,
                  class_names_each_head=None,
                  down_sample_tgt=True,
+                 generate_roi_scr=True,
                  **kwargs):
         super(BEV, self).__init__(**kwargs)
         self.in_dim = in_dim
@@ -26,6 +27,7 @@ class BEV(BaseModule):
         self.down_sample_tgt = down_sample_tgt
         self.stride = stride
         self.num_cls = num_cls
+        self.generate_roi_scr = generate_roi_scr
         for k, v in data_info.items():
             setattr(self, k, v)
         update_me_essentials(self, data_info, self.stride)
@@ -55,6 +57,8 @@ class BEV(BaseModule):
             'unc': unc,
             'feat_max': [feat.max()] * len(stensor_list)
         }
+        if self.generate_roi_scr:
+            out['scr'] = conf.max(dim=-1).values
 
         return self.format_output(out, len(stensor_list))
 
@@ -70,6 +74,8 @@ class BEV(BaseModule):
             output_new['reg'].append(output['reg'][mask])
             output_new['conf'].append(output['conf'][mask])
             output_new['unc'].append(output['unc'][mask])
+            if 'scr' in output_new:
+                output_new['scr'].append(output['scr'][mask])
         output_new['feat_max'] = output['feat_max']
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
