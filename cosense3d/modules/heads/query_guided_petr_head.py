@@ -298,7 +298,7 @@ class QueryGuidedPETRHead(BaseModule):
                     'box': bbox_preds[-1][mask][pos_mask],
                     'scr': scores[mask][pos_mask],
                     'lbl': labels[mask][pos_mask],
-                    'idx': batch_inds[mask].long()
+                    'idx': batch_inds[mask][pos_mask].long()
                 })
 
         return dets

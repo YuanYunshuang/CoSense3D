@@ -128,19 +128,22 @@ class EvalDenseBEVHook(BaseHook):
 
 
 class DetectionNMSHook(BaseHook):
-    def __init__(self, nms_thr, pre_max_size, det_key='detection', **kwargs):
+    def __init__(self, nms_thr, pre_max_size,
+                 det_key='detection',
+                 **kwargs):
         super().__init__(**kwargs)
         self.nms_thr = nms_thr
         self.pre_max_size = pre_max_size
         self.nms = import_module('cosense3d.ops.iou3d_nms_utils').nms_gpu
         self.det_key = det_key
-
+        self.defual_pred_keys = ['box', 'scr', 'lbl', 'idx']
     def post_iter(self, runner, **kwargs):
         detection_out = runner.controller.data_manager.gather_ego_data(self.det_key)
         preds = []
         cav_ids = []
         for cav_id, values in detection_out.items():
             cav_ids.append(cav_id)
+
             boxes =   values['preds']['box']
             scores =  values['preds']['scr']
             labels =  values['preds']['lbl']
@@ -152,12 +155,13 @@ class DetectionNMSHook(BaseHook):
             if 'conf' in values:
                 out['conf'] = values['conf']
 
-            if len(boxes) == 0:
+            if len(values['preds']['box']) == 0:
                 out.update({
                     'box': torch.zeros((0, 7), device=boxes.device),
                     'scr': torch.zeros((0,), device=scores.device),
                     'lbl': torch.zeros((0,), device=labels.device),
-                    'idx': torch.zeros((3, 0), device=indices.device),
+                    'idx': torch.zeros(indices.shape[0] if isinstance(indices, torch.Tensor) else (0,),
+                                       device=indices.device),
                 })
             else:
                 keep = self.nms(
@@ -302,7 +306,10 @@ class EvalDetectionHook(BaseHook):
         if labels is not None:
             labels = labels[mask]
         if indices is not None:
-            indices = indices[mask]
+            try:
+                indices = indices[mask]
+            except:
+                print('d')
         if times is not None:
             times = times[mask]
         return boxes, scores, labels, indices, times

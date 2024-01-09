@@ -303,7 +303,7 @@ class TemporalFusion(BaseModule):
             global_feat.append(tgt)
         global_feat = torch.stack(global_feat, dim=0)
         local_feat = torch.cat([ref_feat, ext_feat], dim=1)
-        local_feat = local_feat[None].repeat(global_feat.shape[0], 1, 1, 1)
+        local_feat = local_feat[None].repeat(self.transformer_itrs, 1, 1, 1)
         outs_dec = local_feat + global_feat
 
         outs = [

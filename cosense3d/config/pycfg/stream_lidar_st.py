@@ -28,6 +28,7 @@ data_manager = dict(
                      'remove_global_empty_boxes']
     ),
     test=dict(
+        aug=dict()
         # aug=dict(
         #     rot_range=[-1.57, 1.57],
         #     flip='xy',

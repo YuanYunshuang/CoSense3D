@@ -62,6 +62,8 @@ class TestRunner(BaseRunner):
             self.hooks(self, 'post_epoch')
 
     def run_itr(self, data):
+        # if self.iter > 140:
+        #     print('d')
         self.hooks(self, 'pre_iter')
         load_tensors_to_gpu(data)
         self.controller.test_forward(data)
