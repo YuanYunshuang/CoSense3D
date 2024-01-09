@@ -63,7 +63,7 @@ det_head_cfg = dict(
         type='target_assigners.BEVHardCenternessAssigner',
         n_cls=1,
         min_radius=1.0,
-        pos_neg_ratio=0,
+        pos_neg_ratio=2,
         max_mining_ratio=0,
     ),
     box_assigner=dict(
