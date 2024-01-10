@@ -62,7 +62,7 @@ def is_tensor_to_cuda(data, device=0):
     elif isinstance(data, list) or isinstance(data, tuple):
         data_t = []
         for i in range(len(data)):
-            data_t.append(is_tensor_to_cuda(data[i]), device)
+            data_t.append(is_tensor_to_cuda(data[i], device))
         return data_t
     else:
         return data
