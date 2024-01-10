@@ -52,23 +52,23 @@ def build_lr_scheduler(optimizer, cfg, steps_per_epoch):
     return lr_scheduler
 
 
-def is_tensor_to_cuda(data, device='cuda:0'):
+def is_tensor_to_cuda(data, device=0):
     if isinstance(data, dict):
         for k, v in data.items():
-            data[k] = is_tensor_to_cuda(v)
+            data[k] = is_tensor_to_cuda(v, device)
         return data
     elif isinstance(data, torch.Tensor):
         return data.to(device)
     elif isinstance(data, list) or isinstance(data, tuple):
         data_t = []
         for i in range(len(data)):
-            data_t.append(is_tensor_to_cuda(data[i]))
+            data_t.append(is_tensor_to_cuda(data[i]), device)
         return data_t
     else:
         return data
 
 
-def load_tensors_to_gpu(batch_dict, device='cuda:0'):
+def load_tensors_to_gpu(batch_dict, device=0):
     """
     Load all tensors in batch_dict to gpu
     """

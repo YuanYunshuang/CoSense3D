@@ -96,8 +96,6 @@ class TrainRunner(BaseRunner):
                 self.lr_scheduler.step_epoch(i)
                 self.epoch += 1
                 self.iter = 1
-        if self.gpus > 0:
-            destroy_process_group()
 
     def step(self):
         data = self.next_batch()
