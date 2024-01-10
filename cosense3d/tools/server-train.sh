@@ -13,4 +13,4 @@ cosense3d/tools/agent_runner.py \
 --meta-path /koko/yunshuang/cosense3d/opv2v_temporal \
 --log-dir /koko/yunshuang/train_out/cosense3d \
 --run-name StreamLTSv3 \
---batch-size 2
+--batch-size 4

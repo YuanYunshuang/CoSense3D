@@ -379,7 +379,7 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
             cur_labels[lbl_inds] = cls_inds + 1
 
             if self.cls_assigner.pos_neg_ratio:
-                avg_factor = len(cur_labels)
+                avg_factor = None
             else:
                 avg_factor = max((cur_labels > 0).sum(), 1)
             lcenter = self.loss_cls(
