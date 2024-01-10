@@ -113,7 +113,7 @@ if __name__ == "__main__":
     cfgs = load_config(args)
     cfgs['TRAIN']['gpus'] = args.gpus
     if args.batch_size is not None:
-        cfgs['DATASET']['train_batch_size'] = args.batch_size
+        cfgs['DATASET']['batch_size_train'] = args.batch_size
     if not os.path.exists(cfgs['DATASET']['data_path']):
         if args.data_path is not None and args.meta_path is not None:
             cfgs['DATASET']['data_path'] = args.data_path
