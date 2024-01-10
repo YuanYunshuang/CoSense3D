@@ -2,8 +2,11 @@ import os, sys
 import argparse
 import logging
 
-from cosense3d.utils.train_utils import ddp_setup
+import torch
+import torch.multiprocessing as mp
 from torch.distributed import destroy_process_group
+from torch.distributed import init_process_group
+
 from cosense3d.dataset import get_dataloader
 from cosense3d.utils.misc import setup_logger
 from cosense3d.config import load_config, save_config
@@ -14,12 +17,18 @@ from cosense3d.agents.core.test_runner import TestRunner
 from cosense3d.agents.core.vis_runner import VisRunner
 
 
+def ddp_setup():
+    init_process_group(backend="nccl")
+    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
+
+
 class AgentRunner:
     def __init__(self, args, cfgs):
         self.visualize = args.visualize or 'vis' in args.mode
         self.mode = args.mode
         if args.gpus > 0:
             self.dist = True
+            ddp_setup()
         else:
             self.dist = False
         if self.visualize:
@@ -31,8 +40,6 @@ class AgentRunner:
         self.build_runner(args, cfgs)
 
     def build_runner(self, args, cfgs):
-        if self.dist:
-            ddp_setup()
         dataloader = get_dataloader(cfgs['DATASET'],
                                     args.mode.replace('vis_', ''),
                                     self.dist)
@@ -93,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpus", type=int, default=0)
     parser.add_argument("--data-path", type=str)
     parser.add_argument("--meta-path", type=str)
+    parser.add_argument("--batch-size", type=int)
     args = parser.parse_args()
 
     setup_logger(args.run_name, args.debug)
@@ -103,6 +111,8 @@ if __name__ == "__main__":
 
     seed_everything(2023)
     cfgs = load_config(args)
+    if args.batch_size is not None:
+        cfgs['DATASET']['train_batch_size'] = args.batch_size
     if not os.path.exists(cfgs['DATASET']['data_path']):
         if args.data_path is not None and args.meta_path is not None:
             cfgs['DATASET']['data_path'] = args.data_path

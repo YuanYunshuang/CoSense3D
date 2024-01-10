@@ -4,12 +4,7 @@ import os, random
 import numpy as np
 import torch
 from torch.nn.utils.clip_grad import clip_grad_norm_
-from torch.distributed import init_process_group
 
-
-def ddp_setup():
-    init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
 def seed_everything(seed):
     torch.manual_seed(seed)

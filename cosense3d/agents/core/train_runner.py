@@ -3,7 +3,6 @@ from datetime import datetime
 
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-
 from cosense3d.utils.train_utils import *
 from cosense3d.utils.lr_scheduler import build_lr_scheduler
 from cosense3d.utils.logger import LogMeter
@@ -26,9 +25,10 @@ class TrainRunner(BaseRunner):
                  ):
         super().__init__(**kwargs)
         self.gpus = gpus
-        self.gpu_id = int(os.environ["LOCAL_RANK"])
-        self.forward_runner.to(self.gpu_id)
+        self.gpu_id = 0
         if gpus > 0:
+            self.gpu_id = int(os.environ.get("LOCAL_RANK", 0))
+            self.forward_runner.to(self.gpu_id)
             self.forward_runner = DDP(self.forward_runner, device_ids=[self.gpu_id])
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
@@ -95,6 +95,8 @@ class TrainRunner(BaseRunner):
                 self.lr_scheduler.step_epoch(i)
                 self.epoch += 1
                 self.iter = 1
+        if self.gpus > 0:
+            destroy_process_group()
 
     def step(self):
         data = self.next_batch()
