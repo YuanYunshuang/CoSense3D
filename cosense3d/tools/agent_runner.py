@@ -47,6 +47,7 @@ class AgentRunner:
         if args.mode == 'train':
             self.runner = TrainRunner(dataloader=dataloader,
                                       controller=center_controller,
+                                      gpus=args.gpus,
                                       **cfgs['TRAIN'])
         elif args.mode == 'test':
             self.runner = TestRunner(dataloader=dataloader,

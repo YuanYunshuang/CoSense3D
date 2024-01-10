@@ -15,7 +15,7 @@ class TrainRunner(BaseRunner):
                  max_epoch,
                  optimizer,
                  lr_scheduler,
-                 gpus=1,
+                 gpus=0,
                  resume_from=None,
                  load_from=None,
                  run_name='default',
