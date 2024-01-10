@@ -5,11 +5,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 # ------------------------------------------------------------------------
 #  Modified by Shihao Wang
+#  Modified by Yunshuang Yuan
 # ------------------------------------------------------------------------
 import math
 import torch
 import torch.nn as nn 
 import numpy as np
+
+
+def ratio2coord(ratio, lidar_range):
+    return ratio * (lidar_range[3:] - lidar_range[:3]) + lidar_range[:3]
+
+
+def coor2ratio(coor, lidar_range):
+    return (coor - lidar_range[:3]) / (lidar_range[3:] - lidar_range[:3])
 
 
 def img_locations(img_size, feat_size=None, stride=None):

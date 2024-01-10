@@ -130,8 +130,7 @@ class CenterBoxCoder(object):
     def __init__(self, with_velo=False):
         self.with_velo = with_velo
 
-    @staticmethod
-    def encode(centers, gt_boxes, meter_per_pixel):
+    def encode(self, centers, gt_boxes, meter_per_pixel):
         """
 
         Args:
@@ -187,13 +186,12 @@ class CenterBoxCoder(object):
         reg_box = torch.cat([xt, yt, zt, lt, wt, ht], dim=1)  # N 6
         reg_dir = torch.cat([rtx, rty], dim=1)  # N 8
 
-        if valid_box.shape[-1] > 8:
-            return reg_box, reg_dir, dir_score, valid, valid_box[:, 8:]
+        if self.with_velo:
+            return reg_box, reg_dir, dir_score, valid, valid_box[:, 8:10]
         else:
             return reg_box, reg_dir, dir_score, valid
 
-    @staticmethod
-    def decode(centers, reg):
+    def decode(self, centers, reg):
         """
 
         Parameters
@@ -203,6 +201,7 @@ class CenterBoxCoder(object):
             box - (N, 6) or (B, N, 6)
             dir - (N, 8) or (B, N, 8)
             scr - (N, 4) or (B, N, 4)
+            vel - (N, 2) or (B, N, 2), optional
         meter_per_pixel: float
 
         Returns
@@ -234,8 +233,13 @@ class CenterBoxCoder(object):
         ro = torch.atan2(st.view(*shape), ct.view(*shape)).unsqueeze(-1)
 
         if centers.ndim > 2:
+            # dense tensor
             ret = torch.cat([xo, yo, zo, lo, wo, ho, ro], dim=-1)
         else:
+            # sparse tensor with batch indices
             ret = torch.cat([centers[..., :1], xo, yo, zo, lo, wo, ho, ro], dim=-1)
+
+        if self.with_velo:
+            ret = torch.cat([ret, reg['vel']], dim=-1)
 
         return ret

@@ -26,7 +26,9 @@ class TrainRunner(BaseRunner):
         super().__init__(**kwargs)
         self.gpus = gpus
         self.gpu_id = 0
+        self.dist = False
         if gpus > 0:
+            self.dist = True
             self.gpu_id = int(os.environ.get("LOCAL_RANK", 0))
             self.forward_runner.to(self.gpu_id)
             self.forward_runner = DDP(self.forward_runner, device_ids=[self.gpu_id])
@@ -101,6 +103,8 @@ class TrainRunner(BaseRunner):
         self.run_itr(data)
 
     def run_epoch(self):
+        if self.dist:
+            self.dataloader.sampler.set_epoch(self.epoch)
         for data in self.dataloader:
             self.hooks(self, 'pre_iter')
             self.run_itr(data)

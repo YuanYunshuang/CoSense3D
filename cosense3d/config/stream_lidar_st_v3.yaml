@@ -1,0 +1,60 @@
+DATASET:
+  name: opv2v
+  dataset: temporal_cosense
+  meta_path: /mnt/t7/data/cosense3d/opv2v_temporal
+  data_path: /mnt/t7/data/OPV2Vt/temporal
+  DetectionBenchmark: Car
+  data_info: &data_info
+    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
+  batch_size_train: 2
+  batch_size_test: 1
+  n_workers: 1
+
+  max_num_cavs: 7
+  seq_len: &seq_len 4
+  train_pipeline: 'pycfg.stream_lidar_st_v3.pipeline_cpu'
+  test_pipeline: 'pycfg.stream_lidar_st_v3.pipeline_cpu'
+
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 1
+  max_epoch: 50
+  gpus: 0
+  hooks: 'pycfg.stream_lidar_st_v3.train_hooks'
+  optimizer:
+    lr: 0.0002
+    weight_decay: 1e-2
+    betas: [0.9, 0.98]
+  lr_scheduler:
+    policy: 'TransformerAdaptiveScheduler'
+    dim_embed: 256
+    warmup_steps: 4000
+
+TEST:
+  hooks: 'pycfg.stream_lidar_st_v3.test_hooks'
+
+
+CONTROLLER:
+  num_loss_frame: 1
+  data_manager: 'pycfg.stream_lidar_st_v3.data_manager'
+  shared_modules: 'pycfg.stream_lidar_st_v3.shared_modules'
+  cav_manager:
+    prototype: stream_lidar_st_v3.StreamLidarCAV
+    memory_len: *seq_len
+    memory_emb_dims: 256
+    memory_num_propagated: 256
+    ref_pts_dim: 3
+    all_grad: false
+
+VISUALIZATION:
+  output_viewer:
+    plots: 'pycfg.stream_lidar_st_v3.plots'
+
+
+
+
+
+
+

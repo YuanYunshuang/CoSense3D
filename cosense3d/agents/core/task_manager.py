@@ -28,7 +28,7 @@ class TaskManager:
             cav_id, task_label, args = task
             stage_order, task_name = task_label.split(':')
             stage = int(stage_order[0])
-            order = int(stage_order[1])
+            order = int(stage_order[1:])
             task_name = task_name.strip()
             if order not in task_out[stage]:
                 task_out[stage][order] = {}

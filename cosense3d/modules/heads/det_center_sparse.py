@@ -1,7 +1,3 @@
-
-import importlib
-
-import torch
 from einops import rearrange
 
 from cosense3d.modules import BaseModule, plugin
@@ -9,6 +5,7 @@ from cosense3d.modules.utils.common import linear_last
 from cosense3d.utils.misc import multi_apply
 from cosense3d.modules.losses import build_loss, pred_to_conf_unc
 from cosense3d.modules.utils.me_utils import *
+from cosense3d.modules.utils.positional_encoding import ratio2coord
 
 
 class UnitedClsHead(nn.Module):
@@ -145,8 +142,9 @@ class DetCenterSparse(BaseModule):
     def forward(self, stensor_list, **kwargs):
         self.temp += 1
         B = len(stensor_list)
-        coor, feat, ctr = self.format_input(stensor_list)
-        centers = indices2metric(coor, self.voxel_size)
+        coor, feat, centers = self.format_input(stensor_list)
+        if centers is not None:
+            centers = indices2metric(coor, self.voxel_size)
         cls = self.cls_head(feat)
         reg = self.reg_head(feat)
 
@@ -200,7 +198,10 @@ class DetCenterSparse(BaseModule):
         epoch = kwargs.get('epoch', 0)
         centers = [batch['center'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
-        pred_scores = [pred_to_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
+        if 'scr' in batch_list[0]:
+            pred_scores = [batch['scr'] for batch in batch_list]
+        else:
+            pred_scores = [pred_to_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
         cls_tgt = multi_apply(self.cls_assigner.assign,
                               centers, gt_boxes, gt_labels, pred_scores, **kwargs)
         cls_tgt = torch.cat(cls_tgt, dim=0)
@@ -262,4 +263,146 @@ class DetCenterSparse(BaseModule):
 
     def predictions(self, preds):
         return self.box_assigner.get_predictions(preds)
+
+
+class MultiLvlDetCenterSparse(DetCenterSparse):
+    def __init__(self, nlvls, sparse, *args, **kwargs):
+        super(MultiLvlDetCenterSparse, self).__init__(*args, **kwargs)
+        self.nlvls = nlvls
+        self.sparse = sparse
+        self.lidar_range_cuda = nn.Parameter(torch.tensor(self.lidar_range), requires_grad=False)
+
+    def forward(self, feat_in, **kwargs):
+        outs_dec, reference_points, reference_inds = self.format_input(feat_in)
+
+        assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
+        pos_dim = reference_points.shape[-1]
+        shape = outs_dec.shape
+        centers = ratio2coord(reference_points, self.lidar_range_cuda)
+
+        cls = self.cls_head(outs_dec.view(-1, shape[-1]))
+        reg = self.reg_head(outs_dec.view(-1, shape[-1]))
+
+        cls = torch.stack(cls, dim=0).view(self.n_heads, *shape[:-1], -1)  # (nhead, nlvl, nbatch, nsample, ncls)
+        reg = {k: torch.stack(v, dim=0).view(self.n_heads, *shape[:-1], -1) for k, v in reg.items()}
+        pred_boxes = self.box_assigner.box_coder.decode(
+            centers.unsqueeze(0).unsqueeze(0).repeat((self.n_heads, self.nlvls,) + (1,) * len(shape[1:])), reg)
+
+        out_dict = {
+            'center': centers,
+            'cls': cls,
+            'reg': reg,
+            'pred_boxes': pred_boxes
+        }
+
+        conf = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
+        if 'edl' in self.loss_cls.name.lower():
+            out_dict['scr'] = conf[..., 1:].max(dim=-1).values
+        else:
+            out_dict['scr'] = conf.max(dim=-1).values
+
+        return self.format_output(out_dict, len(feat_in), reference_inds)
+
+    def format_input(self, feat_in):
+        if self.sparse:
+            outs_dec = self.cat_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2)
+            reference_points = self.cat_data_from_list(feat_in, 'ref_pts', pad_idx=True)
+            reference_inds = reference_points[..., 0]
+            reference_points = reference_points[..., 1:]
+        else:
+            outs_dec = self.stack_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2, 3)
+            reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
+            reference_inds = None
+        return outs_dec, reference_points, reference_inds
+
+    def format_output(self, output, B=None, reference_inds=None):
+        if self.sparse:
+            outs = []
+            for i in range(B):
+                mask = reference_inds == i
+                outs.append(
+                    {
+                        'cls': output['cls'][:, :, mask],
+                        'reg': {k: v[:, :, mask] for k, v in output['reg'].items()},
+                        'center': output['center'][mask],
+                        'scr': output['scr'][:, :, mask],
+                        'preds': output['pred_boxes'][:, :, mask],
+                    }
+                )
+        else:
+            outs = [
+                {
+                    'cls': output['cls'][:, :, i],
+                    'reg': {k: v[:, :, i] for k, v in output['reg'].items()},
+                    'center': output['center'][i],
+                    'scr': output['scr'][:, :, i],
+                    'preds': output['pred_boxes'][:, :, i],
+                } for i in range(B)
+            ]
+        return {self.scatter_keys[0]: outs}
+
+    def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+        epoch = kwargs.get('epoch', 0)
+        centers = [batch['center'] for batch in batch_list for _ in range(self.nlvls)]
+        pred_cls_list = [x for batch in batch_list for x in batch['cls'].transpose(1, 0)]
+        pred_scores = [x for batch in batch_list for x in batch['scr'].transpose(1, 0)]
+
+        cls_tgt = multi_apply(self.cls_assigner.assign,
+                              centers, gt_boxes, gt_labels, pred_scores, **kwargs)
+        cls_tgt = torch.cat(cls_tgt, dim=0)
+
+        n_classes = [len(n) for n in self.class_names_each_head]
+
+        # get reg target
+        box_tgt = self.box_assigner.assign(
+            self.cat_data_from_list([batch['center'] for batch in batch_list], pad_idx=True),
+            self.cat_data_from_list(gt_boxes, pad_idx=True),
+            self.cat_data_from_list(gt_labels)
+        )
+
+        ptr = 0
+        loss_cls = 0
+        loss_box = 0
+        for h in range(self.n_heads):
+            # center loss
+            cur_cls_src = torch.cat([x[h] for x in pred_cls_list], dim=0).contiguous()
+            cur_cls_tgt = cls_tgt[..., ptr:ptr+n_classes[h]].contiguous() # one hot foreground labels
+
+            cared = (cur_cls_tgt >= 0).any(dim=-1)
+            cur_cls_src = cur_cls_src[cared]
+            cur_cls_tgt = cur_cls_tgt[cared]
+            ptr += n_classes[h]
+
+            # convert one-hot to labels
+            cur_labels = torch.zeros_like(cur_cls_tgt[..., 0]).long()
+            lbl_inds, cls_inds = torch.where(cur_cls_tgt)
+            cur_labels[lbl_inds] = cls_inds + 1
+
+            if self.cls_assigner.pos_neg_ratio:
+                avg_factor = len(cur_labels)
+            else:
+                avg_factor = max((cur_labels > 0).sum(), 1)
+            lcenter = self.loss_cls(
+                cur_cls_src,
+                cur_labels,
+                temp=epoch,
+                n_cls_override=n_classes[h] + 1,
+                avg_factor=avg_factor
+            )
+            loss_cls = loss_cls + lcenter
+
+            # reg loss
+            ind = box_tgt['idx'][h]
+            if ind.shape[1] > 0:
+                for reg_name, reg_dim in self.reg_head.reg_channels.items():
+                    pred_reg = torch.cat([x['reg'][reg_name][h].view(-1, reg_dim) for x in batch_list], dim=0)
+                    cur_reg_src = rearrange(pred_reg, 'n d ... -> n ... d').contiguous()
+                    cur_reg_src = cur_reg_src[torch.cat([box_tgt['valid_mask'][h]] * self.nlvls, dim=0)]
+                    cur_reg_tgt = torch.cat([box_tgt[reg_name][h]] * self.nlvls, dim=0)  # N, C
+                    cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)
+
+                    loss_box = loss_box + cur_loss
+
+        loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
+        return loss_dict
 

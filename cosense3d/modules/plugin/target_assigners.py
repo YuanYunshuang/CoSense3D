@@ -796,7 +796,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         box_names = [self.csb[c.item()][0] for c in gt_labels]
 
         # cal regression targets
-        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': [], 'aux': []}
+        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': [], 'vel': []}
         for h, cur_cls_names in enumerate(self.class_names_each_head):
             center_indices = self.pts_to_indices(centers).T
             box_mask = [n in cur_cls_names for n in box_names]
@@ -808,7 +808,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             reg_tgt['box'].append(reg_box)
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
-            reg_tgt['aux'].append(reg_aux)
+            reg_tgt['vel'].append(reg_aux)
         return reg_tgt
 
     def get_predictions(self, preds):
