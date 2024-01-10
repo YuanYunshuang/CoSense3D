@@ -91,6 +91,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--gpus", type=int, default=0)
+    parser.add_argument("--data-path", type=str)
+    parser.add_argument("--meta-path", type=str)
     args = parser.parse_args()
 
     setup_logger(args.run_name, args.debug)
@@ -102,7 +104,10 @@ if __name__ == "__main__":
     seed_everything(2023)
     cfgs = load_config(args)
     if not os.path.exists(cfgs['DATASET']['data_path']):
-        if 'temporal' in cfgs['DATASET']['data_path']:
+        if args.data_path is not None and args.meta_path is not None:
+            cfgs['DATASET']['data_path'] = args.data_path
+            cfgs['DATASET']['meta_path'] = args.meta_path
+        elif 'temporal' in cfgs['DATASET']['data_path']:
             cfgs['DATASET']['data_path'] = "/koko/OPV2V/temporal"
             cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_temporal"
         else:
