@@ -2,8 +2,8 @@
 
 PYTHONPATH=.
 OMP_NUM_THREADS=16
+
 torchrun \
-#--standalone \
 --nproc_per_node=2 \
 cosense3d/tools/agent_runner.py \
 --config ./cosense3d/config/stream_lidar_st_v2.yaml \
