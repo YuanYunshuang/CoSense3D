@@ -198,8 +198,8 @@ def prepare_input_data(points_list, voxel_size, QMODE, floor_height,
     coords = torch.cat(coords, dim=0)
     features = torch.cat(features, dim=0)
 
-    print(features)
-    print(coords)
+    print(features.device)
+    print(coords.device)
     print(QMODE)
     print(device)
     x = ME.TensorField(
