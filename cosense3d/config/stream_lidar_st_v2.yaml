@@ -21,7 +21,7 @@ TRAIN:
   wandb_account: 'opheliayuan'
   log_every: 10
   max_epoch: 50
-  gpus: 1
+  gpus: 0
   hooks: 'pycfg.stream_lidar_st_v2.train_hooks'
   optimizer:
     lr: 0.0002

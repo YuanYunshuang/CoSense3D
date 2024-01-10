@@ -47,7 +47,6 @@ class AgentRunner:
         if args.mode == 'train':
             self.runner = TrainRunner(dataloader=dataloader,
                                       controller=center_controller,
-                                      gpus=args.gpus,
                                       **cfgs['TRAIN'])
         elif args.mode == 'test':
             self.runner = TestRunner(dataloader=dataloader,
@@ -112,6 +111,7 @@ if __name__ == "__main__":
 
     seed_everything(2023)
     cfgs = load_config(args)
+    cfgs['TRAIN']['gpus'] = args.gpus
     if args.batch_size is not None:
         cfgs['DATASET']['train_batch_size'] = args.batch_size
     if not os.path.exists(cfgs['DATASET']['data_path']):
