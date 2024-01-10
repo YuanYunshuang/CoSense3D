@@ -9,7 +9,7 @@ DATASET:
     voxel_size:  &voxel_size [0.2, 0.2, 0.2]
   batch_size_train: 2
   batch_size_test: 1
-  n_workers: 1
+  n_workers: 4
 
   max_num_cavs: 7
   seq_len: &seq_len 4
