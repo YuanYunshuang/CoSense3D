@@ -184,9 +184,10 @@ def sparse_to_dense(stensor, voxel_size, det_r):
 
 def prepare_input_data(points_list, voxel_size, QMODE, floor_height,
                        coor_dim=3, feat_dim=3):
+    device = points_list[0].device
     coords = []
     features = []
-    vs = torch.tensor(voxel_size).reshape(1, 3).to(points_list[0].device)
+    vs = torch.tensor(voxel_size).reshape(1, 3).to(device)
     for i, points in enumerate(points_list):
         pts = points.clone()
         if floor_height is not None:
@@ -200,7 +201,8 @@ def prepare_input_data(points_list, voxel_size, QMODE, floor_height,
     x = ME.TensorField(
         features=features.contiguous(),
         coordinates=coords[:, :coor_dim + 1].contiguous(),
-        quantization_mode=QMODE
+        quantization_mode=QMODE,
+        device=device
     )
     # ME rounds to the floor when casting coords to integer
     return x
