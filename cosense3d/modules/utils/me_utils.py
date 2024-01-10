@@ -186,7 +186,7 @@ def prepare_input_data(points_list, voxel_size, QMODE, floor_height,
                        coor_dim=3, feat_dim=3):
     coords = []
     features = []
-    vs = torch.tensor(voxel_size).reshape(1, 3).cuda()
+    vs = torch.tensor(voxel_size).reshape(1, 3).to(points_list[0].device)
     for i, points in enumerate(points_list):
         pts = points.clone()
         if floor_height is not None:
