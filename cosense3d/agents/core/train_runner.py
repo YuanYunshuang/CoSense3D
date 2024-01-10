@@ -118,7 +118,7 @@ class TrainRunner(BaseRunner):
         self.optimizer.step()
         self.lr_scheduler.step_itr(self.iter + self.epoch * self.total_iter)
 
-        if self.logger is not None:
+        if self.logger is not None and self.gpu_id == 0:
             # rec_lr = self.lr_scheduler.optimizer.param_groups[0]['lr']
             rec_lr = self.lr_scheduler.get_last_lr()[0]
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
