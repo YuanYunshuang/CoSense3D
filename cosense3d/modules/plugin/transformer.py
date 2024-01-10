@@ -8,6 +8,7 @@ from cosense3d.modules.utils import build_torch_module
 from cosense3d.modules.utils.norm import build_norm_layer
 from cosense3d.modules.utils.init import xavier_init
 from cosense3d.modules.plugin.flash_attn import FlashMHA
+from cosense3d.modules.utils.amp import auto_fp16
 
 
 def build_module(cfg):
@@ -130,7 +131,6 @@ class MultiheadFlashAttention(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
         self.dropout_layer = nn.Dropout(attn_drop)
 
-    @torch.autocast(device_type="cuda", dtype=torch.float16, enabled=True)
     def forward(self,
                 query,
                 key=None,
@@ -225,6 +225,25 @@ class MultiheadFlashAttention(nn.Module):
         return identity + self.dropout_layer(self.proj_drop(out))
 
 
+class MultiHeadAttentionWrapper(nn.MultiheadAttention):
+    def __init__(self, *args, **kwargs):
+        super(MultiHeadAttentionWrapper, self).__init__(*args, **kwargs)
+        self.fp16_enabled = True
+
+    @auto_fp16(out_fp32=True)
+    def forward_fp16(self, *args, **kwargs):
+        return super(MultiHeadAttentionWrapper, self).forward(*args, **kwargs)
+
+    def forward_fp32(self, *args, **kwargs):
+        return super(MultiHeadAttentionWrapper, self).forward(*args, **kwargs)
+
+    def forward(self, *args, **kwargs):
+        if self.fp16_enabled and self.training:
+            return self.forward_fp16(*args, **kwargs)
+        else:
+            return self.forward_fp32(*args, **kwargs)
+
+
 class MultiheadAttention(nn.Module):
     """A wrapper for ``torch.nn.MultiheadAttention``.
     This module implements MultiheadAttention with identity connection,
@@ -261,8 +280,10 @@ class MultiheadAttention(nn.Module):
         self.cache_attn_weights = cache_attn_weights
         self.attn_weights = None
         self.fp16_enabled = fp16
-        assert fp16==False, "fp16 not supported."
-        self.attn = nn.MultiheadAttention(embed_dims, num_heads, dropout,  **kwargs)
+        if fp16:
+            self.attn = MultiHeadAttentionWrapper(embed_dims, num_heads, dropout,  **kwargs)
+        else:
+            self.attn = nn.MultiheadAttention(embed_dims, num_heads, dropout,  **kwargs)
 
         self.proj_drop = nn.Dropout(dropout)
         self.dropout_layer = nn.Dropout(dropout)
@@ -344,21 +365,12 @@ class MultiheadAttention(nn.Module):
             key = key.transpose(0, 1).contiguous()
             value = value.transpose(0, 1).contiguous()
 
-        if self.fp16_enabled:
-            with torch.autocast(device_type='cuda', dtype=torch.float16):
-                out, attn_weights = self.attn(
-                    query=query,
-                    key=key,
-                    value=value,
-                    attn_mask=attn_mask,
-                    key_padding_mask=key_padding_mask)
-        else:
-            out, attn_weights = self.attn(
-                query=query,
-                key=key,
-                value=value,
-                attn_mask=attn_mask,
-                key_padding_mask=key_padding_mask)
+        out, attn_weights = self.attn(
+            query=query,
+            key=key,
+            value=value,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask)
         if self.batch_first:
             out = out.transpose(0, 1).contiguous()
 
