@@ -132,7 +132,7 @@ def save_yaml(data, filename, cdumper=False):
 
 def ensure_dir(path):
     if not os.path.exists(path):
-        os.makedirs(path, mode=0o755)
+        os.makedirs(path, mode=0o777, exist_ok=True)
 
 
 def list_dirs(path):
