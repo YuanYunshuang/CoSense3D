@@ -8,4 +8,5 @@ torchrun \
 cosense3d/tools/agent_runner.py \
 --config ./cosense3d/config/stream_lidar_st_v2.yaml \
 --mode train \
---gpus 1
+--gpus 1 \
+--batch-size 2
