@@ -28,6 +28,7 @@ class TrainRunner(BaseRunner):
         self.gpu_id = 0
         if gpus > 0:
             self.gpu_id = int(os.environ.get("LOCAL_RANK", 0))
+            print('gpu_id', self.gpu_id)
             self.forward_runner.to(self.gpu_id)
             self.forward_runner = DDP(self.forward_runner, device_ids=[self.gpu_id])
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
