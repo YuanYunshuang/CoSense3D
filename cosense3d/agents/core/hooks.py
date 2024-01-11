@@ -60,17 +60,21 @@ class TrainTimerHook(BaseHook):
         super().__init__(**kwargs)
         self.elapsed_time = 0
         self.start_time = None
+        self.last_time = None
 
     def pre_epoch(self, runner, **kwargs):
         if self.start_time is None:
             self.start_time = time.time()
+            self.last_time = time.time()
 
     def post_iter(self, runner, **kwargs):
-        self.elapsed_time = (time.time() - self.start_time) / 3600
-        total_run_iter = (runner.total_iter * (runner.epoch - runner.start_epoch)) + runner.iter
-        time_per_iter = self.elapsed_time / total_run_iter
-        estimated_time = time_per_iter * runner.total_iter * runner.total_epochs
-        time_remain = estimated_time - self.elapsed_time
+        cur_time = time.time()
+        self.elapsed_time = (cur_time - self.start_time) / 3600
+        # total_run_iter = (runner.total_iter * (runner.epoch - runner.start_epoch)) + runner.iter
+        # time_per_iter = self.elapsed_time / total_run_iter
+        time_per_iter = (cur_time - self.last_time) / 3600
+        iter_remain = runner.total_iter * (runner.total_epoch - runner.epoch + 1) - runner.iter
+        time_remain = time_per_iter * iter_remain
         runner.logger.update(t_remain=time_remain, t_used=self.elapsed_time)
 
 
