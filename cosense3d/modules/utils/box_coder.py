@@ -188,6 +188,8 @@ class CenterBoxCoder(object):
 
         if self.with_velo:
             return reg_box, reg_dir, dir_score, valid, valid_box[:, 8:10]
+        elif valid_box.shape[-1] > 8:
+            return reg_box, reg_dir, dir_score, valid, valid_box[:, 8:]
         else:
             return reg_box, reg_dir, dir_score, valid
 
