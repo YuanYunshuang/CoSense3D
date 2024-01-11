@@ -60,7 +60,8 @@ class TrainTimerHook(BaseHook):
         super().__init__(**kwargs)
         self.elapsed_time = 0
         self.start_time = None
-        self.last_time = None
+        self.mean_time_per_itr = None
+        self.observations = 0
 
     def pre_epoch(self, runner, **kwargs):
         if self.start_time is None:
@@ -73,9 +74,12 @@ class TrainTimerHook(BaseHook):
         # total_run_iter = (runner.total_iter * (runner.epoch - runner.start_epoch)) + runner.iter
         # time_per_iter = self.elapsed_time / total_run_iter
         time_per_iter = (cur_time - self.last_time) / 3600
+        m = self.observations
+        self.mean_time_per_itr = m / (m + 1) * self.mean_time_per_itr + 1 / (m + 1) * time_per_iter
         iter_remain = runner.total_iter * (runner.total_epoch - runner.epoch + 1) - runner.iter
-        time_remain = time_per_iter * iter_remain
+        time_remain = self.mean_time_per_itr * iter_remain
         runner.logger.update(t_remain=time_remain, t_used=self.elapsed_time)
+        self.observations += 1
 
 
 class CheckPointsHook(BaseHook):
