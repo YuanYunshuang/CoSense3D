@@ -90,9 +90,9 @@ class CheckPointsHook(BaseHook):
         self.iter_every = iter_every
 
     def post_epoch(self, runner, **kwargs):
-        self.save(runner, f'epoch{runner.epoch}.pth')
         if runner.gpu_id != 0:
             return
+        self.save(runner, f'epoch{runner.epoch}.pth')
         if runner.epoch > self.max_ckpt:
             if (self.epoch_every is None or not
             (runner.epoch - self.max_ckpt) % self.epoch_every == 0):
