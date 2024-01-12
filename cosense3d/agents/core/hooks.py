@@ -60,18 +60,26 @@ class TrainTimerHook(BaseHook):
         super().__init__(**kwargs)
         self.elapsed_time = 0
         self.start_time = None
+        self.mean_time_per_itr = None
+        self.observations = 0
 
     def pre_epoch(self, runner, **kwargs):
         if self.start_time is None:
             self.start_time = time.time()
+            self.last_time = time.time()
 
     def post_iter(self, runner, **kwargs):
-        self.elapsed_time = (time.time() - self.start_time) / 3600
-        total_run_iter = (runner.total_iter * (runner.epoch - runner.start_epoch)) + runner.iter
-        time_per_iter = self.elapsed_time / total_run_iter
-        estimated_time = time_per_iter * runner.total_iter * runner.total_epochs
-        time_remain = estimated_time - self.elapsed_time
+        cur_time = time.time()
+        self.elapsed_time = (cur_time - self.start_time) / 3600
+        # total_run_iter = (runner.total_iter * (runner.epoch - runner.start_epoch)) + runner.iter
+        # time_per_iter = self.elapsed_time / total_run_iter
+        time_per_iter = (cur_time - self.last_time) / 3600
+        m = self.observations
+        self.mean_time_per_itr = m / (m + 1) * self.mean_time_per_itr + 1 / (m + 1) * time_per_iter
+        iter_remain = runner.total_iter * (runner.total_epoch - runner.epoch + 1) - runner.iter
+        time_remain = self.mean_time_per_itr * iter_remain
         runner.logger.update(t_remain=time_remain, t_used=self.elapsed_time)
+        self.observations += 1
 
 
 class CheckPointsHook(BaseHook):
@@ -82,9 +90,9 @@ class CheckPointsHook(BaseHook):
         self.iter_every = iter_every
 
     def post_epoch(self, runner, **kwargs):
-        self.save(runner, f'epoch{runner.epoch}.pth')
         if runner.gpu_id != 0:
             return
+        self.save(runner, f'epoch{runner.epoch}.pth')
         if runner.epoch > self.max_ckpt:
             if (self.epoch_every is None or not
             (runner.epoch - self.max_ckpt) % self.epoch_every == 0):

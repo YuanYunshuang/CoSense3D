@@ -122,7 +122,7 @@ shared_modules = OrderedDict(
         gather_keys=['bev_feat'],
         scatter_keys=['det_local', 'bev_local'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
-        heads=[update_dict(copy.copy(det_head_cfg), dict(generate_roi_scr=True)),
+        heads=[update_dict(copy.deepcopy(det_head_cfg), dict(generate_roi_scr=True)),
                bev_head_cfg],
         strides=[2, 8],
         losses=[True, False]
@@ -152,7 +152,7 @@ shared_modules = OrderedDict(
                             embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
-                            fp16=True),
+                            fp16=False),
                         dict(
                             type='MultiheadAttention',
                             embed_dims=256,
@@ -180,7 +180,7 @@ shared_modules = OrderedDict(
 
     ),
 
-    det1_head=update_dict(copy.copy(det_head_cfg), dict(
+    det1_head=update_dict(copy.deepcopy(det_head_cfg), dict(
         type='heads.det_center_sparse.MultiLvlDetCenterSparse',
         gather_keys=['temp_fusion_feat'],
         scatter_keys=['detection_local'],
@@ -194,6 +194,7 @@ shared_modules = OrderedDict(
         box_assigner=dict(
             box_coder=dict(type='CenterBoxCoder', with_velo=True),
         ),
+        loss_cls=dict(loss_weight=1.0),
     )),
 
     spatial_fusion = dict(
@@ -205,7 +206,7 @@ shared_modules = OrderedDict(
         resolution=0.8
     ),
 
-    det2_head=update_dict(copy.copy(det_head_cfg), dict(
+    det2_head=update_dict(copy.deepcopy(det_head_cfg), dict(
         type='heads.det_center_sparse.MultiLvlDetCenterSparse',
         gather_keys=['spatial_fusion_feat'],
         scatter_keys=['detection'],
@@ -219,6 +220,7 @@ shared_modules = OrderedDict(
         box_assigner=dict(
             box_coder=dict(type='CenterBoxCoder', with_velo=True),
         ),
+        loss_cls=dict(loss_weight=1.0),
     )),
 
 )
