@@ -3,9 +3,6 @@ import argparse
 import logging
 
 import torch
-import torch.multiprocessing as mp
-from torch.distributed import destroy_process_group
-from torch.distributed import init_process_group
 
 from cosense3d.dataset import get_dataloader
 from cosense3d.utils.misc import setup_logger
@@ -18,6 +15,7 @@ from cosense3d.agents.core.vis_runner import VisRunner
 
 
 def ddp_setup():
+    from torch.distributed import init_process_group
     init_process_group(backend="nccl")
     torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
 
@@ -82,6 +80,7 @@ class AgentRunner:
                 self.runner.run()
         finally:
             if self.dist:
+                from torch.distributed import destroy_process_group
                 destroy_process_group()
 
 

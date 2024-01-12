@@ -801,14 +801,16 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             center_indices = self.pts_to_indices(centers).T
             box_mask = [n in cur_cls_names for n in box_names]
             cur_boxes = gt_boxes[box_mask]
-            reg_box, reg_dir, dir_score, valid, reg_aux = self.box_coder.encode(
-                centers, cur_boxes, self.meter_per_pixel)
+            res = self.box_coder.encode(centers, cur_boxes, self.meter_per_pixel)
+            reg_box, reg_dir, dir_score, valid = res[:4]
+
             reg_tgt['idx'].append(center_indices[:, valid])
             reg_tgt['valid_mask'].append(valid)
             reg_tgt['box'].append(reg_box)
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
-            reg_tgt['vel'].append(reg_aux)
+            if len(res) == 5:
+                reg_tgt['vel'].append(res[4])
         return reg_tgt
 
     def get_predictions(self, preds):

@@ -9,7 +9,7 @@ class BaseRunner:
     def __init__(self,
                  dataloader,
                  controller,
-                 gpus=1,
+                 gpus=0,
                  log_every=10,
                  hooks=None,
                  **kwargs

@@ -149,7 +149,7 @@ class DetCenterSparse(BaseModule):
         reg = self.reg_head(feat)
 
         out_dict = {
-            'center': centers,
+            'ctr': centers,
             'cls': cls,
             'reg': reg,
         }
@@ -173,8 +173,8 @@ class DetCenterSparse(BaseModule):
         # decompose batch
         output_new = {k: [] for k in output.keys()}
         for i in range(B):
-            mask = output['center'][:, 0] == i
-            output_new['center'].append(output['center'][mask, 1:])
+            mask = output['ctr'][:, 0] == i
+            output_new['ctr'].append(output['ctr'][mask, 1:])
             output_new['cls'].append([h_cls[mask] for h_cls in output['cls']])
             output_new['reg'].append({k:[vi[mask] for vi in v] for k, v in output['reg'].items()})
             if 'conf' in output:
@@ -196,7 +196,7 @@ class DetCenterSparse(BaseModule):
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         epoch = kwargs.get('epoch', 0)
-        centers = [batch['center'] for batch in batch_list]
+        centers = [batch['ctr'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
         if 'scr' in batch_list[0]:
             pred_scores = [batch['scr'] for batch in batch_list]

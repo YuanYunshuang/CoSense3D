@@ -208,13 +208,13 @@ class MultiheadFlashAttention(nn.Module):
             key = key.transpose(0, 1)
             value = value.transpose(0, 1)
 
-        # with torch.autocast(device_type='cuda', dtype=torch.float16):
+        with torch.autocast(device_type='cuda', dtype=torch.float16):
             # flash attention only support f16
-        out, attn_weights = self.attn(
-            q=query,
-            k=key,
-            v=value,
-            key_padding_mask=None)
+            out, attn_weights = self.attn(
+                q=query,
+                k=key,
+                v=value,
+                key_padding_mask=None)
 
         if self.cache_attn_weights:
             self.attn_weights = attn_weights

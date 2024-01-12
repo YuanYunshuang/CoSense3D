@@ -56,6 +56,7 @@ class CenterController:
     def test_forward(self, batch_dict, **kwargs):
         self.data_manager.generate_augment_params(batch_dict, self.seq_len)
         seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
+        self.cav_manager.reset()
         for i in range(self.seq_len):
             self.run_frame(seq_data[i], with_loss=False, training_mode=False, **kwargs)
 

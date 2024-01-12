@@ -245,7 +245,7 @@ class QueryGuidedPETRHead(BaseModule):
                     pred_reg = pred_reg.sigmoid()
                 cur_reg_src = pred_reg[box_tgt['valid_mask'][0]]
                 if reg_name == 'vel':
-                    cur_reg_tgt = box_tgt['aux'][0] * 0.1
+                    cur_reg_tgt = box_tgt['vel'][0] * 0.1
                 else:
                     cur_reg_tgt = box_tgt[reg_name][0]  # N, C
                 cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)

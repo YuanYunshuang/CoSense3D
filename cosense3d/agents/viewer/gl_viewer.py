@@ -136,7 +136,7 @@ class GLViewer(gl.GLViewWidget):
                 self.local_boxes[agent_id] = []
                 for id, label in labels.items():
                     item = LineBoxItem(box=[id, ] + label, last_pose=None,
-                                       status='gt', line_width=2)
+                                       status='local_gt', line_width=2)
                     item.setVisible(self.visibility.get(f'{agent_id}.0', True))
                     self.local_boxes[agent_id].append(item)
                     self.addItem(item)
@@ -144,7 +144,7 @@ class GLViewer(gl.GLViewWidget):
             for id, label in global_labels.items():
                 prev_label = None if predecessor is None else predecessor[id]
                 item = LineBoxItem(box=[id, ] + label, last_pose=prev_label,
-                                   status='gt', line_width=2)
+                                   status='global_gt', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
         if local_pred is not None:

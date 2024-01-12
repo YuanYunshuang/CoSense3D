@@ -13,6 +13,8 @@ BOX_COLORs = {
     'inactive': CSCOLORS,
     'highlight': (0., 1, 1, 1),
     'active': (0.9, 0, 1, 1),
+    'local_gt': (1, 1, 0, 1),
+    'global_gt': (0, 1, 0, 1),
     'gt': (0, 1, 0, 1),
     'pred': (1, 0, 0, 1),
 }

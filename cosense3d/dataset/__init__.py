@@ -13,7 +13,7 @@ def get_dataloader(cfgs, mode='train', distributed=False):
     module_class = getattr(module, dataset_full_name)
     dataset = module_class(cfgs, mode)
     shuffle = cfgs.get('shuffle', True) if mode=='train' else False
-    if distributed > 0:
+    if distributed:
         shuffle = False
         sampler = DistributedSampler(dataset)
     else:

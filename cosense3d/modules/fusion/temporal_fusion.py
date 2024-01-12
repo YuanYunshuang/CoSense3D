@@ -404,7 +404,7 @@ class TemporalFusion(BaseModule):
 
 
 class LocalTemporalFusion(BaseModule):
-    """Modified from TemporalFusion to standarlize input and output keys"""
+    """Modified from TemporalFusion to standardize input and output keys"""
     def __init__(self,
                  in_channels,
                  transformer,
