@@ -75,7 +75,10 @@ class TrainTimerHook(BaseHook):
         # time_per_iter = self.elapsed_time / total_run_iter
         time_per_iter = (cur_time - self.last_time) / 3600
         m = self.observations
-        self.mean_time_per_itr = m / (m + 1) * self.mean_time_per_itr + 1 / (m + 1) * time_per_iter
+        if self.mean_time_per_itr is None:
+            self.mean_time_per_itr = time_per_iter
+        else:
+            self.mean_time_per_itr = m / (m + 1) * self.mean_time_per_itr + 1 / (m + 1) * time_per_iter
         iter_remain = runner.total_iter * (runner.total_epoch - runner.epoch + 1) - runner.iter
         time_remain = self.mean_time_per_itr * iter_remain
         runner.logger.update(t_remain=time_remain, t_used=self.elapsed_time)
