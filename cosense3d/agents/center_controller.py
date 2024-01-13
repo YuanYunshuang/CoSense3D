@@ -2,8 +2,9 @@ from cosense3d.agents import core
 
 
 class CenterController:
-    def __init__(self, cfg, data_loader):
+    def __init__(self, cfg, data_loader, dist=False):
         self.mode = data_loader.dataset.mode
+        self.dist = dist
         self.seq_len = data_loader.dataset.seq_len
         self.data_info = data_loader.dataset.cfgs['data_info']
         self.num_loss_frame = cfg.get('num_loss_frame', 1)
@@ -16,7 +17,7 @@ class CenterController:
         self.data_manager = core.DataManager(
             self.cav_manager, **self.update_cfg(
                 cfg['data_manager'][self.mode], self.data_info))
-        self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager)
+        self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager, self.dist)
         self.task_manager = core.TaskManager()
 
     def update_cfg(self, cfg, *args):

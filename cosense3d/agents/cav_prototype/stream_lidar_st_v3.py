@@ -150,8 +150,8 @@ class StreamLidarCAV(BaseCAV):
         scr = x['scr'][:, -1].view(-1)
         topk = torch.topk(scr, k=self.memory_num_propagated).indices
 
-        ref_pts = x['preds'][:, -1].view(scr.shape[0], -1)[..., :self.ref_pts_dim]
-        velo = x['preds'][:, -1].view(scr.shape[0], -1)[..., -2:]
+        ref_pts = x['pred_boxes'][:, -1].view(scr.shape[0], -1)[..., :self.ref_pts_dim]
+        velo = x['pred_boxes'][:, -1].view(scr.shape[0], -1)[..., -2:]
         embeddings = self.data['temp_fusion_feat']['outs_dec'][-1]
         # timestamp = torch.zeros_like(ref_pts[..., :1])
         # transform ref pts to coop coordinates

@@ -234,7 +234,7 @@ class DetCenterSparse(BaseModule):
             cur_labels[lbl_inds] = cls_inds + 1
 
             if self.cls_assigner.pos_neg_ratio:
-                avg_factor = len(cur_labels)
+                avg_factor = None
             else:
                 avg_factor = max((cur_labels > 0).sum(), 1)
             lcenter = self.loss_cls(
@@ -295,11 +295,14 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
             'pred_boxes': pred_boxes
         }
 
-        conf = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
+        if not self.training:
+            out_dict['preds'], _ = self.predictions(out_dict)
+
+        out_dict['conf'] = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
         if 'edl' in self.loss_cls.name.lower():
-            out_dict['scr'] = conf[..., 1:].max(dim=-1).values
+            out_dict['scr'] = out_dict['conf'][..., 1:].max(dim=-1).values
         else:
-            out_dict['scr'] = conf.max(dim=-1).values
+            out_dict['scr'] = out_dict['conf'].max(dim=-1).values
 
         outs = self.format_output(out_dict, len(feat_in), reference_inds)
         if not self.training:
@@ -322,34 +325,36 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
         return outs_dec, reference_points, reference_inds
 
     def format_output(self, output, B=None, reference_inds=None):
-        if self.sparse:
-            outs = []
-            for i in range(B):
-                mask = reference_inds == i
-                outs.append(
-                    {
-                        'cls': output['cls'][:, :, mask],
-                        'reg': {k: v[:, :, mask] for k, v in output['reg'].items()},
-                        'ctr': output['ctr'][mask],
-                        'scr': output['scr'][:, :, mask],
-                        'preds': output['pred_boxes'][:, :, mask],
-                    }
-                )
-        else:
-            outs = [
-                {
-                    'cls': output['cls'][:, :, i],
-                    'reg': {k: v[:, :, i] for k, v in output['reg'].items()},
-                    'ctr': output['ctr'][i],
-                    'scr': output['scr'][:, :, i],
-                    'preds': output['pred_boxes'][:, :, i],
-                } for i in range(B)
-            ]
-        return outs
+        outs = []
+        for i in range(B):
+            if self.sparse:
+                m = reference_inds == i
+            else:
+                m = i
+            out = {
+                    'cls': output['cls'][:, :, m],
+                    'reg': {k: v[:, :, m] for k, v in output['reg'].items()},
+                    'ctr': output['ctr'][m],
+                    'pred_boxes': output['pred_boxes'][:, :, m],
+                }
+            if 'scr' in output:
+                out['scr'] = output['scr'][:, :, m]
+            if 'preds' in output:
+                mask = output['preds']['idx'][:, 0] == i
+                preds = {}
+                for k, v in output['preds'].items():
+                    if k in ['idx', 'box']:
+                        preds[k] = v[mask][:, 1:]
+                    else:
+                        preds[k] = v[mask]
+                out['preds'] = preds
+            outs.append(out)
+
+        return {self.scatter_keys[0]: outs}
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         epoch = kwargs.get('epoch', 0)
-        centers = [batch['center'] for batch in batch_list for _ in range(self.nlvls)]
+        centers = [batch['ctr'] for batch in batch_list for _ in range(self.nlvls)]
         pred_cls_list = [x for batch in batch_list for x in batch['cls'].transpose(1, 0)]
         pred_scores = [x for batch in batch_list for x in batch['scr'].transpose(1, 0)]
 
@@ -361,7 +366,7 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
 
         # get reg target
         box_tgt = self.box_assigner.assign(
-            self.cat_data_from_list([batch['center'] for batch in batch_list], pad_idx=True),
+            self.cat_data_from_list([batch['ctr'] for batch in batch_list], pad_idx=True),
             self.cat_data_from_list(gt_boxes, pad_idx=True),
             self.cat_data_from_list(gt_labels)
         )
@@ -412,46 +417,11 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
         loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
         return loss_dict
 
-    def get_predictions(self, cls_scores, bbox_preds, batch_inds=None):
-        lbl_cnt = 0
-        multi_heads_dets = []
-        for h, cls_names in enumerate(self.class_names_each_head):
-            if 'edl' in self.loss_cls.name.lower():
-                scores = cls_scores[h, -1][..., 1:].sum(dim=-1)
-                labels = cls_scores[h, -1][..., 1:].argmax(dim=-1) + lbl_cnt
-            else:
-                scores = cls_scores[h, -1].sum(dim=-1)
-                labels = cls_scores[h, -1].argmax(dim=-1) + lbl_cnt
+    def predictions(self, preds):
+        return self.box_assigner.get_predictions({
+            'ctr': preds['ctr'],
+            'cls': preds['cls'][:, -1],
+            'reg': {k: v[:, -1] for k, v in preds['reg'].items()}
+        })
 
-            boxes = bbox_preds[h, -1]
-            pos = scores > self.box_assigner.center_threshold
-
-            dets = []
-            if batch_inds is None:
-                inds = range(cls_scores[h].shape[1])
-                for i in inds:
-                    dets.append({
-                        'box': boxes[i][pos[i]],
-                        'scr': scores[i][pos[i]],
-                        'lbl': labels[i][pos[i]],
-                        'idx': torch.ones_like(labels[i][pos[i]]) * i
-                    })
-            else:
-                inds = batch_inds.unique()
-                for i in inds:
-                    mask = batch_inds == i
-                    pos_mask = pos[mask]
-                    dets.append({
-                        'box': boxes[mask][pos_mask],
-                        'scr': scores[mask][pos_mask],
-                        'lbl': labels[mask][pos_mask],
-                        'idx': batch_inds[mask][pos_mask].long()
-                    })
-            multi_heads_dets.append(dets)
-            lbl_cnt += len(cls_names)
-
-        # merge heads
-        # TODO
-
-        return dets
 

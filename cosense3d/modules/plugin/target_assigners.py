@@ -836,7 +836,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         lbl_cnt = torch.cumsum(torch.Tensor([0] + [m.shape[1] for m in preds['cls']]), dim=0)
         confs = []
         for h, center_cls in enumerate(preds['cls']):
-            if center_cls.ndim > 2:
+            if center_cls.ndim == 4:
                 conf, _ = pred_to_conf_unc(center_cls.permute(0, 2, 3, 1), self.edl_activation)
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
                 center_indices = torch.stack(torch.where(center_mask), dim=0)
@@ -848,10 +848,15 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                 conf, _ = pred_to_conf_unc(center_cls, self.edl_activation)
                 centers = preds['ctr']
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+
+                if center_cls.ndim == 3:
+                    indices = torch.stack([torch.zeros_like(centers[i, :, :1]) + i for i in range(centers.shape[0])], dim=0)
+                    centers = torch.cat([indices, centers], dim=-1)
+
                 cur_centers = centers[center_mask]
                 center_indices = self.pts_to_indices(cur_centers)
                 cur_reg = {k: preds['reg'][k][h][center_mask]
-                           for k in ['box', 'dir', 'scr']}
+                           for k in preds['reg'].keys()}
 
                 # from cosense3d.utils import vislib
                 # mask = cur_centers[:, 0].int() == 0

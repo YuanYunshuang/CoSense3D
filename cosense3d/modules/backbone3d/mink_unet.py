@@ -17,6 +17,7 @@ class MinkUnet(BaseModule):
                  floor_height=0,
                  height_compression=None,
                  to_dense=False,
+                 dist=False,
                  **kwargs):
         super(MinkUnet, self).__init__(**kwargs)
         update_me_essentials(self, data_info)
@@ -27,6 +28,12 @@ class MinkUnet(BaseModule):
         self.height_compression = height_compression
         self.d = d
         self.lidar_range_tensor = nn.Parameter(torch.Tensor(self.lidar_range), requires_grad=False)
+        # For determine batchnorm type: if the model is trained on multiple GPUs with ME.MinkowskiBatchNorm,
+        # the BN would perform differently in eval mode because the running_mean and running_var would be
+        # different to training mode, this is caused by different number of tracked batches, therefore if
+        # ditributed training is used for this model, ME.MinkowskiSyncBatchNorm should be used, otherwise
+        # ME.MinkowskiBatchNorm should be used.
+        self.dist = dist
         if cache_strides is None:
             self.cache_strides = [stride]
             self.max_resolution = stride
@@ -45,19 +52,21 @@ class MinkUnet(BaseModule):
         if self.d == 4:
             kernel = kernel + [1,]
             kernel_conv1 = kernel + [1,]
-        self.conv1 = minkconv_conv_block(32, 32, kernel_conv1, 1, self.d, 0.1)
-        self.conv2 = get_conv_block([32, 32, 32], kernel, d=self.d)
-        self.conv3 = get_conv_block([32, 64, 64], kernel, d=self.d)
-        self.conv4 = get_conv_block([64, 128, 128], kernel, d=self.d)
+
+        kwargs = {'d': self.d, 'distributed': self.dist, 'bn_momentum': 0.1}
+        self.conv1 = minkconv_conv_block(32, 32, kernel_conv1,
+                                         1, **kwargs)
+        self.conv2 = get_conv_block([32, 32, 32], kernel, **kwargs)
+        self.conv3 = get_conv_block([32, 64, 64], kernel, **kwargs)
+        self.conv4 = get_conv_block([64, 128, 128], kernel, **kwargs)
 
         if self.max_resolution <= 4:
-            self.trconv4 = get_conv_block([128, 64, 64], kernel, d=self.d, tr=True)
+            self.trconv4 = get_conv_block([128, 64, 64], kernel, tr=True, **kwargs)
         if self.max_resolution <= 2:
-            self.trconv3 = get_conv_block([128, 64, 64], kernel, d=self.d, tr=True)
+            self.trconv3 = get_conv_block([128, 64, 64], kernel, tr=True, **kwargs)
         if self.max_resolution <= 1:
-            self.trconv2 = get_conv_block([96, 64, 32], kernel, d=self.d, tr=True)
-            self.out_layer = minkconv_conv_block(64, 32, kernel, 1, self.d, 0.1,
-                                                 'ReLU', norm_before=True)
+            self.trconv2 = get_conv_block([96, 64, 32], kernel, tr=True, **kwargs)
+            self.out_layer = minkconv_layer(64, 32, kernel, 1, d=self.d)
 
     def _init_height_compression_layers(self, planes):
         self.stride_size_dict = {}
@@ -124,6 +133,8 @@ class MinkUnet(BaseModule):
 
         vars = locals()
         res = {f'p{k}': vars[f'p{k}_cat'] for k in self.cache_strides}
+
+        tmp = x4.F.max(dim=0).values
         return res
 
     def forward_height_compression(self, res):

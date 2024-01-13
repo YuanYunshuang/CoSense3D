@@ -5,9 +5,9 @@ DATASET:
   data_path: /mnt/t7/data/OPV2Vt/temporal
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
-    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
-  batch_size_train: 4
+    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
+    voxel_size:  &voxel_size [0.4, 0.4, 0.4]
+  batch_size_train: 1
   batch_size_test: 1
   n_workers: 4
 

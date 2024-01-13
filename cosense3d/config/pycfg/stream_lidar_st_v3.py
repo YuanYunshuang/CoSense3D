@@ -45,7 +45,7 @@ bev_head_cfg = dict(
     stride=out_stride,
     in_dim=256,
     target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-    loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=50, n_cls=2, loss_weight=1.0),
+    loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=20, n_cls=2, loss_weight=1.0),
 )
 
 det_head_cfg = dict(
@@ -72,6 +72,7 @@ det_head_cfg = dict(
         lidar_range=point_cloud_range,
         stride=out_stride,
         detection_benchmark='Car',
+        edl_activation='exp',
         class_names_each_head=[['vehicle.car']],
         center_threshold=0.5,
         box_coder=dict(type='CenterBoxCoder'),
