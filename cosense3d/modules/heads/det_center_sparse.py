@@ -234,7 +234,7 @@ class DetCenterSparse(BaseModule):
             cur_labels[lbl_inds] = cls_inds + 1
 
             if self.cls_assigner.pos_neg_ratio:
-                avg_factor = len(cur_labels)
+                avg_factor = None
             else:
                 avg_factor = max((cur_labels > 0).sum(), 1)
             lcenter = self.loss_cls(
@@ -289,17 +289,20 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
             centers.unsqueeze(0).unsqueeze(0).repeat((self.n_heads, self.nlvls,) + (1,) * len(shape[1:])), reg)
 
         out_dict = {
-            'center': centers,
+            'ctr': centers,
             'cls': cls,
             'reg': reg,
             'pred_boxes': pred_boxes
         }
 
-        conf = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
+        if not self.training:
+            out_dict['preds'], _ = self.predictions(out_dict)
+
+        out_dict['conf'] = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
         if 'edl' in self.loss_cls.name.lower():
-            out_dict['scr'] = conf[..., 1:].max(dim=-1).values
+            out_dict['scr'] = out_dict['conf'][..., 1:].max(dim=-1).values
         else:
-            out_dict['scr'] = conf.max(dim=-1).values
+            out_dict['scr'] = out_dict['conf'].max(dim=-1).values
 
         return self.format_output(out_dict, len(feat_in), reference_inds)
 
@@ -316,34 +319,36 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
         return outs_dec, reference_points, reference_inds
 
     def format_output(self, output, B=None, reference_inds=None):
-        if self.sparse:
-            outs = []
-            for i in range(B):
-                mask = reference_inds == i
-                outs.append(
-                    {
-                        'cls': output['cls'][:, :, mask],
-                        'reg': {k: v[:, :, mask] for k, v in output['reg'].items()},
-                        'center': output['center'][mask],
-                        'scr': output['scr'][:, :, mask],
-                        'preds': output['pred_boxes'][:, :, mask],
-                    }
-                )
-        else:
-            outs = [
-                {
-                    'cls': output['cls'][:, :, i],
-                    'reg': {k: v[:, :, i] for k, v in output['reg'].items()},
-                    'center': output['center'][i],
-                    'scr': output['scr'][:, :, i],
-                    'preds': output['pred_boxes'][:, :, i],
-                } for i in range(B)
-            ]
+        outs = []
+        for i in range(B):
+            if self.sparse:
+                m = reference_inds == i
+            else:
+                m = i
+            out = {
+                    'cls': output['cls'][:, :, m],
+                    'reg': {k: v[:, :, m] for k, v in output['reg'].items()},
+                    'ctr': output['ctr'][m],
+                    'pred_boxes': output['pred_boxes'][:, :, m],
+                }
+            if 'scr' in output:
+                out['scr'] = output['scr'][:, :, m]
+            if 'preds' in output:
+                mask = output['preds']['idx'][:, 0] == i
+                preds = {}
+                for k, v in output['preds'].items():
+                    if k in ['idx', 'box']:
+                        preds[k] = v[mask][:, 1:]
+                    else:
+                        preds[k] = v[mask]
+                out['preds'] = preds
+            outs.append(out)
+
         return {self.scatter_keys[0]: outs}
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         epoch = kwargs.get('epoch', 0)
-        centers = [batch['center'] for batch in batch_list for _ in range(self.nlvls)]
+        centers = [batch['ctr'] for batch in batch_list for _ in range(self.nlvls)]
         pred_cls_list = [x for batch in batch_list for x in batch['cls'].transpose(1, 0)]
         pred_scores = [x for batch in batch_list for x in batch['scr'].transpose(1, 0)]
 
@@ -355,7 +360,7 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
 
         # get reg target
         box_tgt = self.box_assigner.assign(
-            self.cat_data_from_list([batch['center'] for batch in batch_list], pad_idx=True),
+            self.cat_data_from_list([batch['ctr'] for batch in batch_list], pad_idx=True),
             self.cat_data_from_list(gt_boxes, pad_idx=True),
             self.cat_data_from_list(gt_labels)
         )
@@ -405,4 +410,11 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
 
         loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
         return loss_dict
+
+    def predictions(self, preds):
+        return self.box_assigner.get_predictions({
+            'ctr': preds['ctr'],
+            'cls': preds['cls'][:, -1],
+            'reg': {k: v[:, -1] for k, v in preds['reg'].items()}
+        })
 

@@ -149,7 +149,7 @@ class StreamLidarCAV(BaseCAV):
 
             self.data['memory']['timestamp'][1:] -= self.timestamp / 2
         except:
-          print('d')
+          print('Post update memory failed.')
         self.data['memory']['pose'] = self.lidar_pose[(None,)*2] @ self.data['memory']['pose'] # local-->global
 
     def transform_ref_pts(self, reference_points, matrix):

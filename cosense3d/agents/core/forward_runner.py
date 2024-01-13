@@ -5,14 +5,16 @@ from cosense3d.modules import build_module
 
 
 class ForwardRunner(nn.Module):
-    def __init__(self, shared_modules, data_manager):
+    def __init__(self, shared_modules, data_manager, dist=False):
         super().__init__()
         self.lidar_range = torch.tensor(data_manager.lidar_range)
         self.data_manager = data_manager
+        self.dist = dist
 
         module_dict = {}
         self.module_keys = []
         for k, v in shared_modules.items():
+            v['dist'] = dist
             module_dict[k] = build_module(v)
             self.module_keys.append(k)
 

@@ -41,7 +41,7 @@ class AgentRunner:
         dataloader = get_dataloader(cfgs['DATASET'],
                                     args.mode.replace('vis_', ''),
                                     self.dist)
-        center_controller = CenterController(cfgs['CONTROLLER'], dataloader)
+        center_controller = CenterController(cfgs['CONTROLLER'], dataloader, self.dist)
         if args.mode == 'train':
             self.runner = TrainRunner(dataloader=dataloader,
                                       controller=center_controller,

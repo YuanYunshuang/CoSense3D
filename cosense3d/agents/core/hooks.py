@@ -321,7 +321,7 @@ class EvalDetectionHook(BaseHook):
             try:
                 indices = indices[mask]
             except:
-                print('d')
+                print("Number of boxes doesn't match the number of indices")
         if times is not None:
             times = times[mask]
         return boxes, scores, labels, indices, times

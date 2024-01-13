@@ -97,7 +97,7 @@ def bev_sparse_to_dense(self, preds):
     return conf_map, unc_map
 
 
-def minkconv_layer(in_dim, out_dim, kernel_size, stride, d, bn_momentum, tr=False):
+def minkconv_layer(in_dim, out_dim, kernel_size, stride, d, tr=False):
     kernel = [kernel_size] * d
     if tr:
         conv = getattr(ME, 'MinkowskiConvolutionTranspose')
@@ -114,11 +114,14 @@ def minkconv_layer(in_dim, out_dim, kernel_size, stride, d, bn_momentum, tr=Fals
     return conv_layer
 
 
-def minkconv_conv_block(in_dim, out_dim, kernel, stride, d, bn_momentum,
+def minkconv_conv_block(in_dim, out_dim, kernel, stride,
+                        d=3,
+                        bn_momentum=0.1,
                         activation='LeakyReLU',
                         tr=False,
                         expand_coordinates=False,
-                        norm_before=False):
+                        norm_before=False,
+                        distributed=False):
     if isinstance(kernel, int):
         kernel = [kernel] * d
     if isinstance(stride, int):
@@ -137,7 +140,10 @@ def minkconv_conv_block(in_dim, out_dim, kernel, stride, d, bn_momentum,
         expand_coordinates=expand_coordinates
     )
     activation_fn = getattr(ME, f'Minkowski{activation}')()
-    norm_layer = ME.MinkowskiBatchNorm(out_dim, momentum=bn_momentum)
+    if distributed:
+        norm_layer = ME.MinkowskiSyncBatchNorm(out_dim, momentum=bn_momentum)
+    else:
+        norm_layer = ME.MinkowskiBatchNorm(out_dim, momentum=bn_momentum)
     if norm_before:
         layer = nn.Sequential(conv_layer, norm_layer, activation_fn)
     else:
@@ -145,7 +151,7 @@ def minkconv_conv_block(in_dim, out_dim, kernel, stride, d, bn_momentum,
     return layer
 
 
-def get_conv_block(nc, k=3, d=3, tr=False):
+def get_conv_block(nc, k=3, d=3, tr=False, bn_momentum=0.1, distributed=False):
     """
     create sparse convolution block
     :param nc: number of channels in each layer in [in_layer, mid_layer, out_layer]
@@ -157,12 +163,12 @@ def get_conv_block(nc, k=3, d=3, tr=False):
         k = [k,] * d
     else:
         assert len(k) == d
-    bnm = 0.1
+    bnm = bn_momentum
     assert len(nc) == 3
     return nn.Sequential(
-            minkconv_conv_block(nc[0], nc[1], k, 2, d, bnm, tr=tr),
-            minkconv_conv_block(nc[1], nc[1], k, 1, d, bnm, tr=tr),
-            minkconv_conv_block(nc[1], nc[2], k, 1, d, bnm, tr=tr),
+            minkconv_conv_block(nc[0], nc[1], k, 2, d, bnm, tr=tr, distributed=distributed),
+            minkconv_conv_block(nc[1], nc[1], k, 1, d, bnm, tr=tr, distributed=distributed),
+            minkconv_conv_block(nc[1], nc[2], k, 1, d, bnm, tr=tr, distributed=distributed),
         )
 
 
@@ -219,13 +225,13 @@ def voxelize_with_centroids(x: ME.TensorField, enc_mlp, pc_range):
     coords_p1, count_p1 = downsample_points(coords, tensor_map, field_map, size)
     features_p1, _ = downsample_points(features, tensor_map, field_map, size)
     if len(features) != len(tensor_map):
-        print('d')
+        print('ME: features != tensor map')
     norm_features = normalize_points(features, features_p1, tensor_map)
 
     features[:, :3] = (features[:, :3] - pc_range[:3]) / (pc_range[3:] - pc_range[:3])
     voxel_embs = enc_mlp(torch.cat([features, norm_features], dim=1))
     down_voxel_embs = downsample_embeddings(voxel_embs, tensor_map, size, mode="avg")
-    out = ME.SparseTensor(down_voxel_embs,
+    out = ME.SparseTensor(features=down_voxel_embs,
                           coordinate_map_key=out.coordinate_key,
                           coordinate_manager=cm)
 
