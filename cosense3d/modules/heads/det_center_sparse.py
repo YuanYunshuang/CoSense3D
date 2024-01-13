@@ -295,14 +295,14 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
             'pred_boxes': pred_boxes
         }
 
-        if not self.training:
-            out_dict['preds'], _ = self.predictions(out_dict)
-
         out_dict['conf'] = pred_to_conf_unc(cls, self.loss_cls.activation)[0]
         if 'edl' in self.loss_cls.name.lower():
             out_dict['scr'] = out_dict['conf'][..., 1:].max(dim=-1).values
         else:
             out_dict['scr'] = out_dict['conf'].max(dim=-1).values
+
+        if not self.training:
+            out_dict['preds'], _ = self.predictions(out_dict)
 
         return self.format_output(out_dict, len(feat_in), reference_inds)
 
