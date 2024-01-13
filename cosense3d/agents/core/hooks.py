@@ -149,6 +149,7 @@ class DetectionNMSHook(BaseHook):
         self.nms = import_module('cosense3d.ops.iou3d_nms_utils').nms_gpu
         self.det_key = det_key
         self.defual_pred_keys = ['box', 'scr', 'lbl', 'idx']
+
     def post_iter(self, runner, **kwargs):
         detection_out = runner.controller.data_manager.gather_ego_data(self.det_key)
         preds = []

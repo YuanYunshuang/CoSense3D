@@ -289,7 +289,7 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
             centers.unsqueeze(0).unsqueeze(0).repeat((self.n_heads, self.nlvls,) + (1,) * len(shape[1:])), reg)
 
         out_dict = {
-            'center': centers,
+            'ctr': centers,
             'cls': cls,
             'reg': reg,
             'pred_boxes': pred_boxes
@@ -301,7 +301,13 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
         else:
             out_dict['scr'] = conf.max(dim=-1).values
 
-        return self.format_output(out_dict, len(feat_in), reference_inds)
+        outs = self.format_output(out_dict, len(feat_in), reference_inds)
+        if not self.training:
+            dets = self.get_predictions(conf, pred_boxes, batch_inds=reference_inds)
+            for i, out in enumerate(outs):
+                out['preds'] = dets[i]
+
+        return {self.scatter_keys[0]: outs}
 
     def format_input(self, feat_in):
         if self.sparse:
@@ -324,7 +330,7 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
                     {
                         'cls': output['cls'][:, :, mask],
                         'reg': {k: v[:, :, mask] for k, v in output['reg'].items()},
-                        'center': output['center'][mask],
+                        'ctr': output['ctr'][mask],
                         'scr': output['scr'][:, :, mask],
                         'preds': output['pred_boxes'][:, :, mask],
                     }
@@ -334,12 +340,12 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
                 {
                     'cls': output['cls'][:, :, i],
                     'reg': {k: v[:, :, i] for k, v in output['reg'].items()},
-                    'center': output['center'][i],
+                    'ctr': output['ctr'][i],
                     'scr': output['scr'][:, :, i],
                     'preds': output['pred_boxes'][:, :, i],
                 } for i in range(B)
             ]
-        return {self.scatter_keys[0]: outs}
+        return outs
 
     def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
         epoch = kwargs.get('epoch', 0)
@@ -405,4 +411,47 @@ class MultiLvlDetCenterSparse(DetCenterSparse):
 
         loss_dict = {'ctr_loss': loss_cls, 'box_loss': loss_box}
         return loss_dict
+
+    def get_predictions(self, cls_scores, bbox_preds, batch_inds=None):
+        lbl_cnt = 0
+        multi_heads_dets = []
+        for h, cls_names in enumerate(self.class_names_each_head):
+            if 'edl' in self.loss_cls.name.lower():
+                scores = cls_scores[h, -1][..., 1:].sum(dim=-1)
+                labels = cls_scores[h, -1][..., 1:].argmax(dim=-1) + lbl_cnt
+            else:
+                scores = cls_scores[h, -1].sum(dim=-1)
+                labels = cls_scores[h, -1].argmax(dim=-1) + lbl_cnt
+
+            boxes = bbox_preds[h, -1]
+            pos = scores > self.box_assigner.center_threshold
+
+            dets = []
+            if batch_inds is None:
+                inds = range(cls_scores[h].shape[1])
+                for i in inds:
+                    dets.append({
+                        'box': boxes[i][pos[i]],
+                        'scr': scores[i][pos[i]],
+                        'lbl': labels[i][pos[i]],
+                        'idx': torch.ones_like(labels[i][pos[i]]) * i
+                    })
+            else:
+                inds = batch_inds.unique()
+                for i in inds:
+                    mask = batch_inds == i
+                    pos_mask = pos[mask]
+                    dets.append({
+                        'box': boxes[mask][pos_mask],
+                        'scr': scores[mask][pos_mask],
+                        'lbl': labels[mask][pos_mask],
+                        'idx': batch_inds[mask][pos_mask].long()
+                    })
+            multi_heads_dets.append(dets)
+            lbl_cnt += len(cls_names)
+
+        # merge heads
+        # TODO
+
+        return dets
 

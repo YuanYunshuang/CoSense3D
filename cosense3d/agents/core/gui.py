@@ -10,6 +10,7 @@ from cosense3d.agents.viewer.gl_viewer import GLViewer
 from cosense3d.agents.viewer.output_viewer import OutputViewer
 from cosense3d.agents.viewer.img_viewer import ImgViewer
 from cosense3d.agents.viewer.img_anno3d_viewer import ImgAnno3DViewer
+from cosense3d.agents.viewer.model_viewer import ModelViewer
 
 
 class GUI(QtWidgets.QMainWindow):
@@ -57,6 +58,10 @@ class GUI(QtWidgets.QMainWindow):
         self.output_viewer = OutputViewer(**cfg['output_viewer'])
         self.tabs.addTab(self.output_viewer, 'OutputViewer')
         self.data_keys.extend(self.output_viewer.gather_data_keys)
+
+        self.model_viewer = ModelViewer(
+            **cfg.get('model_viewer', dict(plots=[dict(title='WeightsStatistics')])))
+        self.tabs.addTab(self.model_viewer, 'ModelViewer')
 
         self.setCentralWidget(self.tabs)
         self.get_toolbar()
@@ -151,9 +156,12 @@ class GUI(QtWidgets.QMainWindow):
             self.timer.stop()
 
     def refresh(self):
-        if self.data is not None:
+        active_widget = self.tabs.currentWidget()
+        if isinstance(active_widget, ModelViewer):
+            active_widget.refresh(self.runner.forward_runner)
+        elif self.data is not None:
             visible_keys = [k for k in self.visible_objects if getattr(self, f"{k.lower()}_visible")]
-            self.tabs.currentWidget().refresh(self.data, visible_keys=visible_keys, color_mode=self.colo_mode)
+            active_widget.refresh(self.data, visible_keys=visible_keys, color_mode=self.colo_mode)
             scene = list(self.data['scenario'].values())[0]
             frame = list(self.data['frame'].values())[0]
             # todo adapt scenario and frame selection
