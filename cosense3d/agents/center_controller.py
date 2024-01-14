@@ -117,7 +117,7 @@ class CenterController:
 
         frame_loss_dict = {}
         if with_loss:
-            frame_loss_dict = self.forward_runner.loss(batched_tasks[2]['loss'], **kwargs)
+            frame_loss_dict = self.forward_runner.frame_loss(batched_tasks[2]['loss'], **kwargs)
         return frame_loss_dict
 
     def run_seq(self, seq_data, training_mode, **kwargs):

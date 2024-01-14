@@ -53,6 +53,18 @@ class ForwardRunner(nn.Module):
         loss_dict['total_loss'] = loss
         return loss, loss_dict
 
+    def frame_loss(self, tasks, **kwargs):
+        loss_dict = {}
+        for task_name, task_list in tasks.items():
+            module = getattr(self.shared_modules, task_name)
+            cav_ids = self.gather_cav_ids(task_list)
+            data = self.data_manager.gather(cav_ids, module.scatter_keys + module.gt_keys)
+            ldict = module.loss(*data, **kwargs)
+            for k, v in ldict.items():
+                prefix = task_name.replace('_head', '')
+                loss_dict[f'{prefix}.{k}'] = v
+        return loss_dict
+
 
 
 
