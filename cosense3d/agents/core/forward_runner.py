@@ -33,13 +33,14 @@ class ForwardRunner(nn.Module):
     def _forward(self, tasks, **kwargs):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
-            cav_ids = self.gather_cav_ids(task_list)
-            data = self.data_manager.gather(cav_ids, module.gather_keys)
+            task_ids = self.gather_cav_ids(task_list)
+            data = self.data_manager.gather(task_ids, module.gather_keys)
             res = module(*data, **kwargs)
-            self.data_manager.scatter(cav_ids, res)
+            self.data_manager.scatter(task_ids, res)
 
     def loss(self, tasks, **kwargs):
         loss_dict = {}
+        loss = 0
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             cav_ids = self.gather_cav_ids(task_list)
@@ -48,7 +49,9 @@ class ForwardRunner(nn.Module):
             for k, v in ldict.items():
                 prefix = task_name.replace('_head', '')
                 loss_dict[f'{prefix}.{k}'] = v
-        return loss_dict
+                loss = loss + v
+        loss_dict['total_loss'] = loss
+        return loss, loss_dict
 
 
 

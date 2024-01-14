@@ -3,8 +3,8 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 
 
 class BaseCAV:
-    def __init__(self, id, mapped_id, is_ego, lidar_pose, lidar_range, memory_len,
-                 require_grad=False, **kwargs):
+    def __init__(self, id, mapped_id, is_ego, lidar_range, memory_len,
+                 lidar_pose=None, require_grad=False, seq_len=1, **kwargs):
         self.id = id
         self.mapped_id = mapped_id
         self.is_ego = is_ego
@@ -12,9 +12,10 @@ class BaseCAV:
         self.lidar_range = lidar_range
         self.memory_len = memory_len
         self.require_grad = require_grad
+        self.seq_len = seq_len
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.data = {'memory': []} # memory FIFO
+        self.data = {} # memory FIFO
         self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
 
     def update(self, lidar_pose):
@@ -99,6 +100,124 @@ class BaseCAV:
         pass
 
 
+class BaseSeqCAV:
+    def __init__(self, id, mapped_id, is_ego, lidar_range, memory_len,
+                 lidar_pose=None, require_grad=False, seq_len=1, **kwargs):
+        self.id = id
+        self.mapped_id = mapped_id
+        self.is_ego = is_ego
+        self.lidar_pose = lidar_pose
+        self.lidar_range = lidar_range
+        self.memory_len = memory_len
+        self.require_grad = require_grad
+        self.seq_len = seq_len
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        self.data = {} # memory FIFO
+        self.memory = {}
+        self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
+
+    def update(self, lidar_pose):
+        self.lidar_pose = lidar_pose
+
+    def task_id(self, seq_idx):
+        return f"{self.id}.{seq_idx}"
+
+    def get_data(self, keys, seq_idx=None):
+        if seq_idx is None:
+            out = {}
+            for i, d in self.data.items():
+                out[i] = {}
+                for k in keys:
+                    out[i][k] = d[k]
+        else:
+            out = {k: self.data[seq_idx][k] for k in keys}
+        return out
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(id={self.id}, '
+        repr_str += f'is_ego={self.is_ego}, '
+        repr_str += f'data={self.data.keys()})'
+        return repr_str
+
+    def apply_transform(self):
+        if self.is_ego:
+            transform = torch.eye(4).to(self.lidar_pose.device)
+        else:
+            # cav to ego
+            request = self.data['received_request']
+            transform = request['lidar_pose'].inverse() @ self.lidar_pose
+        DOP.cav_aug_transform(self.data, transform, self.data['augment_params'],
+                              apply_to=self.prepare_data_keys)
+
+    def prepare_data(self):
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+
+    def has_request(self):
+        if 'received_request' in self.data[0] and self.data[0]['received_request'] is not None:
+            return True
+        else:
+            return False
+
+    def get_request_cpm(self):
+        return self.get_data(['lidar_poses'])
+
+    def get_response_cpm(self):
+        cpm = {}
+        for k in ['points']:
+            if k in self.data[0]:
+                cpm[k] = {i: d[k] for i, d in self.data.items()}
+        return cpm
+
+    def receive_request(self, request):
+        for i, req in request.items():
+            self.data[i]['received_request'] = req
+
+    def receive_response(self, response):
+        resp_dict = {}
+        for cav_id, resp in response.items():
+            for i in range(self.seq_len):
+                resp_dict[cav_id] = {k: v[i] for k, v in resp.items()}
+                if 'received_response' not in self.data[i]:
+                    self.data[i]['received_response'] = {}
+                self.data[i]['received_response'].update({cav_id: {k: v[i] for k, v in resp.items()}})
+
+    def forward(self, tasks, training_mode, seq_idx):
+        self.prepare_data(seq_idx)
+        self.forward_local(tasks, training_mode, seq_idx)
+        self.forward_fusion(tasks, training_mode, seq_idx)
+        self.forward_head(tasks, training_mode, seq_idx)
+        return tasks
+
+    def forward_local(self, tasks, training_mode):
+        """To be overloaded."""
+        return tasks
+
+    def forward_fusion(self, tasks, training_mode):
+        """To be overloaded."""
+        return tasks
+
+    def forward_head(self, tasks, training_mode):
+        """To be overloaded."""
+        return tasks
+
+    def loss(self, tasks):
+        """To be overloaded."""
+        return tasks
+
+    def reset_data(self, *args, **kwargs):
+        del self.data
+        self.data = {}
+
+    def pre_update_memory(self):
+        """Update memory before each forward run of a single frame."""
+        pass
+
+    def post_update_memory(self):
+        """Update memory after each forward run of a single frame."""
+        pass
 
 
 class OPV2VtCAV(BaseCAV):
