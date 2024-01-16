@@ -37,8 +37,8 @@ class ForwardRunner(nn.Module):
             data = self.data_manager.gather(task_ids, module.gather_keys)
             res = module(*data, **kwargs)
             self.data_manager.scatter(task_ids, res)
-            # if kwargs['itr'] == 6:
-            #     print(kwargs['gpu_id'], task_name)
+            if kwargs['itr'] == 6:
+                print(kwargs['gpu_id'], task_name)
 
     def loss(self, tasks, **kwargs):
         loss_dict = {}
