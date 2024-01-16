@@ -134,8 +134,8 @@ class CenterController:
         # preprocess after transformation to ego frame
         self.data_manager.apply_preprocess()
 
-        # if kwargs['itr'] == 6:
-        #     print('0')
+        if kwargs['itr'] == 6:
+            print(kwargs['gpu_id'], batched_tasks[0])
         # process local cav data
         if 'no_grad' in batched_tasks[0] and len(batched_tasks[0]['no_grad']) > 0:
             self.forward_runner(batched_tasks[0]['no_grad'], with_grad=False, **kwargs)
