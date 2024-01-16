@@ -326,12 +326,14 @@ class SeqDataManager:
         batch_size = len(points_list)
         points_list = cat_coor_with_idx(points_list)
         global_boxes_list = cat_coor_with_idx(global_boxes_list)
-        box_idx = points_in_boxes_gpu(points_list[..., :4],
-                                      global_boxes_list[..., :8],
-                                      batch_size=batch_size)[1]
-        box_idx = box_idx[box_idx > -1]
+
         num_pts = torch.zeros_like(global_boxes_list[:, 0]).long()
-        torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+        if len(global_boxes_list) > 0 and len(points_list) > 0:
+            box_idx = points_in_boxes_gpu(points_list[..., :4],
+                                          global_boxes_list[..., :8],
+                                          batch_size=batch_size)[1]
+            box_idx = box_idx[box_idx > -1]
+            torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
         mask = num_pts > 3
         ptr = 0
         for i, seq_cavs in enumerate(self.cav_manager.cavs):
@@ -351,12 +353,14 @@ class SeqDataManager:
                 continue
             points = cat_coor_with_idx([x['points'] for i, x in cav.data.items()])
             local_boxes = cat_coor_with_idx([x['local_bboxes_3d'] for i, x in cav.data.items()])
-            box_idx = points_in_boxes_gpu(points[..., :4],
-                                          local_boxes[..., :8],
-                                          batch_size=len(cav.data))[1]
-            box_idx = box_idx[box_idx > -1]
+
             num_pts = torch.zeros_like(local_boxes[:, 0]).long()
-            torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+            if len(local_boxes) > 0 and len(points) > 0:
+                box_idx = points_in_boxes_gpu(points[..., :4],
+                                              local_boxes[..., :8],
+                                              batch_size=len(cav.data))[1]
+                box_idx = box_idx[box_idx > -1]
+                torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
             mask = num_pts > 3
 
             for i, (seq_idx, x) in enumerate(cav.data.items()):
