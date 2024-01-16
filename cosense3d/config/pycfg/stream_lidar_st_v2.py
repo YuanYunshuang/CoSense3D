@@ -154,10 +154,12 @@ shared_modules = OrderedDict(
                             dropout=0.1,
                             fp16=False),
                         dict(
-                            type='MultiheadFlashAttention',
+                            type='MultiheadAttention',
                             embed_dims=256,
                             num_heads=8,
-                            dropout=0.1),
+                            dropout=0.1,
+                            fp16=True
+                        ),
                         ],
                     ffn_cfgs=dict(
                         type='FFN',
