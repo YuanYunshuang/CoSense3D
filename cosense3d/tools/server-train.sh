@@ -11,6 +11,6 @@ cosense3d/tools/agent_runner.py \
 --gpus 4 \
 --data-path /koko/yunshuang/OPV2V/temporal \
 --meta-path /koko/yunshuang/cosense3d/opv2v_temporal \
---log-dir /koko/yunshuang/train_out/cosense3d \
+--log-dir /koko/yunshuang/train_out \
 --run-name StreamLTS_seq8 \
 --batch-size 1
