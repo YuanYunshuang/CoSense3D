@@ -180,7 +180,6 @@ class BaseSeqCAV:
             self.data[i]['received_request'] = req
 
     def receive_response(self, response, seq_idx):
-        self.data[seq_idx]['received_response'] = {}
         for cav_id, resp in response.items():
             self.data[seq_idx]['received_response'][cav_id] = {k: v[seq_idx] for k, v in resp.items()}
 

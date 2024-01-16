@@ -203,6 +203,7 @@ class SeqCAVManager:
             for b, cavs in enumerate(seq_cavs):
                 cur_cav = self.get_cav_with_id(cavs[0])
                 assert cur_cav.is_ego
+                cur_cav.data[i]['received_response'] = {}
                 if len(cavs) > 1:
                     cur_cav.receive_response({cav: response[cav] for cav in cavs[1:]}, i)
 
