@@ -53,7 +53,7 @@ class MinkUnet(BaseModule):
             kernel = kernel + [1,]
             kernel_conv1 = kernel + [1,]
 
-        kwargs = {'d': self.d, 'distributed': self.dist, 'bn_momentum': 0.1}
+        kwargs = {'d': self.d, 'bn_momentum': 0.1}
         self.conv1 = minkconv_conv_block(32, 32, kernel_conv1,
                                          1, **kwargs)
         self.conv2 = get_conv_block([32, 32, 32], kernel, **kwargs)
@@ -93,7 +93,7 @@ class MinkUnet(BaseModule):
                 nn.init.xavier_uniform_(p)
 
     def forward(self, points: list, **kwargs):
-        res = self.forward_unet(points)
+        res = self.forward_unet(points, **kwargs)
 
         if self.height_compression is not None:
             res = self.forward_height_compression(res)
@@ -101,7 +101,7 @@ class MinkUnet(BaseModule):
         res = self.format_output(res, len(points))
         return res
 
-    def forward_unet(self, points):
+    def forward_unet(self, points, **kwargs):
         N = len(points)
         points = [torch.cat([torch.ones_like(pts[:, :1]) * i, pts], dim=-1
                             ) for i, pts in enumerate(points)]
