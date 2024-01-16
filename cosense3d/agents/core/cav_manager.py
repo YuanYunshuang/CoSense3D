@@ -199,15 +199,12 @@ class SeqCAVManager:
         return response
 
     def receive_response(self, response):
-        for recv_id, cav in self.cav_dict.items():
-            if cav.is_ego:
-                for i in range(self.seq_len):
-                    if i not in cav.data:
-                        continue
-                    cav.data[i]['received_response'] = {}
-                    for resp_id, resp in response.items():
-                        if recv_id.split('.')[0] == resp_id.split('.')[0]:
-                            cav.receive_response({resp_id: resp}, i)
+        for i , seq_cavs in enumerate(self.cavs):
+            for b, cavs in enumerate(seq_cavs):
+                cur_cav = self.get_cav_with_id(cavs[0])
+                assert cur_cav.is_ego
+                if len(cavs) > 1:
+                    cur_cav.receive_response({cav: response[cav] for cav in cavs[1:]}, i)
 
     def forward(self, training_mode, num_loss_frame):
         tasks = {'with_grad': [], 'no_grad': [], 'loss': []}
@@ -216,9 +213,8 @@ class SeqCAVManager:
             for id, cav in self.cav_dict.items():
                 if i not in cav.data:
                     continue
-                cav.forward(tasks, training_mode, i)
-                if with_loss and training_mode:
-                    cav.loss(tasks, i)
+                cav.forward(tasks, training_mode, i, with_loss)
+                cav.loss(tasks, training_mode, i, with_loss)
         return tasks
 
     def apply_cav_function(self, func_name, seq_idx=None, **kwargs):

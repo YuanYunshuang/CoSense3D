@@ -180,33 +180,30 @@ class BaseSeqCAV:
             self.data[i]['received_request'] = req
 
     def receive_response(self, response, seq_idx):
+        self.data[seq_idx]['received_response'] = {}
         for cav_id, resp in response.items():
-            try:
-                self.data[seq_idx]['received_response'][cav_id] = {k: v[seq_idx] for k, v in resp.items()}
-            except:
-                for k, v in resp.items():
-                    print(seq_idx, v.keys())
+            self.data[seq_idx]['received_response'][cav_id] = {k: v[seq_idx] for k, v in resp.items()}
 
-    def forward(self, tasks, training_mode, seq_idx):
+    def forward(self,  tasks, training_mode, seq_idx, with_loss):
         self.prepare_data(seq_idx)
-        self.forward_local(tasks, training_mode, seq_idx)
-        self.forward_fusion(tasks, training_mode, seq_idx)
-        self.forward_head(tasks, training_mode, seq_idx)
+        self.forward_local(tasks, training_mode, seq_idx, with_loss)
+        self.forward_fusion(tasks, training_mode, seq_idx, with_loss)
+        self.forward_head(tasks, training_mode, seq_idx, with_loss)
         return tasks
 
-    def forward_local(self, tasks, training_mode, seq_idx):
+    def forward_local(self,  tasks, training_mode, seq_idx, with_loss):
         """To be overloaded."""
         return tasks
 
-    def forward_fusion(self, tasks, training_mode, seq_idx):
+    def forward_fusion(self,  tasks, training_mode, seq_idx, with_loss):
         """To be overloaded."""
         return tasks
 
-    def forward_head(self, tasks, training_mode, seq_idx):
+    def forward_head(self,  tasks, training_mode, seq_idx, with_loss):
         """To be overloaded."""
         return tasks
 
-    def loss(self, tasks, seq_idx):
+    def loss(self,  tasks, training_mode, seq_idx, with_loss):
         """To be overloaded."""
         return tasks
 

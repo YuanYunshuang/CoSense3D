@@ -108,7 +108,7 @@ class StreamLidarCAV(BaseSeqCAV):
             cpm[k] = {i: d[k] for i, d in self.data.items() if k in d}
         return cpm
 
-    def forward_local(self, tasks, training_mode, seq_idx):
+    def forward_local(self, tasks, training_mode, seq_idx, with_loss):
         if (self.is_ego or self.require_grad) and training_mode:
             grad_mode = 'with_grad'
         else:
@@ -119,18 +119,18 @@ class StreamLidarCAV(BaseSeqCAV):
         tasks[grad_mode].append((self.task_id(seq_idx), '11:temporal_fusion', {}))
         tasks[grad_mode].append((self.task_id(seq_idx), '12:det1_head', {}))
 
-    def forward_fusion(self, tasks, training_mode, seq_idx):
-        if self.is_ego:
+    def forward_fusion(self, tasks, training_mode, seq_idx, with_loss):
+        if self.is_ego and with_loss:
             tasks['with_grad'].append((self.task_id(seq_idx), '21:spatial_fusion', {}))
         return tasks
 
-    def forward_head(self, tasks, training_mode, seq_idx):
-        if self.is_ego:
+    def forward_head(self, tasks, training_mode, seq_idx, with_loss):
+        if self.is_ego and with_loss:
             tasks['with_grad'].append((self.task_id(seq_idx), '22:det2_head', {}))
         return tasks
 
-    def loss(self, tasks, seq_idx):
-        if self.is_ego:
+    def loss(self, tasks, training_mode, seq_idx, with_loss):
+        if self.is_ego and training_mode and with_loss:
             tasks['loss'].append((self.task_id(seq_idx), '31:roi_head', {}))
             tasks['loss'].append((self.task_id(seq_idx), '32:det1_head', {}))
             tasks['loss'].append((self.task_id(seq_idx), '33:det2_head', {}))
