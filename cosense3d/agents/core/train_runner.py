@@ -116,7 +116,7 @@ class TrainRunner(BaseRunner):
         load_tensors_to_gpu(data, self.gpu_id)
         self.optimizer.zero_grad()
         print(f'{self.gpu_id}: run_itr{self.iter}: 2')
-        total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch, itr=self.iter)
+        total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch, itr=self.iter, gpu_id=self.gpu_id)
         print(f'{self.gpu_id}: run_itr{self.iter}: 3')
         total_loss.backward()
         # print(f'{self.gpu_id}: run_itr{self.iter}: 4')

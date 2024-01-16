@@ -32,13 +32,13 @@ class ForwardRunner(nn.Module):
 
     def _forward(self, tasks, **kwargs):
         for task_name, task_list in tasks.items():
-            print(0, task_name)
             module = getattr(self.shared_modules, task_name)
             task_ids = self.gather_cav_ids(task_list)
             data = self.data_manager.gather(task_ids, module.gather_keys)
             res = module(*data, **kwargs)
             self.data_manager.scatter(task_ids, res)
-            print(1, task_name)
+            if kwargs['itr'] == 6:
+                print(kwargs['gpu_id'], task_name, 'with_grad' if module.training else 'without_grad')
 
     def loss(self, tasks, **kwargs):
         loss_dict = {}
