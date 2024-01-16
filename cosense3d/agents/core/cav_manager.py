@@ -219,11 +219,10 @@ class SeqCAVManager:
                     cav.loss(tasks, i)
         return tasks
 
-    def apply_cav_function(self, func_name, seq_idx, **kwargs):
+    def apply_cav_function(self, func_name, seq_idx=None, **kwargs):
         for cav_id, cav in self.cav_dict.items():
-            if seq_idx not in cav.data:
-                continue
-            getattr(cav, func_name)(seq_idx=seq_idx, **kwargs)
+            if seq_idx is None or seq_idx in cav.data:
+                getattr(cav, func_name)(seq_idx=seq_idx, **kwargs)
 
 
 
