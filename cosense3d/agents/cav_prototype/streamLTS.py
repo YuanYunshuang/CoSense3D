@@ -155,11 +155,7 @@ class StreamLidarCAV(BaseSeqCAV):
     def pre_update_memory(self, seq_idx, **kwargs):
         """Update memory before each forward run of a single frame."""
         if seq_idx > 0:
-            try:
-                self.memory['timestamp'] += self.timestamp(seq_idx) / 2
-            except:
-                print(seq_idx, self.data.keys())
-                print(self.memory['timestamp'])
+            self.memory['timestamp'] += self.timestamp(seq_idx) / 2
 
         self.refresh_memory(self.data[seq_idx]['prev_exists'])
 
