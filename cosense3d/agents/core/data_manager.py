@@ -374,7 +374,9 @@ class SeqDataManager:
                 if len(box_idx) > 0:
                     if box_idx.max() >= len(num_pts):
                         print(box_idx.unique())
-                        print(local_boxes[:, 0])
+                        print(local_boxes.shape)
+                        print(points.shape)
+                        print(cav.data.keys())
                     torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
             mask = num_pts > 3
             for i, (seq_idx, x) in enumerate(cav.data.items()):
