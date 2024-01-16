@@ -59,6 +59,7 @@ def points_in_boxes_gpu(points, boxes, batch_size=None, batch_indices=None):
             f"Box shape: {', '.join([str(s) for s in boxes.shape])}"
         assert boxes.shape[1] == 8 and points.shape[1] == 4
         batch_flag = True
+        n_box = len(boxes)
         _, points, point_cnts = decompose_batch_indices(points, batch_size, batch_indices)
         boxes_decomposed, boxes, box_cnts = decompose_batch_indices(boxes, batch_size, batch_indices)
     assert boxes.shape[0] == points.shape[0], \
@@ -71,7 +72,7 @@ def points_in_boxes_gpu(points, boxes, batch_size=None, batch_indices=None):
     cuda_ops.points_in_boxes_gpu(boxes.contiguous(), points.contiguous(), box_idxs_of_pts)
 
     if batch_flag:
-        box_idxs_composed = torch.zeros(sum(point_cnts), dtype=torch.int,
+        box_idxs_composed = torch.zeros(len(src_idx), dtype=torch.int,
                                         device=points.device).fill_(-1)
         cnt_p = 0
         cnt_b = 0
@@ -81,6 +82,8 @@ def points_in_boxes_gpu(points, boxes, batch_size=None, batch_indices=None):
             box_idxs_composed[src_idx==b] = indices
             cnt_p += cp
             cnt_b += cb
+        if box_idxs_composed.max() >= n_box:
+            print(box_idxs_composed, box_cnts)
         return boxes_decomposed, box_idxs_composed.long()
     return box_idxs_of_pts.long()
 
