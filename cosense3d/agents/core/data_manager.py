@@ -337,8 +337,8 @@ class SeqDataManager:
                                           global_boxes_list[..., :8],
                                           batch_size=batch_size)[1]
             box_idx = box_idx[box_idx > -1]
-            print(box_idx.max(), num_pts.shape)
-            torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+            if len(box_idx) > 0:
+                torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
         mask = num_pts > 3
         ptr = 0
 
@@ -371,8 +371,8 @@ class SeqDataManager:
                                               local_boxes[..., :8],
                                               batch_size=len(cav.data))[1]
                 box_idx = box_idx[box_idx > -1]
-                print(box_idx.max(), num_pts.shape)
-                torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+                if len(box_idx) > 0:
+                    torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
             mask = num_pts > 3
             for i, (seq_idx, x) in enumerate(cav.data.items()):
                 batch_mask = local_boxes[:, 0] == i
