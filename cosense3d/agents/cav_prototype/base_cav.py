@@ -180,15 +180,13 @@ class BaseSeqCAV:
             self.data[i]['received_request'] = req
 
     def receive_response(self, response):
-        resp_dict = {}
         for cav_id, resp in response.items():
             for i in range(self.seq_len):
                 if i not in self.data:
                     continue
-                resp_dict[cav_id] = {k: v[i] for k, v in resp.items()}
                 if 'received_response' not in self.data[i]:
                     self.data[i]['received_response'] = {}
-                self.data[i]['received_response'].update({cav_id: {k: v[i] for k, v in resp.items()}})
+                self.data[i]['received_response'][cav_id] = {k: v[i] for k, v in resp.items()}
 
     def forward(self, tasks, training_mode, seq_idx):
         self.prepare_data(seq_idx)
