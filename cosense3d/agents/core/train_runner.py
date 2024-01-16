@@ -106,25 +106,25 @@ class TrainRunner(BaseRunner):
         if self.dist:
             self.dataloader.sampler.set_epoch(self.epoch)
         for data in self.dataloader:
-            print(f'{self.gpu_id}: run_itr: 0')
+            print(f'{self.gpu_id}: run_itr{self.iter}: 0')
             self.hooks(self, 'pre_iter')
             self.run_itr(data)
             self.hooks(self, 'post_iter')
 
     def run_itr(self, data):
-        print(f'{self.gpu_id}: run_itr: 1')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 1')
         load_tensors_to_gpu(data, self.gpu_id)
         self.optimizer.zero_grad()
-        print(f'{self.gpu_id}: run_itr: 2')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 2')
         total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch, itr=self.iter)
-        print(f'{self.gpu_id}: run_itr: 3')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 3')
         total_loss.backward()
-        print(f'{self.gpu_id}: run_itr: 4')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 4')
         # grad_norm = clip_grads(self.controller.parameters)
         # loss_dict['grad_norm'] = grad_norm
         # Updating parameters
         self.optimizer.step()
-        print(f'{self.gpu_id}: run_itr: 5')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 5')
         self.lr_scheduler.step_itr(self.iter + self.epoch * self.total_iter)
 
         if self.logger is not None and self.gpu_id == 0:
@@ -134,7 +134,7 @@ class TrainRunner(BaseRunner):
 
         # del data
         self.iter += 1
-        print(f'{self.gpu_id}: run_itr: 6')
+        print(f'{self.gpu_id}: run_itr{self.iter}: 6')
 
 
 
