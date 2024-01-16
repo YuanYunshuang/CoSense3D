@@ -100,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--data-path", type=str)
     parser.add_argument("--meta-path", type=str)
     parser.add_argument("--batch-size", type=int)
+    parser.add_argument("--n-workers", type=int)
     args = parser.parse_args()
 
     setup_logger(args.run_name, args.debug)
@@ -113,6 +114,8 @@ if __name__ == "__main__":
     cfgs['TRAIN']['gpus'] = args.gpus
     if args.batch_size is not None:
         cfgs['DATASET']['batch_size_train'] = args.batch_size
+    if args.n_workers is not None:
+        cfgs['DATASET']['n_workers'] = args.n_workers
     if not os.path.exists(cfgs['DATASET']['data_path']):
         if args.data_path is not None and args.meta_path is not None:
             cfgs['DATASET']['data_path'] = args.data_path

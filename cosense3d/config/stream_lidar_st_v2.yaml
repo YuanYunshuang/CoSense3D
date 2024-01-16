@@ -9,10 +9,10 @@ DATASET:
     voxel_size:  &voxel_size [0.4, 0.4, 0.4]
   batch_size_train: 4
   batch_size_test: 1
-  n_workers: 1
+  n_workers: 8
 
   max_num_cavs: 7
-  seq_len: &seq_len 4
+  seq_len: &seq_len 8
   train_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
 
