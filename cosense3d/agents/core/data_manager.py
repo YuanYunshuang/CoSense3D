@@ -338,31 +338,22 @@ class SeqDataManager:
         for cav_id, cav in self.cav_manager.cav_dict.items():
             if not cav.is_ego and ego_only:
                 continue
-            points = cat_coor_with_idx([x['points'] for i, x in cav.data.items()])
-            local_boxes = cat_coor_with_idx([x['local_bboxes_3d'] for i, x in cav.data.items()])
-            if len(local_boxes) == 0:
-                continue
+            for i, x in cav.data.items():
+                points = x['points']
+                local_boxes = x['local_bboxes_3d']
+                if len(local_boxes) == 0:
+                    continue
 
-            num_pts = torch.zeros_like(local_boxes[:, 0]).long()
-            if len(points) > 0:
-                box_idx = points_in_boxes_gpu(points[..., :4],
-                                              local_boxes[..., :8],
-                                              batch_size=len(cav.data))[1]
-                box_idx = box_idx[box_idx > -1]
-                if len(box_idx) > 0:
-                    if box_idx.max() >= len(num_pts):
-                        print(box_idx)
-                        print(local_boxes)
-                        print(points)
-                        print(cav.data.keys())
-                    torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
-            mask = num_pts > 3
-            for i, (seq_idx, x) in enumerate(cav.data.items()):
-                batch_mask = local_boxes[:, 0] == i
-                m = mask[batch_mask]
-                cav.data[seq_idx]['local_bboxes_3d'] = x['local_bboxes_3d'][m]
-                cav.data[seq_idx]['local_labels_3d'] = x['local_labels_3d'][m]
-
+                num_pts = torch.zeros_like(local_boxes[:, 0]).long()
+                if len(points) > 0:
+                    box_idx = points_in_boxes_gpu(points[..., :3].unsqueeze(0),
+                                                  local_boxes[..., :7].unsqueeze(0))[0]
+                    box_idx = box_idx[box_idx > -1]
+                    if len(box_idx) > 0:
+                        torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
+                m = num_pts > 3
+                cav.data[i]['local_bboxes_3d'] = x['local_bboxes_3d'][m]
+                cav.data[i]['local_labels_3d'] = x['local_labels_3d'][m]
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []
