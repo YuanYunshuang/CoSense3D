@@ -111,9 +111,10 @@ class TrainRunner(BaseRunner):
             self.hooks(self, 'post_iter')
 
     def run_itr(self, data):
+        print('run_itr: 1')
         load_tensors_to_gpu(data, self.gpu_id)
         self.optimizer.zero_grad()
-
+        print('run_itr: 2')
         total_loss, loss_dict = self.controller.train_forward(data, epoch=self.epoch, itr=self.iter)
         total_loss.backward()
         # grad_norm = clip_grads(self.controller.parameters)
@@ -127,9 +128,9 @@ class TrainRunner(BaseRunner):
             rec_lr = self.lr_scheduler.get_last_lr()[0]
             self.logger.log(self.epoch, self.iter, rec_lr, **loss_dict)
 
-        del data
+        # del data
         self.iter += 1
-
+        print('run_itr: 3')
 
 
 

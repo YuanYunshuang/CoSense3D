@@ -48,6 +48,7 @@ class CenterController:
         return self.forward_runner.parameters()
 
     def train_forward(self, batch_dict, **kwargs):
+        print('0')
         self.data_manager.generate_augment_params(batch_dict, self.seq_len)
         seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
         self.cav_manager.reset()
@@ -121,6 +122,7 @@ class CenterController:
         return frame_loss_dict
 
     def run_seq(self, seq_data, training_mode, **kwargs):
+        print('1')
         self.cav_manager.update_cav_info(seq_data)
         self.data_manager.distribute_to_cav(seq_data)
         self.cav_manager.apply_cav_function('init_memory')
