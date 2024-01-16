@@ -106,6 +106,7 @@ class TrainRunner(BaseRunner):
         if self.dist:
             self.dataloader.sampler.set_epoch(self.epoch)
         for data in self.dataloader:
+            print(f'{self.gpu_id}: run_itr: 0')
             self.hooks(self, 'pre_iter')
             self.run_itr(data)
             self.hooks(self, 'post_iter')
