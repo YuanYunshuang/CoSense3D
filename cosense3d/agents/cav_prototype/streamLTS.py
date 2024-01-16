@@ -139,7 +139,7 @@ class StreamLidarCAV(BaseSeqCAV):
 
     def init_memory(self, **kwargs):
         for v in self.data.values():
-            x = v['prev_exists']
+            x = v['prev_exists'].float()
             break
         init_pose = torch.eye(4, device=x.device).unsqueeze(0).unsqueeze(0)
         self.memory = {
