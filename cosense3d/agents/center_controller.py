@@ -147,11 +147,21 @@ class CenterController:
         # process tasks that needs to be run sequentially
         seq_tasks = self.task_manager.parallel_to_sequential(batched_tasks[1])
         for i in range(self.seq_len):
+            if kwargs['itr'] == 6:
+                print(f"{kwargs['gpu_id']}: 2.1")
             self.cav_manager.apply_cav_function('pre_update_memory', seq_idx=i)
+            if kwargs['itr'] == 6:
+                print(f"{kwargs['gpu_id']}: 2.2")
             if 'no_grad' in seq_tasks and len(seq_tasks['no_grad'][i]) > 0:
                 self.forward_runner(seq_tasks['no_grad'][i], with_grad=False, **kwargs)
+            if kwargs['itr'] == 6:
+                print(f"{kwargs['gpu_id']}: 2.3")
             self.forward_runner(seq_tasks['with_grad'][i], with_grad=training_mode, **kwargs)
+            if kwargs['itr'] == 6:
+                print(f"{kwargs['gpu_id']}: 2.4")
             self.cav_manager.apply_cav_function('post_update_memory', seq_idx=i)
+            if kwargs['itr'] == 6:
+                print(f"{kwargs['gpu_id']}: 2.5")
         # if kwargs['itr'] == 6:
         #     print('3')
         # send coop cav feature-level cpm to ego cav
