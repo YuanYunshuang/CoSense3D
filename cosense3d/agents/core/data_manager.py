@@ -372,13 +372,20 @@ class SeqDataManager:
                                               batch_size=len(cav.data))[1]
                 box_idx = box_idx[box_idx > -1]
                 if len(box_idx) > 0:
+                    assert box_idx.max < len(num_pts)
                     torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
             mask = num_pts > 3
             for i, (seq_idx, x) in enumerate(cav.data.items()):
-                batch_mask = local_boxes[:, 0] == i
-                m = mask[batch_mask]
-                cav.data[seq_idx]['local_bboxes_3d'] = x['local_bboxes_3d'][m]
-                cav.data[seq_idx]['local_labels_3d'] = x['local_labels_3d'][m]
+                try:
+                    batch_mask = local_boxes[:, 0] == i
+                    m = mask[batch_mask]
+                    cav.data[seq_idx]['local_bboxes_3d'] = x['local_bboxes_3d'][m]
+                    cav.data[seq_idx]['local_labels_3d'] = x['local_labels_3d'][m]
+                except:
+                    print('boxes', local_boxes[:, 0])
+                    print(mask.shape, batch_mask.sum())
+                    print(x['local_bboxes_3d'].shape)
+                    raise NotImplementedError
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []
