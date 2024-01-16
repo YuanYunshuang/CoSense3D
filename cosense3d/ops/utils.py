@@ -78,7 +78,11 @@ def points_in_boxes_gpu(points, boxes, batch_size=None, batch_indices=None):
         cnt_b = 0
         for b, (cp, cb) in enumerate(zip(point_cnts, box_cnts)):
             indices = box_idxs_of_pts[b, :cp]
-            indices[indices >= 0] += cnt_b
+            if cb == 0:
+                # zero points are assigned to padded zeros boxes --> remove them
+                indices = -1
+            else:
+                indices[indices >= 0] += cnt_b
             box_idxs_composed[src_idx==b] = indices
             cnt_p += cp
             cnt_b += cb
