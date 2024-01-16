@@ -154,7 +154,7 @@ shared_modules = OrderedDict(
                             dropout=0.1,
                             fp16=False),
                         dict(
-                            type='MultiheadAttention',
+                            type='MultiheadFlashAttention',
                             embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
