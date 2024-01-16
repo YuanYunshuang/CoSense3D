@@ -179,18 +179,13 @@ class BaseSeqCAV:
                 continue
             self.data[i]['received_request'] = req
 
-    def receive_response(self, response):
+    def receive_response(self, response, seq_idx):
         for cav_id, resp in response.items():
-            for i in range(self.seq_len):
-                if i not in self.data:
-                    continue
-                if 'received_response' not in self.data[i]:
-                    self.data[i]['received_response'] = {}
-                try:
-                    self.data[i]['received_response'][cav_id] = {k: v[i] for k, v in resp.items()}
-                except:
-                    for k, v in resp.items():
-                        print(k, v.keys())
+            try:
+                self.data[seq_idx]['received_response'][cav_id] = {k: v[seq_idx] for k, v in resp.items()}
+            except:
+                for k, v in resp.items():
+                    print(seq_idx, v.keys())
 
     def forward(self, tasks, training_mode, seq_idx):
         self.prepare_data(seq_idx)

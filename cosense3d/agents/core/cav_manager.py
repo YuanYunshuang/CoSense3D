@@ -205,9 +205,9 @@ class SeqCAVManager:
                     if i not in cav.data:
                         continue
                     cav.data[i]['received_response'] = {}
-                for resp_id, resp in response.items():
-                    if recv_id.split('.')[0] == resp_id.split('.')[0]:
-                        cav.receive_response({resp_id: resp})
+                    for resp_id, resp in response.items():
+                        if recv_id.split('.')[0] == resp_id.split('.')[0]:
+                            cav.receive_response({resp_id: resp}, i)
 
     def forward(self, training_mode, num_loss_frame):
         tasks = {'with_grad': [], 'no_grad': [], 'loss': []}
