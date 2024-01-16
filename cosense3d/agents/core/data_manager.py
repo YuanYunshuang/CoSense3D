@@ -344,7 +344,7 @@ class SeqDataManager:
 
         for i, seq_cavs in enumerate(self.cav_manager.cavs):
             for b, cavs in enumerate(seq_cavs):
-                global_boxes = cavs[0].data[i]['global_bboxes_3d']
+                global_boxes = self.cav_manager.get_cav_with_id(cavs[0]).data[i]['global_bboxes_3d']
                 if len(global_boxes) == 0:
                     continue
                 m = mask[global_boxes_list[:, 0] == ptr]
