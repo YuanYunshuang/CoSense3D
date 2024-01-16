@@ -86,10 +86,6 @@ def points_in_boxes_gpu(points, boxes, batch_size=None, batch_indices=None):
             box_idxs_composed[src_idx==b] = indices
             cnt_p += cp
             cnt_b += cb
-        if box_idxs_composed.max() >= n_box:
-            print(box_idxs_composed, box_cnts)
-            print(box_idxs_of_pts)
-            print(boxes_decomposed)
         return boxes_decomposed, box_idxs_composed.long()
     return box_idxs_of_pts.long()
 
