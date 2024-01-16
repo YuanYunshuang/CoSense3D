@@ -134,48 +134,30 @@ class CenterController:
         # preprocess after transformation to ego frame
         self.data_manager.apply_preprocess()
 
-        # if kwargs['itr'] == 6:
-        #     print(kwargs['gpu_id'], batched_tasks[0])
         # process local cav data
         if 'no_grad' in batched_tasks[0] and len(batched_tasks[0]['no_grad']) > 0:
             self.forward_runner(batched_tasks[0]['no_grad'], with_grad=False, **kwargs)
-        # if kwargs['itr'] == 6:
-        #     print(f"{kwargs['gpu_id']}: 1")
+
         self.forward_runner(batched_tasks[0]['with_grad'], with_grad=training_mode, **kwargs)
-        # if kwargs['itr'] == 6:
-        #     print('2')
+
         # process tasks that needs to be run sequentially
         seq_tasks = self.task_manager.parallel_to_sequential(batched_tasks[1])
         for i in range(self.seq_len):
-            # if kwargs['itr'] == 6:
-            #     print(f"{kwargs['gpu_id']}: 2.1")
             self.cav_manager.apply_cav_function('pre_update_memory', seq_idx=i)
-            # if kwargs['itr'] == 6:
-            #     print(f"{kwargs['gpu_id']}: 2.2")
             if 'no_grad' in seq_tasks and len(seq_tasks['no_grad'][i]) > 0:
                 self.forward_runner(seq_tasks['no_grad'][i], with_grad=False, **kwargs)
-            # if kwargs['itr'] == 6:
-            #     print(f"{kwargs['gpu_id']}: 2.3")
             self.forward_runner(seq_tasks['with_grad'][i], with_grad=training_mode, **kwargs)
-            # if kwargs['itr'] == 6:
-            #     print(f"{kwargs['gpu_id']}: 2.4")
             self.cav_manager.apply_cav_function('post_update_memory', seq_idx=i)
-            # if kwargs['itr'] == 6:
-            #     print(f"{kwargs['gpu_id']}: 2.5")
-        # if kwargs['itr'] == 6:
-        #     print('3')
+
         # send coop cav feature-level cpm to ego cav
         response = self.cav_manager.send_response()
         self.cav_manager.receive_response(response)
-        # if kwargs['itr'] == 6:
-        #     print('4')
+
         # process ego cav data and fuse data from coop cav with grad if training
         self.forward_runner(batched_tasks[2]['with_grad'], with_grad=training_mode, **kwargs)
         if 'no_grad' in batched_tasks[2]:
             self.forward_runner(batched_tasks[2]['no_grad'], with_grad=False, **kwargs)
         loss, loss_dict = self.forward_runner.loss(batched_tasks[3]['loss'], with_grad=False, **kwargs)
-        # if kwargs['itr'] == 6:
-        #     print('5')
         return loss, loss_dict
 
 

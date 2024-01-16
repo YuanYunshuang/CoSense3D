@@ -318,8 +318,10 @@ class SeqDataManager:
         for i, seq_cavs in enumerate(self.cav_manager.cavs):
             for cavs in seq_cavs:
                 cavs = [self.cav_manager.get_cav_with_id(cav) for cav in cavs]
-                points = torch.cat([cav.data[i]['points'] for cav in cavs], dim=0)
                 global_boxes = cavs[0].data[i]['global_bboxes_3d']
+                if len(global_boxes) == 0:
+                    continue
+                points = torch.cat([cav.data[i]['points'] for cav in cavs], dim=0)
                 points_list.append(points)
                 global_boxes_list.append(global_boxes)
 
@@ -335,12 +337,16 @@ class SeqDataManager:
                                           global_boxes_list[..., :8],
                                           batch_size=batch_size)[1]
             box_idx = box_idx[box_idx > -1]
+            print(box_idx.max(), num_pts.shape)
             torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
         mask = num_pts > 3
         ptr = 0
 
         for i, seq_cavs in enumerate(self.cav_manager.cavs):
             for b, cavs in enumerate(seq_cavs):
+                global_boxes = cavs[0].data[i]['global_bboxes_3d']
+                if len(global_boxes) == 0:
+                    continue
                 m = mask[global_boxes_list[:, 0] == ptr]
                 ego_cav = self.cav_manager.get_cav_with_id(cavs[0])
                 ego_cav.data[i]['global_bboxes_3d'] = ego_cav.data[i]['global_bboxes_3d'][m]
