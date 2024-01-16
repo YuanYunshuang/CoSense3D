@@ -135,7 +135,7 @@ class CenterController:
         self.data_manager.apply_preprocess()
 
         # process local cav data
-        if len(batched_tasks[0]['no_grad']) > 0:
+        if 'no_grad' in batched_tasks[0] and len(batched_tasks[0]['no_grad']) > 0:
             self.forward_runner(batched_tasks[0]['no_grad'], with_grad=False, **kwargs)
         self.forward_runner(batched_tasks[0]['with_grad'], with_grad=training_mode, **kwargs)
 
@@ -143,7 +143,7 @@ class CenterController:
         seq_tasks = self.task_manager.parallel_to_sequential(batched_tasks[1])
         for i in range(self.seq_len):
             self.cav_manager.apply_cav_function('pre_update_memory', seq_idx=i)
-            if len(seq_tasks['no_grad'][i]) > 0:
+            if 'no_grad' in batched_tasks[i] and len(seq_tasks['no_grad'][i]) > 0:
                 self.forward_runner(seq_tasks['no_grad'][i], with_grad=False, **kwargs)
             self.forward_runner(seq_tasks['with_grad'][i], with_grad=training_mode, **kwargs)
             self.cav_manager.apply_cav_function('post_update_memory', seq_idx=i)
