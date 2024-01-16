@@ -19,7 +19,7 @@ DATASET:
 TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
-  log_every: 10
+  log_every: 1
   max_epoch: 50
   gpus: 0
   hooks: 'pycfg.streamLTS.train_hooks'
