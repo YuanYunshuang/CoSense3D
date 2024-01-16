@@ -137,10 +137,8 @@ class StreamLidarCAV(BaseSeqCAV):
             tasks['loss'].append((self.task_id(seq_idx), '33:det2_head', {}))
         return tasks
 
-    def init_memory(self):
-        for v in self.data.values():
-            x = v['prev_exists']
-            break
+    def init_memory(self, seq_idx, **kwargs):
+        x = self.data[seq_idx]['prev_exists']
         init_pose = torch.eye(4, device=x.device).unsqueeze(0).unsqueeze(0)
         self.memory = {
             'embeddings': x.new_zeros(self.memory_len, self.memory_num_propagated, self.memory_emb_dims),
