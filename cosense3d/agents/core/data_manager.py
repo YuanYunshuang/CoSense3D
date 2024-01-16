@@ -375,10 +375,11 @@ class SeqDataManager:
         return result
 
     def distribute_to_cav(self, data):
+        print('##################')
         for l, d in enumerate(data):
             valid_agent_ids = d['valid_agent_ids']
             print(l, valid_agent_ids)
-            print('##################')
+
             global_data_list = []
             for b, agent_ids in enumerate(valid_agent_ids):
                 global_data = {}

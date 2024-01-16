@@ -212,14 +212,18 @@ class SeqCAVManager:
         for i in range(self.seq_len):
             with_loss = i >= self.seq_len - num_loss_frame
             for id, cav in self.cav_dict.items():
+                if i not in cav.data:
+                    continue
                 cav.forward(tasks, training_mode, i)
                 if with_loss and training_mode:
                     cav.loss(tasks, i)
         return tasks
 
-    def apply_cav_function(self, func_name, **kwargs):
+    def apply_cav_function(self, func_name, seq_idx, **kwargs):
         for cav_id, cav in self.cav_dict.items():
-            getattr(cav, func_name)(**kwargs)
+            if seq_idx not in cav.data:
+                continue
+            getattr(cav, func_name)(seq_idx=seq_idx, **kwargs)
 
 
 

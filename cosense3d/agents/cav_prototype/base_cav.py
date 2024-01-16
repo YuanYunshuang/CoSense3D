@@ -211,11 +211,11 @@ class BaseSeqCAV:
         del self.data
         self.data = {}
 
-    def pre_update_memory(self):
+    def pre_update_memory(self, seq_idx, **kwargs):
         """Update memory before each forward run of a single frame."""
         pass
 
-    def post_update_memory(self):
+    def post_update_memory(self, seq_idx, **kwargs):
         """Update memory after each forward run of a single frame."""
         pass
 

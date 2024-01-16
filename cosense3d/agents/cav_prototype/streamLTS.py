@@ -138,10 +138,9 @@ class StreamLidarCAV(BaseSeqCAV):
         return tasks
 
     def init_memory(self):
-        try:
-            x = self.data[0]['prev_exists']
-        except:
-            print(self.data.keys())
+        for v in self.data.values():
+            x = v['prev_exists']
+            break
         init_pose = torch.eye(4, device=x.device).unsqueeze(0).unsqueeze(0)
         self.memory = {
             'embeddings': x.new_zeros(self.memory_len, self.memory_num_propagated, self.memory_emb_dims),
@@ -153,14 +152,14 @@ class StreamLidarCAV(BaseSeqCAV):
         }
         self.memory['pose_no_aug'] = self.memory['pose'] + init_pose
 
-    def pre_update_memory(self, seq_idx):
+    def pre_update_memory(self, seq_idx, **kwargs):
         """Update memory before each forward run of a single frame."""
         if seq_idx > 0:
             self.memory['timestamp'] += self.timestamp(seq_idx) / 2
 
         self.refresh_memory(self.data[seq_idx]['prev_exists'])
 
-    def post_update_memory(self, seq_idx):
+    def post_update_memory(self, seq_idx, **kwargs):
         """Update memory after each forward run of a single frame."""
         x = self.data[seq_idx]['detection_local']
         scores = x['all_cls_scores'][-1][...,
