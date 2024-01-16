@@ -141,7 +141,7 @@ class BaseSeqCAV:
         repr_str += f'data={self.data.keys()})'
         return repr_str
 
-    def apply_transform(self):
+    def apply_transform(self, seq_idx):
         if self.is_ego:
             transform = torch.eye(4).to(self.lidar_pose.device)
         else:
@@ -151,7 +151,7 @@ class BaseSeqCAV:
         DOP.cav_aug_transform(self.data, transform, self.data['augment_params'],
                               apply_to=self.prepare_data_keys)
 
-    def prepare_data(self):
+    def prepare_data(self, seq_idx):
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
@@ -173,12 +173,16 @@ class BaseSeqCAV:
 
     def receive_request(self, request):
         for i, req in request.items():
+            if i not in self.data:
+                continue
             self.data[i]['received_request'] = req
 
     def receive_response(self, response):
         resp_dict = {}
         for cav_id, resp in response.items():
             for i in range(self.seq_len):
+                if i not in self.data:
+                    continue
                 resp_dict[cav_id] = {k: v[i] for k, v in resp.items()}
                 if 'received_response' not in self.data[i]:
                     self.data[i]['received_response'] = {}
@@ -191,19 +195,19 @@ class BaseSeqCAV:
         self.forward_head(tasks, training_mode, seq_idx)
         return tasks
 
-    def forward_local(self, tasks, training_mode):
+    def forward_local(self, tasks, training_mode, seq_idx):
         """To be overloaded."""
         return tasks
 
-    def forward_fusion(self, tasks, training_mode):
+    def forward_fusion(self, tasks, training_mode, seq_idx):
         """To be overloaded."""
         return tasks
 
-    def forward_head(self, tasks, training_mode):
+    def forward_head(self, tasks, training_mode, seq_idx):
         """To be overloaded."""
         return tasks
 
-    def loss(self, tasks):
+    def loss(self, tasks, seq_idx):
         """To be overloaded."""
         return tasks
 
