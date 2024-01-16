@@ -372,7 +372,7 @@ class SeqDataManager:
                                               batch_size=len(cav.data))[1]
                 box_idx = box_idx[box_idx > -1]
                 if len(box_idx) > 0:
-                    assert box_idx.max < len(num_pts)
+                    assert box_idx.max() < len(num_pts)
                     torch_scatter.scatter_add(torch.ones_like(box_idx), box_idx, dim=0, out=num_pts)
             mask = num_pts > 3
             for i, (seq_idx, x) in enumerate(cav.data.items()):
