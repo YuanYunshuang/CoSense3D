@@ -202,6 +202,8 @@ class SeqCAVManager:
         for recv_id, cav in self.cav_dict.items():
             if cav.is_ego:
                 for i in range(self.seq_len):
+                    if i not in cav.data:
+                        continue
                     cav.data[i]['received_response'] = {}
                 for resp_id, resp in response.items():
                     if recv_id.split('.')[0] == resp_id.split('.')[0]:

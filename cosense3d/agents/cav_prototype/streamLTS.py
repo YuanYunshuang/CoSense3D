@@ -105,8 +105,7 @@ class StreamLidarCAV(BaseSeqCAV):
     def get_response_cpm(self):
         cpm = {}
         for k in ['temp_fusion_feat']:
-            if k in self.data[0]:
-                cpm[k] = {i: d[k] for i, d in self.data.items()}
+            cpm[k] = {i: d[k] for i, d in self.data.items() if k in d}
         return cpm
 
     def forward_local(self, tasks, training_mode, seq_idx):

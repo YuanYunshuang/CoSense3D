@@ -156,10 +156,12 @@ class BaseSeqCAV:
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
     def has_request(self):
-        if 'received_request' in self.data[0] and self.data[0]['received_request'] is not None:
-            return True
-        else:
-            return False
+        has_req = False
+        for d in self.data.values():
+            if 'received_request' in d and d['received_request'] is not None:
+                has_req = True
+                break
+        return has_req
 
     def get_request_cpm(self):
         return self.get_data(['lidar_poses'])
