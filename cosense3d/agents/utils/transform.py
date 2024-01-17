@@ -78,8 +78,8 @@ def filter_range(data, lidar_range, key):
         mask = filter_range_mask(data['points'], lidar_range)
         points = data['points'][mask]
         if len(points) == 0:
-            # pad empty point cloud with one point full of zeros
-            points = torch.zeros_like(data['points'][:1])
+            # pad empty point cloud with two point full of zeros to ensure batch norm validity
+            points = torch.zeros_like(data['points'][:2])
         data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         coor = key.split('_')[1]
