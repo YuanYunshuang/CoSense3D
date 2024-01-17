@@ -129,7 +129,13 @@ class CenterController:
         request = self.cav_manager.send_request()
         self.cav_manager.receive_request(request)
         # get pseudo forward tasks
-        tasks = self.cav_manager.forward(training_mode, self.num_loss_frame)
+        try:
+            tasks = self.cav_manager.forward(training_mode, self.num_loss_frame)
+        except:
+            print('request', request)
+            print('valid_cav_ids', [data['valid_agent_ids'] for l, data in enumerate(seq_data)])
+            for cav_id, cav in self.cav_manager.cav_dict.items():
+                print(cav_id, {k: v.get('received_request', None) for k, v in cav.data.items()})
         batched_tasks = self.task_manager.summarize_tasks(tasks)
         # preprocess after transformation to ego frame
         self.data_manager.apply_preprocess()
