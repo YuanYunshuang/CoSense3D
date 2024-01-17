@@ -10,6 +10,8 @@ class ForwardRunner(nn.Module):
         self.lidar_range = torch.tensor(data_manager.lidar_range)
         self.data_manager = data_manager
         self.dist = dist
+        # if the fwd items of a module exits the GPU capacity, run them in several mini batches
+        self.chunk_size = 24
 
         module_dict = {}
         self.module_keys = []
@@ -34,8 +36,13 @@ class ForwardRunner(nn.Module):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             task_ids = self.gather_cav_ids(task_list)
-            data = self.data_manager.gather(task_ids, module.gather_keys)
-            res = module(*data, **kwargs)
+            chunks = [task_ids[i:i + self.chunk_size] for i in range(0, len(task_ids), self.chunk_size)]
+            res = {k: [] for k in module.scatter_keys}
+            for tids in chunks:
+                data = self.data_manager.gather(tids, module.gather_keys)
+                cur_res = module(*data, **kwargs)
+                for k in module.scatter_keys:
+                    res[k].extend(cur_res[k])
             self.data_manager.scatter(task_ids, res)
 
     def loss(self, tasks, **kwargs):
