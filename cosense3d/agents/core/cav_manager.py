@@ -136,9 +136,9 @@ class SeqCAVManager:
 
     def update_cav_info(self, data):
         seq_len = len(data)
-        valid_agent_ids = [data[l]['valid_agent_ids'] for l in range(seq_len)]
+        # valid_agent_ids = [data[l]['valid_agent_ids'] for l in range(seq_len)]
+        # uniq_ids = set(x for d in data for cids in d['valid_agent_ids'] for x in cids)
         B = len(data[0]['valid_agent_ids'])  # batch_size
-        uniq_ids = set(x for d in data for cids in d['valid_agent_ids'] for x in cids)
         cavs = []
         cav_dict = {}
         for l, d in enumerate(data):
@@ -207,10 +207,11 @@ class SeqCAVManager:
                 if len(cavs) > 1:
                     cur_cav.receive_response({cav: response[cav] for cav in cavs[1:]}, i)
 
-    def forward(self, training_mode, num_loss_frame):
+    def forward(self, training_mode, num_loss_frame, seq_len_override=None):
         tasks = {'with_grad': [], 'no_grad': [], 'loss': []}
-        for i in range(self.seq_len):
-            with_loss = i >= self.seq_len - num_loss_frame
+        seq_len = self.seq_len if seq_len_override is None else seq_len_override
+        for i in range(seq_len):
+            with_loss = i >= seq_len - num_loss_frame
             for id, cav in self.cav_dict.items():
                 if i not in cav.data:
                     continue

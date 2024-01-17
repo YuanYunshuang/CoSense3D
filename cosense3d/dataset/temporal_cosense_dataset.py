@@ -40,7 +40,15 @@ class TemporalCosenseDataset(CosenseDataset):
                 prev_scene_token = input_dict['scene_tokens']
 
             queue.append(input_dict)
-        queue = {k: [q[k] for q in queue] for k in queue[0].keys()}
+
+        # remove frames not belong to the current sequence
+        # and ensure all frames have the same ego id
+        ego_id = queue[-1]['valid_agent_ids'][0]
+        valid_idx_start = 0
+        for i in range(len(queue)):
+            if queue[i]['valid_agent_ids'][0] != ego_id:
+                valid_idx_start = i + 1
+        queue = {k: [q[k] for q in queue[valid_idx_start:]] for k in queue[0].keys()}
         return queue
 
 

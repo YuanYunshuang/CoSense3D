@@ -48,8 +48,9 @@ class CenterController:
         return self.forward_runner.parameters()
 
     def train_forward(self, batch_dict, **kwargs):
-        self.data_manager.generate_augment_params(batch_dict, self.seq_len)
-        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
+        cur_len = len(batch_dict['frame'][0])  # a few seqs from dataloader might < self.seq_lens
+        self.data_manager.generate_augment_params(batch_dict, cur_len)
+        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, cur_len)
         self.cav_manager.reset()
 
         if self.batch_seq:
@@ -57,10 +58,10 @@ class CenterController:
         else:
             loss = 0
             loss_dict = {}
-            for i in range(self.seq_len):
-                with_loss = i >= self.seq_len - self.num_loss_frame
+            for i, data in enumerate(seq_data):
+                with_loss = i >= cur_len - self.num_loss_frame
                 kwargs['seq_idx'] = i
-                frame_loss_dict = self.run_frame(seq_data[i], with_loss, training_mode=True, **kwargs)
+                frame_loss_dict = self.run_frame(data, with_loss, training_mode=True, **kwargs)
                 for k, v in frame_loss_dict.items():
                     if 'loss' in k:
                         loss = loss + v
@@ -121,6 +122,7 @@ class CenterController:
         return frame_loss_dict
 
     def run_seq(self, seq_data, training_mode, **kwargs):
+        cur_len = len(seq_data)
         self.cav_manager.update_cav_info(seq_data)
         self.data_manager.distribute_to_cav(seq_data)
         self.cav_manager.apply_cav_function('init_memory')
@@ -129,13 +131,7 @@ class CenterController:
         request = self.cav_manager.send_request()
         self.cav_manager.receive_request(request)
         # get pseudo forward tasks
-        try:
-            tasks = self.cav_manager.forward(training_mode, self.num_loss_frame)
-        except:
-            print('request', request)
-            print('valid_cav_ids', [data['valid_agent_ids'] for l, data in enumerate(seq_data)])
-            for cav_id, cav in self.cav_manager.cav_dict.items():
-                print(cav_id, {k: v.get('received_request', None) for k, v in cav.data.items()})
+        tasks = self.cav_manager.forward(training_mode, self.num_loss_frame, cur_len)
         batched_tasks = self.task_manager.summarize_tasks(tasks)
         # preprocess after transformation to ego frame
         self.data_manager.apply_preprocess()
@@ -148,7 +144,7 @@ class CenterController:
 
         # process tasks that needs to be run sequentially
         seq_tasks = self.task_manager.parallel_to_sequential(batched_tasks[1])
-        for i in range(self.seq_len):
+        for i in range(cur_len):
             self.cav_manager.apply_cav_function('pre_update_memory', seq_idx=i)
             if 'no_grad' in seq_tasks and len(seq_tasks['no_grad'][i]) > 0:
                 self.forward_runner(seq_tasks['no_grad'][i], with_grad=False, **kwargs)
