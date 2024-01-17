@@ -44,9 +44,9 @@ class TemporalCosenseDataset(CosenseDataset):
 
         # remove frames not belong to the current sequence
         # and ensure all frames have the same ego id
+        valid_idx_start = 0
         if self.clean_seq:
             ego_id = queue[-1]['valid_agent_ids'][0]
-            valid_idx_start = 0
             for i in range(len(queue)):
                 if queue[i]['valid_agent_ids'][0] != ego_id:
                     valid_idx_start = i + 1
