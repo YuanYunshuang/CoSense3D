@@ -93,7 +93,7 @@ shared_modules = OrderedDict(
         gather_keys=['points'],
         scatter_keys=['bev_feat'],
         d=3,
-        cache_strides=[2, 8],
+        cache_strides=[2],
         kernel_size_layer1=5,
         in_dim=4,
         stride=out_stride,
@@ -101,7 +101,6 @@ shared_modules = OrderedDict(
         data_info=data_info,
         height_compression=OrderedDict(
             p2=dict(channels=[128, 256, 384], steps=[5, 2]),
-            p8=dict(channels=[128, 256], steps=[2])
         )
     ),
 
@@ -113,24 +112,22 @@ shared_modules = OrderedDict(
         d=2,
         convs=dict(
             p2=dict(kernels=[3, 3, 3], in_dim=384, out_dim=256),
-            p8=dict(kernels=[3, 3, 3], in_dim=256, out_dim=256)
         )
     ),
 
     roi_head = dict(
         type='heads.multitask_head.MultiTaskHead',
         gather_keys=['bev_feat'],
-        scatter_keys=['det_local', 'bev_local'],
+        scatter_keys=['det_local'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
-        heads=[update_dict(copy.copy(det_head_cfg), dict(generate_roi_scr=True)),
-               bev_head_cfg],
-        strides=[2, 8],
-        losses=[True, False]
+        heads=[update_dict(copy.copy(det_head_cfg), dict(generate_roi_scr=True))],
+        strides=[2],
+        losses=[True]
     ),
 
     temporal_fusion = dict(
-        type='fusion.temporal_fusion.LocalTemporalFusion',
-        gather_keys=['det_local', 'bev_local', 'bev_feat', 'memory'],
+        type='fusion.temporal_fusion.LocalTemporalFusionV2',
+        gather_keys=['det_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
         ref_pts_stride=2,

@@ -13,8 +13,8 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 4
-  train_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
-  test_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
+  train_pipeline: 'pycfg.stream_lidar_st_v5.pipeline_cpu'
+  test_pipeline: 'pycfg.stream_lidar_st_v5.pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
@@ -22,7 +22,7 @@ TRAIN:
   log_every: 10
   max_epoch: 50
   gpus: 0
-  hooks: 'pycfg.stream_lidar_st_v2.train_hooks'
+  hooks: 'pycfg.stream_lidar_st_v5.train_hooks'
   optimizer:
     lr: 0.0002
     weight_decay: 1e-2
@@ -33,13 +33,13 @@ TRAIN:
     warmup_steps: 4000
 
 TEST:
-  hooks: 'pycfg.stream_lidar_st_v2.test_hooks'
+  hooks: 'pycfg.stream_lidar_st_v5.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.stream_lidar_st_v2.data_manager'
-  shared_modules: 'pycfg.stream_lidar_st_v2.shared_modules'
+  data_manager: 'pycfg.stream_lidar_st_v5.data_manager'
+  shared_modules: 'pycfg.stream_lidar_st_v5.shared_modules'
   cav_manager:
     prototype: stream_lidar_st_v2.StreamLidarCAV
     memory_len: *seq_len
@@ -50,7 +50,7 @@ CONTROLLER:
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.stream_lidar_st_v2.plots'
+    plots: 'pycfg.stream_lidar_st_v5.plots'
 
 
 

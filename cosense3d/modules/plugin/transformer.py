@@ -974,11 +974,12 @@ class PETRTemporalTransformer(nn.Module):
                 - memory: Output results from encoder, with shape \
                       [bs, embed_dims, h, w].
         """
-        memory = memory.transpose(0, 1).contiguous()
         query_pos = query_pos.transpose(0, 1).contiguous()
-        pos_embed = pos_embed.transpose(0, 1).contiguous()
-
-        n, bs, c = memory.shape
+        if memory is not None:
+            memory = memory.transpose(0, 1).contiguous()
+            n, bs, c = memory.shape
+        if pos_embed is not None:
+            pos_embed = pos_embed.transpose(0, 1).contiguous()
 
         if tgt is None:
             tgt = torch.zeros_like(query_pos)
@@ -1006,5 +1007,6 @@ class PETRTemporalTransformer(nn.Module):
             attn_masks=attn_masks,
         )
         out_dec = out_dec.transpose(1, 2).contiguous()
-        memory = memory.reshape(-1, bs, c).transpose(0, 1).contiguous()
+        if memory is not None:
+            memory = memory.reshape(-1, bs, c).transpose(0, 1).contiguous()
         return out_dec, memory
