@@ -63,7 +63,7 @@ class DataManager:
         for l in range(seq_len):
             res = {}
             for k, v in batch_dict.items():
-                res[k] = [x[l] for x in v]
+                res[k] = [x[l] for x in v if l < len(x)]
             result.append(res)
         return result
 

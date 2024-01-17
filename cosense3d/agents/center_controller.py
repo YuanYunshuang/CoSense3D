@@ -48,9 +48,8 @@ class CenterController:
         return self.forward_runner.parameters()
 
     def train_forward(self, batch_dict, **kwargs):
-        cur_len = len(batch_dict['frame'][0])  # a few seqs from dataloader might < self.seq_lens
-        self.data_manager.generate_augment_params(batch_dict, cur_len)
-        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, cur_len)
+        self.data_manager.generate_augment_params(batch_dict, self.seq_len)
+        seq_data = self.data_manager.distribute_to_seq_list(batch_dict, self.seq_len)
         self.cav_manager.reset()
 
         if self.batch_seq:
@@ -58,7 +57,8 @@ class CenterController:
         else:
             loss = 0
             loss_dict = {}
-            for i, data in enumerate(seq_data):
+            cur_len = len(seq_data)
+            for i, data in enumerate(seq_data): # a few seqs from dataloader might < self.seq_lens
                 with_loss = i >= cur_len - self.num_loss_frame
                 kwargs['seq_idx'] = i
                 frame_loss_dict = self.run_frame(data, with_loss, training_mode=True, **kwargs)
