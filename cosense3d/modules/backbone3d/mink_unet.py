@@ -93,7 +93,11 @@ class MinkUnet(BaseModule):
                 nn.init.xavier_uniform_(p)
 
     def forward(self, points: list, **kwargs):
-        res = self.forward_unet(points, **kwargs)
+        try:
+            res = self.forward_unet(points, **kwargs)
+        except:
+            for p in points:
+                print(p.shape)
 
         if self.height_compression is not None:
             res = self.forward_height_compression(res)

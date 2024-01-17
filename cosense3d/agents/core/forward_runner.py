@@ -1,3 +1,4 @@
+import math
 import torch
 from torch import nn
 
@@ -36,7 +37,11 @@ class ForwardRunner(nn.Module):
         for task_name, task_list in tasks.items():
             module = getattr(self.shared_modules, task_name)
             task_ids = self.gather_cav_ids(task_list)
-            chunks = [task_ids[i:i + self.chunk_size] for i in range(0, len(task_ids), self.chunk_size)]
+            n_task = len(task_ids)
+            s = self.chunk_size
+            if n_task > s and 0 < n_task % s < 4:
+                s = int(math.ceil(n_task / math.ceil(n_task / s)))
+            chunks = [task_ids[i:i + s] for i in range(0, len(task_ids), s)]
             res = {k: [] for k in module.scatter_keys}
             for tids in chunks:
                 data = self.data_manager.gather(tids, module.gather_keys)
