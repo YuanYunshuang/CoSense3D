@@ -95,9 +95,10 @@ class MinkUnet(BaseModule):
     def forward(self, points: list, **kwargs):
         try:
             res = self.forward_unet(points, **kwargs)
-        except:
+        except RuntimeError as e:
             for p in points:
                 print(p.shape)
+            raise e
 
         if self.height_compression is not None:
             res = self.forward_height_compression(res)
