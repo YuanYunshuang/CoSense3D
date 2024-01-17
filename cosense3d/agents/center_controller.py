@@ -155,6 +155,8 @@ class CenterController:
         response = self.cav_manager.send_response()
         self.cav_manager.receive_response(response)
 
+        if 2 not in batched_tasks:
+            print([d['valid_agent_ids'] for d in seq_data])
         # process ego cav data and fuse data from coop cav with grad if training
         self.forward_runner(batched_tasks[2]['with_grad'], with_grad=training_mode, **kwargs)
         if 'no_grad' in batched_tasks[2]:
