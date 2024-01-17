@@ -13,6 +13,7 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 8
+  clean_seq: True
   train_pipeline: 'pycfg.streamLTS.pipeline_cpu'
   test_pipeline: 'pycfg.streamLTS.pipeline_cpu'
 

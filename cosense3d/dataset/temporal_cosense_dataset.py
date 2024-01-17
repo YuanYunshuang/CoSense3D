@@ -10,6 +10,7 @@ class TemporalCosenseDataset(CosenseDataset):
         self.seq_len = cfgs['seq_len']
         self.rand_len = cfgs.get('rand_len', 0)
         self.seq_mode = cfgs.get('seq_mode', False)
+        self.clean_seq = cfgs.get('clean_seq', False)
 
     def __getitem__(self, index):
         queue = []
@@ -43,11 +44,12 @@ class TemporalCosenseDataset(CosenseDataset):
 
         # remove frames not belong to the current sequence
         # and ensure all frames have the same ego id
-        ego_id = queue[-1]['valid_agent_ids'][0]
-        valid_idx_start = 0
-        for i in range(len(queue)):
-            if queue[i]['valid_agent_ids'][0] != ego_id:
-                valid_idx_start = i + 1
+        if self.clean_seq:
+            ego_id = queue[-1]['valid_agent_ids'][0]
+            valid_idx_start = 0
+            for i in range(len(queue)):
+                if queue[i]['valid_agent_ids'][0] != ego_id:
+                    valid_idx_start = i + 1
         queue = {k: [q[k] for q in queue[valid_idx_start:]] for k in queue[0].keys()}
         return queue
 

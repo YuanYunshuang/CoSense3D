@@ -57,9 +57,8 @@ class CenterController:
         else:
             loss = 0
             loss_dict = {}
-            cur_len = len(seq_data)
             for i, data in enumerate(seq_data): # a few seqs from dataloader might < self.seq_lens
-                with_loss = i >= cur_len - self.num_loss_frame
+                with_loss = i >= self.seq_len - self.num_loss_frame
                 kwargs['seq_idx'] = i
                 frame_loss_dict = self.run_frame(data, with_loss, training_mode=True, **kwargs)
                 for k, v in frame_loss_dict.items():
