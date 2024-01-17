@@ -63,8 +63,13 @@ class DataManager:
         for l in range(seq_len):
             res = {}
             for k, v in batch_dict.items():
-                res[k] = [x[l] for x in v if l < len(x)]
-            result.append(res)
+                x_list = [x[l] for x in v if l < len(x)]
+                if len(x_list) == 0:
+                    res = {}
+                    break
+                res[k] = x_list
+            if len(res) > 0:
+                result.append(res)
         return result
 
     def distribute_to_cav(self, valid_agent_ids=None, **data):
@@ -360,8 +365,13 @@ class SeqDataManager:
         for l in range(seq_len):
             res = {}
             for k, v in batch_dict.items():
-                res[k] = [x[l] for x in v if l < len(x)]
-            result.append(res)
+                x_list = [x[l] for x in v if l < len(x)]
+                if len(x_list) == 0:
+                    res = {}
+                    break
+                res[k] = x_list
+            if len(res) > 0:
+                result.append(res)
         return result
 
     def distribute_to_cav(self, data):
