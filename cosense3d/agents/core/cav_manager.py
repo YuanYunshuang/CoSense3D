@@ -138,10 +138,11 @@ class SeqCAVManager:
         seq_len = len(data)
         # valid_agent_ids = [data[l]['valid_agent_ids'] for l in range(seq_len)]
         # uniq_ids = set(x for d in data for cids in d['valid_agent_ids'] for x in cids)
-        B = len(data[0]['valid_agent_ids'])  # batch_size
+
         cavs = []
         cav_dict = {}
         for l, d in enumerate(data):
+            B = len(d['valid_agent_ids'])  # batch_size
             seq_cavs = []
             for b in range(B):
                 batch_cavs = []
