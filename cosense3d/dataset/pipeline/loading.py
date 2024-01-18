@@ -7,6 +7,7 @@ from plyfile import PlyData
 import cv2
 
 from cosense3d.utils.pclib import pose_to_transformation
+from cosense3d.utils.pcdio import point_cloud_from_path
 
 
 class LoadLidarPoints:
@@ -18,21 +19,14 @@ class LoadLidarPoints:
         self.load_attributes = load_attributes
 
     def read_pcd(self, pts_filename):
-        with open(pts_filename, "r") as pcd_file:
-            flag = False
-            points = []
-            for line in pcd_file.readlines():
-                if flag:
-                    points.append([float(l.strip()) for l in line.split(' ')])
-                else:
-                    if 'DATA' in line:
-                        flag = True
-            points = np.array(points)
-        lidar_dict = {'xyz': points[:, :3]}
-        if points.shape[-1] == 4:
-            lidar_dict['intensity'] = points[:, 3:4]
+        pcd = point_cloud_from_path(pts_filename)
+        points = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1)
+        lidar_dict = {'xyz': points}
+        if 'intensity' in pcd.fields:
+            lidar_dict['intensity'] = pcd.pc_data['intensity']
+        if 'timestamp' in pcd.fields:
+            lidar_dict['time'] = pcd.pc_data['timestamp']
         return lidar_dict
-
 
     def _load_points(self, pts_filename):
         """

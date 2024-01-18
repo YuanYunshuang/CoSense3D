@@ -3,27 +3,15 @@ import torch
 import glob
 import os
 import tqdm
+from cosense3d.utils.misc import load_json, save_json
 
 import matplotlib.pyplot as plt
 
-# Sample data
-x = [1, 2, 3, 4, 5]
-y = [5, 7, 2, 8, 6]
-labels = ['A', 'B', 'C', 'D', 'E']
+files = glob.glob("/koko/cosense3d/dairv2x/*.json")
+for file in files:
+    data = load_json(file)
+    for f, fdict in data.items():
+        fdict['meta']['ego_id'] = str(fdict['meta']['ego_id'])
 
-# Create a scatter plot
-plt.scatter(x, y, color='blue')
-
-# Add labels to data points
-for i, label in enumerate(labels):
-    plt.annotate(label, (x[i], y[i]), textcoords="offset points", xytext=(0,10), ha='center')
-
-# Add labels to axes
-plt.xlabel('X Axis')
-plt.ylabel('Y Axis')
-plt.title('Scatter Plot with Labeled Data Points')
-
-# Show the plot
-plt.show()
-
+    save_json(data, file.replace('dairv2x', 'dairv2x-correction'))
 

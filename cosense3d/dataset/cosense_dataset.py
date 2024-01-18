@@ -26,7 +26,11 @@ class CosenseDataset(Dataset):
     def __init__(self, cfgs, mode):
         self.cfgs = cfgs
         self.mode = mode
-        self.data_path = os.path.join(self.cfgs['data_path'], self.mode)
+        if cfgs.get('enable_split_sub_folder', True):
+            self.data_path = os.path.join(self.cfgs['data_path'], self.mode)
+        else:
+            self.data_path = self.cfgs['data_path']
+
         self.max_num_cavs = cfgs['max_num_cavs']
 
         self.init_dataset()

@@ -28,7 +28,9 @@ class CenterController:
             self.cav_manager, **self.update_cfg(
                 cfg['data_manager'][self.mode], self.data_info))
         self.task_manager = task_manager
-        self.forward_runner = core.ForwardRunner(cfg['shared_modules'], self.data_manager, self.dist)
+        self.forward_runner = core.ForwardRunner(cfg['shared_modules'],
+                                                 self.data_manager,
+                                                 self.dist, **cfg['forward_runner'])
 
     def update_cfg(self, cfg, *args):
         for arg in args:
