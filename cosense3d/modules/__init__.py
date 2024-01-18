@@ -30,7 +30,7 @@ class BaseModule(nn.Module):
     def to_gpu(self, gpu_id):
         self.to(gpu_id)
         addtional_sync_func = nn.SyncBatchNorm.convert_sync_batchnorm
-        return addtional_sync_func
+        return None
 
     def forward(self, *args, **kwargs):
         raise NotImplementedError
