@@ -24,8 +24,8 @@ class TransformerAdaptiveScheduler(torch_lr._LRScheduler):
             self._step_count = itrs_per_epoch * last_epoch
 
     def get_lr(self) -> float:
-        lr = self.calc_lr(self._step_count, self.dim_embed, self.warmup_steps)
-        return [lr] * self.num_param_groups * self.global_fade_ratio
+        lr = self.calc_lr(self._step_count, self.dim_embed, self.warmup_steps) * self.global_fade_ratio
+        return [lr] * self.num_param_groups
 
     def calc_lr(self, step, dim_embed, warmup_steps):
         return dim_embed ** (-0.5) * min(step ** (-0.5), step * warmup_steps ** (-1.5))
