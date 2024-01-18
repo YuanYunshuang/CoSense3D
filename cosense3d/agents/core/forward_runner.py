@@ -23,6 +23,12 @@ class ForwardRunner(nn.Module):
 
         self.shared_modules = nn.ModuleDict(module_dict)
 
+    def to_gpu(self, gpu_id):
+        for n, m in self.shared_modules.items():
+            sync_func = m.to_gpu(gpu_id)
+            if sync_func is not None:
+                self.shared_modules[n] = sync_func(m)
+
     def gather_cav_ids(self, tasks):
         return [t[0] for t in tasks]
 

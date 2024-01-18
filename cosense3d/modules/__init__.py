@@ -27,6 +27,11 @@ class BaseModule(nn.Module):
         self.scatter_keys = scatter_keys
         self.gt_keys = gt_keys
 
+    def to_gpu(self, gpu_id):
+        self.to(gpu_id)
+        addtional_sync_func = None
+        return addtional_sync_func
+
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
