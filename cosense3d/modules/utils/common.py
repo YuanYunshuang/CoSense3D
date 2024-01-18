@@ -143,6 +143,7 @@ def get_norm_layer(channels, norm):
         raise NotImplementedError
     return norm_layer
 
+
 def linear_last(in_channels, mid_channels, out_channels, bias=False, norm='BN'):
     return nn.Sequential(
             nn.Linear(in_channels, mid_channels, bias=bias),
