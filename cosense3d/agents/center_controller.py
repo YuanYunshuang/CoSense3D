@@ -30,7 +30,7 @@ class CenterController:
         self.task_manager = task_manager
         self.forward_runner = core.ForwardRunner(cfg['shared_modules'],
                                                  self.data_manager,
-                                                 self.dist, **cfg['forward_runner'])
+                                                 self.dist, **cfg.get('forward_runner', {}))
 
     def update_cfg(self, cfg, *args):
         for arg in args:

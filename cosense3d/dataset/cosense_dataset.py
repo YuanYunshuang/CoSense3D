@@ -21,11 +21,11 @@ from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 class CosenseDataset(Dataset):
     LABEL_COLORS = {}
     VALID_CLS = []
-    COM_RANGE = 70
 
     def __init__(self, cfgs, mode):
         self.cfgs = cfgs
         self.mode = mode
+        self.COM_RANGE = self.cfgs.get('com_range', 70)
         if cfgs.get('enable_split_sub_folder', True):
             self.data_path = os.path.join(self.cfgs['data_path'], self.mode)
         else:

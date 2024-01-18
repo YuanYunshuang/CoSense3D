@@ -14,9 +14,11 @@ class LoadLidarPoints:
 
     def __init__(self,
                  coop_mode=True,
-                 load_attributes=['xyz', 'intensity']):
+                 load_attributes=['xyz', 'intensity'],
+                 time_offset=0):
         self.coop_mode = coop_mode
         self.load_attributes = load_attributes
+        self.time_offset = time_offset
 
     def read_pcd(self, pts_filename):
         pcd = point_cloud_from_path(pts_filename)
@@ -96,6 +98,9 @@ class LoadLidarPoints:
         lidar_dict = self._load_points(pts_filename)
         if 'intensity' in self.load_attributes and 'intensity' not in lidar_dict:
             lidar_dict['intensity'] = np.ones_like(lidar_dict['xyz'][:, :1])
+        if 'time' in self.load_attributes and self.time_offset:
+            lidar_dict['time'] -= self.time_offset
+
         points = np.concatenate(
             [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
 

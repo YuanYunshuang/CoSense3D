@@ -14,13 +14,14 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 1
-  train_pipeline: 'pycfg.data_opv2vt.train_pipeline_cpu'
-  test_pipeline: 'pycfg.data_opv2vt.test_pipeline_cpu'
+  com_range: 200
+  train_pipeline: 'pycfg.data_dairv2x.train_pipeline_cpu'
+  test_pipeline: 'pycfg.data_dairv2x.test_pipeline_cpu'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.data_opv2vt.data_manager'
+  data_manager: 'pycfg.data_dairv2x.data_manager'
   shared_modules: {}
   cav_manager:
     prototype: base_cav.DairV2XCAV
