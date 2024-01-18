@@ -27,11 +27,10 @@ class TrainRunner(BaseRunner):
         self.gpus = gpus
         self.gpu_id = 0
         self.dist = False
-        self.forward_runner.to_gpu(self.gpu_id)
         if gpus > 0:
             self.dist = True
             self.gpu_id = int(os.environ.get("LOCAL_RANK", 0))
-            self.forward_runner.to(self.gpu_id)
+            self.forward_runner.to_gpu(self.gpu_id)
             self.forward_runner = DDP(self.forward_runner, device_ids=[self.gpu_id])
         self.optimizer = build_optimizer(self.forward_runner, optimizer)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, lr_scheduler,
