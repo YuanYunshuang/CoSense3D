@@ -31,7 +31,8 @@ TRAIN:
   lr_scheduler:
     policy: 'TransformerAdaptiveScheduler'
     dim_embed: 256
-    warmup_steps: 4000
+    warmup_steps: 1000
+    global_fade_ratio: 0.5
 
 TEST:
   hooks: 'pycfg.streamLTS.test_hooks'
