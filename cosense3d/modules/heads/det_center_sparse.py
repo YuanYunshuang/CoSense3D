@@ -106,6 +106,7 @@ class DetCenterSparse(BaseModule):
                  loss_box,
                  center_threshold=0.5,
                  generate_roi_scr=False,
+                 norm='BN',
                  **kwargs):
         super(DetCenterSparse, self).__init__(**kwargs)
         update_me_essentials(self, data_info, stride)
@@ -118,13 +119,15 @@ class DetCenterSparse(BaseModule):
         self.cls_head = globals()[cls_head_cfg['name']](
             class_names_each_head,
             shared_conv_channel,
-            one_hot_encoding=cls_head_cfg.get('one_hot_encoding', True)
+            one_hot_encoding=cls_head_cfg.get('one_hot_encoding', True),
+            norm=norm
         )
         self.reg_head = globals()[reg_head_cfg['name']](
             reg_channels,
             shared_conv_channel,
             combine_channels=reg_head_cfg['combine_channels'],
             sigmoid_keys=reg_head_cfg['sigmoid_keys'],
+            norm=norm
         )
 
         self.cls_assigner = plugin.build_plugin_module(cls_assigner)
