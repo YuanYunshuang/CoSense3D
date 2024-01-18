@@ -43,7 +43,7 @@ CONTROLLER:
   data_manager: 'pycfg.streamLTS.data_manager'
   shared_modules: 'pycfg.streamLTS.shared_modules'
   forward_runner:
-    chunk_size: 8
+    chunk_size: 4
   cav_manager:
     prototype: streamLTS.StreamLidarCAV
     memory_len: *seq_len
