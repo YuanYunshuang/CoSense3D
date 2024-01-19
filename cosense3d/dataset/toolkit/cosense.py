@@ -45,7 +45,8 @@ csColors = {
     'human.pedestrian': [220, 20, 60], #9
     'human.wheelchair': [134, 93, 255], #10
     'human.sitting': [56, 229, 77], #11
-    'unknown': [255, 255, 255], #12
+    'static.trafficcone': [255, 0, 0], #12
+    'unknown': [255, 255, 255], #13
 }
 
 
@@ -63,7 +64,8 @@ class CoSenseDataConverter:
         'human.pedestrian',   #9
         'human.wheelchair',   #10
         'human.sitting',   #11
-        'unknown',   #12
+        'static.trafficcone',   #12
+        'unknown',   #13
     ]
     OBJ_ID2NAME = {i: n for i, n in enumerate(OBJ_LIST)}
     OBJ_NAME2ID = {n: i for i, n in enumerate(OBJ_LIST)}
@@ -345,12 +347,12 @@ class CoSenseDataConverter:
     def fdict_template():
         return {
                     'agents': {
-                        0: {
+                        '0': {
                             'type': None,
                             'pose': [0.0] * 6,
                             'time': None,  # timestamp for the current vehicle pose
                             'lidar': {
-                                0: {
+                                '0': {
                                     'pose': [0.0] * 6,
                                     'time': None,  # timestamp for the current lidar triggering round
                                     'filename': None
@@ -387,7 +389,7 @@ class CoSenseDataConverter:
                      agent_time=None,
                      **kwargs):
         if agent_id not in fdict['agents']:
-            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents'][0]
+            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents']['0']
         if agent_type is not None:
             fdict['agents'][agent_id]['type'] = agent_type
         if agent_pose is not None:
@@ -405,7 +407,7 @@ class CoSenseDataConverter:
                            lidar_time=None,
                            lidar_file=None):
         if agent_id not in fdict['agents']:
-            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents'][0]
+            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents']['0']
         if lidar_pose is not None:
             fdict['agents'][agent_id]['lidar'][lidar_id]['pose'] = lidar_pose
         if lidar_time is not None:
@@ -418,7 +420,7 @@ class CoSenseDataConverter:
                               agent_id,
                               gt_boxes):
         if agent_id not in fdict['agents']:
-            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents'][0]
+            fdict['agents'][agent_id] = CoSenseDataConverter.fdict_template()['agents']['0']
         fdict['agents'][agent_id]['gt_boxes'] = gt_boxes
 
     @staticmethod

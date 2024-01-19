@@ -13,16 +13,18 @@ class TransformerAdaptiveScheduler(torch_lr._LRScheduler):
                  warmup_steps: int,
                  itrs_per_epoch: int,
                  last_epoch: int = -1,
+                 global_fade_ratio: float = 1,
                  verbose: bool = False) -> None:
         self.dim_embed = dim_embed
         self.warmup_steps = warmup_steps
         self.num_param_groups = len(optimizer.param_groups)
+        self.global_fade_ratio = global_fade_ratio
         super().__init__(optimizer, last_epoch, verbose)
         if last_epoch > 0:
             self._step_count = itrs_per_epoch * last_epoch
 
     def get_lr(self) -> float:
-        lr = self.calc_lr(self._step_count, self.dim_embed, self.warmup_steps)
+        lr = self.calc_lr(self._step_count, self.dim_embed, self.warmup_steps) * self.global_fade_ratio
         return [lr] * self.num_param_groups
 
     def calc_lr(self, step, dim_embed, warmup_steps):

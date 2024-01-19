@@ -6,13 +6,13 @@ from cosense3d.modules import build_module
 
 
 class ForwardRunner(nn.Module):
-    def __init__(self, shared_modules, data_manager, dist=False):
+    def __init__(self, shared_modules, data_manager, dist=False, chunk_size=24, **kwargs):
         super().__init__()
         self.lidar_range = torch.tensor(data_manager.lidar_range)
         self.data_manager = data_manager
         self.dist = dist
         # if the fwd items of a module exits the GPU capacity, run them in several mini batches
-        self.chunk_size = 24
+        self.chunk_size = chunk_size
 
         module_dict = {}
         self.module_keys = []
@@ -22,6 +22,12 @@ class ForwardRunner(nn.Module):
             self.module_keys.append(k)
 
         self.shared_modules = nn.ModuleDict(module_dict)
+
+    def to_gpu(self, gpu_id):
+        for n, m in self.shared_modules.items():
+            sync_func = m.to_gpu(gpu_id)
+            if sync_func is not None:
+                self.shared_modules[n] = sync_func(m)
 
     def gather_cav_ids(self, tasks):
         return [t[0] for t in tasks]

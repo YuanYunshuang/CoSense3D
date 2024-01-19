@@ -55,6 +55,7 @@ det_head_cfg = dict(
     shared_conv_channel=256,
     get_predictions=True,
     stride=out_stride,
+    norm='LN',
     cls_head_cfg=dict(name='UnitedClsHead'),
     reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
     class_names_each_head=[['vehicle.car']],

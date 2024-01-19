@@ -733,10 +733,10 @@ class TransformerDecoder(TransformerLayerSequence):
                     intermediate.append(self.post_norm(query))
                 else:
                     intermediate.append(query)
-        if torch.isnan(query).any():
-            print('TransfromerDecoder: Found nan in query.')
-        if torch.isnan(intermediate[-1]).any():
-            print('TransfromerDecoder: Found nan in intermediate result.')
+        # if torch.isnan(query).any():
+        #     print('TransfromerDecoder: Found nan in query.')
+        # if torch.isnan(intermediate[-1]).any():
+        #     print('TransfromerDecoder: Found nan in intermediate result.')
         return torch.stack(intermediate)
 
 

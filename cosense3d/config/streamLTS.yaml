@@ -32,6 +32,7 @@ TRAIN:
     policy: 'TransformerAdaptiveScheduler'
     dim_embed: 256
     warmup_steps: 4000
+    global_fade_ratio: 1.0
 
 TEST:
   hooks: 'pycfg.streamLTS.test_hooks'
@@ -42,6 +43,8 @@ CONTROLLER:
   batch_seq: True
   data_manager: 'pycfg.streamLTS.data_manager'
   shared_modules: 'pycfg.streamLTS.shared_modules'
+  forward_runner:
+    chunk_size: 4
   cav_manager:
     prototype: streamLTS.StreamLidarCAV
     memory_len: *seq_len

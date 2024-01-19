@@ -93,6 +93,10 @@ class MinkUnet(BaseModule):
                     continue
                 nn.init.xavier_uniform_(p)
 
+    def to_gpu(self, gpu_id):
+        self.to(gpu_id)
+        return ME.MinkowskiSyncBatchNorm.convert_sync_batchnorm
+
     def forward(self, points: list, **kwargs):
         res = self.forward_unet(points, **kwargs)
 

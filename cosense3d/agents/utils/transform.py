@@ -79,8 +79,8 @@ def filter_range(data, lidar_range, key):
         points = data['points'][mask]
         if len(points) == 0:
             # pad empty point cloud with random points to ensure batch norm validity
-            points = torch.zeros_like(data['points'][:10])
-            points[:, :2] = torch.rand_like(points[:, :2]) * 10
+            points = data['points'].new_zeros((1024, points.shape[-1]))
+            points[:, :2] = torch.rand_like(points[:, :2]) * 40
             points[:, 3] = -1
         data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:

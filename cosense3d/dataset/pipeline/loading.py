@@ -7,32 +7,28 @@ from plyfile import PlyData
 import cv2
 
 from cosense3d.utils.pclib import pose_to_transformation
+from cosense3d.utils.pcdio import point_cloud_from_path
 
 
 class LoadLidarPoints:
 
     def __init__(self,
                  coop_mode=True,
-                 load_attributes=['xyz', 'intensity']):
+                 load_attributes=['xyz', 'intensity'],
+                 time_offset=0):
         self.coop_mode = coop_mode
         self.load_attributes = load_attributes
+        self.time_offset = time_offset
 
     def read_pcd(self, pts_filename):
-        with open(pts_filename, "r") as pcd_file:
-            flag = False
-            points = []
-            for line in pcd_file.readlines():
-                if flag:
-                    points.append([float(l.strip()) for l in line.split(' ')])
-                else:
-                    if 'DATA' in line:
-                        flag = True
-            points = np.array(points)
-        lidar_dict = {'xyz': points[:, :3]}
-        if points.shape[-1] == 4:
-            lidar_dict['intensity'] = points[:, 3:4]
+        pcd = point_cloud_from_path(pts_filename)
+        points = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1)
+        lidar_dict = {'xyz': points}
+        if 'intensity' in pcd.fields:
+            lidar_dict['intensity'] = pcd.pc_data['intensity']
+        if 'timestamp' in pcd.fields:
+            lidar_dict['time'] = pcd.pc_data['timestamp']
         return lidar_dict
-
 
     def _load_points(self, pts_filename):
         """
@@ -98,10 +94,16 @@ class LoadLidarPoints:
                 lidar_dict[k] = v.reshape(-1, 1)
         return lidar_dict
 
-    def _load_single(self, pts_filename):
+    def _load_single(self, pts_filename, timestamp=0):
         lidar_dict = self._load_points(pts_filename)
         if 'intensity' in self.load_attributes and 'intensity' not in lidar_dict:
             lidar_dict['intensity'] = np.ones_like(lidar_dict['xyz'][:, :1])
+        if 'time' in self.load_attributes:
+            if 'time' in lidar_dict:
+                lidar_dict['time'] -= self.time_offset
+            else:
+                lidar_dict['time'] = np.zeros_like(lidar_dict['xyz'][:, :1]) + (timestamp - self.time_offset)
+
         points = np.concatenate(
             [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
 
@@ -113,7 +115,7 @@ class LoadLidarPoints:
             for ai in data_dict['valid_agent_ids']:
                 adict = data_dict['sample_info']['agents'][ai]
                 filename = os.path.join(data_dict['data_path'], adict['lidar']['0']['filename'])
-                points.append(self._load_single(filename))
+                points.append(self._load_single(filename, adict['lidar']['0']['time']))
         else:
             ego_id = data_dict['sample_info']['meta']['ego_id']
             ego_dict = data_dict['sample_info']['agents'][ego_id]
@@ -308,7 +310,10 @@ class LoadAnnotations:
                 continue
             adict = agents[ai]
             boxes = np.array(adict['gt_boxes']).reshape(-1, 11)
-            mask = np.array(adict['num_pts']) > self.min_num_pts
+            if 'num_pts' not in adict:
+                mask = np.ones_like(boxes[:, 0]).astype(bool)
+            else:
+                mask = np.array(adict['num_pts']) > self.min_num_pts
             if len(boxes) != len(mask):
                 # TODO: update num pts in meta
                 mask = np.ones_like(boxes[..., 0]).astype(bool)

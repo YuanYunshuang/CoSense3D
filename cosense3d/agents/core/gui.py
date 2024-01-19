@@ -78,6 +78,7 @@ class GUI(QtWidgets.QMainWindow):
         self.infos = ['scene', 'frame', 'PCDcolor']
         self.tools = ['start', 'stop', 'step']
         self.visible_objects = ['local_pred', 'global_pred', 'local_gt', 'global_gt']
+
         # add label combo pairs
         for name in self.infos:
             qlabel = QtWidgets.QLabel(f' {name[0].upper()}{name[1:]}:')
@@ -112,7 +113,7 @@ class GUI(QtWidgets.QMainWindow):
             setattr(self, f'button_{name}', qbutton)
             self.toolbar.addWidget(getattr(self, f'button_{name}'))
 
-        for name in self.visible_objects:
+        for name in ['glcolor'] + self.visible_objects:
             bname = f'{name[0].upper()}{name[1:]}'
             qbutton = QtWidgets.QPushButton()
             qbutton.setText(bname)
@@ -121,15 +122,29 @@ class GUI(QtWidgets.QMainWindow):
             setattr(self, f'button_{name}', qbutton)
             self.toolbar.addWidget(getattr(self, f'button_{name}'))
 
+        self.button_glcolor.setStyleSheet("background-color: black; color: white")
+
     def change_visible(self, name):
         button = getattr(self, f'button_{name}')
         current_color = button.palette().button().color()
+
         if current_color != QtGui.QColor('lightblue'):
             button.setStyleSheet("background-color: lightblue")
             setattr(self, f"{name}_visible", True)
         else:
             button.setStyleSheet("background-color: #efefef")
             setattr(self, f"{name}_visible", False)
+        self.refresh()
+
+    def change_glcolor(self):
+        button = self.button_glcolor
+        current_color = button.palette().button().color()
+        if current_color == QtGui.QColor('black'):
+            button.setStyleSheet("background-color: white; color: black")
+            self.glViewer0.setBackgroundColor('w')
+        else:
+            button.setStyleSheet("background-color: black; color: white")
+            self.glViewer0.setBackgroundColor('k')
         self.refresh()
 
     def change_color_mode(self):
@@ -142,6 +157,7 @@ class GUI(QtWidgets.QMainWindow):
         self.button_start.clicked.connect(self.start)
         self.button_stop.clicked.connect(self.stop)
         self.tabs.currentChanged.connect(self.refresh)
+        self.button_glcolor.clicked.connect(self.change_glcolor)
         for name in self.visible_objects:
             if getattr(self, f"{name.lower()}_visible"):
                 self.change_visible(name)
