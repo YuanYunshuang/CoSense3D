@@ -94,12 +94,15 @@ class LoadLidarPoints:
                 lidar_dict[k] = v.reshape(-1, 1)
         return lidar_dict
 
-    def _load_single(self, pts_filename):
+    def _load_single(self, pts_filename, timestamp=0):
         lidar_dict = self._load_points(pts_filename)
         if 'intensity' in self.load_attributes and 'intensity' not in lidar_dict:
             lidar_dict['intensity'] = np.ones_like(lidar_dict['xyz'][:, :1])
-        if 'time' in self.load_attributes and self.time_offset:
-            lidar_dict['time'] -= self.time_offset
+        if 'time' in self.load_attributes:
+            if 'time' in lidar_dict:
+                lidar_dict['time'] -= self.time_offset
+            else:
+                lidar_dict['time'] = np.zeros_like(lidar_dict['xyz'][:, :1]) + (timestamp - self.time_offset)
 
         points = np.concatenate(
             [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
@@ -112,7 +115,7 @@ class LoadLidarPoints:
             for ai in data_dict['valid_agent_ids']:
                 adict = data_dict['sample_info']['agents'][ai]
                 filename = os.path.join(data_dict['data_path'], adict['lidar']['0']['filename'])
-                points.append(self._load_single(filename))
+                points.append(self._load_single(filename, adict['lidar']['0']['time']))
         else:
             ego_id = data_dict['sample_info']['meta']['ego_id']
             ego_dict = data_dict['sample_info']['agents'][ego_id]
@@ -307,7 +310,10 @@ class LoadAnnotations:
                 continue
             adict = agents[ai]
             boxes = np.array(adict['gt_boxes']).reshape(-1, 11)
-            mask = np.array(adict['num_pts']) > self.min_num_pts
+            if 'num_pts' not in adict:
+                mask = np.ones_like(boxes[:, 0]).astype(bool)
+            else:
+                mask = np.array(adict['num_pts']) > self.min_num_pts
             if len(boxes) != len(mask):
                 # TODO: update num pts in meta
                 mask = np.ones_like(boxes[..., 0]).astype(bool)

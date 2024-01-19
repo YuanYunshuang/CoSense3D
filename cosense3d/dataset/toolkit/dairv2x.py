@@ -11,6 +11,7 @@ from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 from cosense3d.utils.vislib import o3d_draw_frame_data, \
     o3d_draw_agent_data, o3d_play_sequence
 
+global_time_offset = 1.62616 * 1e9
 
 def calib_to_tf_matrix(calib_file):
     calib = load_json(calib_file)
@@ -37,7 +38,10 @@ def load_label(label_file):
             'van': 'vehicle.van',
             'truck': 'vehicle.truck',
             'bus': 'vehicle.bus',
-            'pedestrian': 'human.pedestrian'
+            'pedestrian': 'human.pedestrian',
+            'trafficcone': 'static.trafficcone',
+            'motorcyclist': 'vehicle.motorcycle',
+            'cyclist': 'vehicle.cyclist',
         }[l.get('type', "car").lower()]
         bbx = [
             -1,
@@ -69,7 +73,7 @@ def load_info_to_dict(info_file):
     return info_dict
 
 
-def convert(root_dir, meta_out_dir, transf_correction=False):
+def convert_v2x_c(root_dir, meta_out_dir):
     cvi_path = "cooperative-vehicle-infrastructure"
     infra_path = "infrastructure-side"
     cav_path = "vehicle-side"
@@ -100,7 +104,10 @@ def convert(root_dir, meta_out_dir, transf_correction=False):
     # load all re-annotated samples
     train = load_json(os.path.join(root_dir, new_label_path, 'train.json'))
     val = load_json(os.path.join(root_dir, new_label_path, 'val.json'))
-    split = {'train': train, 'test': val}
+    split = {
+                # 'train': train,
+                 'test': val
+             }
 
     for sp, frames in split.items():
         visualization = True
@@ -119,7 +126,7 @@ def convert(root_dir, meta_out_dir, transf_correction=False):
             tf_lidar2world = tf_novatel2world @ tf_lidar2novatel
             veh_lidar_pose = pclib.tf2pose(tf_lidar2world)
             veh_pose = pclib.tf2pose(tf_novatel2world)
-            veh_lidar_time = float(frame_info['pointcloud_timestamp']) * 10e-6
+            veh_lidar_time = float(frame_info['pointcloud_timestamp']) * 1e-6
             veh_lidar_file = os.path.join(cav_lidar_path, frame + ".pcd")
             veh_bbxs_center, _ = load_label(
                 os.path.join(root_dir,
@@ -135,58 +142,73 @@ def convert(root_dir, meta_out_dir, transf_correction=False):
                 os.path.join(root_dir, cvi_path, infra_path,
                              cur_inf_info['calib_virtuallidar_to_world_path'])
             )
-            tf_infra2ego = np.linalg.inv(tf_lidar2world) @ tf_virtuallidar2world
-            inf_lidar_time = float(cur_inf_info['pointcloud_timestamp']) * 10e-6
-            inf_lidar_file = os.path.join(inf_lidar_path, cur_inf_frame + ".pcd")
-            if transf_correction:
-                tf_infra2ego = register_pcds(
-                    os.path.join(root_dir, inf_lidar_file),
-                    os.path.join(root_dir, veh_lidar_file),
-                    tf_infra2ego,
-                    visualization
-                )
-                visualization = False
-            inf_lidar_pose = pclib.tf2pose(tf_infra2ego)
 
-            # process global meta
-            bbxs_center, bbxs_corner = load_label(
-                os.path.join(root_dir,
+            inf_lidar_time = float(cur_inf_info['pointcloud_timestamp']) * 1e-6
+            inf_lidar_file = os.path.join(inf_lidar_path, cur_inf_frame + ".pcd")
+
+            # inf_lidar_pose = pclib.tf2pose(tf_infra2ego)
+            inf_lidar_pose = pclib.tf2pose(tf_virtuallidar2world)
+            inf_label_path = os.path.join(root_dir,
+                             f"{cvi_path}/infrastructure-side/label/virtuallidar",
+                             frame + '.json')
+
+            coop_label_path = os.path.join(root_dir,
                              f"{new_label_path}/new_labels/cooperative_label/label_world",
                              frame + '.json'
                              )
+            # process global meta
+            world_bbxs_center, world_bbxs_corner = load_label(coop_label_path)
+            coop_bbxs_corner =  pclib.rotate_box_corners_with_tf_np(
+                np.array(world_bbxs_corner), np.linalg.inv(tf_lidar2world)
             )
-            bbxs_center = np.concatenate(
-                [np.array(bbxs_center)[:, :2],
-                 corners_to_boxes_3d(np.array(bbxs_corner))],
+            coop_bbxs_center = np.concatenate(
+                [np.array(world_bbxs_center)[:, :2],
+                 corners_to_boxes_3d(coop_bbxs_corner)],
                 axis=1
-            )
+            ).tolist()
+
+            if not os.path.exists(inf_label_path):
+                inf_bbxs_center = pclib.rotate_box_corners_with_tf_np(
+                    np.array(world_bbxs_corner), np.linalg.inv(tf_virtuallidar2world)
+                )
+                inf_bbxs_center = np.concatenate(
+                    [np.array(world_bbxs_center)[:, :2],
+                     corners_to_boxes_3d(inf_bbxs_center)],
+                    axis=1
+                ).tolist()
+            else:
+                inf_bbxs_center, _ = load_label(inf_label_path)
+
             # construct meta dict
             fdict = cs.fdict_template()
             # add cav lidar meta
             cs.update_agent(fdict,
-                            agent_id=0,
+                            agent_id='0',
                             agent_type='cav',
-                            agent_pose=veh_pose)
+                            agent_pose=veh_pose,
+                            gt_boxes=veh_bbxs_center)
             cs.update_agent_lidar(fdict,
-                                  agent_id=0,
-                                  lidar_id=0,
-                                  lidar_pose=[0,] * 6,
+                                  agent_id='0',
+                                  lidar_id='0',
+                                  lidar_pose=veh_lidar_pose,
                                   lidar_time=veh_lidar_time,
                                   lidar_file=veh_lidar_file)
             # add infra lidar meta
             cs.update_agent(fdict,
-                            agent_id=1,
-                            agent_type='infra')
+                            agent_id='1',
+                            agent_type='infra',
+                            agent_pose=inf_lidar_pose,
+                            gt_boxes=inf_bbxs_center)
             cs.update_agent_lidar(fdict,
-                                  agent_id=1,
-                                  lidar_id=0,
+                                  agent_id='1',
+                                  lidar_id='0',
                                   lidar_pose=inf_lidar_pose,
                                   lidar_time=inf_lidar_time,
                                   lidar_file=inf_lidar_file)
             cs.update_frame_bbx(fdict,
-                                veh_bbxs_center
+                                coop_bbxs_center
                                 )# in global coords
-            fdict['meta']['ego_id'] = 0
+            fdict['meta']['ego_id'] = '0'
             fdict['meta']['ego_lidar_pose'] = veh_lidar_pose
             if scenario not in meta_dict:
                 meta_dict[scenario] = {}
@@ -200,10 +222,120 @@ def convert(root_dir, meta_out_dir, transf_correction=False):
             fh.write('\n'.join(list(meta_dict.keys())))
 
 
+def convert_v2x_seq(root_dir, meta_out_dir):
+    inf_info_file = os.path.join(root_dir, "infrastructure-side/data_info.json")
+    inf_info = load_info_to_dict(inf_info_file)
+    veh_info_file = os.path.join(root_dir, "vehicle-side/data_info.json")
+    veh_info = load_info_to_dict(veh_info_file)
+    frame_pairs = load_json(os.path.join(root_dir, "cooperative/data_info.json"))
+
+    meta_dict = {}
+    for pi, pdict in frame_pairs.items():
+        scenario = pdict['vehicle_sequence']
+        # processing vehicle meta
+        cur_veh_info = veh_info[pdict['vehicle_frame']]
+        tf_novatel2world = calib_to_tf_matrix(
+            os.path.join(root_dir, "vehicle-side", cur_veh_info['calib_novatel_to_world_path'])
+        )
+        tf_lidar2novatel = calib_to_tf_matrix(
+            os.path.join(root_dir, "vehicle-side", cur_veh_info['calib_lidar_to_novatel_path'])
+        )
+        tf_lidar2world = tf_novatel2world @ tf_lidar2novatel
+        veh_lidar_pose = pclib.tf2pose(tf_lidar2world)
+        veh_pose = pclib.tf2pose(tf_novatel2world)
+
+        veh_lidar_time = float(cur_veh_info['pointcloud_timestamp']) * 1e-6 - global_time_offset
+        veh_lidar_file = os.path.join("vehicle-side", cur_veh_info['pointcloud_path'])
+        veh_bbxs_center, _ = load_label(
+            os.path.join(root_dir, "vehicle-side", cur_veh_info['label_lidar_std_path'])
+        )
+
+        # process infra info
+        cur_inf_info = inf_info[pdict['infrastructure_frame']]
+        tf_virtuallidar2world = calib_to_tf_matrix(
+            os.path.join(root_dir, "infrastructure-side", cur_inf_info['calib_virtuallidar_to_world_path'])
+        )
+
+        inf_lidar_time = float(cur_inf_info['pointcloud_timestamp']) * 1e-6 - global_time_offset
+        veh_lidar_file = os.path.join("infrastructure-side", cur_inf_info['pointcloud_path'])
+        veh_bbxs_center, _ = load_label(
+            os.path.join(root_dir, "infrastructure-side", cur_inf_info['label_lidar_std_path'])
+        )
+
+        # process global meta
+        coop_label, _ = load_label(
+            os.path.join(root_dir, "cooperative", "label", f"{pdict['vehicle_frame']}.json")
+        )
+        world_bbxs_center, world_bbxs_corner = load_label(coop_label_path)
+        coop_bbxs_corner =  pclib.rotate_box_corners_with_tf_np(
+            np.array(world_bbxs_corner), np.linalg.inv(tf_lidar2world)
+        )
+        coop_bbxs_center = np.concatenate(
+            [np.array(world_bbxs_center)[:, :2],
+             corners_to_boxes_3d(coop_bbxs_corner)],
+            axis=1
+        ).tolist()
+
+        if not os.path.exists(inf_label_path):
+            inf_bbxs_center = pclib.rotate_box_corners_with_tf_np(
+                np.array(world_bbxs_corner), np.linalg.inv(tf_virtuallidar2world)
+            )
+            inf_bbxs_center = np.concatenate(
+                [np.array(world_bbxs_center)[:, :2],
+                 corners_to_boxes_3d(inf_bbxs_center)],
+                axis=1
+            ).tolist()
+        else:
+            inf_bbxs_center, _ = load_label(inf_label_path)
+
+        # construct meta dict
+        fdict = cs.fdict_template()
+        # add cav lidar meta
+        cs.update_agent(fdict,
+                        agent_id='0',
+                        agent_type='cav',
+                        agent_pose=veh_pose,
+                        gt_boxes=veh_bbxs_center)
+        cs.update_agent_lidar(fdict,
+                              agent_id='0',
+                              lidar_id='0',
+                              lidar_pose=veh_lidar_pose,
+                              lidar_time=veh_lidar_time,
+                              lidar_file=veh_lidar_file)
+        # add infra lidar meta
+        cs.update_agent(fdict,
+                        agent_id='1',
+                        agent_type='infra',
+                        agent_pose=inf_lidar_pose,
+                        gt_boxes=inf_bbxs_center)
+        cs.update_agent_lidar(fdict,
+                              agent_id='1',
+                              lidar_id='0',
+                              lidar_pose=inf_lidar_pose,
+                              lidar_time=inf_lidar_time,
+                              lidar_file=inf_lidar_file)
+        cs.update_frame_bbx(fdict,
+                            coop_bbxs_center
+                            )# in global coords
+        fdict['meta']['ego_id'] = '0'
+        fdict['meta']['ego_lidar_pose'] = veh_lidar_pose
+        if scenario not in meta_dict:
+            meta_dict[scenario] = {}
+        meta_dict[scenario][frame] = fdict
+    # save meta
+    os.makedirs(meta_out_dir, exist_ok=True)
+    for scenario, meta in meta_dict.items():
+        meta_file = os.path.join(meta_out_dir, f'{scenario}.json')
+        save_json(meta, meta_file)
+    with open(os.path.join(meta_out_dir, f'{sp}.txt'), 'w') as fh:
+        fh.write('\n'.join(list(meta_dict.keys())))
+
+
+
 if __name__=="__main__":
-    root_dir = "/koko/DAIR-V2X"
-    meta_out_dir = "/koko/cosense3d"
-    convert(root_dir, meta_out_dir, transf_correction=False)
+    root_dir = "/koko/V2X-Seq-SPD"
+    meta_out_dir = "/koko/cosense3d/dairv2x-seq"
+    convert_v2x_seq(root_dir, meta_out_dir)
     # meta_dict = load_meta(os.path.join(meta_out_dir, 'dairv2x'))
     # o3d_play_sequence(meta_dict, root_dir)
 

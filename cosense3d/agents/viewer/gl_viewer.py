@@ -104,23 +104,35 @@ class GLViewer(gl.GLViewWidget):
 
     def updatePCDs(self, pcds, color_mode='united', **kwargs):
         self.pcds = pcds
+        if color_mode  == 'height':
+            points_all = np.stack([pcd for pcd in pcds.values()], axis=0)
+            global_min = points_all[:, 2].min()
+            global_max = points_all[:, 2].max()
+        elif color_mode  == 'time':
+            points_all = np.concatenate([pcd for pcd in pcds.values()], axis=0)
+            global_min = points_all[:, -1].min()
+            global_max = points_all[:, -1].max()
+        else:
+            global_min = None
+            global_max = None
+
         for lidar_id, pcd in pcds.items():
             if color_mode == 'united':
                 colors = [1.0, 1.0, 1.0, 1.0]
             elif color_mode == 'height':
-                height_norm = (pcd[:, 2] - pcd[:, 2].min()) / (pcd[:, 2].max() - pcd[:, 2].min())
+                height_norm = (pcd[:, 2] - global_min) / (global_max - global_min)
                 colors = jet(height_norm)
             elif color_mode == 'cav':
                 colors = np.random.random(4)
                 colors[-1] = 0.5
                 colors = colors.reshape(1, 4).repeat(len(pcd), 0)
             elif color_mode == 'time':
-                time_norm = (pcd[:, -1] - pcd[:, -1].min()) / (pcd[:, -1].max() - pcd[:, -1].min())
+                time_norm = (pcd[:, -1] - global_min) / (global_max - global_min)
                 colors = jet(time_norm)
             else:
                 raise NotImplementedError
             item = gl.GLScatterPlotItem(
-                pos=pcd[:, :3], size=1, glOptions='opaque', color=colors
+                pos=pcd[:, :3], size=2, glOptions='opaque', color=colors
             )
             if lidar_id in self.visibility:
                 item.setVisible(self.visibility[lidar_id])

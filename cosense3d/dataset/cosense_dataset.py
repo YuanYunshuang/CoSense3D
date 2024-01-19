@@ -162,7 +162,7 @@ class CosenseDataset(Dataset):
             return prev_agents
         else:
             agents = sample_info['agents']
-            ego_id = sample_info['meta']['ego_id']
+            ego_id = str(sample_info['meta']['ego_id'])
             agents_ids = [ego_id]
             # filter cavs in communication range
             ego_pose_vec = agents[ego_id]['pose']

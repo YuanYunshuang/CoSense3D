@@ -9,6 +9,7 @@ from plyfile import PlyData, PlyElement
 from scipy.spatial.transform import Rotation as R
 
 from cosense3d.utils.misc import check_numpy_to_torch
+from cosense3d.utils.pcdio import point_cloud_from_path
 
 ply_fields = {'x': 'f4', 'y': 'f4', 'z': 'f4', 'ObjIdx': 'u4', 'ObjTag': 'u4', 'ring': 'u1', 'time': 'f4'}
 np_types = {'f4': np.float32, 'u4': np.uint32, 'u1': np.uint8}
@@ -159,15 +160,17 @@ def load_pcd(pcd_file, return_o3d=False):
     lidar_dict = {}
     ext = os.path.splitext(pcd_file)[-1]
     if ext == '.pcd':
-        pcd = o3d.io.read_point_cloud(pcd_file)
         if return_o3d:
-            return pcd
-        xyz = np.asarray(pcd.points, dtype=np.float32)
-        lidar_dict['xyz'] = xyz
-        # we save the intensity in the first channel
-        intensity = np.expand_dims(np.asarray(pcd.colors)[:, 0], -1)
-        if len(intensity) == len(xyz):
-            lidar_dict['intensity'] = intensity
+            return o3d.io.read_point_cloud(pcd_file)
+        else:
+            pcd = point_cloud_from_path(pcd_file)
+            xyz = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1).astype(float)
+            lidar_dict['xyz'] = xyz
+            # we save the intensity in the first channel
+            if 'intensity' in pcd.fields:
+                lidar_dict['intensity'] = pcd.pc_data['intensity']
+            if 'timestamp' in pcd.fields:
+                lidar_dict['time'] = pcd.pc_data['timestamp']
 
     elif ext == '.bin':
         pcd_np = np.fromfile(pcd_file, dtype=np.float32).reshape(-1, 4)
@@ -379,6 +382,34 @@ def rotate_points_along_z_torch(points, angle):
     points_rot = torch.bmm(points[..., 0:2], rot_matrix)
     points_rot = torch.cat((points_rot, points[..., 2:]), dim=-1)
     return points_rot
+
+
+def rotate_points_with_tf_np(points: np.ndarray, tf_np: np.ndarray) -> np.ndarray:
+    """
+    Rotate points with transformation matrix
+    Args:
+        points (np.ndarray): Nx3 points array
+        tf_np (np.ndarray): 4x4 transformation matrix
+    Returns:
+        points (np.ndarray): Nx3 points array
+    """
+    points_homo = np.concatenate([points, np.ones_like(points[:, :1])], axis=-1).T
+    points = (tf_np @ points_homo)[:3].T
+    return points
+
+
+def rotate_box_corners_with_tf_np(corners: np.ndarray, tf_np: np.ndarray) -> np.ndarray:
+    """
+    Rotate points with transformation matrix
+    Args:
+        corners (np.ndarray): Nx8X3 points array
+        tf_np (np.ndarray): 4x4 transformation matrix
+    Returns:
+        corners (np.ndarray): Nx8X3 points array
+    """
+    points = rotate_points_with_tf_np(corners.reshape(-1, 3), tf_np)
+    corners = points.reshape(corners.shape)
+    return corners
 
 
 def mask_values_in_range(values, min,  max):
