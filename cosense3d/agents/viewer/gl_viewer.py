@@ -105,7 +105,7 @@ class GLViewer(gl.GLViewWidget):
     def updatePCDs(self, pcds, color_mode='united', **kwargs):
         self.pcds = pcds
         if color_mode  == 'height':
-            points_all = np.stack([pcd for pcd in pcds.values()], axis=0)
+            points_all = np.concatenate([pcd for pcd in pcds.values()], axis=0)
             global_min = points_all[:, 2].min()
             global_max = points_all[:, 2].max()
         elif color_mode  == 'time':

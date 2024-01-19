@@ -227,4 +227,4 @@ class OPV2VtCAV(BaseCAV):
 class DairV2XCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prepare_data_keys = ['points', 'annos_global']
+        self.prepare_data_keys = ['points', 'annos_global', 'annos_local']

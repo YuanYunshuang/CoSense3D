@@ -8,8 +8,9 @@ from cosense3d.utils.misc import load_json, save_json
 from cosense3d.utils.box_utils import corners_to_boxes_3d
 from cosense3d.dataset.toolkit import register_pcds
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
+from cosense3d.utils.pcdio import point_cloud_from_path
 from cosense3d.utils.vislib import o3d_draw_frame_data, \
-    o3d_draw_agent_data, o3d_play_sequence
+    o3d_draw_agent_data, o3d_draw_pcds_bbxs
 
 global_time_offset = 1.62616 * 1e9
 
@@ -42,9 +43,12 @@ def load_label(label_file):
             'trafficcone': 'static.trafficcone',
             'motorcyclist': 'vehicle.motorcycle',
             'cyclist': 'vehicle.cyclist',
+            'tricyclist': 'vehicle.tricyclist',
+            'barrowlist': 'static.barrowlist',
         }[l.get('type', "car").lower()]
+        track_id = l.get('track_id', -1)
         bbx = [
-            -1,
+            int(track_id),
             cs.OBJ_NAME2ID[obj_type],
             l['3d_location']['x'],
             l['3d_location']['y'],
@@ -112,22 +116,22 @@ def convert_v2x_c(root_dir, meta_out_dir):
     for sp, frames in split.items():
         visualization = True
         for frame in tqdm.tqdm(frames):
-            frame_info = veh_info[frame]
-            scenario = frame_info['batch_id']
+            cur_veh_info = veh_info[frame]
+            scenario = cur_veh_info['batch_id']
             # processing vehicle meta
             tf_novatel2world = calib_to_tf_matrix(
                 os.path.join(root_dir, cvi_path, cav_path,
-                             frame_info['calib_novatel_to_world_path'])
+                             cur_veh_info['calib_novatel_to_world_path'])
             )
             tf_lidar2novatel = calib_to_tf_matrix(
                 os.path.join(root_dir, cvi_path, cav_path,
-                             frame_info['calib_lidar_to_novatel_path'])
+                             cur_veh_info['calib_lidar_to_novatel_path'])
             )
             tf_lidar2world = tf_novatel2world @ tf_lidar2novatel
             veh_lidar_pose = pclib.tf2pose(tf_lidar2world)
             veh_pose = pclib.tf2pose(tf_novatel2world)
-            veh_lidar_time = float(frame_info['pointcloud_timestamp']) * 1e-6
-            veh_lidar_file = os.path.join(cav_lidar_path, frame + ".pcd")
+            veh_lidar_time = float(cur_veh_info['pointcloud_timestamp']) * 1e-6
+            veh_lidar_file = os.path.join(cav_lidar_path, frame + '.pcd')
             veh_bbxs_center, _ = load_label(
                 os.path.join(root_dir,
                              f"{new_label_path}/new_labels/vehicle-side_label/lidar",
@@ -150,13 +154,14 @@ def convert_v2x_c(root_dir, meta_out_dir):
             inf_lidar_pose = pclib.tf2pose(tf_virtuallidar2world)
             inf_label_path = os.path.join(root_dir,
                              f"{cvi_path}/infrastructure-side/label/virtuallidar",
-                             frame + '.json')
+                             cur_inf_frame + '.json')
+            inf_bbxs_center, _ = load_label(inf_label_path)
 
+            # process global meta
             coop_label_path = os.path.join(root_dir,
                              f"{new_label_path}/new_labels/cooperative_label/label_world",
                              frame + '.json'
                              )
-            # process global meta
             world_bbxs_center, world_bbxs_corner = load_label(coop_label_path)
             coop_bbxs_corner =  pclib.rotate_box_corners_with_tf_np(
                 np.array(world_bbxs_corner), np.linalg.inv(tf_lidar2world)
@@ -167,17 +172,22 @@ def convert_v2x_c(root_dir, meta_out_dir):
                 axis=1
             ).tolist()
 
-            if not os.path.exists(inf_label_path):
-                inf_bbxs_center = pclib.rotate_box_corners_with_tf_np(
-                    np.array(world_bbxs_corner), np.linalg.inv(tf_virtuallidar2world)
-                )
-                inf_bbxs_center = np.concatenate(
-                    [np.array(world_bbxs_center)[:, :2],
-                     corners_to_boxes_3d(inf_bbxs_center)],
-                    axis=1
-                ).tolist()
-            else:
-                inf_bbxs_center, _ = load_label(inf_label_path)
+            # if not os.path.exists(inf_label_path):
+            #     print('infra label not found.')
+            #     inf_bbxs_center = pclib.rotate_box_corners_with_tf_np(
+            #         np.array(world_bbxs_corner), np.linalg.inv(tf_virtuallidar2world)
+            #     )
+            #     inf_bbxs_center = np.concatenate(
+            #         [np.array(world_bbxs_center)[:, :2],
+            #          corners_to_boxes_3d(inf_bbxs_center)],
+            #         axis=1
+            #     ).tolist()
+
+
+
+            # pcd = point_cloud_from_path(os.path.join(root_dir, veh_lidar_file))
+            # points = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1)
+            # o3d_draw_pcds_bbxs([points], [np.array(veh_bbxs_center)])
 
             # construct meta dict
             fdict = cs.fdict_template()
@@ -223,6 +233,7 @@ def convert_v2x_c(root_dir, meta_out_dir):
 
 
 def convert_v2x_seq(root_dir, meta_out_dir):
+    split = "test"
     inf_info_file = os.path.join(root_dir, "infrastructure-side/data_info.json")
     inf_info = load_info_to_dict(inf_info_file)
     veh_info_file = os.path.join(root_dir, "vehicle-side/data_info.json")
@@ -230,8 +241,9 @@ def convert_v2x_seq(root_dir, meta_out_dir):
     frame_pairs = load_json(os.path.join(root_dir, "cooperative/data_info.json"))
 
     meta_dict = {}
-    for pi, pdict in frame_pairs.items():
+    for pdict in frame_pairs:
         scenario = pdict['vehicle_sequence']
+        #############################################################
         # processing vehicle meta
         cur_veh_info = veh_info[pdict['vehicle_frame']]
         tf_novatel2world = calib_to_tf_matrix(
@@ -244,50 +256,33 @@ def convert_v2x_seq(root_dir, meta_out_dir):
         veh_lidar_pose = pclib.tf2pose(tf_lidar2world)
         veh_pose = pclib.tf2pose(tf_novatel2world)
 
-        veh_lidar_time = float(cur_veh_info['pointcloud_timestamp']) * 1e-6 - global_time_offset
+        veh_lidar_time = float(cur_veh_info['pointcloud_timestamp']) * 1e-6
         veh_lidar_file = os.path.join("vehicle-side", cur_veh_info['pointcloud_path'])
         veh_bbxs_center, _ = load_label(
             os.path.join(root_dir, "vehicle-side", cur_veh_info['label_lidar_std_path'])
         )
 
+        ###############################################################
         # process infra info
         cur_inf_info = inf_info[pdict['infrastructure_frame']]
         tf_virtuallidar2world = calib_to_tf_matrix(
             os.path.join(root_dir, "infrastructure-side", cur_inf_info['calib_virtuallidar_to_world_path'])
         )
-
-        inf_lidar_time = float(cur_inf_info['pointcloud_timestamp']) * 1e-6 - global_time_offset
-        veh_lidar_file = os.path.join("infrastructure-side", cur_inf_info['pointcloud_path'])
-        veh_bbxs_center, _ = load_label(
+        inf_lidar_pose = pclib.tf2pose(tf_virtuallidar2world)
+        inf_lidar_time = float(cur_inf_info['pointcloud_timestamp']) * 1e-6
+        inf_lidar_file = os.path.join("infrastructure-side", cur_inf_info['pointcloud_path'])
+        inf_bbxs_center, _ = load_label(
             os.path.join(root_dir, "infrastructure-side", cur_inf_info['label_lidar_std_path'])
         )
+        inf_bbxs_center = []
 
+        ###############################################################
         # process global meta
-        coop_label, _ = load_label(
+        coop_bbxs_center, _ = load_label(
             os.path.join(root_dir, "cooperative", "label", f"{pdict['vehicle_frame']}.json")
         )
-        world_bbxs_center, world_bbxs_corner = load_label(coop_label_path)
-        coop_bbxs_corner =  pclib.rotate_box_corners_with_tf_np(
-            np.array(world_bbxs_corner), np.linalg.inv(tf_lidar2world)
-        )
-        coop_bbxs_center = np.concatenate(
-            [np.array(world_bbxs_center)[:, :2],
-             corners_to_boxes_3d(coop_bbxs_corner)],
-            axis=1
-        ).tolist()
 
-        if not os.path.exists(inf_label_path):
-            inf_bbxs_center = pclib.rotate_box_corners_with_tf_np(
-                np.array(world_bbxs_corner), np.linalg.inv(tf_virtuallidar2world)
-            )
-            inf_bbxs_center = np.concatenate(
-                [np.array(world_bbxs_center)[:, :2],
-                 corners_to_boxes_3d(inf_bbxs_center)],
-                axis=1
-            ).tolist()
-        else:
-            inf_bbxs_center, _ = load_label(inf_label_path)
-
+        ###############################################################
         # construct meta dict
         fdict = cs.fdict_template()
         # add cav lidar meta
@@ -321,21 +316,23 @@ def convert_v2x_seq(root_dir, meta_out_dir):
         fdict['meta']['ego_lidar_pose'] = veh_lidar_pose
         if scenario not in meta_dict:
             meta_dict[scenario] = {}
-        meta_dict[scenario][frame] = fdict
+        meta_dict[scenario][pdict['vehicle_frame']] = fdict
     # save meta
     os.makedirs(meta_out_dir, exist_ok=True)
     for scenario, meta in meta_dict.items():
         meta_file = os.path.join(meta_out_dir, f'{scenario}.json')
         save_json(meta, meta_file)
-    with open(os.path.join(meta_out_dir, f'{sp}.txt'), 'w') as fh:
+    with open(os.path.join(meta_out_dir, f'{split}.txt'), 'w') as fh:
         fh.write('\n'.join(list(meta_dict.keys())))
 
 
 
 if __name__=="__main__":
-    root_dir = "/koko/V2X-Seq-SPD"
-    meta_out_dir = "/koko/cosense3d/dairv2x-seq"
-    convert_v2x_seq(root_dir, meta_out_dir)
+    root_dir = "/koko/DAIR-V2X"
+    meta_out_dir = "/koko/cosense3d/dairv2x"
+    # root_dir = "/home/data/DAIR-V2X-Seq/SPD-Example"
+    # meta_out_dir = "/home/data/cosense3d/dairv2x_seq"
+    convert_v2x_c(root_dir, meta_out_dir)
     # meta_dict = load_meta(os.path.join(meta_out_dir, 'dairv2x'))
     # o3d_play_sequence(meta_dict, root_dir)
 

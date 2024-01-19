@@ -2,20 +2,22 @@ import open3d as o3d
 import copy
 
 
-def register_pcds(src_file, tgt_file, initial_transf, visualize=False):
+def register_pcds(source_cloud, target_cloud, initial_transf, visualize=False):
     # Load point clouds
-    source_cloud = o3d.io.read_point_cloud(src_file)
-    target_cloud = o3d.io.read_point_cloud(tgt_file)
+    if isinstance(source_cloud, str):
+        source_cloud = o3d.io.read_point_cloud(source_cloud)
+    if isinstance(target_cloud, str):
+        target_cloud = o3d.io.read_point_cloud(target_cloud)
 
     # source_cloud.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=2, max_nn=50))
     # target_cloud.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=2, max_nn=50))
 
     # Perform ICP registration
     icp_result = o3d.pipelines.registration.registration_icp(
-                    source_cloud, target_cloud, 3, initial_transf,
+                    source_cloud, target_cloud, 1, initial_transf,
               o3d.pipelines.registration.TransformationEstimationPointToPoint())
     icp_result = o3d.pipelines.registration.registration_icp(
-                    source_cloud, target_cloud, 1, icp_result.transformation,
+                    source_cloud, target_cloud, 0.5, icp_result.transformation,
               o3d.pipelines.registration.TransformationEstimationPointToPoint())
 
     # Obtain the final transformation matrix
@@ -49,7 +51,7 @@ def register_pcds(src_file, tgt_file, initial_transf, visualize=False):
     #     o3d.visualization.draw_geometries(pcds)
 
         # Visualize the aligned point clouds
-        source_aligned0.paint_uniform_color([1, 0.706, 0])
+        source_aligned0.paint_uniform_color([1, 0, 0])
         source_aligned.paint_uniform_color([1, 0.706, 0])
         target_cloud.paint_uniform_color([0, 0.651, 0.929])
         o3d.visualization.draw_geometries([source_aligned0, target_cloud])

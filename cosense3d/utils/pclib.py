@@ -164,8 +164,7 @@ def load_pcd(pcd_file, return_o3d=False):
             return o3d.io.read_point_cloud(pcd_file)
         else:
             pcd = point_cloud_from_path(pcd_file)
-            xyz = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1).astype(float)
-            lidar_dict['xyz'] = xyz
+            lidar_dict['xyz'] = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1).astype(float)
             # we save the intensity in the first channel
             if 'intensity' in pcd.fields:
                 lidar_dict['intensity'] = pcd.pc_data['intensity']
