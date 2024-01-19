@@ -31,8 +31,9 @@ class MinkUnet(BaseModule):
         # For determine batchnorm type: if the model is trained on multiple GPUs with ME.MinkowskiBatchNorm,
         # the BN would perform differently in eval mode because the running_mean and running_var would be
         # different to training mode, this is caused by different number of tracked batches, therefore if
-        # ditributed training is used for this model, ME.MinkowskiSyncBatchNorm should be used, otherwise
-        # ME.MinkowskiBatchNorm should be used.
+        # ditributed training is used for this model, either ME.MinkowskiSyncBatchNorm should be used, or
+        # the running mean and var should be adapted.
+        # TODO: adapt running mean and var in inference mode if model is trained with DDP
         self.dist = dist
         if cache_strides is None:
             self.cache_strides = [stride]
@@ -93,12 +94,7 @@ class MinkUnet(BaseModule):
                 nn.init.xavier_uniform_(p)
 
     def forward(self, points: list, **kwargs):
-        try:
-            res = self.forward_unet(points, **kwargs)
-        except RuntimeError as e:
-            for p in points:
-                print(p.shape)
-            raise e
+        res = self.forward_unet(points, **kwargs)
 
         if self.height_compression is not None:
             res = self.forward_height_compression(res)
