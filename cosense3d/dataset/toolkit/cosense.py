@@ -597,76 +597,13 @@ class CoSenseDataConverter:
             plt.close()
 
 
-    @staticmethod
-    def optimize_trajectory(meta_path, root_dir):
-        """
-        This function iterates over scenarios, for each scenario it does the following steps:
-        1. register point clouds sequentially for each agent to get accurate trajectory of agents.
-        Before registration, the points belonging to the labeled objets with high dynamics are removed.
-        After registration of each sequence pair, the merged point cloud is down-sampled to save space.
-        2. match the registered point clouds of different agents to get optimized relative poses.
-        3. recover the relative pose to the world pose.
-
-        Parameters
-        ----------
-        meta_path: directory of meta files
-        root_dir: root dir of data
-
-        Returns
-        -------
-        meta: meta information with updated poses of agents
-        """
-        import open3d as o3d
-        ignore_aids = ['1']
-        mfiles = glob.glob(os.path.join(meta_path, '*.json'))[:1]
-        for mf in mfiles:
-            sdict = load_json(mf)
-            agents_reg = {}
-            frames = sorted(sdict.keys())[:5]
-            for f in frames:
-                fdict = sdict[f]
-                for ai, adict in fdict['agents'].items():
-                    if ai in ignore_aids:
-                        continue
-                    pose = pclib.pose_to_transformation(adict['lidar']['0']['pose'])
-                    pcd = o3d.io.read_point_cloud(os.path.join(root_dir, adict['lidar']['0']['filename']))
-                    points = np.array(pcd.points)
-                    boxes = np.array(adict['gt_boxes'])[:, [2, 3, 4, 5, 6, 7, 10]]
-                    in_box_mask = points_in_boxes_cpu(points, boxes).any(axis=0)
-                    pcd.points = o3d.utility.Vector3dVector(points[np.logical_not(in_box_mask)])
-                    if ai not in agents_reg:
-                        agents_reg[ai] = {'last_pose': pose,
-                                          'last_pcd': pcd,
-                                          'pcd_merged': pcd,
-                                          'sequence_info': {f: {'lidar_pose': pose}}}
-                    else:
-                        source_pcd = pcd
-                        target_pcd = agents_reg[ai]['last_pcd']
-                        tf_init = np.linalg.inv(agents_reg[ai]['last_pose']) @ pose
-                        tf_out = register_pcds(source_pcd, target_pcd, tf_init, visualize=False)
-                        pose = agents_reg[ai]['last_pose'] @ tf_out
-                        pcd_merged = agents_reg[ai]['pcd_merged'].transform(np.linalg.inv(tf_out)) + source_pcd
-                        pcd_merged = pcd_merged.voxel_down_sample(voxel_size=0.1)
-                        agents_reg[ai]['last_pose'] = pose
-                        agents_reg[ai]['last_pcd'] = pcd
-                        agents_reg[ai]['pcd_merged'] = pcd_merged
-                        agents_reg[ai]['sequence_info'][f] = {'lidar_pose': pose}
-
-            # o3d.visualization.draw_geometries([agents_reg['0']['pcd_merged']])
-            o3d.io.write_point_cloud("/home/data/DAIR-V2X/veh.pcd", agents_reg['0']['pcd_merged'])
-            # o3d.io.write_point_cloud("/home/data/DAIR-V2X/infra.pcd", agents_reg['1']['pcd_merged'])
-            for ai in agents_reg:
-                agents_reg[ai].pop('pcd_merged')
-                agents_reg[ai].pop('last_pcd')
-            np.savez("/home/data/DAIR-V2X/info.npz", agents_reg)
-
 
 if __name__=="__main__":
-    # cosense3d = CoSenseDataConverter(
-    #     "/koko/LUMPI/lumpi_selected/data",
-    #     "/koko/LUMPI/lumpi_selected/meta",
-    #     'all'
-    # )
+    cosense3d = CoSenseDataConverter(
+        "/koko/LUMPI/lumpi_selected/data",
+        "/koko/LUMPI/lumpi_selected/meta",
+        'all'
+    )
     # cosense3d.to_kitti("/koko/LUMPI/kitti_test")
     # cosense3d.to_sustech("/koko/LUMPI/lumpi_selected_sustech")
     # cosense3d.to_opv2v("/media/hdd/yuan/koko/data/LUMPI/opv2v_fmt")
@@ -679,7 +616,3 @@ if __name__=="__main__":
     # cosense.update_from_sustech('/koko/LUMPI/sustech_fmt')
     # cosense.parse_global_bbox_velo(cosense.meta, cosense.data_path, cosense.meta_path)
     # cosense.draw_sample_distributions(cosense.meta_path)
-    CoSenseDataConverter.optimize_trajectory(
-        "/home/data/cosense3d/dairv2x",
-        "/home/data/DAIR-V2X"
-    )

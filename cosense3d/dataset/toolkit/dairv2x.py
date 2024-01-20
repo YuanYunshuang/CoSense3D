@@ -1,13 +1,16 @@
+import copy
 import glob
 import os
 import tqdm
 import numpy as np
+import open3d as o3d
 
 from cosense3d.utils import pclib
 from cosense3d.utils.misc import load_json, save_json
 from cosense3d.utils.box_utils import corners_to_boxes_3d
 from cosense3d.dataset.toolkit import register_pcds
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
+from cosense3d.ops.utils import points_in_boxes_cpu
 from cosense3d.utils.pcdio import point_cloud_from_path
 from cosense3d.utils.vislib import o3d_draw_frame_data, \
     o3d_draw_agent_data, o3d_draw_pcds_bbxs
@@ -326,14 +329,258 @@ def convert_v2x_seq(root_dir, meta_out_dir):
         fh.write('\n'.join(list(meta_dict.keys())))
 
 
+def parse_static_pcd(adict, root_dir):
+    pose = pclib.pose_to_transformation(adict['lidar']['0']['pose'])
+    pcd = o3d.io.read_point_cloud(os.path.join(root_dir, adict['lidar']['0']['filename']))
+    points = np.array(pcd.points)
+    boxes = np.array(adict['gt_boxes'])[:, [2, 3, 4, 5, 6, 7, 10]]
+    in_box_mask = points_in_boxes_cpu(points, boxes).any(axis=0)
+    pcd.points = o3d.utility.Vector3dVector(points[np.logical_not(in_box_mask)])
+    return pcd, pose
+
+
+def register_sequence(sdict, frames, root_dir, ignore_ids=[], vis=False):
+    agents_reg = {}
+    for f in tqdm.tqdm(frames):
+        # print(f)
+        fdict = sdict[f]
+        for ai, adict in fdict['agents'].items():
+            if ai in ignore_ids:
+                continue
+            pcd, pose = parse_static_pcd(adict, root_dir)
+            if ai not in agents_reg:
+                agents_reg[ai] = {
+                                  'init_pose': pose,
+                                  'last_pose_old': pose,
+                                  'last_pose_new': pose,
+                                  'last_pcd': pcd,
+                                  'pcd_merged': copy.copy(pcd).transform(pose),
+                                  'last_frame': f,
+                                  'sequence_info': {f: {'lidar_pose': pose}}}
+            else:
+                source_pcd = pcd
+                target_pcd = agents_reg[ai]['last_pcd']
+                tf_init = np.linalg.inv(agents_reg[ai]['last_pose_old']) @ pose
+                tf_out = register_pcds(source_pcd, target_pcd, tf_init, [0.2], visualize=vis)
+                pose_new = agents_reg[ai]['last_pose_new'] @ tf_out
+                pcd_merged = agents_reg[ai]['pcd_merged']
+                pcd_transformed = copy.copy(source_pcd).transform(pose_new)
+                # if vis:
+                #     pcd_transformed.paint_uniform_color([1, 0.706, 0])
+                #     pcd_merged.paint_uniform_color([0, 0.651, 0.929])
+                #     o3d.visualization.draw_geometries([pcd_merged, pcd_transformed])
+                pcd_merged = pcd_merged + pcd_transformed
+                pcd_merged = pcd_merged.voxel_down_sample(voxel_size=0.1)
+
+                agents_reg[ai]['last_pose_old'] = pose
+                agents_reg[ai]['last_pose_new'] = pose_new
+                agents_reg[ai]['last_pcd'] = pcd
+                agents_reg[ai]['pcd_merged'] = pcd_merged
+                agents_reg[ai]['sequence_info'][f] = {'lidar_pose': pose}
+
+    return agents_reg
+
+
+def register_pcds_to_blocks(seq, sdict, root_dir, idx=0):
+    frames = sorted(sdict.keys())
+    sub_seq = frames[:1]
+    cnt = 0
+    for i, f in enumerate(frames[1:]):
+        if (i == len(frames) - 2 or int(f) - int(sub_seq[-1]) > 2):
+            if i == len(frames) - 2:
+                sub_seq.append(f)
+            if len(sub_seq) >= 8:
+                vis = False
+                agents_reg = register_sequence(sdict, sub_seq, root_dir, ['1'], vis)
+                pcd_merged = agents_reg['0']['pcd_merged']
+                o3d.visualization.draw_geometries([pcd_merged])
+                o3d.io.write_point_cloud(f"{root_dir}/agent0_seq{seq}_{cnt}.pcd", pcd_merged)
+                info_file = f"{root_dir}/agent0_seq{seq}_{cnt}.npy"
+                np.save(info_file, {k: v for k, v in agents_reg['0'].items() if 'pcd' not in k}, allow_pickle=True)
+                cnt += 1
+            if not i == len(frames) - 2:
+                sub_seq = [f]
+        else:
+            sub_seq.append(f)
+
+
+def optimize_trajectory(seq, sdict, root_dir, out_meta_dir, ego_agent_id, idx, sub_idx):
+    """
+    This function iterates over scenarios, for each scenario it does the following steps:
+    1. register point clouds sequentially for each agent to get accurate trajectory of agents.
+    Before registration, the points belonging to the labeled objets with high dynamics are removed.
+    After registration of each sequence pair, the merged point cloud is down-sampled to save space.
+    2. match the registered point clouds of different agents to get optimized relative poses.
+    3. recover the relative pose to the world pose.
+
+    Parameters
+    ----------
+    meta_path: directory of meta files
+    root_dir: root dir of data
+
+    Returns
+    -------
+    meta: meta information with updated poses of agents
+    """
+    info_file = f"{root_dir}/agent0_seq{seq}_{sub_idx}.npy"
+    ego_info = np.load(info_file, allow_pickle=True).item()
+    pcd_merged = o3d.io.read_point_cloud(f"{root_dir}/agent0_seq{seq}_{sub_idx}.pcd")
+    frames = sorted(ego_info['sequence_info'].keys())
+    sub_seq_dict = {}
+
+    infra_info = sdict[frames[0]]['agents']['1']
+    pcd, pose = parse_static_pcd(infra_info, root_dir)
+    tf_init = pose
+    # o3d.visualization.draw_geometries([pcd_merged])
+    tf_out = register_pcds(pcd, pcd_merged, tf_init, [1, 0.2], visualize=True)
+    pose = pclib.tf2pose(tf_out)
+
+    for f in tqdm.tqdm(frames):
+        fdict = sdict[f]
+        fdict['agents']['1']['lidar']['0']['pose'] = pose
+        fdict['agents']['1']['pose'] = pose
+
+        lidar_pose_new = ego_info['sequence_info'][f]['lidar_pose']
+        lidar_pose_old = pclib.pose_to_transformation(fdict['agents'][ego_agent_id]['lidar']['0']['pose'])
+        # lidar_old2new = np.linalg.inv(lidar_pose_new) @ lidar_pose_old
+        vpose_to_lpose = np.linalg.inv(lidar_pose_old) @ pclib.pose_to_transformation(fdict['agents'][ego_agent_id]['pose'])
+        vpose_new = lidar_pose_new @ vpose_to_lpose
+        fdict['agents'][ego_agent_id]['pose'] = pclib.tf2pose(vpose_new)
+        fdict['agents'][ego_agent_id]['lidar']['0']['pose'] = pclib.tf2pose(lidar_pose_new)
+        sub_seq_dict[f] = fdict
+        if int(f) > 1002:
+            vis_pcd, vis_pose = parse_static_pcd(fdict['agents'][ego_agent_id], root_dir)
+            vis_pcd2, vis_pose2 = parse_static_pcd(fdict['agents']['1'], root_dir)
+            vis_pcd = vis_pcd.transform(lidar_pose_new)
+            vis_pcd2 = vis_pcd2.transform(vis_pose2)
+
+            # o3d.visualization.draw_geometries([pcd_merged])
+            corr = register_pcds(vis_pcd2, vis_pcd, np.eye(4), [1, 0.2], visualize=True)
+            vis_pose2 = corr @ vis_pcd2
+            vis_pose2 = pclib.tf2pose(vis_pose2)
+            fdict['agents']['1']['lidar']['0']['pose'] = vis_pose2
+            fdict['agents']['1']['pose'] = vis_pose2
+
+            # vis_pcd.paint_uniform_color([1, 0.706, 0])
+            # vis_pcd2.paint_uniform_color([0, 0.651, 0.929])
+            # o3d.visualization.draw_geometries([vis_pcd, vis_pcd2.transform(corr)])
+
+    save_json(sub_seq_dict, os.path.join(out_meta_dir, f"{seq}_{sub_idx}.json"))
+
+
+def optimize_poses(meta_path):
+    mfiles = glob.glob(os.path.join(meta_path, '*.json'))[3:]
+    mfiles = ["/koko/cosense3d/dairv2x/45.json"]
+    for idx, mf in enumerate(mfiles):
+        sdict = load_json(mf)
+        seq = os.path.basename(mf)[:-5]
+        print('###########################', seq, len(sdict))
+
+        # register_pcds_to_blocks(
+        #     seq,
+        #     sdict,
+        #     "/home/data/DAIR-V2X",
+        #     idx
+        # )
+        files = glob.glob(f"/home/data/DAIR-V2X/agent0_seq{seq}_*.npy")
+        for sub_idx in range(len(files)):
+            optimize_trajectory(seq, sdict,
+                "/home/data/DAIR-V2X",
+                "/home/data/DAIR-V2X/meta",
+                '0',
+                idx,
+                sub_idx=sub_idx
+            )
+
+
+def register_step_one(mf):
+    """Find vehicle that is most close to infra"""
+    sdict = load_json(mf)
+    seq = os.path.basename(mf)[:-5]
+    frames = sorted(sdict.keys())
+    min_dist = 1000
+    min_dist_frame = frames[0]
+    for f in frames:
+        fdict = sdict[f]
+        veh_pose = fdict['agents']['0']['lidar']['0']['pose']
+        inf_pose = fdict['agents']['1']['lidar']['0']['pose']
+        dist = np.sqrt((veh_pose[0] - inf_pose[0]) ** 2 + (inf_pose[1] - veh_pose[1]) ** 2)
+        if dist < min_dist:
+            min_dist = dist
+            min_dist_frame = f
+    return min_dist_frame, min_dist
+
+
+def register_step_two(start_frame, mf, meta_out_dir):
+    """Register point clouds"""
+    sdict = load_json(mf)
+    seq = os.path.basename(mf)[:-5]
+    frames = sorted(sdict.keys())
+    total_frames = len(frames)
+    start_idx = frames.index(start_frame)
+    ref_pcd, ref_tf = parse_static_pcd(sdict[start_frame]['agents']['1'], root_dir)
+    ref_pose = pclib.tf2pose(ref_tf)
+    ref_pcd = ref_pcd.transform(ref_tf)
+    idx_l = start_idx
+    idx_r = start_idx + 1
+    vis = False
+    cnt = 0
+    while True:
+        if idx_l < 0 and idx_r >= len(frames):
+            break
+        if idx_l >= 0:
+            cur_frame = frames[idx_l]
+            pcd, tf = parse_static_pcd(sdict[cur_frame]['agents']['0'], root_dir)
+            tf = register_pcds(pcd, ref_pcd, tf, [1.6, 0.5], vis, cur_frame)
+            pose = pclib.tf2pose(tf)
+            sdict[cur_frame]['agents']['0']['lidar']['0']['pose'] = pose
+            sdict[cur_frame]['agents']['0']['pose'] = pose
+            sdict[cur_frame]['agents']['1']['lidar']['0']['pose'] = ref_pose
+            sdict[cur_frame]['agents']['1']['pose'] = ref_pose
+            ref_pcd = ref_pcd + pcd.transform(tf)
+            idx_l -= 1
+            cnt += 1
+        if idx_r < len(frames):
+            cur_frame = frames[idx_r]
+            pcd, tf = parse_static_pcd(sdict[cur_frame]['agents']['0'], root_dir)
+            tf = register_pcds(pcd, ref_pcd, tf, [1.6, 0.5], vis, cur_frame)
+            pose = pclib.tf2pose(tf)
+            sdict[cur_frame]['agents']['0']['lidar']['0']['pose'] = pose
+            sdict[cur_frame]['agents']['0']['pose'] = pose
+            sdict[cur_frame]['agents']['1']['lidar']['0']['pose'] = ref_pose
+            sdict[cur_frame]['agents']['1']['pose'] = ref_pose
+            ref_pcd = ref_pcd + pcd.transform(tf)
+            idx_r += 1
+            cnt += 1
+
+        ref_pcd = ref_pcd.voxel_down_sample(voxel_size=0.1)
+        print(f"\rStep2: registered [{cnt}/{total_frames}] frames",end='',flush=True)
+
+    save_json(sdict, os.path.join(meta_out_dir, f"{seq}.json"))
+
+
 
 if __name__=="__main__":
     root_dir = "/koko/DAIR-V2X"
-    meta_out_dir = "/koko/cosense3d/dairv2x"
+    meta_out_dir = "/koko/DAIR-V2X/meta"
+    meta_path = "/home/data/cosense3d/dairv2x"
     # root_dir = "/home/data/DAIR-V2X-Seq/SPD-Example"
     # meta_out_dir = "/home/data/cosense3d/dairv2x_seq"
-    convert_v2x_c(root_dir, meta_out_dir)
+    # convert_v2x_c(root_dir, meta_out_dir)
     # meta_dict = load_meta(os.path.join(meta_out_dir, 'dairv2x'))
     # o3d_play_sequence(meta_dict, root_dir)
+    # optimize_poses(meta_path)
+
+    # with open("/home/data/DAIR-V2X/meta/test.txt", 'w') as fh:
+    #     files = glob.glob("/home/data/DAIR-V2X/meta/*.json")
+    #     for f in files:
+    #         fh.writelines(os.path.basename(f)[:-5] + '\n')
+    mf = "/home/data/cosense3d/dairv2x/35.json"
+    min_dist_frame, min_dist = register_step_one(mf)
+    sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
+
+
+
+
 
 
