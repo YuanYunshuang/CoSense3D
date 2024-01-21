@@ -1,5 +1,6 @@
 import open3d as o3d
 import copy
+import numpy as np
 
 
 def register_pcds(source_cloud, target_cloud, initial_transf, thr=0.2, visualize=False, title="PCD"):
@@ -65,3 +66,48 @@ def register_pcds(source_cloud, target_cloud, initial_transf, thr=0.2, visualize
         o3d.visualization.draw_geometries([source_aligned, target_cloud], window_name=title)
 
     return copy.deepcopy(transformation_matrix)
+
+
+def callback_registrations(source, target, source_points, target_points):
+    """
+    Callback function for point picking. Registers two point clouds using selected corresponding points.
+    """
+    print("Point picking callback called!")
+
+    # Corresponding points
+    correspondences = np.asarray([source_points, target_points])
+
+    # Create Open3D point cloud from numpy arrays
+    source_pc = o3d.geometry.PointCloud()
+    source_pc.points = o3d.utility.Vector3dVector(source.points[source_points])
+    target_pc = o3d.geometry.PointCloud()
+    target_pc.points = o3d.utility.Vector3dVector(target.points[target_points])
+
+    # Perform registration
+    transformation = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+        source_pc, target_pc, correspondences,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+        o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500)
+    )
+
+    # Apply the transformation to the source point cloud
+    source.transform(transformation.transformation)
+
+    # Visualize the result
+    o3d.visualization.draw_geometries([source, target])
+    return transformation
+
+
+def click_register(source, target):
+    # Visualize the two point clouds
+    o3d.visualization.draw_geometries([source, target])
+
+    # Register point clouds by picking corresponding points
+    print("Pick corresponding points in both point clouds. Press 'Q' to finish picking.")
+    source_points = o3d.visualization.PointCloudPickPoints()
+    target_points = o3d.visualization.PointCloudPickPoints()
+    transformation = o3d.visualization.draw_geometries_with_editing(
+        [source, target, source_points, target_points],
+                     callback=callback_registrations,
+                     window_name="Pick corresponding points")
+    return transformation

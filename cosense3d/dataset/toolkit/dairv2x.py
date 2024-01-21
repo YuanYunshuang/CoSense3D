@@ -8,7 +8,7 @@ import open3d as o3d
 from cosense3d.utils import pclib
 from cosense3d.utils.misc import load_json, save_json
 from cosense3d.utils.box_utils import corners_to_boxes_3d
-from cosense3d.dataset.toolkit import register_pcds
+from cosense3d.dataset.toolkit import register_pcds, registration
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 from cosense3d.ops.utils import points_in_boxes_cpu
 from cosense3d.utils.pcdio import point_cloud_from_path
@@ -112,12 +112,11 @@ def convert_v2x_c(root_dir, meta_out_dir):
     train = load_json(os.path.join(root_dir, new_label_path, 'train.json'))
     val = load_json(os.path.join(root_dir, new_label_path, 'val.json'))
     split = {
-                # 'train': train,
-                 'test': val
+                'train': train,
+                 # 'test': val
              }
 
     for sp, frames in split.items():
-        visualization = True
         for frame in tqdm.tqdm(frames):
             cur_veh_info = veh_info[frame]
             scenario = cur_veh_info['batch_id']
@@ -508,6 +507,7 @@ def register_step_one(mf):
         if dist < min_dist:
             min_dist = dist
             min_dist_frame = f
+    print(f"Step1: registration starts from frame {min_dist_frame}")
     return min_dist_frame, min_dist
 
 
@@ -531,7 +531,17 @@ def register_step_two(start_frame, mf, meta_out_dir):
         if idx_l >= 0:
             cur_frame = frames[idx_l]
             pcd, tf = parse_static_pcd(sdict[cur_frame]['agents']['0'], root_dir)
-            tf = register_pcds(pcd, ref_pcd, tf, [1.6, 0.5], vis, cur_frame)
+            if cnt == -1:
+                # tf = registration.manual_registration(pcd.transform(tf), ref_pcd)
+
+                tf_corr = np.array([ [ 9.98532892e-01,  5.34621722e-02,  8.59413959e-03, -1.22072297e+02],
+                             [-5.34946946e-02,  9.98561645e-01,  3.59984429e-03,  2.15912680e+02],
+                             [-8.38932267e-03, -4.05430380e-03,  9.99956590e-01,  4.32884527e+01],
+                             [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  1.00000000e+00]])
+                tf = tf_corr @ tf
+
+            else:
+                tf = register_pcds(pcd, ref_pcd, tf, [1.6, 0.5], vis, cur_frame)
             pose = pclib.tf2pose(tf)
             sdict[cur_frame]['agents']['0']['lidar']['0']['pose'] = pose
             sdict[cur_frame]['agents']['0']['pose'] = pose
@@ -557,7 +567,7 @@ def register_step_two(start_frame, mf, meta_out_dir):
         print(f"\rStep2: registered [{cnt}/{total_frames}] frames",end='',flush=True)
 
     save_json(sdict, os.path.join(meta_out_dir, f"{seq}.json"))
-
+    print('\n')
 
 
 if __name__=="__main__":
@@ -566,7 +576,7 @@ if __name__=="__main__":
     meta_path = "/home/data/cosense3d/dairv2x"
     # root_dir = "/home/data/DAIR-V2X-Seq/SPD-Example"
     # meta_out_dir = "/home/data/cosense3d/dairv2x_seq"
-    # convert_v2x_c(root_dir, meta_out_dir)
+    # convert_v2x_c(root_dir, meta_path)
     # meta_dict = load_meta(os.path.join(meta_out_dir, 'dairv2x'))
     # o3d_play_sequence(meta_dict, root_dir)
     # optimize_poses(meta_path)
@@ -575,9 +585,13 @@ if __name__=="__main__":
     #     files = glob.glob("/home/data/DAIR-V2X/meta/*.json")
     #     for f in files:
     #         fh.writelines(os.path.basename(f)[:-5] + '\n')
-    mf = "/home/data/cosense3d/dairv2x/35.json"
-    min_dist_frame, min_dist = register_step_one(mf)
-    sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
+    mfs = sorted(glob.glob("/home/data/cosense3d/dairv2x/*.json"))
+    # mf = "/home/data/cosense3d/dairv2x/11.json"
+    for mf in mfs:
+        if int(os.path.basename(mf)[:-5]) <= 10:
+            continue
+        min_dist_frame, min_dist = register_step_one(mf)
+        sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
 
 
 
