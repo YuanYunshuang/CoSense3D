@@ -6,7 +6,7 @@ export PYTORCH_CUDA_ALLOC_CONF=MAX_SPLIT_SIZE_MB=256
 torchrun \
 --nproc_per_node=4 \
 cosense3d/tools/agent_runner.py \
---config ./cosense3d/config/streamLTS.yaml \
+--config ./cosense3d/config/stream_lidar_st_v6.yaml \
 --mode train \
 --gpus 4 \
 --data-path /koko/yunshuang/OPV2V/temporal \
