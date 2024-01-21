@@ -5,7 +5,7 @@ DATASET:
   data_path: /mnt/t7/data/OPV2Vt/temporal
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-142, -40, -3.0, 142, 4, 1.0]
+    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
     voxel_size:  &voxel_size [0.4, 0.4, 0.4]
   batch_size_train: 2
   batch_size_test: 1
@@ -13,17 +13,16 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 8
-  clean_seq: True
-  train_pipeline: 'pycfg.streamLTS.pipeline_cpu'
-  test_pipeline: 'pycfg.streamLTS.pipeline_cpu'
+  train_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
+  test_pipeline: 'pycfg.stream_lidar_st_v2.pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
-  log_every: 1
+  log_every: 10
   max_epoch: 50
   gpus: 0
-  hooks: 'pycfg.streamLTS.train_hooks'
+  hooks: 'pycfg.stream_lidar_st_v2.train_hooks'
   optimizer:
     lr: 0.0002
     weight_decay: 1e-2
@@ -32,31 +31,26 @@ TRAIN:
     policy: 'TransformerAdaptiveScheduler'
     dim_embed: 256
     warmup_steps: 4000
-    global_fade_ratio: 1.0
 
 TEST:
-  hooks: 'pycfg.streamLTS.test_hooks'
+  hooks: 'pycfg.stream_lidar_st_v2.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  batch_seq: True
-  data_manager: 'pycfg.streamLTS.data_manager'
-  shared_modules: 'pycfg.streamLTS.shared_modules'
-  forward_runner:
-    chunk_size: 4
+  data_manager: 'pycfg.stream_lidar_st_v2.data_manager'
+  shared_modules: 'pycfg.stream_lidar_st_v2.shared_modules'
   cav_manager:
-    prototype: streamLTS.StreamLidarCAV
+    prototype: stream_lidar_st_v2.StreamLidarCAV
     memory_len: *seq_len
     memory_emb_dims: 256
     memory_num_propagated: 256
     ref_pts_dim: 3
     all_grad: false
-    seq_len: *seq_len
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.streamLTS.plots'
+    plots: 'pycfg.stream_lidar_st_v2.plots'
 
 
 
