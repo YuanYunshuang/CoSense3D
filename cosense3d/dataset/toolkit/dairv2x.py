@@ -4,10 +4,11 @@ import os
 import tqdm
 import numpy as np
 import open3d as o3d
+from scipy.optimize import linear_sum_assignment
 
-from cosense3d.utils import pclib
+from cosense3d.utils import pclib, vislib
 from cosense3d.utils.misc import load_json, save_json
-from cosense3d.utils.box_utils import corners_to_boxes_3d
+from cosense3d.utils.box_utils import corners_to_boxes_3d, transform_boxes_3d
 from cosense3d.dataset.toolkit import register_pcds, registration
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 from cosense3d.ops.utils import points_in_boxes_cpu
@@ -570,9 +571,91 @@ def register_step_two(start_frame, mf, meta_out_dir):
     print('\n')
 
 
+def select_sub_scenes(meta_in, meta_out, split):
+    with open(os.path.join(meta_in, f"{split}.txt"), 'r') as f:
+        scenes = f.read().splitlines()
+
+    sub_scenes = []
+    for s in scenes:
+        sdict = load_json(os.path.join(meta_in, f"{s}.json"))
+        frames = sorted(sdict.keys())
+        sub_seq = frames[:1]
+        cnt = 0
+        for i, f in enumerate(frames[1:]):
+            if (i == len(frames) - 2 or int(f) - int(sub_seq[-1]) > 2):
+                if i == len(frames) - 2:
+                    sub_seq.append(f)
+                if len(sub_seq) >= 8:
+                    cnt += 1
+                if not i == len(frames) - 2:
+                    sub_seq = [f]
+            else:
+                sub_seq.append(f)
+
+
+def parse_timestamped_boxes(adict, root_dir):
+    lf = os.path.join(root_dir, adict['lidar']['0']['filename'])
+    pcd = point_cloud_from_path(lf)
+    boxes = np.array(adict['gt_boxes'])
+    if 'timestamp' in pcd.fields:
+        points = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1)
+        points_inds = points_in_boxes_cpu(points, boxes[:, [2, 3, 4, 5, 6, 7, 10]]).astype(bool)
+        times = pcd.pc_data['timestamp']
+        timestamps = []
+        for inds in points_inds:
+            if inds.sum() == 0:
+                raise IOError
+            else:
+                ts = times[inds]
+                timestamps.append(ts.mean())
+        timestamps = np.array(timestamps)
+    else:
+        timestamps = np.zeros_like(boxes[:, 0]) + adict['lidar']['0']['time']
+
+    return timestamps, boxes
+
+
+def parse_global_bboxes(mf, meta_out, root_dir):
+    """Step three"""
+    sdict = load_json(mf)
+    frames = sorted(sdict.keys())
+    tracklets = {}
+    id_counter = 0
+    for f in frames:
+        fdict = sdict[f]
+        for ai, adict in fdict['agents'].items():
+            timestamps, boxes = parse_timestamped_boxes(adict, root_dir)
+            tf = pclib.pose_to_transformation(adict['lidar']['0']['pose'])
+            boxes_global = transform_boxes_3d(boxes, tf, mode=11)
+            if len(tracklets) == 0:
+                for t, box in zip(timestamps, boxes_global):
+                    tracklets[id_counter] = [[t] + box[1:].tolist()]
+                    id_counter += 1
+            else:
+                tracked_boxes = np.array([v[-1] for k, v in tracklets.items()])
+                dist_cost = np.linalg.norm(tracked_boxes[:, [2, 3]][:, None] - boxes_global[:, [2, 3]][None], axis=-1)
+                thr = 3
+                mask1 = dist_cost.min(axis=1) < thr
+                mask2 = dist_cost.min(axis=0) < thr
+                mask = dist_cost
+                # cls_cost = (tracked_boxes[:, 1][:, None] - boxes_global[:, 1][None]).astype(bool).astype(float) * 1000
+                cost = dist_cost
+                matched_row_inds, matched_col_inds = linear_sum_assignment(cost)
+                matched_cost = cost[matched_row_inds, matched_col_inds]
+                mask = matched_cost < 15
+
+                vislib.draw_matched_boxes(
+                    tracked_boxes[:, [2, 3, 4, 5, 6, 7, 10]],
+                    boxes_global[:, [2, 3, 4, 5, 6, 7, 10]],
+                    zip(matched_row_inds, matched_col_inds),
+                    out_file="/home/yuan/Pictures/tmp.png"
+                )
+                print('d')
+
+
 if __name__=="__main__":
     root_dir = "/koko/DAIR-V2X"
-    meta_out_dir = "/koko/DAIR-V2X/meta"
+    meta_out_dir = "/koko/DAIR-V2X/meta-sub-scenes"
     meta_path = "/home/data/cosense3d/dairv2x"
     # root_dir = "/home/data/DAIR-V2X-Seq/SPD-Example"
     # meta_out_dir = "/home/data/cosense3d/dairv2x_seq"
@@ -585,13 +668,21 @@ if __name__=="__main__":
     #     files = glob.glob("/home/data/DAIR-V2X/meta/*.json")
     #     for f in files:
     #         fh.writelines(os.path.basename(f)[:-5] + '\n')
-    mfs = sorted(glob.glob("/home/data/cosense3d/dairv2x/*.json"))
-    # mf = "/home/data/cosense3d/dairv2x/11.json"
+
+    mfs = sorted(glob.glob("/koko/DAIR-V2X/meta-loc-correct/*.json"))
+    # # mf = "/home/data/cosense3d/dairv2x/11.json"
     for mf in mfs:
-        if int(os.path.basename(mf)[:-5]) <= 10:
-            continue
-        min_dist_frame, min_dist = register_step_one(mf)
-        sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
+        # if int(os.path.basename(mf)[:-5]) <= 10:
+        #     continue
+        # min_dist_frame, min_dist = register_step_one(mf)
+        # sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
+        parse_global_bboxes(mf, meta_out_dir, root_dir)
+
+    # select_sub_scenes(
+    #     "/koko/DAIR-V2X/meta-loc-correct",
+    #     "/koko/DAIR-V2X/mata-sub-scenes",
+    #     "train"
+    # )
 
 
 

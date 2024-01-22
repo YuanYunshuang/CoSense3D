@@ -574,3 +574,21 @@ def draw_3d_points_boxes_on_img(ax, img,  lidar2img, points=None, boxes=None):
                 polygon = Polygon(vertices, fill=None, edgecolor='lime')
                 ax.add_patch(polygon)
 
+
+def draw_matched_boxes(boxes1, boxes2, match, out_file=None):
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot()
+    ax.axis('equal')
+
+    ax = draw_box_plt(boxes1, ax=ax, color='b')
+    ax = draw_box_plt(boxes2, ax=ax, color='r')
+
+    for p1, p2 in match:
+        ax.plot([boxes1[p1][0], boxes2[p2][0]], [boxes1[p1][1], boxes2[p2][1]], c='k', markersize=3)
+
+    if out_file is None:
+        plt.show()
+        plt.close()
+    else:
+        plt.savefig(out_file)
+
