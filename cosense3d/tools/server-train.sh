@@ -15,4 +15,4 @@ cosense3d/tools/agent_runner.py \
 --run-name StreamLTS_seq8 \
 --batch-size 1 \
 --n-workers 8 \
---resume-from /koko/yunshuang/train_out/StreamLTS_seq8/epoch1.pth
+#--resume-from /koko/yunshuang/train_out/StreamLTS_seq8/epoch1.pth
