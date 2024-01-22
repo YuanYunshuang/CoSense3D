@@ -112,7 +112,8 @@ class CheckPointsHook(BaseHook):
         if self.iter_every is not None and runner.iter % self.iter_every == 0:
             self.save(runner, f'latest.pth')
 
-    def save(self, runner, name):
+    @staticmethod
+    def save(runner, name):
         save_path = os.path.join(runner.logger.logdir, name)
         print(f'Saving checkpoint to {save_path}.')
         torch.save({

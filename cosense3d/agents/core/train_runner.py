@@ -8,6 +8,7 @@ from cosense3d.utils.lr_scheduler import build_lr_scheduler
 from cosense3d.utils.logger import LogMeter
 from cosense3d.utils.misc import ensure_dir, setup_logger
 from cosense3d.agents.core.base_runner import BaseRunner
+from cosense3d.agents.utils.deco import save_ckpt_on_error
 
 
 class TrainRunner(BaseRunner):
@@ -21,12 +22,14 @@ class TrainRunner(BaseRunner):
                  run_name='default',
                  log_dir='work_dir',
                  use_wandb=False,
+                 debug=False,
                  **kwargs
                  ):
         super().__init__(**kwargs)
         self.gpus = gpus
         self.gpu_id = 0
         self.dist = False
+        self.debug = debug
         if gpus > 0:
             self.dist = True
             self.gpu_id = int(os.environ.get("LOCAL_RANK", 0))
@@ -111,6 +114,7 @@ class TrainRunner(BaseRunner):
             self.run_itr(data)
             self.hooks(self, 'post_iter')
 
+    @save_ckpt_on_error
     def run_itr(self, data):
         load_tensors_to_gpu(data, self.gpu_id)
         self.optimizer.zero_grad()

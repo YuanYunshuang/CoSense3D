@@ -2,12 +2,13 @@ from torch import nn
 
 
 class SELayer_Linear(nn.Module):
-    def __init__(self, channels, act_layer=nn.ReLU, gate_layer=nn.Sigmoid):
+    def __init__(self, channels, act_layer=nn.ReLU, gate_layer=nn.Sigmoid, norm=False):
         super().__init__()
         self.conv_reduce = nn.Linear(channels, channels)
         self.act1 = act_layer()
         self.conv_expand = nn.Linear(channels, channels)
         self.gate = gate_layer()
+        self.norm = norm
 
     def forward(self, x, x_se):
         x_se = self.conv_reduce(x_se)

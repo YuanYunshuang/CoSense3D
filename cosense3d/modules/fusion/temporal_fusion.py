@@ -419,6 +419,7 @@ class LocalTemporalFusion(BaseModule):
                  ref_pts_stride=2,
                  transformer_itrs=1,
                  global_ref_time=0,
+                 norm_pos_emb=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.transformer = plugin.build_plugin_module(transformer)
@@ -434,6 +435,7 @@ class LocalTemporalFusion(BaseModule):
         self.memory_len = memory_len
         self.transformer_itrs = transformer_itrs
         self.global_ref_time = global_ref_time
+        self.norm_pos_emb = norm_pos_emb
 
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
 
@@ -441,18 +443,34 @@ class LocalTemporalFusion(BaseModule):
         self.init_weights()
 
     def _init_layers(self):
-        self.position_embeding = nn.Sequential(
-            nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims * 4),
-            nn.ReLU(),
-            nn.LayerNorm(self.embed_dims * 4),
-            nn.Linear(self.embed_dims * 4, self.embed_dims),
-        )
-        self.memory_embed = nn.Sequential(
-            nn.Linear(self.in_channels, self.embed_dims),
-            nn.ReLU(),
-            nn.LayerNorm(self.embed_dims),
-            nn.Linear(self.embed_dims, self.embed_dims),
-        )
+        if self.norm_pos_emb:
+            self.position_embeding = nn.Sequential(
+                nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims * 4),
+                nn.LayerNorm(self.embed_dims * 4),
+                nn.ReLU(),
+                nn.Linear(self.embed_dims * 4, self.embed_dims),
+                nn.LayerNorm(self.embed_dims),
+            )
+            self.memory_embed = nn.Sequential(
+                nn.Linear(self.in_channels, self.embed_dims),
+                nn.LayerNorm(self.embed_dims),
+                nn.ReLU(),
+                nn.Linear(self.embed_dims, self.embed_dims),
+                nn.LayerNorm(self.embed_dims),
+            )
+        else:
+            self.position_embeding = nn.Sequential(
+                nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims * 4),
+                nn.ReLU(),
+                nn.LayerNorm(self.embed_dims * 4),
+                nn.Linear(self.embed_dims * 4, self.embed_dims),
+            )
+            self.memory_embed = nn.Sequential(
+                nn.Linear(self.in_channels, self.embed_dims),
+                nn.ReLU(),
+                nn.LayerNorm(self.embed_dims),
+                nn.Linear(self.embed_dims, self.embed_dims),
+            )
 
         self.query_embedding = nn.Sequential(
             nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims),
@@ -462,7 +480,7 @@ class LocalTemporalFusion(BaseModule):
         )
 
         # can be replaced with MLN
-        self.featurized_pe = SELayer_Linear(self.embed_dims)
+        self.featurized_pe = SELayer_Linear(self.embed_dims, norm=self.norm_pos_emb)
 
         self.time_embedding = nn.Sequential(
             nn.Linear(self.embed_dims, self.embed_dims),
