@@ -97,10 +97,8 @@ class QueryGuidedPETRHead(BaseModule):
             outs_dec = self.stack_data_from_list(feat_in, 'outs_dec').permute(1, 0, 2, 3)
             reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
             reference_inds = None
-        if outs_dec.isnan().sum() > 0:
-            print("found nan in outs_dec, reset to numbers")
-            outs_dec = torch.nan_to_num(outs_dec)
         pos_dim = reference_points.shape[-1]
+        assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
 
         outputs_classes = []
         outputs_coords = []
