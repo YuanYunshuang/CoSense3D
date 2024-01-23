@@ -538,7 +538,8 @@ def load_vehicles_gframe(params):
     return object_out
 
 
-def parse_global_boxes(scenario_path):
+def parse_global_boxes(scenario_path, meta_out):
+    s = os.path.basename(scenario_path)
     cavs = [x for x in os.listdir(scenario_path) if os.path.isdir(os.path.join(scenario_path, x))]
     global_objects = {os.path.basename(x)[:6]: {}
                       for x in sorted(glob(os.path.join(scenario_path, cavs[0],
@@ -550,7 +551,7 @@ def parse_global_boxes(scenario_path):
             params = load_yaml(yf)
             objects = load_vehicles_gframe(params)
             global_objects[frame].update(objects)
-    save_json(global_objects, os.path.join())
+    save_json(global_objects, os.path.join(meta_out, f'{s}.json'))
 
 
 
