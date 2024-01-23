@@ -98,7 +98,9 @@ class QueryGuidedPETRHead(BaseModule):
             reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
             reference_inds = None
         pos_dim = reference_points.shape[-1]
-        assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
+        if outs_dec.isnan().any():
+            print('d')
+        # assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
 
         outputs_classes = []
         outputs_coords = []

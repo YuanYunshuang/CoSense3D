@@ -32,7 +32,7 @@ pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
 echo -e "${GREEN}[INFO] Installing cuda_ops...${NC}"
 cd cosense3d/ops && pip install . && cd ../..
 
-echo "[INFO] Installing requirements...${NC}"
+echo -e "${GREEN}[INFO] Installing requirements...${NC}"
 pip install -r requirements_cosense.txt
 pip install -r requirements_ui.txt
 

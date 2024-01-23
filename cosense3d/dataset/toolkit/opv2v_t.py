@@ -1,3 +1,4 @@
+import glob
 import os.path
 import random
 
@@ -518,15 +519,50 @@ def gen_time_offsets(data_dir):
     save_json(out_dict, os.path.join(data_dir, f'time_offsets.json'))
 
 
+def load_vehicles_gframe(params):
+    """Load vehicles in global coordinate system."""
+    object_dict = params['vehicles']
+    object_out = {}
+    for object_id, object_content in object_dict.items():
+        location = object_content['location']
+        rotation = object_content['angle']
+        center = object_content['center']
+        extent = object_content['extent']
+
+        object_pose = [location[0] + center[0],
+                       location[1] + center[1],
+                       location[2] + center[2],
+                       rotation[0], rotation[1], rotation[2]]
+
+        object_out[object_id] = [0,] + object_pose[:3] + extent + object_pose[3:]
+    return object_out
+
+
+def parse_global_boxes(scenario_path):
+    cavs = [x for x in os.listdir(scenario_path) if os.path.isdir(os.path.join(scenario_path, x))]
+    global_objects = {os.path.basename(x)[:6]: {}
+                      for x in sorted(glob(os.path.join(scenario_path, cavs[0],
+                                                 '*.0_objects.yaml')))}
+    for cav in cavs:
+        yaml_files = sorted(glob(os.path.join(scenario_path, cav, '*.0_objects.yaml')))
+        for yf in yaml_files:
+            frame = os.path.basename(yf)[:6]
+            params = load_yaml(yf)
+            objects = load_vehicles_gframe(params)
+            global_objects[frame].update(objects)
+    save_json(global_objects, os.path.join())
+
+
+
 if __name__=="__main__":
     # gen_time_offsets("/media/yuan/luna/data/OPV2Vt")
     # parse_speed_from_yamls("/home/data/OPV2V/temporal_dump/train/2021_08_16_22_26_54")
-    opv2vt_to_cosense(
-        "/media/yuan/luna/data/OPV2Vt/temporal_dump",
-        "train",
-        "/koko/OPV2V/temporal",
-        "/koko/cosense3d/opv2v_temporal"
-    )
+    # opv2vt_to_cosense(
+    #     "/media/yuan/luna/data/OPV2Vt/temporal_dump",
+    #     "train",
+    #     "/koko/OPV2V/temporal",
+    #     "/koko/cosense3d/opv2v_temporal"
+    # )
     # opv2vt_to_cosense(
     #     "/home/data/OPV2V/temporal_dump",
     #     "test",
@@ -541,3 +577,4 @@ if __name__=="__main__":
     # update_velo(
     #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
     # )
+    parse_global_boxes("/mnt/t7/data/OPV2Vt/temporal_dump/train/2021_08_16_22_26_54")
