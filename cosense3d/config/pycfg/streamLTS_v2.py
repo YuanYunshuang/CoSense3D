@@ -217,7 +217,7 @@ shared_modules = OrderedDict(
             detection_benchmark='Car',
             class_names_each_head=[['vehicle.car']],
             center_threshold=0.5,
-            box_coder=dict(type='CenterBoxCoder', with_velo=True),
+            box_coder=dict(type='CenterBoxCoder', with_velo=True, with_pred=True),
         ),
         loss_cls=dict(type='FocalLoss', use_sigmoid=True, bg_idx=0,
                       gamma=2.0, alpha=0.25, loss_weight=2.0),
