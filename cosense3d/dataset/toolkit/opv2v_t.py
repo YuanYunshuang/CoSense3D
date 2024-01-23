@@ -538,20 +538,48 @@ def load_vehicles_gframe(params):
     return object_out
 
 
-def parse_global_boxes(scenario_path, meta_out):
-    s = os.path.basename(scenario_path)
-    cavs = [x for x in os.listdir(scenario_path) if os.path.isdir(os.path.join(scenario_path, x))]
-    global_objects = {os.path.basename(x)[:6]: {}
-                      for x in sorted(glob(os.path.join(scenario_path, cavs[0],
-                                                 '*.0_objects.yaml')))}
-    for cav in cavs:
-        yaml_files = sorted(glob(os.path.join(scenario_path, cav, '*.0_objects.yaml')))
-        for yf in yaml_files:
+def transform_boxes_global_to_ref(boxes, ref_pose):
+    pass
+
+
+def update_global_boxes(root_dir, meta_in, meta_out, split):
+    split_dir = os.path.join(root_dir, split)
+    scenes = os.listdir(split_dir)
+    for s in scenes:
+        scene_dir = os.path.join(split_dir, s)
+        sdict = load_json(os.path.join(meta_in, f"{s}.json"))
+        cavs = sorted([x for x in os.listdir(scene_dir) if os.path.isdir(os.path.join(scene_dir, x))])
+
+        ego_files = sorted(glob(os.path.join(scene_dir, cavs[0], '*.0_objects.yaml')))
+        sim_frames = [os.path.basename(x)[:6] for x in ego_files]
+        global_objects = {x: {} for x in sim_frames}
+        ego_poses = {}
+
+        for cav in cavs[1:]:
+            yaml_files = sorted(glob(os.path.join(scene_dir, cav, '*.0_objects.yaml')))
+            for yf in yaml_files:
+                frame = os.path.basename(yf)[:6]
+                objects = load_yaml(yf)['vehicles']
+                global_objects[frame].update(objects)
+        for yf in ego_files:
             frame = os.path.basename(yf)[:6]
             params = load_yaml(yf)
-            objects = load_vehicles_gframe(params)
-            global_objects[frame].update(objects)
-    save_json(global_objects, os.path.join(meta_out, f'{s}.json'))
+            ego_poses[frame] = params['lidar_pose']
+            global_objects[frame].update(params['vehicles'])
+
+        frames = sorted(list(sdict.keys()))
+        for f in frames[:-1]:
+            lidar_pose = ego_poses[f]
+            sdict[f]['meta']['boxes_pred'] = {}
+            box_ids = [int(box[0]) for box in sdict[f]['meta']['bbx_center_global']]
+            for i in range(1, 3):
+                cur_frame = f"{int(f) + (i + 1) * 2:06d}"
+                boxes_global = global_objects[f]
+                boxes_ref = {}
+                project_world_objects(boxes_global, boxes_ref, lidar_pose, 'lwh')
+                boxes_pred = [boxes_ref[box_id]['coord'].reshape(7)[[0, 1, 2, 6]].tolist() for box_id in box_ids]
+                sdict[f]['meta']['boxes_pred'][cur_frame] = boxes_pred
+        save_json(sdict, os.path.join(meta_out, f"{s}.json"))
 
 
 
@@ -578,4 +606,15 @@ if __name__=="__main__":
     # update_velo(
     #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
     # )
-    parse_global_boxes("/mnt/t7/data/OPV2Vt/temporal_dump/train/2021_08_16_22_26_54")
+    update_global_boxes(
+        "/home/data/OPV2V/temporal_dump",
+        "/home/data/cosense3d/opv2v_temporal",
+        "/home/data/cosense3d/opv2v_temporal_v2",
+        "train"
+    )
+    update_global_boxes(
+        "/home/data/OPV2V/temporal_dump",
+        "/home/data/cosense3d/opv2v_temporal",
+        "/home/data/cosense3d/opv2v_temporal_v2",
+        "test"
+    )

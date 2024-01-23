@@ -179,12 +179,13 @@ class LoadMultiViewImg:
 class LoadAnnotations:
     def __init__(self, load2d=False, load_cam_param=False,
                  load3d_local=False, load3d_global=False,
-                 load_global_time=False,
+                 load_global_time=False, load3d_pred=False,
                  min_num_pts=0, with_velocity=False):
         self.load2d = load2d
         self.load_cam_param = load_cam_param
         self.load3d_local = load3d_local
         self.load3d_global = load3d_global
+        self.load3d_pred = load3d_pred
         self.load_global_time = load_global_time
         self.min_num_pts = min_num_pts
         self.with_velocity = with_velocity
@@ -202,6 +203,8 @@ class LoadAnnotations:
             data_dict = self._load_anno3d_global(data_dict)
         if self.load_global_time:
             data_dict = self._load_global_time(data_dict)
+        if self.load3d_pred:
+            data_dict = self._load_anno3d_pred(data_dict)
 
         return data_dict
 
@@ -364,6 +367,10 @@ class LoadAnnotations:
         frame_meta = data_dict['sample_info']['meta']
         assert 'global_bbox_time' in frame_meta
         data_dict['global_time'] = frame_meta['global_bbox_time'][0]
+        return data_dict
+
+    def _load_anno3d_pred(self, data_dict):
+        data_dict['bboxes_3d_pred'] = data_dict['sample_info']['meta']['boxes_pred']
         return data_dict
 
     def get_lidar2img_transform(self, lidar2cam, intrinsic):
