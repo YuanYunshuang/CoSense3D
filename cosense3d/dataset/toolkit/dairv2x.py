@@ -1,6 +1,8 @@
 import copy
 import glob
 import os
+
+import matplotlib.pyplot as plt
 import tqdm
 import numpy as np
 import open3d as o3d
@@ -571,9 +573,9 @@ def register_step_two(start_frame, mf, meta_out_dir):
     print('\n')
 
 
-def select_sub_scenes(meta_in, meta_out, split):
+def select_sub_scenes(meta_in, root_dir, meta_out, split):
     with open(os.path.join(meta_in, f"{split}.txt"), 'r') as f:
-        scenes = f.read().splitlines()
+        scenes = sorted(f.read().splitlines())
 
     sub_scenes = []
     for s in scenes:
@@ -582,21 +584,27 @@ def select_sub_scenes(meta_in, meta_out, split):
         sub_seq = frames[:1]
         cnt = 0
         for i, f in enumerate(frames[1:]):
-            if (i == len(frames) - 2 or int(f) - int(sub_seq[-1]) > 2):
+            if (i == len(frames) - 2 or int(f) - int(sub_seq[-1]) > 1):
                 if i == len(frames) - 2:
+                    # reach the end
                     sub_seq.append(f)
-                if len(sub_seq) >= 8:
+                if len(sub_seq) >= 6:
+                    # find one valid sub sequence
+                    tracklets = parse_global_bboxes(sdict, sub_seq, root_dir)
                     cnt += 1
                 if not i == len(frames) - 2:
+                    # sequence breaks, add the current frame to the new seq
                     sub_seq = [f]
             else:
                 sub_seq.append(f)
 
 
-def parse_timestamped_boxes(adict, root_dir):
+def parse_timestamped_boxes(adict, root_dir, four_wheel_only=True):
     lf = os.path.join(root_dir, adict['lidar']['0']['filename'])
     pcd = point_cloud_from_path(lf)
     boxes = np.array(adict['gt_boxes'])
+    if four_wheel_only:
+        boxes = boxes[boxes[:, 1] < 4]
     if 'timestamp' in pcd.fields:
         points = np.stack([pcd.pc_data[x] for x in 'xyz'], axis=-1)
         points_inds = points_in_boxes_cpu(points, boxes[:, [2, 3, 4, 5, 6, 7, 10]]).astype(bool)
@@ -615,14 +623,15 @@ def parse_timestamped_boxes(adict, root_dir):
     return timestamps, boxes
 
 
-def parse_global_bboxes(mf, meta_out, root_dir):
+def parse_global_bboxes(sdict, frames, root_dir):
     """Step three"""
-    sdict = load_json(mf)
-    frames = sorted(sdict.keys())
     tracklets = {}
     id_counter = 0
-    for f in frames:
+    last_track_ids = set()
+    for fi, f in enumerate(frames):
         fdict = sdict[f]
+        matched_track_ids = set()
+        matched_inds = []
         for ai, adict in fdict['agents'].items():
             timestamps, boxes = parse_timestamped_boxes(adict, root_dir)
             tf = pclib.pose_to_transformation(adict['lidar']['0']['pose'])
@@ -632,30 +641,69 @@ def parse_global_bboxes(mf, meta_out, root_dir):
                     tracklets[id_counter] = [[t] + box[1:].tolist()]
                     id_counter += 1
             else:
-                tracked_boxes = np.array([v[-1] for k, v in tracklets.items()])
+                tracked_boxes = []
+                tracked_ids = []
+                for k, v in tracklets.items():
+                    tracked_ids.append(k)
+                    tracked_boxes.append(v[-1])
+                tracked_boxes = np.array(tracked_boxes)
+                tracked_ids = np.array(tracked_ids)
                 dist_cost = np.linalg.norm(tracked_boxes[:, [2, 3]][:, None] - boxes_global[:, [2, 3]][None], axis=-1)
                 thr = 3
-                mask1 = dist_cost.min(axis=1) < thr
-                mask2 = dist_cost.min(axis=0) < thr
-                mask = dist_cost
-                # cls_cost = (tracked_boxes[:, 1][:, None] - boxes_global[:, 1][None]).astype(bool).astype(float) * 1000
-                cost = dist_cost
-                matched_row_inds, matched_col_inds = linear_sum_assignment(cost)
-                matched_cost = cost[matched_row_inds, matched_col_inds]
-                mask = matched_cost < 15
+                min_dist = dist_cost.min(axis=0)
+                min_idx = dist_cost.argmin(axis=0)
+                match_inds = []
+                for i, box in enumerate(boxes_global):
+                    cur_box = [timestamps[i]] + box[1:].tolist()
+                    if min_dist[i] < thr:
+                        tracklets[tracked_ids[min_idx[i]]].append(cur_box)
+                        match_inds.append([tracked_ids[min_idx[i]], i])
+                    else:
+                        tracklets[id_counter] = [cur_box]
+                        id_counter += 1
+                matched_inds.extend(match_inds)
 
-                vislib.draw_matched_boxes(
-                    tracked_boxes[:, [2, 3, 4, 5, 6, 7, 10]],
-                    boxes_global[:, [2, 3, 4, 5, 6, 7, 10]],
-                    zip(matched_row_inds, matched_col_inds),
-                    out_file="/home/yuan/Pictures/tmp.png"
-                )
-                print('d')
+                # vislib.draw_matched_boxes(tracked_boxes[:, [2, 3, 4, 5, 6, 7, 10]],
+                #                           boxes_global[:, [2, 3, 4, 5, 6, 7, 10]],
+                #                           zip(match_inds[:, 0], match_inds[:, 1]),
+                #                           "/home/yys/Pictures/tmp.png")
+
+        for ti, tracklet in tracklets.items():
+            tracklets[ti] = sorted(tracklet)
+
+        if fi > 0:
+            matched_inds = np.array(matched_inds)
+            disappeared_track_ids = last_track_ids - set(matched_inds[:, 0])
+            for track_id in disappeared_track_ids:
+                tracklet = tracklets[track_id]
+                if len(tracklet) > 1:
+                    # interpolate
+                    new_box = copy.copy(tracklet[-1])
+                    new_box[1] = -1 # indicate that the box in interpolated
+                    dt = new_box[0] - tracklet[-2][0]
+                    dx = new_box[2] - tracklet[-2][2]
+                    dy = new_box[3] - tracklet[-2][3]
+                    new_box[0] += 0.1
+                    new_box[2] = new_box[2] + dx / dt * 0.1
+                    new_box[3] = new_box[3] + dy / dt * 0.1
+                    tracklets[track_id].append(new_box)
+        else:
+            last_track_ids = set(np.arange(id_counter))
+
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot()
+    for id, tracklet in tracklets.items():
+        tracklet = np.array(tracklet)
+        ax.plot(tracklet[:, 2], tracklet[:, 3])
+
+    plt.savefig("/home/yys/Pictures/tmp.png")
+    plt.close()
+    return tracklets
 
 
 if __name__=="__main__":
-    root_dir = "/koko/DAIR-V2X"
-    meta_out_dir = "/koko/DAIR-V2X/meta-sub-scenes"
+    root_dir = "/home/data/DAIR-V2X"
+    meta_out_dir = "/home/data/DAIR-V2X/meta-sub-scenes"
     meta_path = "/home/data/cosense3d/dairv2x"
     # root_dir = "/home/data/DAIR-V2X-Seq/SPD-Example"
     # meta_out_dir = "/home/data/cosense3d/dairv2x_seq"
@@ -669,20 +717,21 @@ if __name__=="__main__":
     #     for f in files:
     #         fh.writelines(os.path.basename(f)[:-5] + '\n')
 
-    mfs = sorted(glob.glob("/koko/DAIR-V2X/meta-loc-correct/*.json"))
+    mfs = sorted(glob.glob("/home/data/DAIR-V2X/meta-loc-correct/*.json"))[:1]
     # # mf = "/home/data/cosense3d/dairv2x/11.json"
-    for mf in mfs:
+    # for mf in mfs:
         # if int(os.path.basename(mf)[:-5]) <= 10:
         #     continue
         # min_dist_frame, min_dist = register_step_one(mf)
         # sdict = register_step_two(min_dist_frame, mf, meta_out_dir)
-        parse_global_bboxes(mf, meta_out_dir, root_dir)
+        # parse_global_bboxes(mf, meta_out_dir, root_dir)
 
-    # select_sub_scenes(
-    #     "/koko/DAIR-V2X/meta-loc-correct",
-    #     "/koko/DAIR-V2X/mata-sub-scenes",
-    #     "train"
-    # )
+    select_sub_scenes(
+        "/home/data/DAIR-V2X/meta-loc-correct",
+        "/home/data/DAIR-V2X",
+        "/home/data/DAIR-V2X/mata-sub-scenes",
+        "train"
+    )
 
 
 

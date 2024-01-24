@@ -1,7 +1,7 @@
 DATASET:
   name: opv2v
   dataset: temporal_cosense
-  meta_path: /mnt/t7/data/cosense3d/opv2v_temporal_v2
+  meta_path: /mnt/t7/data/cosense3d/opv2vt
   data_path: /mnt/t7/data/OPV2Vt/temporal
   DetectionBenchmark: Car
   data_info: &data_info
