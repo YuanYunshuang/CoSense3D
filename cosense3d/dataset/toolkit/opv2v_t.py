@@ -573,12 +573,29 @@ def update_global_boxes(root_dir, meta_in, meta_out, split):
             sdict[f]['meta']['boxes_pred'] = {}
             box_ids = [int(box[0]) for box in sdict[f]['meta']['bbx_center_global']]
             for i in range(1, 3):
-                cur_frame = f"{int(f) + (i + 1) * 2:06d}"
-                boxes_global = global_objects[f]
+                cur_frame = f"{int(f) + i * 2:06d}"
+                boxes_global = global_objects[cur_frame]
                 boxes_ref = {}
                 project_world_objects(boxes_global, boxes_ref, lidar_pose, 'lwh')
-                boxes_pred = [boxes_ref[box_id]['coord'].reshape(7)[[0, 1, 2, 6]].tolist() for box_id in box_ids]
+                boxes_pred = []
+                for box_id in box_ids:
+                    if box_id in boxes_global:
+                        pred = boxes_ref[box_id]['coord'].reshape(7)[[0, 1, 2, 6]].tolist()
+                    else:
+                        pred = [0,] * 4
+                    boxes_pred.append(pred)
                 sdict[f]['meta']['boxes_pred'][cur_frame] = boxes_pred
+        sdict.pop(frames[-1])
+        save_json(sdict, os.path.join(meta_out, f"{s}.json"))
+
+def tmp(root_dir, meta_in, meta_out, split):
+    split_dir = os.path.join(root_dir, split)
+    scenes = os.listdir(split_dir)
+    for s in scenes:
+        scene_dir = os.path.join(split_dir, s)
+        sdict = load_json(os.path.join(meta_out, f"{s}.json"))
+        frames = sorted(list(sdict.keys()))
+        sdict.pop(frames[-1])
         save_json(sdict, os.path.join(meta_out, f"{s}.json"))
 
 
@@ -606,15 +623,15 @@ if __name__=="__main__":
     # update_velo(
     #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
     # )
-    update_global_boxes(
-        "/home/data/OPV2V/temporal_dump",
-        "/home/data/cosense3d/opv2v_temporal",
-        "/home/data/cosense3d/opv2v_temporal_v2",
+    tmp(
+        "/home/yuan/data/OPV2V/temporal_dump",
+        "/home/yuan/data/cosense3d/opv2v_temporal",
+        "/home/yuan/data/cosense3d/opv2vt",
         "train"
     )
-    update_global_boxes(
-        "/home/data/OPV2V/temporal_dump",
-        "/home/data/cosense3d/opv2v_temporal",
-        "/home/data/cosense3d/opv2v_temporal_v2",
+    tmp(
+        "/home/yuan/data/OPV2V/temporal_dump",
+        "/home/yuan/data/cosense3d/opv2v_temporal",
+        "/home/yuan/data/cosense3d/opv2vt",
         "test"
     )

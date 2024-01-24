@@ -792,16 +792,16 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         return indices
 
     @torch.no_grad()
-    def assign(self, centers, gt_boxes, gt_labels, **kwargs):
+    def assign(self, centers, gt_boxes, gt_labels, gt_preds=None, **kwargs):
         box_names = [self.csb[c.item()][0] for c in gt_labels]
 
         # cal regression targets
-        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': [], 'vel': []}
+        reg_tgt = {'box': [], 'dir': [], 'scr': [], 'idx': [], 'valid_mask': [], 'vel': [], 'pred': []}
         for h, cur_cls_names in enumerate(self.class_names_each_head):
             center_indices = self.pts_to_indices(centers).T
             box_mask = [n in cur_cls_names for n in box_names]
             cur_boxes = gt_boxes[box_mask]
-            res = self.box_coder.encode(centers, cur_boxes, self.meter_per_pixel)
+            res = self.box_coder.encode(centers, cur_boxes, self.meter_per_pixel, gt_preds)
             reg_box, reg_dir, dir_score, valid = res[:4]
 
             reg_tgt['idx'].append(center_indices[:, valid])
@@ -809,8 +809,10 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             reg_tgt['box'].append(reg_box)
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
-            if len(res) == 5:
+            if getattr(self.box_coder, 'with_velo', False):
                 reg_tgt['vel'].append(res[4])
+            if getattr(self.box_coder, 'with_pred', False):
+                reg_tgt['pred'].append(res[5])
         return reg_tgt
 
     def get_predictions(self, preds):

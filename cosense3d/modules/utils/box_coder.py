@@ -158,6 +158,9 @@ class CenterBoxCoder(object):
         diagnal = torch.norm(gt_boxes[:, 4:6].mean(dim=0) / 2)
         valid = min_dists < max(diagnal, meter_per_pixel[0])
         valid_center, valid_box = centers[valid], gt_boxes[box_idx_of_pts[valid]]
+        valid_pred = None
+        if self.with_pred and gt_preds is not None:
+            valid_pred = gt_preds[box_idx_of_pts[valid]]
 
         xc, yc = torch.split(valid_center[:, 1:3], 1, dim=-1)
         xg, yg, zg, lg, wg, hg, rg = torch.split(valid_box[:, 1:8], 1, dim=-1)
@@ -193,13 +196,21 @@ class CenterBoxCoder(object):
             res = res + (valid_box[:, 8:10],)
         elif valid_box.shape[-1] > 8:
             res = res + (valid_box[:, 8:10],)
-        if self.with_pred:
-            prev_boxes = gt_boxes[:, [1, 2, 3, 7]]
+        if self.with_pred and valid_pred is not None:
+            prev_angles = valid_box[:, 7:8]
             preds_tgt = []
-            for boxes in gt_preds:
-                preds_tgt.append(boxes - prev_boxes)
-                prev_boxes = boxes
-            res = res + (torch.cat(preds_tgt, dim=-1))
+            mask = []
+            for i, boxes in enumerate(valid_pred.transpose(1, 0)):
+                # some gt_boxes do not have gt successors, zero padded virtual successors are used to align the number
+                # of boxes between gt_boxes and gt_preds, when calculate preds loss, these boxes should be ignored.
+                mask.append(boxes.any(dim=-1, keepdim=True).float())
+                diff_xyz = boxes[:, :3] - valid_center[:, 1:4]
+                diff_cos = torch.cos(boxes[:, 3:]) - torch.cos(prev_angles)
+                diff_sin = torch.sin(boxes[:, 3:]) - torch.sin(prev_angles)
+                preds_tgt.append(torch.cat([diff_xyz, diff_cos, diff_sin], dim=-1) / (i + 1))
+            preds_tgt = torch.cat(preds_tgt, dim=-1)
+            mask = torch.cat(mask, dim=-1).all(dim=-1, keepdim=True)
+            res = res + (torch.cat([mask, preds_tgt], dim=-1),)
         return res
 
     def decode(self, centers, reg):
@@ -213,6 +224,7 @@ class CenterBoxCoder(object):
             dir - (N, 8) or (B, N, 8)
             scr - (N, 4) or (B, N, 4)
             vel - (N, 2) or (B, N, 2), optional
+            pred - (N, 5) or (B, N, 5), optional
         meter_per_pixel: float
 
         Returns
@@ -252,5 +264,8 @@ class CenterBoxCoder(object):
 
         if self.with_velo:
             ret = torch.cat([ret, reg['vel']], dim=-1)
+        if self.with_pred:
+            # TODO decode pred boxes
+            pass
 
         return ret

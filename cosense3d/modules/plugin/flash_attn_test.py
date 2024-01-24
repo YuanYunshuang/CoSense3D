@@ -17,10 +17,12 @@ from torch.nn.functional import linear
 
 from einops import rearrange
 
+
 from flash_attn.flash_attn_interface import flash_attn_unpadded_kvpacked_func, _get_block_size
 from flash_attn.bert_padding import unpad_input, pad_input, index_first_axis
 from cosense3d.modules.utils.test_flash_attn import convert_flash_attn_S_to_softmax, \
     generate_random_padding_mask
+
 
 
 def flash_attn_unpadded_kvpacked_test(q, kv, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk, dropout_p, softmax_scale,

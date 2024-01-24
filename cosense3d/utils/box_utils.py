@@ -358,6 +358,7 @@ def transform_boxes_3d(boxes_in, transform, mode=7):
     Returns:
 
     """
+    is_numpy = isinstance(boxes_in, np.ndarray)
     assert mode == 11 or mode == 9 or mode == 7
     assert boxes_in.shape[-1] == 11 or boxes_in.shape[-1] == 9 or boxes_in.shape[-1] == 7
     if boxes_in.shape[-1] == 11:
@@ -368,14 +369,22 @@ def transform_boxes_3d(boxes_in, transform, mode=7):
         boxes = boxes_in
     boxes_corner = boxes_to_corners_3d(boxes[:, :7])  # (N, 8, 3)
     boxes_corner = boxes_corner.reshape(-1, 3).T  # (N*8, 3)
-    boxes_corner = np.concatenate([boxes_corner, np.ones_like(boxes_corner[:1])], axis=0)
+    if is_numpy:
+        boxes_corner = np.concatenate([boxes_corner, np.ones_like(boxes_corner[:1])], axis=0)
+    else:
+        boxes_corner = torch.cat([boxes_corner, torch.ones_like(boxes_corner[:1])], dim=0)
     # rotate bbx to augmented coords
     boxes_corner = (transform @ boxes_corner)[:3].T.reshape(len(boxes), 8, 3)
     if mode == 11:
         boxes_ = corners_to_boxes_3d(boxes_corner, mode=9)
-        boxes = np.concatenate([boxes_in[:, :2], boxes_], axis=-1)
+        if is_numpy:
+            boxes = np.concatenate([boxes_in[:, :2], boxes_], axis=-1)
+        else:
+            boxes = torch.cat([boxes_in[:, :2], boxes_], dim=-1)
     else:
         boxes = corners_to_boxes_3d(boxes_corner, mode=mode)
+    if is_numpy and isinstance(boxes, torch.Tensor):
+        boxes = boxes.cpu().numpy()
     return boxes
 
 

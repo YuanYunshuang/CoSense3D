@@ -371,7 +371,8 @@ class LoadAnnotations:
 
     def _load_anno3d_pred(self, data_dict):
         frames = sorted(list(data_dict['sample_info']['meta']['boxes_pred'].keys()))
-        data_dict['bboxes_3d_pred'] = [data_dict['sample_info']['meta']['boxes_pred'][f] for f in frames]
+        boxes_preds = [data_dict['sample_info']['meta']['boxes_pred'][f] for f in frames]
+        data_dict['bboxes_3d_pred'] = np.array(boxes_preds)
         return data_dict
 
     def get_lidar2img_transform(self, lidar2cam, intrinsic):

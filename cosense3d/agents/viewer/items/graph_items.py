@@ -16,7 +16,9 @@ BOX_COLORs = {
     'local_gt': (1, 1, 0, 1),
     'global_gt': (0, 1, 0, 1),
     'gt': (0, 1, 0, 1),
-    'pred': (1, 0, 0, 1),
+    'det': (1, 0, 0, 1),
+    'pred': (1, 0, 1, 1),
+    'successor_gt': (0, 1, 1, 1)
 }
 
 pens = {

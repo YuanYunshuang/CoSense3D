@@ -77,30 +77,6 @@ class GLViewer(gl.GLViewWidget):
     def draw_axes(self):
         axis = gl.GLAxisItem(size=QtGui.QVector3D(5, 5, 5))
         self.addItem(axis)
-        # # create the lines for unit vetors
-        # x_axis_pos = np.array([[0, 0, 0], [1, 0, 0]])
-        # y_axis_pos = np.array([[0, 0, 0], [0, 1, 0]])
-        # z_axis_pos = np.array([[0, 0, 0], [0, 0, 1]])
-        #
-        # # concatenate the position arrays
-        # pos = np.concatenate([x_axis_pos, y_axis_pos, z_axis_pos], axis=0)
-        #
-        # # define the colors for each axis
-        # x_axis_color = (1.0, 0.0, 0.0)  # red
-        # y_axis_color = (0.0, 1.0, 0.0)  # green
-        # z_axis_color = (0.0, 0.0, 1.0)  # blue
-        #
-        # # create a color array with the same length as the position array
-        # colors = np.zeros((pos.shape[0], 4))
-        # colors[0:len(x_axis_pos), :] = x_axis_color + (1.0,)
-        # colors[len(x_axis_pos):(len(x_axis_pos) + len(y_axis_pos)), :] = y_axis_color + (1.0,)
-        # colors[(len(x_axis_pos) + len(y_axis_pos)):, :] = z_axis_color + (1.0,)
-        #
-        # # create a GLLinePlotItem for the axes
-        # self.axes = gl.GLLinePlotItem(pos=pos, color=colors, width=3, glOptions='opaque')
-        #
-        # # add the axes to the view
-        # self.addItem(self.axes)
 
     def updatePCDs(self, pcds, color_mode='united', **kwargs):
         self.pcds = pcds
@@ -141,7 +117,8 @@ class GLViewer(gl.GLViewWidget):
             self.pcd_items[lidar_id] = item
             self.addItem(item)
 
-    def updateLabel(self, local_labels, global_labels, local_pred, global_pred, predecessor=None):
+    def updateLabel(self, local_labels, global_labels, local_det, global_det,
+                    successor=None, successor_gt=None, predecessor=None):
         self.boxes = []
         if local_labels is not None:
             for agent_id, labels in local_labels.items():
@@ -159,67 +136,85 @@ class GLViewer(gl.GLViewWidget):
                                    status='global_gt', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
-        if local_pred is not None:
-            for agent_id, labels in local_pred.items():
+        if local_det is not None:
+            for agent_id, labels in local_det.items():
                 self.local_boxes[agent_id] = []
                 for id, label in labels.items():
                     item = LineBoxItem(box=[id, ] + label, last_pose=None,
-                                       status='pred', line_width=2)
+                                       status='det', line_width=2)
                     item.setVisible(self.visibility.get(f'{agent_id}.0', True))
                     self.local_boxes[agent_id].append(item)
                     self.addItem(item)
-        if global_pred is not None:
-            for id, label in global_pred.items():
+        if global_det is not None:
+            for id, label in global_det.items():
                 item = LineBoxItem(box=[id, ] + label, last_pose=None,
-                                   status='pred', line_width=2)
+                                   status='det', line_width=2)
+                self.boxes.append(item)
+                self.addItem(item)
+        if successor_gt is not None:
+            for id, label in successor_gt.items():
+                item = LineBoxItem(box=[id, ] + label, last_pose=None,
+                                   status='successor_gt', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
 
     def updateFrameData(self, pcds,
                         local_label=None,
                         global_label=None,
-                        local_pred=None,
-                        global_pred=None,
+                        local_det=None,
+                        global_det=None,
                         predecessor=None,
+                        successor=None,
+                        successor_gt=None,
                         pcd_color='united'):
         self.clear()
         self.draw_axes()
         self.updatePCDs(pcds, color_mode=pcd_color)
         self.updateLabel(local_label,
                          global_label,
-                         local_pred,
-                         global_pred,
-                         predecessor)
+                         local_det,
+                         global_det,
+                         successor,
+                         successor_gt,
+                         predecessor,)
         self.update()
 
-    def refresh(self, data_dict, visible_keys=['global_gt'], color_mode='united', **kwargs):
+    def refresh(self, data_dict, visible_keys=['globalGT'], color_mode='united', **kwargs):
         pcds = data_dict.get('points', {})
-        local_labels, global_labels, local_pred, global_pred, ego_id = None, None, None, None, None
-        if 'global_gt' in visible_keys:
+        local_labels, global_labels, local_det, global_det, ego_id = None, None, None, None, None
+        global_pred_gt, global_pred = None, None
+        if 'globalGT' in visible_keys:
             global_labels = data_dict.get('global_labels', {})
             ego_id = list(global_labels.keys())[0]
             global_labels = global_labels[ego_id]
-        if 'local_gt' in visible_keys:
+        if 'localGT' in visible_keys:
             local_labels = data_dict.get('local_labels', {})
             ego_id = list(local_labels.keys())[0]
         if pcds is None and global_labels is {} and local_labels is None:
             return
 
-        if 'local_pred' in visible_keys:
+        if 'localDet' in visible_keys:
             if 'detection_local' in data_dict:
-                local_pred = {k: v.get('labels', {}) for k, v in data_dict['detection_local'].items()}
-        if 'global_pred' in visible_keys:
+                local_det = {k: v.get('labels', {}) for k, v in data_dict['detection_local'].items()}
+        if 'globalDet' in visible_keys:
             if 'detection' in data_dict:
-                global_pred = data_dict.get('detection', {})
+                global_det = data_dict.get('detection', {})
             else:
-                global_pred = data_dict.get('detection_global', {})
-            global_pred = global_pred.get(ego_id, {'labels': {}})['labels']
+                global_det = data_dict.get('detection_global', {})
+            global_det = global_det.get(ego_id, {'labels': {}})['labels']
+        if 'globalPredGT' in visible_keys:
+            global_pred_gt = data_dict.get('global_pred_gt', {})
+            global_pred_gt = global_pred_gt.get(ego_id, {})
+        if 'globalPred' in visible_keys:
+            global_pred = data_dict.get('global_pred', {})
 
         self.updateFrameData(pcds,
                              local_label=local_labels,
                              global_label=global_labels,
-                             local_pred=local_pred,
-                             global_pred=global_pred,
+                             local_det=local_det,
+                             global_det=global_det,
+                             successor=global_pred,
+                             successor_gt=global_pred_gt,
                              pcd_color=color_mode)
 
     def addBox(self):

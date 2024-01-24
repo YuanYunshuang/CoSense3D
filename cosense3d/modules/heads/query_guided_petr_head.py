@@ -37,7 +37,7 @@ class QueryGuidedPETRHead(BaseModule):
             for c in reg_channels:
                 name, channel = c.split(':')
                 self.reg_channels[name] = int(channel)
-            self.code_size = sum(self.reg_channels.values()) + 2
+            self.code_size = sum(self.reg_channels.values())
         self.num_classes = num_classes
         self.num_reg_fcs = num_reg_fcs
         self.num_pred = num_pred
@@ -98,9 +98,7 @@ class QueryGuidedPETRHead(BaseModule):
             reference_points = self.stack_data_from_list(feat_in, 'ref_pts')
             reference_inds = None
         pos_dim = reference_points.shape[-1]
-        if outs_dec.isnan().any():
-            print('d')
-        # assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
+        assert outs_dec.isnan().sum() == 0, "found nan in outs_dec."
 
         outputs_classes = []
         outputs_coords = []
@@ -160,7 +158,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         return {self.scatter_keys[0]: outs}
 
-    def loss(self, petr_out, gt_boxes, gt_labels, det, **kwargs):
+    def loss(self, petr_out, gt_boxes, gt_labels, gt_preds=None, **kwargs):
         epoch = kwargs.get('epoch', 0)
         if self.sparse:
             cls_scores = torch.cat([x for out in petr_out for x in out['all_cls_logits']], dim=0)
@@ -171,9 +169,11 @@ class QueryGuidedPETRHead(BaseModule):
             bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
             ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
                 1, self.num_pred, 1, 1).flatten(0, 1)
-        gt_boxes = [boxes for boxes in gt_boxes for _ in range(self.num_pred)]
-        # gt_velos = [boxes[:, 7:] for boxes in gt_boxes for _ in range(self.num_pred)]
-        gt_labels = [labels for labels in gt_labels for _ in range(self.num_pred)]
+        gt_boxes = [x for x in gt_boxes for _ in range(self.num_pred)]
+        # gt_velos = [x[:, 7:] for x in gt_boxes for _ in range(self.num_pred)]
+        gt_labels = [x for x in gt_labels for _ in range(self.num_pred)]
+        if gt_preds is not None:
+            gt_preds = [x.transpose(1, 0) for x in gt_preds for _ in range(self.num_pred)]
 
         # cls loss
         cls_tgt = multi_apply(self.cls_assigner.assign,
@@ -231,10 +231,13 @@ class QueryGuidedPETRHead(BaseModule):
 
         # box loss
         # pad ref pts with batch index
+        if gt_preds is not None:
+            gt_preds = self.cat_data_from_list(gt_preds)
         box_tgt = self.box_assigner.assign(
             self.cat_data_from_list(ref_pts, pad_idx=True),
             self.cat_data_from_list(gt_boxes, pad_idx=True),
-            self.cat_data_from_list(gt_labels)
+            self.cat_data_from_list(gt_labels),
+            gt_preds
         )
         ind = box_tgt['idx'][0]  # only one head
         loss_box = 0
@@ -248,6 +251,11 @@ class QueryGuidedPETRHead(BaseModule):
                 cur_reg_src = pred_reg[box_tgt['valid_mask'][0]]
                 if reg_name == 'vel':
                     cur_reg_tgt = box_tgt['vel'][0] * 0.1
+                elif reg_name == 'pred':
+                    cur_reg_tgt = box_tgt[reg_name][0]
+                    mask = cur_reg_tgt[..., 0].bool()
+                    cur_reg_src = cur_reg_src[mask]
+                    cur_reg_tgt = cur_reg_tgt[mask, 1:]
                 else:
                     cur_reg_tgt = box_tgt[reg_name][0]  # N, C
                 cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)

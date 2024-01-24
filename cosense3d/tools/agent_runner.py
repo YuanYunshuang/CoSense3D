@@ -84,6 +84,29 @@ class AgentRunner:
                 destroy_process_group()
 
 
+def parse_paths(cfgs):
+    import socket
+    path_map = {
+        "ISI": {
+            "data": "/home/yuan/data/OPV2V/temporal",
+            "meta": "/home/yuan/data/cosense3d/opv2vt"
+        },
+        "mars": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
+        "ominotago": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
+    }
+    name = socket.gethostname()
+    cfgs['DATASET']['data_path'] = path_map[name]['data']
+    cfgs['DATASET']['meta_path'] = path_map[name]['meta']
+    return cfgs
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="./config/config.yaml")
@@ -111,21 +134,13 @@ if __name__ == "__main__":
 
     seed_everything(2023)
     cfgs = load_config(args)
-    cfgs['TRAIN']['gpus'] = args.gpus
+    if args.gpus:
+        cfgs['TRAIN']['gpus'] = args.gpus
     if args.batch_size is not None:
         cfgs['DATASET']['batch_size_train'] = args.batch_size
     if args.n_workers is not None:
         cfgs['DATASET']['n_workers'] = args.n_workers
-    if not os.path.exists(cfgs['DATASET']['data_path']):
-        if args.data_path is not None and args.meta_path is not None:
-            cfgs['DATASET']['data_path'] = args.data_path
-            cfgs['DATASET']['meta_path'] = args.meta_path
-        elif 'temporal' in cfgs['DATASET']['data_path']:
-            cfgs['DATASET']['data_path'] = "/koko/OPV2V/temporal"
-            cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_temporal"
-        else:
-            cfgs['DATASET']['data_path'] = "/koko/OPV2V"
-            cfgs['DATASET']['meta_path'] = "/koko/cosense3d/opv2v_full"
+    parse_paths(cfgs)
     agent_runner = AgentRunner(args, cfgs)
     if args.mode == "train":
         save_config(cfgs, agent_runner.runner.logdir)

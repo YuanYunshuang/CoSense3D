@@ -38,6 +38,8 @@ class DataManager:
             mask = num_pts > 3
             cavs[0].data['global_bboxes_3d'] = global_boxes[mask]
             cavs[0].data['global_labels_3d'] = cavs[0].data['global_labels_3d'][mask]
+            if 'bboxes_3d_pred' in cavs[0].data:
+                cavs[0].data['bboxes_3d_pred'] = cavs[0].data['bboxes_3d_pred'][:, mask]
 
     def remove_global_empty_boxes(self):
         self.remove_empty_boxes()
@@ -192,28 +194,47 @@ class DataManager:
                 data[cav.id] = cav.data.get(key, {})
         return data
 
-    def boxes_to_vis_format(self, boxes, labels):
+    def boxes_to_vis_format(self, boxes, labels, id_appendix=0):
         boxes_vis = {}
         gt_labels = labels.tolist()
         for i, box in enumerate(boxes.tolist()):
-            boxes_vis[i] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
+            cur_id = i + 1
+            if id_appendix != 0:
+                cur_id = cur_id * 10 + id_appendix
+            boxes_vis[cur_id] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
         return boxes_vis
 
-    def get_gt_boxes_as_vis_format(self, batch_idx, coor='global'):
+    def get_gt_boxes_as_vis_format(self, batch_idx, coor='global', successors=False):
         gt_boxes = self.gather_batch(batch_idx, f'{coor}_bboxes_3d' )
         gt_labels = self.gather_batch(batch_idx, f'{coor}_labels_3d')
+        if successors and coor=='global':
+            bboxes_3d_pred = self.gather_batch(batch_idx, 'bboxes_3d_pred')
         labels = {}
+        successor_labels = {}
         for k in gt_boxes.keys():
             labels[k] = self.boxes_to_vis_format(gt_boxes[k], gt_labels[k])
-        return labels
+            if successors and coor=='global' and k in bboxes_3d_pred:
+                successor_labels[k] = {}
+                for i, cur_preds in enumerate(bboxes_3d_pred[k]):
+                    tmp_boxes = gt_boxes[k].detach().clone()
+                    tmp_boxes[:, :3] = cur_preds[:, :3]
+                    tmp_boxes[:, 6] = cur_preds[:, -1]
+                    successor_labels[k].update(self.boxes_to_vis_format(tmp_boxes, gt_labels[k], i))
+        return labels, successor_labels
+
 
     def gather_vis_data(self, batch_idx=0, keys=['points']):
         gather_dict = {}
+        successors = 'global_pred_gt' in keys
         for k in keys:
             if k in ['global_labels', 'local_labels']:
                 ref_coor = k.split('_')[0]
-                gather_dict[f'{ref_coor}_labels'] = (
-                    self.get_gt_boxes_as_vis_format(batch_idx, ref_coor))
+                gather_dict[f'{ref_coor}_labels'], successor_labels = (
+                    self.get_gt_boxes_as_vis_format(batch_idx, ref_coor, successors))
+                if successors and ref_coor=='global':
+                    gather_dict['global_pred_gt'] = successor_labels
+            elif k == 'global_pred_gt':
+                continue
             elif k == 'detection' or k == 'detection_global':
                 detection = self.gather_ego_data(k)
                 for cav_id, det in detection.items():
@@ -335,6 +356,8 @@ class SeqDataManager:
                 m = num_pts > 3
                 cavs[0].data[i]['global_bboxes_3d'] = cavs[0].data[i]['global_bboxes_3d'][m]
                 cavs[0].data[i]['global_labels_3d'] = cavs[0].data[i]['global_labels_3d'][m]
+                if 'bboxes_3d_pred' in cavs[0].data[i]:
+                    cavs[0].data[i]['bboxes_3d_pred'] = cavs[0].data[i]['bboxes_3d_pred'][:, m]
 
     def remove_global_empty_boxes(self):
         self.remove_empty_boxes()

@@ -23,8 +23,8 @@ class GUI(QtWidgets.QMainWindow):
         self.data_keys = [
             'scenario', 'frame',
             'points', 'img', 'bboxes2d', 'lidar2img',
-            'global_labels', 'local_labels',
-            'detection', 'detection_local'
+            'global_labels', 'local_labels', 'global_pred_gt',
+            'detection', 'detection_local', 'global_pred'
         ]
         self.setupUI(cfg)
         self.setWindowTitle("Cosense3D")
@@ -37,10 +37,6 @@ class GUI(QtWidgets.QMainWindow):
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.step)
         self.data = None
-        self.local_gt_visible = False
-        self.global_gt_visible = True
-        self.local_pred_visible = False
-        self.global_pred_visible = True
         self.colo_mode = 'united'
 
     def setupUI(self, cfg):
@@ -77,7 +73,7 @@ class GUI(QtWidgets.QMainWindow):
         self.toolbar = self.addToolBar("Toolbar")
         self.infos = ['scene', 'frame', 'PCDcolor']
         self.tools = ['start', 'stop', 'step']
-        self.visible_objects = ['local_pred', 'global_pred', 'local_gt', 'global_gt']
+        self.visible_objects = ['localDet', 'globalDet', 'localGT', 'globalGT', 'globalPred', 'globalPredGT']
 
         # add label combo pairs
         for name in self.infos:
@@ -122,6 +118,9 @@ class GUI(QtWidgets.QMainWindow):
             setattr(self, f'button_{name}', qbutton)
             self.toolbar.addWidget(getattr(self, f'button_{name}'))
 
+        for name in self.visible_objects:
+            setattr(self, f"{name.lower()}_visible", False)
+
         self.button_glcolor.setStyleSheet("background-color: black; color: white")
 
     def change_visible(self, name):
@@ -130,10 +129,10 @@ class GUI(QtWidgets.QMainWindow):
 
         if current_color != QtGui.QColor('lightblue'):
             button.setStyleSheet("background-color: lightblue")
-            setattr(self, f"{name}_visible", True)
+            setattr(self, f"{name.lower()}_visible", True)
         else:
             button.setStyleSheet("background-color: #efefef")
-            setattr(self, f"{name}_visible", False)
+            setattr(self, f"{name.lower()}_visible", False)
         self.refresh()
 
     def change_glcolor(self):

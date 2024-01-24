@@ -224,6 +224,16 @@ class OPV2VtCAV(BaseCAV):
         super().__init__(*args, **kwargs)
         self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
 
+
+class OPV2VtCAV_v2(BaseCAV):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.is_ego:
+            self.prepare_data_keys = ['points', 'annos_local', 'annos_global', 'annos_global_pred']
+        else:
+            self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
+
+
 class DairV2XCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
