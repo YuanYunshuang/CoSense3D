@@ -114,8 +114,8 @@ def parse_dairv2x_paths(cfgs):
     import socket
     path_map = {
         "ISI": {
-            "data": "/home/yuan/data/OPV2V/temporal",
-            "meta": "/home/yuan/data/cosense3d/opv2vt"
+            "data": "/home/yuan/data/DAIR-V2X",
+            "meta": "/home/yuan/data/DAIR-V2X/meta_with_pred"
         },
         "mars": {
             "data": "/koko/OPV2V/temporal",

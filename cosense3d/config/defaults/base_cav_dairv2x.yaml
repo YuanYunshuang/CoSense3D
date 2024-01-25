@@ -1,7 +1,7 @@
 DATASET:
   name: opv2vt
   dataset: temporal_cosense
-  meta_path: /koko/DAIR-V2X/meta
+  meta_path: /home/yuan/data/DAIR-V2X/meta-sub-scenes
   data_path: /koko/DAIR-V2X
   enable_split_sub_folder: False  # weather has train, val or test folders
   DetectionBenchmark: Car

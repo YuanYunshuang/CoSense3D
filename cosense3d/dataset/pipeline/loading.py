@@ -324,8 +324,12 @@ class LoadAnnotations:
             local_boxes = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
             local_labels = boxes[:, 1].astype(int)
             if self.with_velocity:
-                velos = np.array(adict['velos']).reshape(-1, 2).astype(np.float32) / 3.6
-                local_boxes = np.concatenate([local_boxes, velos[mask]], axis=-1)
+                if 'velos' in adict:
+                    velos = np.array(adict['velos']).reshape(-1, 2).astype(np.float32) / 3.6
+                    local_boxes = np.concatenate([local_boxes, velos[mask]], axis=-1)
+                else:
+                    velos = np.zeros_like(local_boxes[:, :2])
+                    local_boxes = np.concatenate([local_boxes, velos], axis=-1)
             local_bboxes_3d.append(local_boxes)
             local_labels_3d.append(local_labels)
             local_names.append(['car' for _ in local_labels])
@@ -345,7 +349,10 @@ class LoadAnnotations:
         global_labels_3d = boxes[:, 1].astype(int)
 
         if self.with_velocity:
-            global_velocity = np.array(frame_meta['bbx_velo_global']).astype(np.float32) / 3.6
+            if 'bbx_velo_global' in frame_meta:
+                global_velocity = np.array(frame_meta['bbx_velo_global']).astype(np.float32) / 3.6
+            else:
+                global_velocity = np.zeros_like(global_bboxes_3d[:, :2])
             global_bboxes_3d = np.concatenate([global_bboxes_3d, global_velocity], axis=-1)
 
         if 'num_pts' in frame_meta and self.min_num_pts > 0:

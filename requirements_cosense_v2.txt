@@ -12,4 +12,4 @@ einops
 timm
 flash-attn
 spconv-cu118
-lzf
+pypcd

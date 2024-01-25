@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from cosense3d.modules import BaseModule, plugin
-from cosense3d.modules.utils.misc import SELayer_Linear, MLN
+from cosense3d.modules.utils.misc import SELayer_Linear, MLN, MLN2
 import cosense3d.modules.utils.positional_encoding as PE
 
 
@@ -496,8 +496,9 @@ class LocalTemporalFusion(BaseModule):
 
         # encoding ego pose
         pose_nerf_dim = (3 + 3 * 4) * 12
-        self.ego_pose_pe = MLN(pose_nerf_dim, f_dim=self.embed_dims)
-        self.ego_pose_memory = MLN(pose_nerf_dim, f_dim=self.embed_dims)
+        layer = MLN2 if self.norm_emb else MLN
+        self.ego_pose_pe = layer(pose_nerf_dim, f_dim=self.embed_dims)
+        self.ego_pose_memory = layer(pose_nerf_dim, f_dim=self.embed_dims)
 
     def init_weights(self):
         self.transformer.init_weights()
@@ -556,7 +557,8 @@ class LocalTemporalFusion(BaseModule):
         else:
             # simple addition will lead to large values in long sequences
             outs_dec = local_feat + global_feat
-
+        if outs_dec.isnan().any():
+            print('found nan')
         outs = [
             {
                 'outs_dec': outs_dec[:, i],

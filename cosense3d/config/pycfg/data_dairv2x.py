@@ -2,12 +2,12 @@ from collections import OrderedDict
 
 train_pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time'], time_offset=1.62616 * 1e9),
-    LoadAnnotations=dict(load3d_global=True, load3d_local=True),
+    LoadAnnotations=dict(load3d_global=True, load3d_local=True, load3d_pred=True, with_velocity=True),
 )
 
 test_pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time'], time_offset=1.62616 * 1e9),
-    LoadAnnotations=dict(load3d_global=True, load3d_local=True),
+    LoadAnnotations=dict(load3d_global=True, load3d_local=True, load3d_pred=True, with_velocity=True),
 )
 
 data_manager = dict(
