@@ -84,7 +84,7 @@ class AgentRunner:
                 destroy_process_group()
 
 
-def parse_paths(cfgs):
+def parse_opv2v_paths(cfgs):
     import socket
     path_map = {
         "ISI": {
@@ -99,10 +99,48 @@ def parse_paths(cfgs):
             "data": "/koko/OPV2V/temporal",
             "meta": "/koko/cosense3d/opv2vt"
         },
+        "lavander": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
     }
     name = socket.gethostname()
     cfgs['DATASET']['data_path'] = path_map[name]['data']
     cfgs['DATASET']['meta_path'] = path_map[name]['meta']
+    return cfgs
+
+
+def parse_dairv2x_paths(cfgs):
+    import socket
+    path_map = {
+        "ISI": {
+            "data": "/home/yuan/data/OPV2V/temporal",
+            "meta": "/home/yuan/data/cosense3d/opv2vt"
+        },
+        "mars": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
+        "ominotago": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
+        "lavander": {
+            "data": "/home/data/DAIR-V2X",
+            "meta": "/home/data/DAIR-V2X/meta-loc-correct"
+        },
+    }
+    name = socket.gethostname()
+    cfgs['DATASET']['data_path'] = path_map[name]['data']
+    cfgs['DATASET']['meta_path'] = path_map[name]['meta']
+    return cfgs
+
+
+def parse_paths(cfgs):
+    if 'opv2v' in cfgs['DATASET']['data_path'].lower():
+        cfgs = parse_opv2v_paths(cfgs)
+    elif 'dair' in cfgs['DATASET']['data_path'].lower():
+        cfgs = parse_dairv2x_paths(cfgs)
     return cfgs
 
 
