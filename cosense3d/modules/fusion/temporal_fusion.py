@@ -420,6 +420,7 @@ class LocalTemporalFusion(BaseModule):
                  transformer_itrs=1,
                  global_ref_time=0,
                  norm_emb=False,
+                 norm_fusion=False,
                  **kwargs):
         super().__init__(**kwargs)
         self.transformer = plugin.build_plugin_module(transformer)
@@ -436,6 +437,7 @@ class LocalTemporalFusion(BaseModule):
         self.transformer_itrs = transformer_itrs
         self.global_ref_time = global_ref_time
         self.norm_emb = norm_emb
+        self.norm_fusion = norm_fusion
 
         self.lidar_range = nn.Parameter(torch.tensor(lidar_range), requires_grad=False)
 
@@ -443,6 +445,14 @@ class LocalTemporalFusion(BaseModule):
         self.init_weights()
 
     def _init_layers(self):
+        if self.norm_fusion:
+            self.local_global_fusion = nn.Sequential(
+                nn.Linear(self.embed_dims * 2, self.embed_dims),
+                nn.LayerNorm(self.embed_dims),
+                nn.ReLU(),
+                nn.Linear(self.embed_dims, self.embed_dims),
+                nn.LayerNorm(self.embed_dims),
+            )
         if self.norm_emb:
             self.position_embeding = nn.Sequential(
                 nn.Linear(self.num_pose_feat * self.pos_dim, self.embed_dims * 4),
@@ -453,13 +463,6 @@ class LocalTemporalFusion(BaseModule):
             )
             self.memory_embed = nn.Sequential(
                 nn.Linear(self.in_channels, self.embed_dims),
-                nn.LayerNorm(self.embed_dims),
-                nn.ReLU(),
-                nn.Linear(self.embed_dims, self.embed_dims),
-                nn.LayerNorm(self.embed_dims),
-            )
-            self.local_global_fusion = nn.Sequential(
-                nn.Linear(self.embed_dims * 2, self.embed_dims),
                 nn.LayerNorm(self.embed_dims),
                 nn.ReLU(),
                 nn.Linear(self.embed_dims, self.embed_dims),
@@ -552,7 +555,7 @@ class LocalTemporalFusion(BaseModule):
         global_feat = torch.stack(global_feat, dim=0)
         local_feat = torch.cat([ref_feat, ext_feat], dim=1)
         local_feat = local_feat[None].repeat(self.transformer_itrs, 1, 1, 1)
-        if self.norm_emb:
+        if self.norm_fusion:
             outs_dec = self.local_global_fusion(torch.cat([local_feat, global_feat], dim=-1))
         else:
             # simple addition will lead to large values in long sequences

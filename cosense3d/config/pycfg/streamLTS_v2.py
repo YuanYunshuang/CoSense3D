@@ -137,7 +137,8 @@ shared_modules = OrderedDict(
         feature_stride=8,
         transformer_itrs=1,
         global_ref_time=0.05,
-        norm_emb=True,
+        norm_emb=False,
+        norm_fusion=True,
         lidar_range=point_cloud_range,
         transformer=dict(
             type='transformer.PETRTemporalTransformer',
@@ -173,7 +174,7 @@ shared_modules = OrderedDict(
                     feedforward_channels=1024,
                     ffn_dropout=0.1,
                     with_cp=False,  ###use checkpoint to save memory
-                    operation_order=('norm', 'self_attn', 'norm',
+                    operation_order=('self_attn', 'norm',
                                      'cross_attn', 'norm',
                                      'ffn', 'norm')),
             )

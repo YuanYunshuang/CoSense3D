@@ -24,7 +24,7 @@ TRAIN:
   gpus: 0
   hooks: 'pycfg.streamLTS_v2.train_hooks'
   optimizer:
-    lr: 0.0002
+    lr: 0.0001
     weight_decay: 1e-2
     betas: [0.9, 0.98]
   lr_scheduler:
