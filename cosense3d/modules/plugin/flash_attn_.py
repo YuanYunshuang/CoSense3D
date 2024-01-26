@@ -18,29 +18,6 @@ from torch.nn.functional import linear
 from einops import rearrange
 
 
-from flash_attn.flash_attn_interface import flash_attn_unpadded_kvpacked_func, _get_block_size
-from flash_attn.bert_padding import unpad_input, pad_input, index_first_axis
-from cosense3d.modules.utils.test_flash_attn import convert_flash_attn_S_to_softmax, \
-    generate_random_padding_mask
-
-
-
-def flash_attn_unpadded_kvpacked_test(q, kv, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk, dropout_p, softmax_scale,
-                                      causal, batch_size):
-    d = q.shape[-1]
-    device = q.device
-    output_unpad, sm_lse, S_dmask = flash_attn_unpadded_kvpacked_func(
-        q, kv, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk,
-        dropout_p, return_attn_probs=True, causal=causal, softmax_scale=softmax_scale
-    )
-    query_padding_mask = generate_random_padding_mask(max_sq, batch_size, device, mode='full')
-    key_padding_mask = generate_random_padding_mask(max_sk, batch_size, device, mode='full')
-    S_dmask_converted = convert_flash_attn_S_to_softmax(
-        S_dmask, query_padding_mask, key_padding_mask, d, dropout_p > 0.0, causal=causal
-    )
-    return output_unpad, S_dmask_converted
-
-
 def _in_projection_packed(q, k, v, w, b=None):
     w_q, w_k, w_v = w.chunk(3)
     if b is None:
@@ -92,13 +69,7 @@ class FlashAttention(nn.Module):
             cu_seqlens_k = torch.arange(0, (batch_size + 1) * seqlen_k, step=seqlen_k, dtype=torch.int32,
                                         device=kv.device)
             if self.training or not self.return_attn_weights:
-                output = flash_attn_unpadded_kvpacked_func(
-                    q, kv, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk,
-                    self.dropout_p if self.training else 0.0,
-                    softmax_scale=self.softmax_scale, causal=causal
-                )
-                output = rearrange(output, '(b s) ... -> b s ...', b=batch_size)
-                attn_weights = None
+                raise NotImplementedError
             else:
                 Q, K, V = q.permute(1, 0, 2), kv[:, 0].permute(1, 0, 2), kv[:, 1].permute(1, 0, 2)
                 attn_weights = torch.softmax((Q @ K.transpose(-2, -1) / math.sqrt(Q.size(-1))), dim=-1)
@@ -116,21 +87,7 @@ class FlashAttention(nn.Module):
                 attn_weights = rearrange(attn_weights, '(b s) ... -> b s ...', b=batch_size)
                 # attn_weights = attn_weights.mean(dim=1)
         else:
-            nheads = kv.shape[-2]
-            q = rearrange(q, 'b s ... -> (b s) ...')
-            max_sq = seqlen_q
-            cu_seqlens_q = torch.arange(0, (batch_size + 1) * seqlen_q, step=seqlen_q, dtype=torch.int32,
-                                        device=q.device)
-            x = rearrange(kv, 'b s two h d -> b s (two h d)')
-            x_unpad, indices, cu_seqlens_k, max_sk = unpad_input(x, key_padding_mask)
-            x_unpad = rearrange(x_unpad, 'nnz (two h d) -> nnz two h d', two=2, h=nheads)
-            output_unpad = flash_attn_unpadded_kvpacked_func(
-                q, x_unpad, cu_seqlens_q, cu_seqlens_k, max_sq, max_sk,
-                self.dropout_p if self.training else 0.0,
-                softmax_scale=self.softmax_scale, causal=causal
-            )
-            output = rearrange(output_unpad, '(b s) ... -> b s ...', b=batch_size)
-            attn_weights = None
+            raise NotImplementedError
 
         return output, attn_weights
 
