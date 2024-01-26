@@ -7,7 +7,10 @@ import torch.utils.checkpoint as cp
 from cosense3d.modules.utils import build_torch_module
 from cosense3d.modules.utils.norm import build_norm_layer
 from cosense3d.modules.utils.init import xavier_init
-from cosense3d.modules.plugin.flash_attn import FlashMHA
+try:
+    from cosense3d.modules.plugin.flash_attn import FlashMHA
+except:
+    pass
 from cosense3d.modules.utils.amp import auto_fp16
 
 
