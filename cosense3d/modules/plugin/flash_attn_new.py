@@ -5,6 +5,12 @@ from functools import partial
 
 import torch
 import torch.nn as nn
+from torch.nn.init import (
+    xavier_uniform_,
+    constant_,
+    xavier_normal_
+)
+from torch.nn.functional import linear
 from einops import rearrange, repeat
 
 from flash_attn.utils.distributed import get_dim_for_local_rank
@@ -988,6 +994,15 @@ class ParallelMHA(nn.Module):
         return out
 
 
+def _in_projection_packed(q, k, v, w, b=None):
+    w_q, w_k, w_v = w.chunk(3)
+    if b is None:
+        b_q = b_k = b_v = None
+    else:
+        b_q, b_k, b_v = b.chunk(3)
+    return linear(q, w_q, b_q), linear(k, w_k, b_k), linear(v, w_v, b_v)
+
+
 class FlashMHA(nn.Module):
 
     def __init__(self, embed_dim, num_heads, bias=True, batch_first=True, attention_dropout=0.0,
@@ -1011,7 +1026,7 @@ class FlashMHA(nn.Module):
             self.register_parameter('in_proj_bias', None)
         self.inner_attn = FlashCrossAttention(
             causal=causal,
-            attention_dropout=attention_dropout, **factory_kwargs)
+            attention_dropout=attention_dropout)
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self._reset_parameters()
 
