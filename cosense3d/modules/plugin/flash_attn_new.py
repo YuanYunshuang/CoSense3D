@@ -1046,5 +1046,5 @@ class FlashMHA(nn.Module):
         k = rearrange(k, 'b s (h d) -> b s h d', h=self.num_heads)
         v = rearrange(v, 'b s (h d) -> b s h d', h=self.num_heads)
         kv = torch.stack([k, v], dim=2)
-        context, attn_weights = self.inner_attn(q, kv, key_padding_mask=key_padding_mask, causal=self.causal)
+        context, attn_weights = self.inner_attn(q, kv, causal=self.causal)
         return self.out_proj(rearrange(context, 'b s h d -> b s (h d)')), attn_weights
