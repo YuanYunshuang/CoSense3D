@@ -10,7 +10,7 @@ from cosense3d.modules.utils.init import xavier_init
 try:
     from cosense3d.modules.plugin.flash_attn import FlashMHA
 except:
-    pass
+    from cosense3d.modules.plugin.flash_attn_new import FlashMHA
 from cosense3d.modules.utils.amp import auto_fp16
 
 

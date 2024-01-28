@@ -11,7 +11,7 @@ DATASET:
   batch_size_test: 1
   n_workers: 4
 
-  max_num_cavs: 5
+  max_num_cavs: 7
   seq_len: &seq_len 4
   train_pipeline: 'pycfg.stream_lidar_st_v2_s.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar_st_v2_s.pipeline_cpu'
