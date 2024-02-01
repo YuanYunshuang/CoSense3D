@@ -126,7 +126,7 @@ class QueryGuidedPETRHead(BaseModule):
                     self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3])
 
         reference_points = reference_points * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]
-        pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
+        det_boxes, pred_boxes = self.get_pred_boxes(all_bbox_reg, reference_points)
         cls_scores = pred_to_conf_unc(all_cls_logits, self.loss_cls.activation, self.is_edl)[0]
 
         if self.sparse:
@@ -139,7 +139,8 @@ class QueryGuidedPETRHead(BaseModule):
                         'all_bbox_reg': all_bbox_reg[:, mask],
                         'ref_pts': reference_points[mask],
                         'all_cls_scores': cls_scores[:, mask],
-                        'all_bbox_preds': pred_boxes[:, mask],
+                        'all_bbox_preds': det_boxes[:, mask],
+                        'all_bbox_preds_t': pred_boxes[:, mask] if pred_boxes is not None else None,
                     }
                 )
         else:
@@ -149,12 +150,13 @@ class QueryGuidedPETRHead(BaseModule):
                     'all_bbox_reg': all_bbox_reg[:, i],
                     'ref_pts': reference_points[i],
                     'all_cls_scores': cls_scores[:, i],
-                    'all_bbox_preds': pred_boxes[:, i],
+                    'all_bbox_preds': det_boxes[:, i],
+                    'all_bbox_preds_t': pred_boxes[:, i] if pred_boxes is not None else None,
                 } for i in range(len(feat_in))
             ]
 
         if not self.training:
-            dets = self.get_predictions(cls_scores, pred_boxes, batch_inds=reference_inds)
+            dets = self.get_predictions(cls_scores, det_boxes, pred_boxes, batch_inds=reference_inds)
             for i, out in enumerate(outs):
                 out['preds'] = dets[i]
 
@@ -280,10 +282,15 @@ class QueryGuidedPETRHead(BaseModule):
             reg[reg_name] = bbox_preds[..., ptr:ptr + reg_dim].contiguous()
             ptr += reg_dim
 
-        boxes = self.box_assigner.box_coder.decode(ref_pts[None], reg)
-        return torch.cat([boxes, reg['vel']], dim=-1)
+        out = self.box_assigner.box_coder.decode(ref_pts[None], reg)
+        if isinstance(out, tuple):
+            det, pred = out
+        else:
+            det = out
+            pred = None
+        return det, pred
 
-    def get_predictions(self, cls_scores, bbox_preds, batch_inds=None):
+    def get_predictions(self, cls_scores, det_boxes, pred_boxes, batch_inds=None):
         if self.is_edl:
             scores = cls_scores[-1][..., 1:].sum(dim=-1)
         else:
@@ -296,10 +303,10 @@ class QueryGuidedPETRHead(BaseModule):
             inds = range(cls_scores.shape[1])
             for i in inds:
                 dets.append({
-                    'box': bbox_preds[-1][i][pos[i]],
+                    'box': det_boxes[-1][i][pos[i]],
                     'scr': scores[i][pos[i]],
                     'lbl': labels[i][pos[i]],
-                    'idx': torch.ones_like(labels[i][pos[i]]) * i
+                    'idx': torch.ones_like(labels[i][pos[i]]) * i,
                 })
         else:
             inds = batch_inds.unique()
@@ -307,9 +314,10 @@ class QueryGuidedPETRHead(BaseModule):
                 mask = batch_inds == i
                 pos_mask = pos[mask]
                 dets.append({
-                    'box': bbox_preds[-1][mask][pos_mask],
+                    'box': det_boxes[-1][mask][pos_mask],
                     'scr': scores[mask][pos_mask],
                     'lbl': labels[mask][pos_mask],
+                    'pred': pred_boxes[-1][mask][pos_mask],
                     'idx': batch_inds[mask][pos_mask].long()
                 })
 

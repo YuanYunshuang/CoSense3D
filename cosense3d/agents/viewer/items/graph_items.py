@@ -18,6 +18,7 @@ BOX_COLORs = {
     'gt': (0, 1, 0, 1),
     'det': (1, 0, 0, 1),
     'pred': (1, 0, 1, 1),
+    'successor': (0, 0.5, 1, 1),
     'successor_gt': (0, 1, 1, 1)
 }
 

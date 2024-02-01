@@ -151,6 +151,12 @@ class GLViewer(gl.GLViewWidget):
                                    status='det', line_width=2)
                 self.boxes.append(item)
                 self.addItem(item)
+        if successor is not None:
+            for id, label in successor.items():
+                item = LineBoxItem(box=[id, ] + label, last_pose=None,
+                                   status='successor', line_width=2)
+                self.boxes.append(item)
+                self.addItem(item)
         if successor_gt is not None:
             for id, label in successor_gt.items():
                 item = LineBoxItem(box=[id, ] + label, last_pose=None,
@@ -181,15 +187,14 @@ class GLViewer(gl.GLViewWidget):
 
     def refresh(self, data_dict, visible_keys=['globalGT'], color_mode='united', **kwargs):
         pcds = data_dict.get('points', {})
-        local_labels, global_labels, local_det, global_det, ego_id = None, None, None, None, None
+        ego_id = list(data_dict['scenario'].keys())[0]
+        local_labels, global_labels, local_det, global_det = None, None, None, None
         global_pred_gt, global_pred = None, None
         if 'globalGT' in visible_keys:
             global_labels = data_dict.get('global_labels', {})
-            ego_id = list(global_labels.keys())[0]
             global_labels = global_labels[ego_id]
         if 'localGT' in visible_keys:
             local_labels = data_dict.get('local_labels', {})
-            ego_id = list(local_labels.keys())[0]
         if pcds is None and global_labels is {} and local_labels is None:
             return
 
@@ -207,6 +212,7 @@ class GLViewer(gl.GLViewWidget):
             global_pred_gt = global_pred_gt.get(ego_id, {})
         if 'globalPred' in visible_keys:
             global_pred = data_dict.get('global_pred', {})
+            global_pred = global_pred.get(ego_id, {'labels': {}})['labels']
 
         self.updateFrameData(pcds,
                              local_label=local_labels,

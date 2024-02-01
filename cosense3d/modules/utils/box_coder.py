@@ -158,9 +158,9 @@ class CenterBoxCoder(object):
         cc, bb = torch.meshgrid(centers[:, 0], gt_boxes[:, 0], indexing='ij')
         dist_ctr_to_box[cc != bb] = 1000
         min_dists, box_idx_of_pts = dist_ctr_to_box.min(dim=1)
-        # diagnal = torch.norm(gt_boxes[:, 4:6].mean(dim=0) / 2)
-        # valid = min_dists < max(diagnal, meter_per_pixel[0])
-        valid = min_dists < self.reg_radius
+        diagnal = torch.norm(gt_boxes[:, 4:6].mean(dim=0) / 2)
+        valid = min_dists < max(diagnal, meter_per_pixel[0])
+        # valid = min_dists < self.reg_radius
         valid_center, valid_box = centers[valid], gt_boxes[box_idx_of_pts[valid]]
         valid_pred = None
         if self.with_pred and gt_preds is not None:
@@ -171,7 +171,7 @@ class CenterBoxCoder(object):
 
         xt = xg - xc
         yt = yg - yc
-        zt = zg + self.z_offset
+        zt = zg # + self.z_offset
 
         lt = torch.log(lg)
         wt = torch.log(wg)
@@ -193,7 +193,7 @@ class CenterBoxCoder(object):
 
         reg_box = torch.cat([xt, yt, zt, lt, wt, ht], dim=1)  # N 6
         reg_dir = torch.cat([rtx, rty], dim=1)  # N 8
-        reg_box[..., :3] /= self.reg_radius
+        # reg_box[..., :3] /= self.reg_radius
 
         res = (reg_box, reg_dir, dir_score, valid)
 
@@ -209,11 +209,11 @@ class CenterBoxCoder(object):
                 # some gt_boxes do not have gt successors, zero padded virtual successors are used to align the number
                 # of boxes between gt_boxes and gt_preds, when calculate preds loss, these boxes should be ignored.
                 mask.append(boxes.any(dim=-1, keepdim=True).float())
-                diff_xy = (boxes[:, :2] - valid_center[:, 1:3]) / self.pred_max_offset
-                diff_z = boxes[:, 2:3] + self.z_offset
+                diff_xy = (boxes[:, :2] - valid_center[:, 1:3]) # / self.pred_max_offset
+                diff_z = boxes[:, 2:3] # + self.z_offset
                 diff_cos = torch.cos(boxes[:, 3:]) - torch.cos(prev_angles)
                 diff_sin = torch.sin(boxes[:, 3:]) - torch.sin(prev_angles)
-                preds_tgt.append(torch.cat([diff_xy, diff_z, diff_cos, diff_sin], dim=-1) / (i + 1))
+                preds_tgt.append(torch.cat([diff_xy, diff_z, diff_cos, diff_sin], dim=-1) / (i + 2))
             preds_tgt = torch.cat(preds_tgt, dim=-1)
             mask = torch.cat(mask, dim=-1).all(dim=-1, keepdim=True)
             res = res + (torch.cat([mask, preds_tgt], dim=-1),)
@@ -241,11 +241,12 @@ class CenterBoxCoder(object):
             xc, yc = torch.split(centers[..., 0:2], 1, dim=-1)
         else:
             xc, yc = torch.split(centers[..., 1:3], 1, dim=-1)
+        reg['box'][..., :3] *= self.reg_radius
         xt, yt, zt, lt, wt, ht = torch.split(reg['box'], 1, dim=-1)
 
         xo = xt + xc
         yo = yt + yc
-        zo = zt
+        zo = zt - self.z_offset
 
         lo = torch.exp(lt)
         wo = torch.exp(wt)
@@ -271,7 +272,16 @@ class CenterBoxCoder(object):
         if self.with_velo:
             ret = torch.cat([ret, reg['vel']], dim=-1)
         if self.with_pred:
-            # TODO decode pred boxes
-            pass
+            pred = reg['pred'].clone()
+            b, n, c = pred.shape
+            pred_len = c // 5
+            mul = torch.arange(1, pred_len + 1, device=pred.device, dtype=pred.dtype)
+            pred = pred.view(b, n, -1, 5) * mul.view(1, 1, -1, 1)
+            xy = pred[..., :2] * self.pred_max_offset + centers[..., :2].unsqueeze(-2)
+            z = pred[..., 2:3] - self.z_offset
+            r = torch.atan2(pred[..., 4] + st.view(*shape, 1), pred[..., 3] + ct.view(*shape, 1)).unsqueeze(-1)
+            lwh = torch.cat([lo, wo, ho], dim=-1).unsqueeze(-2).repeat(1, 1, pred_len, 1)
+            pred = torch.cat([xy, z, lwh, r], dim=-1)
+            ret = (ret,  pred)
 
         return ret

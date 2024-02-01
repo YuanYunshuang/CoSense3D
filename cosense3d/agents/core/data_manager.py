@@ -201,7 +201,10 @@ class DataManager:
             cur_id = i + 1
             if id_appendix != 0:
                 cur_id = cur_id * 10 + id_appendix
-            boxes_vis[cur_id] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
+            try:
+                boxes_vis[cur_id] = [gt_labels[i]] + box[:6] + [0, 0] + [box[6]]
+            except:
+                print('d')
         return boxes_vis
 
     def get_gt_boxes_as_vis_format(self, batch_idx, coor='global', successors=False):
@@ -233,15 +236,21 @@ class DataManager:
                     self.get_gt_boxes_as_vis_format(batch_idx, ref_coor, successors))
                 if successors and ref_coor=='global':
                     gather_dict['global_pred_gt'] = successor_labels
-            elif k == 'global_pred_gt':
+            elif k == 'global_pred_gt' or k == 'global_pred':
                 continue
             elif k == 'detection' or k == 'detection_global':
                 detection = self.gather_ego_data(k)
+                global_pred = {}
                 for cav_id, det in detection.items():
+                    global_pred[cav_id] = {}
                     if 'preds' in det:
                         det = det['preds'] # todo: without nms hook, keywork preds is not removed
                     detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+                    if 'pred' in det:
+                        global_pred[cav_id]['labels'] = self.boxes_to_vis_format(
+                            det['pred'].view(-1, 7), det['lbl'].unsqueeze(0).repeat(2, 1).view(-1))
                 gather_dict['detection'] = detection
+                gather_dict['global_pred'] = global_pred
             elif k == 'detection_local':
                 detection = self.gather_cav_data(k)
                 for cav_id, det in detection.items():

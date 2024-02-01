@@ -181,6 +181,8 @@ class DetectionNMSHook(BaseHook):
                     'idx': torch.zeros(indices.shape[0] if isinstance(indices, torch.Tensor) else (0,),
                                        device=indices.device),
                 })
+                if 'pred' in values['preds']:
+                    out['pred'] = torch.zeros((0, 2, 7), device=boxes.device)
             else:
                 keep = self.nms(
                     boxes[..., :7],
@@ -194,6 +196,10 @@ class DetectionNMSHook(BaseHook):
                     'lbl': labels[keep],
                     'idx': indices[keep],
                 })
+                if 'pred' in values['preds']:
+                    out['pred'] = values['preds']['pred'][keep]
+                    if len(out['pred']) != len(out['box']):
+                        print('d')
             preds.append(out)
 
             # from cosense3d.utils.vislib import draw_points_boxes_plt
