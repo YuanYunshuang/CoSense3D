@@ -127,7 +127,7 @@ def parse_dairv2x_paths(cfgs):
         },
         "lavander": {
             "data": "/home/data/DAIR-V2X",
-            "meta": "/home/data/DAIR-V2X/meta-loc-correct"
+            "meta": "/home/data/DAIR-V2X/meta_with_pred"
         },
     }
     name = socket.gethostname()
