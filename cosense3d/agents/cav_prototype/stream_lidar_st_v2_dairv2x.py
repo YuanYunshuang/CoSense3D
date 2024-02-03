@@ -96,7 +96,7 @@ class StreamLidarCAV(BaseCAV):
         else:
             time360 = times
         self.data['time_scale'] = time360
-        self.data['time_scale_reduced'] = time360 - self.timestamp / 2
+        self.data['time_scale_reduced'] = time360 - self.timestamp
         # self.data['points'] = self.data['points'][:, :-1]
         DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
         self.apply_transform()
@@ -142,7 +142,7 @@ class StreamLidarCAV(BaseCAV):
     def pre_update_memory(self):
         """Update memory before each forward run of a single frame."""
         if self.data['memory'] is not None:
-            self.data['memory']['timestamp'] += self.timestamp / 2
+            self.data['memory']['timestamp'] += self.timestamp
             # pose_inv = self.lidar_pose.inverse()
             # self.data['memory']['pose'] = pose_inv @ self.data['memory']['pose']
             # self.data['memory']['ref_pts'] = self.transform_ref_pts(
@@ -196,7 +196,7 @@ class StreamLidarCAV(BaseCAV):
         # ego aug to global
         self.data['memory']['ref_pts'] = self.transform_ref_pts(
             self.data['memory']['ref_pts'], self.T_aug2g)
-        self.data['memory']['timestamp'][1:] -= self.timestamp / 2
+        self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
     def transform_ref_pts(self, reference_points, matrix):

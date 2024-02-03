@@ -107,6 +107,7 @@ def parse_opv2v_paths(cfgs):
     name = socket.gethostname()
     cfgs['DATASET']['data_path'] = path_map[name]['data']
     cfgs['DATASET']['meta_path'] = path_map[name]['meta']
+    cfgs['DATASET']['enable_split_sub_folder'] = True
     return cfgs
 
 
@@ -133,6 +134,7 @@ def parse_dairv2x_paths(cfgs):
     name = socket.gethostname()
     cfgs['DATASET']['data_path'] = path_map[name]['data']
     cfgs['DATASET']['meta_path'] = path_map[name]['meta']
+    cfgs['DATASET']['enable_split_sub_folder'] = False
     return cfgs
 
 

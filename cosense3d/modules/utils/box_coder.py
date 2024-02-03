@@ -241,12 +241,12 @@ class CenterBoxCoder(object):
             xc, yc = torch.split(centers[..., 0:2], 1, dim=-1)
         else:
             xc, yc = torch.split(centers[..., 1:3], 1, dim=-1)
-        reg['box'][..., :3] *= self.reg_radius
+        # reg['box'][..., :3] *= self.reg_radius
         xt, yt, zt, lt, wt, ht = torch.split(reg['box'], 1, dim=-1)
 
         xo = xt + xc
         yo = yt + yc
-        zo = zt - self.z_offset
+        zo = zt #- self.z_offset
 
         lo = torch.exp(lt)
         wo = torch.exp(wt)
@@ -277,8 +277,8 @@ class CenterBoxCoder(object):
             pred_len = c // 5
             mul = torch.arange(1, pred_len + 1, device=pred.device, dtype=pred.dtype)
             pred = pred.view(b, n, -1, 5) * mul.view(1, 1, -1, 1)
-            xy = pred[..., :2] * self.pred_max_offset + centers[..., :2].unsqueeze(-2)
-            z = pred[..., 2:3] - self.z_offset
+            xy = pred[..., :2] + centers[..., :2].unsqueeze(-2)
+            z = pred[..., 2:3]
             r = torch.atan2(pred[..., 4] + st.view(*shape, 1), pred[..., 3] + ct.view(*shape, 1)).unsqueeze(-1)
             lwh = torch.cat([lo, wo, ho], dim=-1).unsqueeze(-2).repeat(1, 1, pred_len, 1)
             pred = torch.cat([xy, z, lwh, r], dim=-1)

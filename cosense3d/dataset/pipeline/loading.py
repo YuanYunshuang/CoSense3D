@@ -177,10 +177,12 @@ class LoadMultiViewImg:
 
 
 class LoadAnnotations:
-    def __init__(self, load2d=False, load_cam_param=False,
+    def __init__(self,
+                 load2d=False, load_cam_param=False,
                  load3d_local=False, load3d_global=False,
                  load_global_time=False, load3d_pred=False,
-                 min_num_pts=0, with_velocity=False):
+                 min_num_pts=0, with_velocity=False,
+                 class_agnostic_3d=True):
         self.load2d = load2d
         self.load_cam_param = load_cam_param
         self.load3d_local = load3d_local
@@ -189,6 +191,7 @@ class LoadAnnotations:
         self.load_global_time = load_global_time
         self.min_num_pts = min_num_pts
         self.with_velocity = with_velocity
+        self.class_agnostic_3d = class_agnostic_3d
 
     def __call__(self, data_dict):
         self._load_essential(data_dict)
@@ -322,7 +325,10 @@ class LoadAnnotations:
                 mask = np.ones_like(boxes[..., 0]).astype(bool)
             boxes = boxes[mask]
             local_boxes = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
-            local_labels = boxes[:, 1].astype(int)
+            if self.class_agnostic_3d:
+                local_labels = np.zeros(len(boxes), dtype=int)
+            else:
+                local_labels = boxes[:, 1].astype(int)
             if self.with_velocity:
                 if 'velos' in adict:
                     velos = np.array(adict['velos']).reshape(-1, 2).astype(np.float32) / 3.6
@@ -332,6 +338,7 @@ class LoadAnnotations:
                     local_boxes = np.concatenate([local_boxes, velos], axis=-1)
             local_bboxes_3d.append(local_boxes)
             local_labels_3d.append(local_labels)
+            assert np.all(local_labels == 0), "Num. cls > 1 not implemented."
             local_names.append(['car' for _ in local_labels])
 
         data_dict.update({
@@ -346,7 +353,10 @@ class LoadAnnotations:
         frame_meta = data_dict['sample_info']['meta']
         boxes = np.array(frame_meta['bbx_center_global'])
         global_bboxes_3d = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
-        global_labels_3d = boxes[:, 1].astype(int)
+        if self.class_agnostic_3d:
+            global_labels_3d = np.zeros(len(boxes), dtype=int)
+        else:
+            global_labels_3d = boxes[:, 1].astype(int)
 
         if self.with_velocity:
             if 'bbx_velo_global' in frame_meta:
@@ -372,8 +382,10 @@ class LoadAnnotations:
 
     def _load_global_time(self, data_dict):
         frame_meta = data_dict['sample_info']['meta']
-        assert 'global_bbox_time' in frame_meta
-        data_dict['global_time'] = frame_meta['global_bbox_time'][0]
+        if 'global_bbox_time' in frame_meta:
+            data_dict['global_time'] = frame_meta['global_bbox_time'][0]
+        else:
+            data_dict['global_time'] = data_dict['points'][0][:, -1].max()
         return data_dict
 
     def _load_anno3d_pred(self, data_dict):
