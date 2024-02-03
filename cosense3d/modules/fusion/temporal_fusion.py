@@ -582,8 +582,13 @@ class LocalTemporalFusion(BaseModule):
                 scores = roi[f'p{stride}']['scr']
             sort_inds = scores.argsort(descending=True)
             if scores.shape[0] < topk:
-                n_repeat = topk // len(scores) + 1
-                sort_inds = torch.cat([sort_inds] * n_repeat, dim=0)
+                try:
+                    n_repeat = topk // len(scores) + 1
+                    sort_inds = torch.cat([sort_inds] * n_repeat, dim=0)
+                except:
+                    print(topk)
+                    print(scores)
+                    raise AssertionError
 
             topk_inds = sort_inds[:topk]
             topk_ctr.append(ctr[topk_inds])
