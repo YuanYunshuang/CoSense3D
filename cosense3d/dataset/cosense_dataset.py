@@ -94,6 +94,7 @@ class CosenseDataset(Dataset):
                 scenarios = [l.strip() for l in fh.readlines() if len(l.strip()) > 0]
         else:
             scenarios = [d[:-5] for d in os.listdir(meta_dir) if 'json' in d]
+
         for scenario in scenarios:
             meta_file = os.path.join(meta_dir, f"{scenario}.json")
             scenario_dict = load_json(meta_file)

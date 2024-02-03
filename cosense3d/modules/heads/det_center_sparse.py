@@ -160,6 +160,9 @@ class DetCenterSparse(BaseModule):
         if self.generate_roi_scr:
             conf = [pred_to_conf_unc(x, self.loss_cls.activation)[0] for x in cls]
             conf = torch.stack(conf, dim=0).max(dim=0).values
+            if len(conf) == 0:
+                print('det_coor', coor.shape)
+                print('det_feat', feat.shape)
             if 'edl' in self.loss_cls.name.lower():
                 out_dict['scr'] = conf[:, 1:].max(dim=-1).values
             else:

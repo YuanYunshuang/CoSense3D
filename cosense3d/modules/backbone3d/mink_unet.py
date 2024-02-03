@@ -140,8 +140,6 @@ class MinkUnet(BaseModule):
         res = {f'p{k}': vars[f'p{k}_cat'] for k in self.cache_strides}
 
         tmp = x4.F.max(dim=0).values
-        if len(p2_cat) <= 10:
-            print('npoints', [len(pts) for pts in points])
         return res
 
     def forward_height_compression(self, res):

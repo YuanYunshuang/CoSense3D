@@ -46,6 +46,8 @@ class VisRunner(BaseRunner):
 
     def run_itr(self, data):
         self.hooks(self, 'pre_iter')
+        if data['scenario'][0][0] == '10.0' and data['frame'][0][0] == '018076':
+            print('d')
         load_tensors_to_gpu(data)
         self.controller.vis_forward(data)
 
