@@ -18,7 +18,7 @@ class BEV(BaseModule):
                  loss_cls,
                  num_cls=1,
                  class_names_each_head=None,
-                 down_sample_tgt=True,
+                 down_sample_tgt=False,
                  generate_roi_scr=True,
                  **kwargs):
         super(BEV, self).__init__(**kwargs)

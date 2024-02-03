@@ -44,8 +44,10 @@ bev_head_cfg = dict(
     data_info=data_info,
     stride=out_stride,
     in_dim=256,
+    num_cls=1,
     target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-    loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=50, n_cls=2, loss_weight=1.0),
+    loss_cls=dict(type='FocalLoss', use_sigmoid=True, bg_idx=0,
+                      gamma=2.0, alpha=0.25, loss_weight=2.0),
 )
 
 det_head_cfg = dict(

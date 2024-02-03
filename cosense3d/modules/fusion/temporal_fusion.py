@@ -586,8 +586,9 @@ class LocalTemporalFusion(BaseModule):
                     n_repeat = topk // len(scores) + 1
                     sort_inds = torch.cat([sort_inds] * n_repeat, dim=0)
                 except:
-                    print(topk)
-                    print(scores)
+                    print('stride', stride)
+                    print(ctr.shape)
+                    print(feat.shape)
                     raise AssertionError
 
             topk_inds = sort_inds[:topk]
