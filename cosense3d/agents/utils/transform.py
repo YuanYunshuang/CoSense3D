@@ -88,6 +88,7 @@ def filter_range(data, lidar_range, key):
         points = data['points'][mask]
         if len(points) == 0:
             # pad empty point cloud with random points to ensure batch norm validity
+            print("Empty point cloud found. Pad random points.")
             points = data['points'].new_zeros((10, points.shape[-1]))
             points[:, :2] = torch.rand_like(points[:, :2]) * 2 - 1
             points[:, 3] = -1
