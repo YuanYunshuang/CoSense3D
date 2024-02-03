@@ -14,7 +14,7 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 4
-  com_range: 200
+  com_range: 100
   train_pipeline: 'pycfg.stream_lidar_st_v2_dairv2x.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar_st_v2_dairv2x.pipeline_cpu'
 
