@@ -317,7 +317,7 @@ class QueryGuidedPETRHead(BaseModule):
                     'box': det_boxes[-1][mask][pos_mask],
                     'scr': scores[mask][pos_mask],
                     'lbl': labels[mask][pos_mask],
-                    'pred': pred_boxes[-1][mask][pos_mask],
+                    'pred': pred_boxes[-1][mask][pos_mask] if pred_boxes is not None else None,
                     'idx': batch_inds[mask][pos_mask].long()
                 })
 

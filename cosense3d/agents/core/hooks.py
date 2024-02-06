@@ -198,8 +198,7 @@ class DetectionNMSHook(BaseHook):
                 })
                 if 'pred' in values['preds']:
                     out['pred'] = values['preds']['pred'][keep]
-                    if len(out['pred']) != len(out['box']):
-                        print('d')
+                    assert len(out['pred']) != len(out['box'])
             preds.append(out)
 
             # from cosense3d.utils.vislib import draw_points_boxes_plt
