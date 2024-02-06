@@ -29,6 +29,10 @@ class StreamLidarCAV(BaseCAV):
                 'velo': x.new_zeros(self.memory_len, self.memory_num_propagated, 2),
             }
             self.data['memory']['pose_no_aug'] = self.data['memory']['pose'] + init_pose
+            self.aug_transform = None
+            self.T_aug2g = None
+            self.T_g2aug = None
+            self.T_e2g = None
         else:
             for k, v in self.data['memory'].items():
                 self.data['memory'][k] = self.data['memory'][k][:self.memory_len] * x

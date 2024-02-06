@@ -10,13 +10,13 @@ data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
 out_stride = 2
 
 pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time'], time_offset=1.6261*1e9),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     LoadAnnotations=dict(load3d_global=True, load3d_local=True,
-                         with_velocity=True, min_num_pts=3, load_global_time=True),
+                         with_velocity=True, min_num_pts=3, time_offset=1.6261*1e9),
 )
 
 inference_pipeline_cpu = OrderedDict(
-    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
+    LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
 )
 
 data_manager = dict(
@@ -31,11 +31,6 @@ data_manager = dict(
     ),
     test=dict(
         aug=dict()
-        # aug=dict(
-        #     rot_range=[-1.57, 1.57],
-        #     flip='xy',
-        #     scale_ratio_range=[0.95, 1.05],
-        # ),
     )
 )
 
@@ -138,7 +133,7 @@ shared_modules = OrderedDict(
         ref_pts_stride=2,
         feature_stride=8,
         transformer_itrs=1,
-        global_ref_time=0.0,
+        global_ref_time=0.05,
         lidar_range=point_cloud_range,
         transformer=dict(
             type='transformer.PETRTemporalTransformer',

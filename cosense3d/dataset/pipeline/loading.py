@@ -182,7 +182,7 @@ class LoadAnnotations:
                  load3d_local=False, load3d_global=False,
                  load_global_time=False, load3d_pred=False,
                  min_num_pts=0, with_velocity=False,
-                 class_agnostic_3d=True):
+                 class_agnostic_3d=True, time_offset=0):
         self.load2d = load2d
         self.load_cam_param = load_cam_param
         self.load3d_local = load3d_local
@@ -192,6 +192,7 @@ class LoadAnnotations:
         self.min_num_pts = min_num_pts
         self.with_velocity = with_velocity
         self.class_agnostic_3d = class_agnostic_3d
+        self.time_offset = time_offset
 
     def __call__(self, data_dict):
         self._load_essential(data_dict)
@@ -213,6 +214,7 @@ class LoadAnnotations:
 
     def _load_essential(self, data_dict):
         lidar_poses = []
+        timestampes = []
         agents = data_dict['sample_info']['agents']
         ego_pose = agents[data_dict['sample_info']['meta']['ego_id']]['lidar']['0']['pose']
         ego_pose = pose_to_transformation(ego_pose)
@@ -223,10 +225,12 @@ class LoadAnnotations:
             adict = agents[ai]
             lidar_pose = pose_to_transformation(adict['lidar']['0']['pose'])
             lidar_poses.append(lidar_pose)
+            timestampes.append(adict['lidar']['0']['time'] - self.time_offset)
 
         data_dict.update({
             'lidar_poses': lidar_poses,
             'ego_poses': ego_pose,
+            'timestamp': timestampes,
         })
 
         return data_dict
