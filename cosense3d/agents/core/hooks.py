@@ -196,7 +196,7 @@ class DetectionNMSHook(BaseHook):
                     'lbl': labels[keep],
                     'idx': indices[keep],
                 })
-                if 'pred' in values['preds']:
+                if 'pred' in values['preds'] and values['preds']['pred'] is not None:
                     out['pred'] = values['preds']['pred'][keep]
                     assert len(out['pred']) != len(out['box'])
             preds.append(out)
