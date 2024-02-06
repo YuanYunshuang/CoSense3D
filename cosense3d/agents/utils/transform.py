@@ -88,10 +88,11 @@ def filter_range(data, lidar_range, key):
         points = data['points'][mask]
         if len(points) == 0:
             # pad empty point cloud with random points to ensure batch norm validity
-            print("Empty point cloud found. Pad random points.")
-            points = data['points'].new_zeros((10, points.shape[-1]))
+            # print("Empty point cloud found. Pad random points.")
+            points = data['points'].new_zeros((8, points.shape[-1]))
             points[:, :2] = torch.rand_like(points[:, :2]) * 2 - 1
             points[:, 3] = -1
+            points[:, -1] = data['points'][:, -1].min()
         data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         coor = key.split('_')[1]
@@ -228,8 +229,12 @@ class DataOnlineProcessor:
         xyz_new = xyz_new[tmp > 0]
         # xyz_new = xyz_new[(xyz_new[..., 2] < min_h)]
         xyz_new = xyz_new[torch.randperm(len(xyz_new))]
-        selected = torch.unique(torch.floor(xyz_new[..., :3] / 2).long(), return_inverse=True, dim=0)[1]
+        uniq, selected = torch.unique(torch.floor(xyz_new[..., :3] / 2).long(), return_inverse=True, dim=0)
+        # xyz = torch.zeros_like(xyz_new[:len(uniq)])
+        tmin = xyz_new[:, -1].min()
+        xyz_new[:, -1] -= tmin
         xyz_new = scatter_mean(src=xyz_new, index=selected, dim=0)
+        xyz_new[:, -1] += tmin
 
         # pad free space point intensity as -1
         xyz_new = torch.cat([xyz_new[:, :3], - torch.ones_like(xyz_new[:, :1]), xyz_new[:, 3:]], dim=-1)

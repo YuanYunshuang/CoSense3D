@@ -22,7 +22,7 @@ inference_pipeline_cpu = OrderedDict(
 data_manager = dict(
     train=dict(
         aug=dict(
-            rot_range=[-1.57, 1.57],
+            rot_range=[-0.785, 0.785],
             flip='xy',
             scale_ratio_range=[0.95, 1.05],
         ),

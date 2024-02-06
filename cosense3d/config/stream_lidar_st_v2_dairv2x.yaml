@@ -6,7 +6,7 @@ DATASET:
   enable_split_sub_folder: False
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
+    lidar_range: [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
     voxel_size:  &voxel_size [0.4, 0.4, 0.4]
   batch_size_train: 4
   batch_size_test: 1
@@ -14,7 +14,7 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 4
-  com_range: 100
+  com_range: 200
   train_pipeline: 'pycfg.stream_lidar_st_v2_dairv2x.pipeline_cpu'
   test_pipeline: 'pycfg.stream_lidar_st_v2_dairv2x.pipeline_cpu'
 
