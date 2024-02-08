@@ -39,10 +39,8 @@ bev_head_cfg = dict(
     data_info=data_info,
     stride=out_stride,
     in_dim=256,
-    num_cls=1,
     target_assigner=dict(type='target_assigners.BEVPointAssigner'),
-    loss_cls=dict(type='FocalLoss', use_sigmoid=True, bg_idx=0,
-                      gamma=2.0, alpha=0.25, loss_weight=2.0),
+    loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=50, n_cls=2, loss_weight=1.0),
 )
 
 det_head_cfg = dict(
@@ -90,7 +88,7 @@ shared_modules = OrderedDict(
         gather_keys=['points'],
         scatter_keys=['bev_feat'],
         d=3,
-        cache_strides=[2, 8],
+        cache_strides=[2],
         kernel_size_layer1=5,
         in_dim=4,
         stride=out_stride,
@@ -98,7 +96,6 @@ shared_modules = OrderedDict(
         data_info=data_info,
         height_compression=OrderedDict(
             p2=dict(channels=[128, 256, 384], steps=[5, 2]),
-            p8=dict(channels=[128, 256], steps=[2])
         )
     ),
 
@@ -110,30 +107,28 @@ shared_modules = OrderedDict(
         d=2,
         convs=dict(
             p2=dict(kernels=[3, 3, 3], in_dim=384, out_dim=256),
-            p8=dict(kernels=[3, 3, 3], in_dim=256, out_dim=256)
         )
     ),
 
     roi_head = dict(
         type='heads.multitask_head.MultiTaskHead',
         gather_keys=['bev_feat'],
-        scatter_keys=['det_local', 'bev_local'],
+        scatter_keys=['det_local'],
         gt_keys=['local_bboxes_3d', 'local_labels_3d'],
-        heads=[update_dict(copy.copy(det_head_cfg), dict(generate_roi_scr=True)),
-               bev_head_cfg],
-        strides=[2, 8],
-        losses=[True, False]
+        heads=[update_dict(copy.copy(det_head_cfg), dict(generate_roi_scr=True))],
+        strides=[2],
+        losses=[True]
     ),
 
     temporal_fusion = dict(
-        type='fusion.temporal_fusion.LocalTemporalFusion',
-        gather_keys=['det_local', 'bev_local', 'bev_feat', 'memory'],
+        type='fusion.temporal_fusion.LocalTemporalFusionV2',
+        gather_keys=['det_local', 'bev_feat', 'memory'],
         scatter_keys=['temp_fusion_feat'],
         in_channels=256,
         ref_pts_stride=2,
         feature_stride=8,
         transformer_itrs=1,
-        global_ref_time=0.0,
+        global_ref_time=0.05,
         lidar_range=point_cloud_range,
         transformer=dict(
             type='transformer.PETRTemporalTransformer',
@@ -150,13 +145,6 @@ shared_modules = OrderedDict(
                             num_heads=8,
                             dropout=0.1,
                             fp16=False),
-                        dict(
-                            type='MultiheadFlashAttention',
-                            embed_dims=256,
-                            num_heads=8,
-                            dropout=0.1,
-                            fp16=True
-                        ),
                         ],
                     ffn_cfgs=dict(
                         type='FFN',
@@ -170,7 +158,6 @@ shared_modules = OrderedDict(
                     ffn_dropout=0.1,
                     with_cp=False,  ###use checkpoint to save memory
                     operation_order=('self_attn', 'norm',
-                                     'cross_attn', 'norm',
                                      'ffn', 'norm')),
             )
         ),
@@ -267,8 +254,7 @@ train_hooks = [
 
 test_hooks = [
         dict(type="DetectionNMSHook", nms_thr=0.1, pre_max_size=500),
-        dict(type="EvalDetectionHook", save_result=True,
-             pc_range=point_cloud_range_test, metrics=['OPV2V', 'CoSense3D']),
+        dict(type="EvalDetectionHook", save_result=True, pc_range=point_cloud_range_test, metrics=['OPV2V', 'CoSense3D']),
     ]
 
 plots = [
@@ -276,7 +262,6 @@ plots = [
     #      data_keys=['bevseg_local', 'local_labels']),
     # dict(title='DetectionScoreMap', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
     #      data_keys=['detection_local']),
-    dict(title='DetectionCanvas', lidar_range=point_cloud_range_test,
-         width=10, height=4, nrows=1, ncols=1,
+    dict(title='DetectionCanvas', lidar_range=point_cloud_range_test, width=10, height=4, nrows=1, ncols=1,
          data_keys=['detection', 'global_labels'])
 ]
