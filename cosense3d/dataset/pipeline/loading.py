@@ -225,7 +225,13 @@ class LoadAnnotations:
             adict = agents[ai]
             lidar_pose = pose_to_transformation(adict['lidar']['0']['pose'])
             lidar_poses.append(lidar_pose)
-            timestampes.append(adict['lidar']['0']['time'] - self.time_offset)
+            if adict['lidar']['0']['time'] is not None:
+                # dairv2x
+                timestampes.append(adict['lidar']['0']['time'] - self.time_offset)
+            else:
+                # opv2v
+                # TODO update opv2v meta files with lidar timestamps
+                timestampes.append(int(data_dict['frame']) * 0.1 - self.time_offset)
 
         data_dict.update({
             'lidar_poses': lidar_poses,
