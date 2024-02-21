@@ -123,8 +123,8 @@ def parse_dairv2x_paths(cfgs):
             "meta": "/media/yuan/luna/cosense3d/meta_with_pred"
         },
         "ominotago": {
-            "data": "/koko/DAIR-V2X",
-            "meta": "/koko/cosense3d/meta_with_pred"
+            "data": "/koko/yunshuang/DAIR-V2X",
+            "meta": "/koko/yunshuang/DAIR-V2X/meta_with_pred"
         },
         "lavander": {
             "data": "/home/data/DAIR-V2X",
