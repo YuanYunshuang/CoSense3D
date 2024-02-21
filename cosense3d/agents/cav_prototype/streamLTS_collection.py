@@ -88,6 +88,13 @@ class StreamLidarCAV(BaseCAV):
             self.T_aug2g = T_c2aug
 
     def prepare_data(self):
+        self.prepare_time_scale()
+        DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+        # self.vis_data('transformed', 4)
+
+    def prepare_time_scale(self):
         # hash time
         azi = torch.arctan2(self.data['points'][:, 1], self.data['points'][:, 0])
         azi, inds = (torch.rad2deg(azi) + 180).floor().long().unique(return_inverse=True)
@@ -102,11 +109,6 @@ class StreamLidarCAV(BaseCAV):
         self.data['time_scale'] = time360
         self.data['time_scale_reduced'] = time360 - self.timestamp / 2
         # self.data['points'] = self.data['points'][:, :-1]
-        DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
-        self.apply_transform()
-        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
-
-        # self.vis_data('transformed', 4)
 
     def get_response_cpm(self):
         cpm = {}
@@ -268,6 +270,12 @@ class StreamLidarCAV(BaseCAV):
 
 
 class slcFcooperOPV2V(StreamLidarCAV):
+
+    def prepare_data(self):
+        self.prepare_time_scale()
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+
     def forward_local(self, tasks, training_mode):
         if (self.is_ego or self.require_grad) and training_mode:
             grad_mode = 'with_grad'
