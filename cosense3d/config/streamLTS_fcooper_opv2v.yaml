@@ -1,0 +1,61 @@
+DATASET:
+  name: opv2v
+  dataset: temporal_cosense
+  meta_path: opv2v
+  data_path: opv2v
+  enable_split_sub_folder: False
+  DetectionBenchmark: Car
+  data_info: &data_info
+    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
+    voxel_size:  &voxel_size [0.4, 0.4, 0.4]
+  batch_size_train: 2
+  batch_size_test: 1
+  n_workers: 4
+
+  max_num_cavs: 7
+  seq_len: &seq_len 4
+  train_pipeline: 'pycfg.streamLTS_fcooper_opv2v.pipeline_cpu'
+  test_pipeline: 'pycfg.streamLTS_fcooper_opv2v.pipeline_cpu'
+
+TRAIN:
+#  project_name: 'centernet'
+  wandb_account: 'opheliayuan'
+  log_every: 10
+  max_epoch: 50
+  gpus: 0
+  hooks: 'pycfg.streamLTS_fcooper_opv2v.train_hooks'
+  optimizer:
+    lr: 0.0002
+    weight_decay: 1e-2
+    betas: [0.9, 0.98]
+  lr_scheduler:
+    policy: 'TransformerAdaptiveScheduler'
+    dim_embed: 256
+    warmup_steps: 4000
+
+TEST:
+  hooks: 'pycfg.streamLTS_fcooper_opv2v.test_hooks'
+
+
+CONTROLLER:
+  num_loss_frame: 1
+  data_manager: 'pycfg.streamLTS_fcooper_opv2v.data_manager'
+  shared_modules: 'pycfg.streamLTS_fcooper_opv2v.shared_modules'
+  cav_manager:
+    prototype: streamLTS_collection.slcFcooperOPV2V
+    memory_len: *seq_len
+    memory_emb_dims: 256
+    memory_num_propagated: 256
+    ref_pts_dim: 3
+    all_grad: false
+
+VISUALIZATION:
+  output_viewer:
+    plots: 'pycfg.streamLTS_fcooper_opv2v.plots'
+
+
+
+
+
+
+

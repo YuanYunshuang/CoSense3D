@@ -162,7 +162,8 @@ class QueryGuidedPETRHead(BaseModule):
 
         return {self.scatter_keys[0]: outs}
 
-    def loss(self, petr_out, gt_boxes, gt_labels, gt_preds=None, **kwargs):
+    def loss(self, petr_out, gt_boxes, gt_labels, *args, **kwargs):
+        aux_dict = {self.gt_keys[2:][i]: x for i, x in enumerate(args)}
         epoch = kwargs.get('epoch', 0)
         if self.sparse:
             cls_scores = torch.cat([x for out in petr_out for x in out['all_cls_logits']], dim=0)
@@ -176,8 +177,10 @@ class QueryGuidedPETRHead(BaseModule):
         gt_boxes = [x for x in gt_boxes for _ in range(self.num_pred)]
         # gt_velos = [x[:, 7:] for x in gt_boxes for _ in range(self.num_pred)]
         gt_labels = [x for x in gt_labels for _ in range(self.num_pred)]
-        if gt_preds is not None:
-            gt_preds = [x.transpose(1, 0) for x in gt_preds for _ in range(self.num_pred)]
+        if 'gt_preds' in aux_dict:
+            gt_preds = [x.transpose(1, 0) for x in aux_dict['gt_preds'] for _ in range(self.num_pred)]
+        else:
+            gt_preds = None
 
         # cls loss
         cls_tgt = multi_apply(self.cls_assigner.assign,
@@ -235,7 +238,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         # box loss
         # pad ref pts with batch index
-        if gt_preds is not None:
+        if 'gt_preds' in aux_dict:
             gt_preds = self.cat_data_from_list(gt_preds)
         box_tgt = self.box_assigner.assign(
             self.cat_data_from_list(ref_pts, pad_idx=True),

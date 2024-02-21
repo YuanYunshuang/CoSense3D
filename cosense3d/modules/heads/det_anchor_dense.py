@@ -14,6 +14,7 @@ class DetAnchorDense(BaseModule):
                  loss_cls,
                  loss_box,
                  num_classes=1,
+                 stride=None,
                  target_assigner=None,
                  get_boxes_when_training=False,
                  box_stamper=None,
@@ -23,6 +24,10 @@ class DetAnchorDense(BaseModule):
         self.num_classes = num_classes
         self.get_boxes_when_training = get_boxes_when_training
         self.target_assigner = plugin.build_plugin_module(target_assigner)
+        self.stride = stride
+        if self.stride is None:
+            assert target_assigner is not None
+            self.stride = self.target_assigner.stride
         self.num_anchors = self.target_assigner.num_anchors
         self.code_size = self.target_assigner.box_coder.code_size
         self.cls_head = nn.Conv2d(in_channels, self.num_anchors, kernel_size=1)
@@ -40,7 +45,12 @@ class DetAnchorDense(BaseModule):
         self._is_init = True
 
     def forward(self, bev_feat_list, points=None, **kwargs):
-        bev_feat = torch.stack(bev_feat_list, dim=0)
+        if isinstance(bev_feat_list[0], torch.Tensor):
+            bev_feat = torch.stack(bev_feat_list, dim=0)
+        elif isinstance(bev_feat_list[0], dict):
+            bev_feat = torch.stack([x[f'p{self.stride}'] for x in bev_feat_list], dim=0)
+        else:
+            raise NotImplementedError
 
         cls = self.cls_head(bev_feat)
         reg = self.reg_head(bev_feat)

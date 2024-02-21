@@ -92,7 +92,7 @@ class PillarBEV(BaseModule):
 
     def forward(self, points: list, **kwargs):
         N = len(points)
-        voxels, coords, num_points = self.voxel_generator(points)
+        voxels, coords, num_points = self.voxel_generator([x[:, :4] for x in points])
         coords = self.cat_data_from_list(coords, pad_idx=True)
         voxels = self.cat_data_from_list(voxels)
         num_points = self.cat_data_from_list(num_points)
@@ -107,7 +107,7 @@ class PillarBEV(BaseModule):
             x = self.blocks[i](x)
 
             stride = int(bev_feat.shape[2] / x.shape[2])
-            ret_dict[f'spatial_features_{stride}x'] = x
+            ret_dict[f'p{stride}'] = x
 
             if len(self.deblocks) > 0:
                 ups.append(self.deblocks[i](x))
@@ -127,7 +127,12 @@ class PillarBEV(BaseModule):
         if hasattr(self, 'bev_compressor'):
             x = self.bev_compressor(x)
 
-        return {self.scatter_keys[0]: x}
+        out = {self.scatter_keys[0]: x}
+        if 'multi_scale_bev_feat' in self.scatter_keys:
+            stride = int(bev_feat.shape[2] / x.shape[2])
+            ret_dict[f'p{stride}'] = x
+            out['multi_scale_bev_feat'] = [{k: v[i] for k, v in ret_dict.items()} for i in range(N)]
+        return out
 
     def format_output(self, res, N):
         out_dict = {self.scatter_keys[0]: self.decompose_stensor(res, N)}

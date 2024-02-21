@@ -51,3 +51,28 @@ class BevSegHead(BaseModule):
         return loss_dict
 
 
+class BevRoIDenseHead(BaseModule):
+    def __init__(self, in_dim, stride, num_cls=1, loss_cls=None, **kwargs):
+        super(BevRoIDenseHead, self).__init__(**kwargs)
+        self.head = nn.Conv2d(in_dim, num_cls, kernel_size=1)
+        self.stride = stride
+        if loss_cls is not None:
+            self.loss_cls = build_loss(**loss_cls)
+
+    def forward(self,  input, **kwargs):
+        x = self.stack_data_from_list([x[f'p{self.stride}'] for x in input])
+        x = self.head(x)
+
+        # output_list = self.compose_result_list(out_dict, len(x))
+        return {self.scatter_keys[0]: x}
+
+    def loss(self, bev_preds, bev_tgt, **kwargs):
+        bev_preds = self.stack_data_from_list(bev_preds)
+        dynamic_bev_gt = torch.stack(bev_tgt, dim=0)
+        loss_dict = self.loss_cls(
+            dynamic_pred=bev_preds,
+            dynamic_gt=dynamic_bev_gt
+        )
+        return loss_dict
+
+

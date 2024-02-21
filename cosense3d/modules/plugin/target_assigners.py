@@ -506,7 +506,7 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
 
         Parameters
         ----------
-        gt_boxes Tensor(N, 7): [x, y, z, l, w, h, r]
+        gt_boxes Tensor(N, 7): [x, y, z, l, w, h, r, ...]
 
         Returns
         -------
@@ -518,7 +518,8 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
             dir_scores = gt_boxes.new_zeros((0, 4))
             # Todo dir_score, gt_boxes, correct shape
             return labels, reg_tgt, dir_scores
-        standup_boxes = boxes3d_to_standup_bboxes(gt_boxes)
+
+        standup_boxes = boxes3d_to_standup_bboxes(gt_boxes[:, :7])
         ious = self.box_overlaps(self.standup_anchors, standup_boxes)
         iou_max, max_inds = ious.max(dim=1)
         top1_inds = torch.argmax(ious, dim=0)
@@ -532,7 +533,7 @@ class BoxAnchorAssigner(BaseAssigner, torch.nn.Module):
         labels[neg] = 0
         labels[pos_inds] = 1
 
-        aligned_gt_boxes = gt_boxes[max_inds[pos_inds]]
+        aligned_gt_boxes = gt_boxes[max_inds[pos_inds], :7]
         aligned_anchors = self.anchors[pos_inds]
         reg_tgt, dir_score = self.box_coder.encode(aligned_anchors, aligned_gt_boxes)
 

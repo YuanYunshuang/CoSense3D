@@ -2,6 +2,7 @@ from torch import nn
 
 from cosense3d.modules import BaseModule
 from cosense3d.modules import build_module
+from cosense3d.modules.plugin import build_plugin_module
 
 
 class MultiTaskHead(BaseModule):
@@ -9,6 +10,7 @@ class MultiTaskHead(BaseModule):
                  heads,
                  strides,
                  losses,
+                 formatting=None,
                  **kwargs):
         super().__init__(**kwargs)
         self.losses = losses
@@ -22,11 +24,22 @@ class MultiTaskHead(BaseModule):
             ))
             modules.append(build_module(h))
         self.heads = nn.ModuleList(modules)
+        if formatting is None:
+            self.formatting = [None] * len(self.heads)
+        else:
+            assert len(formatting) == len(self.heads)
+            self.formatting = []
+            for fmt in formatting:
+                self.formatting.append(build_plugin_module(fmt))
 
-    def forward(self, stensor_list, *args, **kwargs):
+    def forward(self, tensor_list, *args, **kwargs):
         out = {}
         for i, h in enumerate(self.heads):
-            out.update(h(stensor_list, *args, **kwargs))
+            x = h(tensor_list, *args, **kwargs)
+            if self.formatting[i] is not None:
+                for k, v in x.items():
+                    x[k] = self.formatting[i](x[k])
+            out.update(x)
 
         return out
 
