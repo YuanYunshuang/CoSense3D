@@ -121,7 +121,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
                                 embed_dims=256,
                                 num_heads=8,
                                 dropout=0.1,
-                                fp16=True
+                                fp16=False if attn1 == 'MultiheadAttention' else True
                             ),
                             ],
                         ffn_cfgs=dict(
