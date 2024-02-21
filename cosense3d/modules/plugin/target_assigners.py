@@ -811,7 +811,10 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
             reg_tgt['dir'].append(reg_dir)
             reg_tgt['scr'].append(dir_score)
             if getattr(self.box_coder, 'with_velo', False):
-                reg_tgt['vel'].append(res[4])
+                try:
+                    reg_tgt['vel'].append(res[4])
+                except:
+                    print(res)
             if getattr(self.box_coder, 'with_pred', False):
                 reg_tgt['pred'].append(res[5])
         return reg_tgt
