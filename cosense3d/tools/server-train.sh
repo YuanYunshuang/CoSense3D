@@ -8,9 +8,9 @@ torchrun \
 cosense3d/tools/agent_runner.py \
 --config ./cosense3d/config/streamLTS_fcooper_dairv2x.yaml \
 --mode train \
---gpus 4 \
+--gpus 2 \
 --log-dir /koko/yunshuang/train_out \
 --run-name StreamLTS_fcooper_dairv2x \
---batch-size 1 \
+--batch-size 2 \
 --n-workers 8 \
 #--resume-from /koko/yunshuang/train_out/StreamLTS_seq8/epoch1.pth
