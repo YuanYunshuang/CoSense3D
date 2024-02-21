@@ -4,7 +4,7 @@ export OMP_NUM_THREADS=16
 export PYTORCH_CUDA_ALLOC_CONF=MAX_SPLIT_SIZE_MB=256
 
 torchrun \
---nproc_per_node=4 \
+--nproc_per_node=2 \
 cosense3d/tools/agent_runner.py \
 --config ./cosense3d/config/streamLTS_fcooper_dairv2x.yaml \
 --mode train \
