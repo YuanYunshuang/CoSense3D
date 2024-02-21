@@ -12,4 +12,4 @@ einops
 timm
 flash-attn==0.2.2
 spconv-cu113
-lzf
+pypcd

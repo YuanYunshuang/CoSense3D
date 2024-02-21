@@ -9,6 +9,7 @@ class VoxelGenerator:
                  max_points_per_voxel,
                  empty_mean=True,
                  mode='train',
+                 device='cuda',
                  **kwargs):
         self.voxel_size = torch.tensor(voxel_size)
         self.lidar_range = torch.tensor(lidar_range)
@@ -24,7 +25,7 @@ class VoxelGenerator:
             max_num_points_per_voxel=self.max_points_per_voxel,
             num_point_features=4,
             max_num_voxels=self.max_voxels,
-            device=torch.device('cuda:0')
+            device=torch.device(device)
         )
 
     def __call__(self, points_list):
