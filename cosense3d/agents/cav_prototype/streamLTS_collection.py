@@ -45,7 +45,7 @@ class StreamLidarCAV(BaseCAV):
         if self.use_aug:
             if self.is_ego:
                 T_e2g = self.lidar_pose
-                T_g2e = self.lidar_pose.cpu().inverse().to(self.lidar_pose.device)
+                T_g2e = self.lidar_pose.inverse()
                 T_c2e = torch.eye(4).to(self.lidar_pose.device)
             else:
                 # cav to ego
