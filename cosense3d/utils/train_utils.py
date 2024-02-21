@@ -6,6 +6,15 @@ import torch
 from torch.nn.utils.clip_grad import clip_grad_norm_
 
 
+def get_gpu_architecture():
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        gpu_props = torch.cuda.get_device_properties(device)
+        return gpu_props.major * 10 + gpu_props.minor
+    else:
+        return 0
+
+
 def seed_everything(seed):
     torch.manual_seed(seed)
     random.seed(seed)

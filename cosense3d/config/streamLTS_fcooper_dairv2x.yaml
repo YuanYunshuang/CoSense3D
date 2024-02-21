@@ -1,21 +1,21 @@
 DATASET:
-  name: opv2v
+  name: dairv2x
   dataset: temporal_cosense
-  meta_path: opv2v
-  data_path: opv2v
+  meta_path: dairv2x
+  data_path: dairv2x
   enable_split_sub_folder: False
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
-    voxel_size:  &voxel_size [0.4, 0.4, 0.4]
+    lidar_range: [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
+    voxel_size:  &voxel_size [0.4, 0.4, 4]
   batch_size_train: 4
   batch_size_test: 1
   n_workers: 4
 
   max_num_cavs: 7
   seq_len: &seq_len 4
-  train_pipeline: 'pycfg.streamLTS_fcooper_opv2v.pipeline_cpu'
-  test_pipeline: 'pycfg.streamLTS_fcooper_opv2v.pipeline_cpu'
+  train_pipeline: 'pycfg.base.dairv2xt.pipeline_cpu'
+  test_pipeline: 'pycfg.base.dairv2xt.pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
@@ -23,7 +23,7 @@ TRAIN:
   log_every: 10
   max_epoch: 50
   gpus: 0
-  hooks: 'pycfg.streamLTS_fcooper_opv2v.train_hooks'
+  hooks: 'pycfg.base.hooks.train_hooks'
   optimizer:
     lr: 0.0002
     weight_decay: 1e-2
@@ -34,16 +34,16 @@ TRAIN:
     warmup_steps: 4000
 
 TEST:
-  hooks: 'pycfg.streamLTS_fcooper_opv2v.test_hooks'
+  hooks: 'pycfg.streamLTS_fcooper_dairv2x.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.streamLTS_fcooper_opv2v.data_manager'
-  shared_modules: 'pycfg.streamLTS_fcooper_opv2v.shared_modules'
+  data_manager: 'pycfg.base.dairv2xt.data_manager'
+  shared_modules: 'pycfg.streamLTS_fcooper_dairv2x.shared_modules'
   cav_manager:
     prototype: streamLTS_collection.slcFcooper
-    dataset: opv2v
+    dataset: dairv2x
     memory_len: *seq_len
     memory_emb_dims: 256
     memory_num_propagated: 256
@@ -52,7 +52,7 @@ CONTROLLER:
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.streamLTS_fcooper_opv2v.plots'
+    plots: 'pycfg.streamLTS_fcooper_dairv2x.plots'
 
 
 

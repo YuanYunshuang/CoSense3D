@@ -7,6 +7,7 @@ from .multi_modal_cav import BaseCAV
 class StreamLidarCAV(BaseCAV):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dataset = kwargs.get('dataset', None)
         self.lidar_range = torch.nn.Parameter(self.lidar_range)
         self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
         self.data['memory'] = None
@@ -107,7 +108,7 @@ class StreamLidarCAV(BaseCAV):
         else:
             time360 = times
         self.data['time_scale'] = time360
-        self.data['time_scale_reduced'] = time360 - self.timestamp / 2
+        self.data['time_scale_reduced'] = time360 - self.timestamp
         # self.data['points'] = self.data['points'][:, :-1]
 
     def get_response_cpm(self):
@@ -148,7 +149,7 @@ class StreamLidarCAV(BaseCAV):
     def pre_update_memory(self):
         """Update memory before each forward run of a single frame."""
         if self.data['memory'] is not None:
-            self.data['memory']['timestamp'] += self.timestamp / 2
+            self.data['memory']['timestamp'] += self.timestamp
             # pose_inv = self.lidar_pose.inverse()
             # self.data['memory']['pose'] = pose_inv @ self.data['memory']['pose']
             # self.data['memory']['ref_pts'] = self.transform_ref_pts(
@@ -202,7 +203,7 @@ class StreamLidarCAV(BaseCAV):
         # ego aug to global
         self.data['memory']['ref_pts'] = self.transform_ref_pts(
             self.data['memory']['ref_pts'], self.T_aug2g)
-        self.data['memory']['timestamp'][1:] -= self.timestamp / 2
+        self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
     def transform_ref_pts(self, reference_points, matrix):
@@ -226,6 +227,8 @@ class StreamLidarCAV(BaseCAV):
             timestamp = self.data['global_time']
         else:
             timestamp = float(self.data['frame']) * 0.1
+        if self.dataset == 'opv2v':
+            timestamp /= 2
         return timestamp
 
     def vis_ref_pts(self, ax=None, label=None, his_len=1, **kwargs):
@@ -269,7 +272,7 @@ class StreamLidarCAV(BaseCAV):
         return ax
 
 
-class slcFcooperOPV2V(StreamLidarCAV):
+class slcFcooper(StreamLidarCAV):
 
     def prepare_data(self):
         self.prepare_time_scale()
