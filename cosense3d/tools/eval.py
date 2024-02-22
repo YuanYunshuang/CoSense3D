@@ -160,7 +160,7 @@ def format_final_result(out_dict, iou_thr):
     return fmt_str
 
 
-def eval_cosense_detection(result_path, pc_range, iou_thr=[0.5, 0.7], metrics=['OPV2V', 'CoSense3D']):
+def eval_cosense_detection_with_pth(result_path, pc_range, iou_thr=[0.5, 0.7], metrics=['OPV2V', 'CoSense3D']):
     iou_thr = iou_thr
     res_dict = {}
     for m in metrics:
@@ -168,31 +168,31 @@ def eval_cosense_detection(result_path, pc_range, iou_thr=[0.5, 0.7], metrics=['
         res_dict[f'{m.lower()}_result'] = \
             {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr}
     files = glob.glob(os.path.join(result_path, "*.pth"))
-    for f in files:
+    for f in tqdm.tqdm(files[::30]):
         res = torch.load(f)
         preds = res['detection']
         cur_gt_boxes = res['gt_boxes']
 
-    for iou in iou_thr:
-        if 'OPV2V' in metrics:
-            result_dict = getattr(res_dict, f'opv2v_result')
-            caluclate_tp_fp(
-                preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
-            )
-        if 'CoSense3D' in metrics:
-            result_dict = getattr(res_dict, f'cosense3d_result')
-            tp = ops_cal_tp(
-                preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
-            )
-            result_dict[iou]['tp'].append(tp.cpu())
-            result_dict[iou]['gt'] += len(cur_gt_boxes)
-            result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
+        for iou in iou_thr:
+            if 'OPV2V' in metrics:
+                result_dict = res_dict['opv2v_result']
+                caluclate_tp_fp(
+                    preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
+                )
+            if 'CoSense3D' in metrics:
+                result_dict = res_dict['cosense3d_result']
+                tp = ops_cal_tp(
+                    preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
+                )
+                result_dict[iou]['tp'].append(tp.cpu())
+                result_dict[iou]['gt'] += len(cur_gt_boxes)
+                result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
 
     fmt_str = ("################\n"
                "DETECTION RESULT\n"
                "################\n")
     if 'OPV2V' in metrics:
-        result_dict = getattr(res_dict, f'opv2v_result')
+        result_dict = res_dict['opv2v_result']
         out_dict = eval_final_results(
             result_dict,
             iou_thr,
@@ -212,7 +212,7 @@ def eval_cosense_detection(result_path, pc_range, iou_thr=[0.5, 0.7], metrics=['
         fmt_str += "----------------\n"
     if 'CoSense3D' in metrics:
         out_dict = {}
-        result_dict = getattr(res_dict, f'cosense3d_result')
+        result_dict = res_dict['cosense3d_result']
         for iou in iou_thr:
             scores = torch.cat(result_dict[iou]['scr'], dim=0)
             tps = torch.cat(result_dict[iou]['tp'], dim=0)
@@ -242,12 +242,16 @@ if __name__=="__main__":
     #     "/home/projects/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
     #     "/koko/logs/cosense3d/epoch50/detection_eval",
     # )
-    eval_detection_opv2v(
-        "/media/yuan/luna/cosense3d/voxelnet_all_grad/epoch50/detection_eval",
-        global_sort_detections=True,
-    )
+    # eval_detection_opv2v(
+    #     "/media/yuan/luna/cosense3d/voxelnet_all_grad/epoch50/detection_eval",
+    #     global_sort_detections=True,
+    # )
     # eval_detection_opv2v_with_opencood_gt(
     #     "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
     #     "/media/yuan/luna/cosense3d/score_sampling_11-16-17-04-22/epoch37/detection_eval",
     #     global_sort_detections=False,
     # )
+    eval_cosense_detection_with_pth(
+        "/koko/train_out/StreamLTS_fcooper_dairv2x_02-21-18-40-44/epoch50/detection_eval",
+        [-100, -38.4, -3.0, 100, 38.4, 1.0],
+    )
