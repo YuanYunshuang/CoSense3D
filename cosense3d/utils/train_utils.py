@@ -1,5 +1,6 @@
 import copy
-import os, random
+import random
+import warnings
 
 import numpy as np
 import torch
@@ -90,12 +91,20 @@ def load_model_dict(model, pretrained_dict):
     try:
         model.load_state_dict(pretrained_dict)
     except:
+        UnmatchedParams = "Unmatched parameters are:\n"
         # 1. filter out unnecessary keys
         model_dict = model.state_dict()
         matched_dict = {}
         for k, v in pretrained_dict.items():
             if k in model_dict and v.shape == model_dict[k].shape:
                 matched_dict[k] = v
+            elif v.shape != model_dict[k].shape:
+                UnmatchedParams += f"{k} : Unmatched shape ({v.shape} -> {model_dict[k].shape})\n"
+            else:
+                UnmatchedParams += f"{k} : Pretrained parameters not in model dict\n"
+        for k in set(model_dict.keys()) - set(pretrained_dict.keys()):
+            UnmatchedParams += f"{k} : Model parameters not in pretrained dict\n"
+        warnings.warn("Model state dict does not match pretrained state dict. " + UnmatchedParams)
         # 2. overwrite entries in the existing state dict
         model_dict.update(matched_dict)
         # 3. load the new state dict
