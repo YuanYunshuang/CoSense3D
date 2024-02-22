@@ -14,6 +14,7 @@ DATASET:
 
   max_num_cavs: 7
   seq_len: &seq_len 4
+  com_range: 200
   train_pipeline: 'pycfg.base.dairv2xt.pipeline_cpu'
   test_pipeline: 'pycfg.base.dairv2xt.pipeline_cpu'
 
