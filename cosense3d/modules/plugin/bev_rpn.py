@@ -50,7 +50,6 @@ class RPN(nn.Module):
         self.deconv_3 = nn.Sequential(nn.ConvTranspose2d(128, 256, 1, 1, 0),
                                       nn.BatchNorm2d(256))
 
-
     def forward(self, x):
         x = self.block_1(x)
         x_skip_1 = x
@@ -62,3 +61,43 @@ class RPN(nn.Module):
         x_2 = self.deconv_3(x_skip_1)
         x = torch.cat((x_0, x_1, x_2), 1)
         return x
+
+
+class CustomRPN(nn.Module):
+    def __init__(self, strides=[2, 2, 2], down_sample=2, num_layers=3, in_channels=128, out_channels=256):
+        super(CustomRPN, self).__init__()
+        self.strides = strides
+        mid_channels = in_channels * 2
+        self.n_blocks = len(strides)
+        up_stride = 1
+
+        for i, s in enumerate(self.strides):
+            channels = mid_channels if i == self.n_blocks - 1 else in_channels
+            block = [Conv2d(in_channels, channels, 3, s, 1)]
+            block += [Conv2d(channels, channels, 3, 1, 1) for _ in range(num_layers)]
+            setattr(self, f'block_{i + 1}', nn.Sequential(*block))
+            up_stride *= s
+            stride = up_stride // down_sample
+            setattr(self, f'deconv_{self.n_blocks  - i}',
+                    nn.Sequential(nn.ConvTranspose2d(channels, mid_channels, stride, stride, 0),
+                                  nn.BatchNorm2d(mid_channels))
+                    )
+        self.out_conv = nn.Sequential(nn.ConvTranspose2d(mid_channels * 3, out_channels, 1, 1, 0),
+                                      nn.BatchNorm2d(out_channels))
+
+    def forward(self, x):
+        ret_dict = {}
+        down_stride = 1
+        for i, s in enumerate(self.strides):
+            x = getattr(self, f'block_{i + 1}')(x)
+            down_stride *= s
+            ret_dict[f'p{down_stride}'] = x
+
+        out = []
+        for i, s in enumerate(self.strides):
+            x = getattr(self, f'deconv_{i + 1}')(ret_dict[f'p{down_stride}'])
+            down_stride = down_stride // s
+            out.append(x)
+        out = self.out_conv(torch.cat(out, 1))
+
+        return out, ret_dict

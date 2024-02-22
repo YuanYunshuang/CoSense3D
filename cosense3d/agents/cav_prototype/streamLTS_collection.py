@@ -272,7 +272,7 @@ class StreamLidarCAV(BaseCAV):
         return ax
 
 
-class slcFcooper(StreamLidarCAV):
+class slcDenseToSparse(StreamLidarCAV):
 
     def prepare_data(self):
         self.prepare_time_scale()
@@ -289,6 +289,10 @@ class slcFcooper(StreamLidarCAV):
         tasks[grad_mode].append((self.id, '03:formatting', {}))
         tasks[grad_mode].append((self.id, '04:temporal_fusion', {}))
         tasks[grad_mode].append((self.id, '05:det1_head', {}))
+
+
+slcFcooper = slcDenseToSparse
+slcAttnFusion = slcDenseToSparse
 
 
 

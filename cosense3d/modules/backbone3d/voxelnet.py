@@ -36,12 +36,25 @@ class VoxelNet(BaseModule):
 
         # 3d to 2d feature
         bev_feat = voxel_features.flatten(1, 2)
+        x = bev_feat
+        ret_dict = {}
         if hasattr(self, 'neck'):
-            bev_feat = self.neck(bev_feat)
+            res = self.neck(x)
+            if isinstance(res, torch.Tensor):
+                x = res
+            else:
+                x = res[0]
+                ret_dict = res[1]
         if hasattr(self, 'bev_compressor'):
-            bev_feat = self.bev_compressor(bev_feat)
+            x = self.bev_compressor(x)
 
-        return {self.scatter_keys[0]: bev_feat}
+        out = {self.scatter_keys[0]: x}
+        if 'multi_scale_bev_feat' in self.scatter_keys:
+            stride = int(bev_feat.shape[2] / x.shape[2])
+            ret_dict[f'p{stride}'] = x
+            out['multi_scale_bev_feat'] = [{k: v[i] for k, v in ret_dict.items()} for i in range(N)]
+
+        return out
 
     def to_dense(self, coor, feat, N):
         bev_feat = torch.zeros(N,
