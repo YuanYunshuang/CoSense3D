@@ -152,6 +152,86 @@ def compare_detection(test_dir1, test_dir2, out_dir):
         #     points = load_pcd(f"{data_path}/{scenario}/{cav}/{frame}.pcd")['xyz']
 
 
+def format_final_result(out_dict, iou_thr):
+    fmt_str = ""
+    for iou in iou_thr:
+        iou_str = f"{int(iou * 100)}"
+        fmt_str += f"AP@{iou_str}: {out_dict[f'ap_{iou_str}']:.3f}\n"
+    return fmt_str
+
+
+def eval_cosense_detection(result_path, pc_range, iou_thr=[0.5, 0.7], metrics=['OPV2V', 'CoSense3D']):
+    iou_thr = iou_thr
+    res_dict = {}
+    for m in metrics:
+        assert m in ['OPV2V', 'CoSense3D']
+        res_dict[f'{m.lower()}_result'] = \
+            {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr}
+    files = glob.glob(os.path.join(result_path, "*.pth"))
+    for f in files:
+        res = torch.load(f)
+        preds = res['detection']
+        cur_gt_boxes = res['gt_boxes']
+
+    for iou in iou_thr:
+        if 'OPV2V' in metrics:
+            result_dict = getattr(res_dict, f'opv2v_result')
+            caluclate_tp_fp(
+                preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
+            )
+        if 'CoSense3D' in metrics:
+            result_dict = getattr(res_dict, f'cosense3d_result')
+            tp = ops_cal_tp(
+                preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
+            )
+            result_dict[iou]['tp'].append(tp.cpu())
+            result_dict[iou]['gt'] += len(cur_gt_boxes)
+            result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
+
+    fmt_str = ("################\n"
+               "DETECTION RESULT\n"
+               "################\n")
+    if 'OPV2V' in metrics:
+        result_dict = getattr(res_dict, f'opv2v_result')
+        out_dict = eval_final_results(
+            result_dict,
+            iou_thr,
+            global_sort_detections=True
+        )
+        fmt_str += "OPV2V BEV Global sorted:\n"
+        fmt_str += format_final_result(out_dict, iou_thr)
+        fmt_str += "----------------\n"
+
+        out_dict = eval_final_results(
+            result_dict,
+            iou_thr,
+            global_sort_detections=False
+        )
+        fmt_str += "OPV2V BEV Local sorted:\n"
+        fmt_str += format_final_result(out_dict, iou_thr)
+        fmt_str += "----------------\n"
+    if 'CoSense3D' in metrics:
+        out_dict = {}
+        result_dict = getattr(res_dict, f'cosense3d_result')
+        for iou in iou_thr:
+            scores = torch.cat(result_dict[iou]['scr'], dim=0)
+            tps = torch.cat(result_dict[iou]['tp'], dim=0)
+            n_pred = len(scores)
+            n_gt = result_dict[iou]['gt']
+
+            ap, mpre, mrec, _ = cal_ap_all_point(scores, tps, n_pred, n_gt)
+            iou_str = f"{int(iou * 100)}"
+            out_dict.update({f'ap_{iou_str}': ap,
+                             f'mpre_{iou_str}': mpre,
+                             f'mrec_{iou_str}': mrec})
+        fmt_str += "CoSense3D Global sorted:\n"
+        fmt_str += format_final_result(out_dict, iou_thr)
+        fmt_str += "----------------\n"
+    print(fmt_str)
+    with open(os.path.join(os.path.dirname(result_path), "test.log"), 'a') as fh:
+        fh.writelines(fmt_str)
+
+
 if __name__=="__main__":
     # compare_detection(
     #     "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
