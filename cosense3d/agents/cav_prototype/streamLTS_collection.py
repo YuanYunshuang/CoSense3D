@@ -296,10 +296,27 @@ class slcDenseToSparse(StreamLidarCAV):
 
 slcFcooper = slcDenseToSparse
 slcAttnFusion = slcDenseToSparse
+slcFPVRCNN = slcDenseToSparse
 
 
 
+class slcFPVRCNN(StreamLidarCAV):
+    def prepare_data(self):
+        self.prepare_time_scale()
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
 
+    def forward_local(self, tasks, training_mode):
+        if (self.is_ego or self.require_grad) and training_mode:
+            grad_mode = 'with_grad'
+        else:
+            grad_mode = 'no_grad'
+        tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
+        tasks[grad_mode].append((self.id, '02:roi_head', {}))
+        tasks[grad_mode].append((self.id, '03:keypoint_composer', {}))
+        tasks[grad_mode].append((self.id, '04:formatting', {}))
+        tasks[grad_mode].append((self.id, '05:temporal_fusion', {}))
+        tasks[grad_mode].append((self.id, '06:det1_head', {}))
 
 
 

@@ -3,9 +3,10 @@ from torch import nn
 
 
 class SSFA(nn.Module):
-    def __init__(self, in_channels, out_channels=128):
+    def __init__(self, in_channels, out_channels=128, shrink_strides=None, shrink_channels=None):
         super(SSFA, self).__init__()
         self._num_input_features = in_channels  # 128
+        self.shrink_strides = shrink_strides
 
         seq = [nn.ZeroPad2d(1)] + get_conv_layers('Conv2d', 128, 128,
                                                   n_layers=3, kernel_size=[3, 3, 3],
@@ -38,6 +39,15 @@ class SSFA(nn.Module):
         self.w_1 = get_conv_layers('Conv2d', out_channels, 1,
                                    n_layers=1, kernel_size=[1], stride=[1], padding=[0], relu_last=False)
 
+        if isinstance(shrink_strides, list):
+            assert len(shrink_channels) == len(shrink_strides)
+            shrink_convs = []
+            in_channels = out_channels
+            for s, c in zip(shrink_strides, shrink_channels):
+                shrink_convs.append(nn.Conv2d(in_channels, c, 3, s, padding=1))
+                in_channels = c
+            self.shrink_convs = nn.ModuleList(shrink_convs)
+
     # default init_weights for conv(msra) and norm in ConvModule
     def init_weights(self):
         for m in self.modules():
@@ -61,7 +71,18 @@ class SSFA(nn.Module):
         x_weight = torch.softmax(torch.cat([x_weight_0, x_weight_1], dim=1), dim=1)
         x_output = x_output_0 * x_weight[:, 0:1, :, :] + x_output_1 * x_weight[:, 1:, :, :]
 
-        return x_output.contiguous()
+        if self.shrink_strides is None:
+            return x_output.contiguous()
+        else:
+            assert isinstance(self.shrink_strides, list)
+            downx = 1
+            ret_dict = {}
+            x = x_output
+            for i, s in enumerate(self.shrink_strides):
+                downx *= s
+                x = self.shrink_convs[i](x)
+                ret_dict[downx] = x
+            return x_output.contiguous(), ret_dict
 
 
 def get_conv_layers(conv_name, in_channels, out_channels, n_layers, kernel_size, stride,

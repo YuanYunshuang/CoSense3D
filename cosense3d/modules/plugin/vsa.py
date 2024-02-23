@@ -218,8 +218,8 @@ class VoxelSetAbstraction(nn.Module):
         scores = torch.cat([x['scr'] for x in preds])
         # At the early training stage, there might be too many boxes,
         # we select limited number of boxes for the second stage.
-        if boxes.shape[0] > B * 50:
-            topk = scores.topk(k=50 * B).indices
+        if boxes.shape[0] > B * 100:
+            topk = scores.topk(k=100 * B).indices
             scores = scores[topk]
             boxes = boxes[topk]
 
@@ -227,12 +227,16 @@ class VoxelSetAbstraction(nn.Module):
         if self.enlarge_selection_boxes:
             boxes_tmp[:, 4:7] += 0.5
         keypoints = cat_coor_with_idx(keypoints_list)
-        kpt_mask = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1] >= 0
-
+        pts_idx_of_box = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1]
+        kpt_mask = pts_idx_of_box >= 0
         # Ensure there are more than 2 points are selected to satisfy the
         # condition of batch norm in the FC layers of feature fusion module
-        if (kpt_mask).sum() < 2:
-            kpt_mask[torch.randint(0, 1024, (2,))] = True
+        for i in range(B):
+            batch_mask = keypoints[:, 0] == i
+            if kpt_mask[batch_mask].sum() < 2:
+                tmp = kpt_mask[batch_mask].clone()
+                tmp[torch.randint(0, batch_mask.sum().item(), (2,))] = True
+                kpt_mask[batch_mask] = tmp
 
         point_features_list = []
         if 'bev' in self.features_source:
@@ -242,6 +246,7 @@ class VoxelSetAbstraction(nn.Module):
             point_features_list.append(point_bev_features[kpt_mask])
 
         new_xyz = keypoints[kpt_mask]
+        new_xyz_scrs = scores[pts_idx_of_box[kpt_mask]]
         new_xyz_batch_cnt = torch.tensor([(new_xyz[:, 0] == b).sum() for b in range(B)],
                                          device=new_xyz.device).int()
 
@@ -292,11 +297,13 @@ class VoxelSetAbstraction(nn.Module):
         cur_idx = 0
         out_dict['point_features'] = []
         out_dict['point_coords'] = []
+        out_dict['point_scores'] = []
         out_dict['boxes'] = []
         out_dict['scores'] = []
         for i, num in enumerate(new_xyz_batch_cnt):
             out_dict['point_features'].append(point_features[cur_idx:cur_idx + num])
             out_dict['point_coords'].append(new_xyz[cur_idx:cur_idx + num])
+            out_dict['point_scores'].append(new_xyz_scrs[cur_idx:cur_idx + num])
             mask = boxes[:, 0] == i
             out_dict['boxes'].append(boxes[mask, 1:])
             out_dict['scores'].append(scores[mask])

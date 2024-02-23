@@ -145,8 +145,14 @@ class Spconv(BaseModule):
         res_dict['p8_out'] = self.conv_out(res_dict['p8'])
         res_dict['bev'] = self.to_dense(res_dict['p8_out'])
 
+        multi_scale_bev_feat = {}
         if hasattr(self, 'bev_neck'):
-            res_dict['bev'] = self.bev_neck(res_dict['bev'])
+            res = self.bev_neck(res_dict['bev'])
+            if isinstance(res, tuple):
+                res_dict['bev'] = res[0]
+                multi_scale_bev_feat = res[1]
+            else:
+                res_dict['bev'] = res
         if hasattr(self, 'bev_compressor'):
             res_dict['bev'] = self.bev_compressor(res_dict['bev'])
 
@@ -156,6 +162,10 @@ class Spconv(BaseModule):
                 {k: res_dict[k] for k in self.cache_keys}, B)
         if 'bev_feat' in self.scatter_keys:
             out_dict['bev_feat'] = res_dict['bev']
+        if 'multi_scale_bev_feat' in self.scatter_keys:
+            multi_scale_bev_feat[1] = res_dict['bev']
+            out_dict['multi_scale_bev_feat'] = \
+                [{f'p{k * 8}': v[i] for k, v in multi_scale_bev_feat.items()} for i in range(B)]
         return out_dict
 
     def format_output(self, out_dict, B):
