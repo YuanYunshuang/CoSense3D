@@ -1,6 +1,13 @@
 import copy
 from collections import OrderedDict
 from cosense3d.utils.misc import update_dict
+from cosense3d.utils.train_utils import get_gpu_architecture
+
+gpu_arc = get_gpu_architecture()
+if gpu_arc >= 75:
+    use_flash_attn = True
+else:
+    use_flash_attn = False
 
 
 point_cloud_range = [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
@@ -151,11 +158,11 @@ shared_modules = OrderedDict(
                             dropout=0.1,
                             fp16=False),
                         dict(
-                            type='MultiheadFlashAttention',
+                            type='MultiheadFlashAttention' if use_flash_attn else 'MultiheadAttention',
                             embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
-                            fp16=True
+                            fp16=True if use_flash_attn else False
                         ),
                         ],
                     ffn_cfgs=dict(
