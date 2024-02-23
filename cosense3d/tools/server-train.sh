@@ -13,4 +13,4 @@ cosense3d/tools/agent_runner.py \
 --run-name StreamLTS_fcooper_dairv2x \
 --batch-size 1 \
 --n-workers 8 \
---resume-from /koko/yunshuang/train_out/StreamLTS_fcooper_dairv2x/epoch30.pth
+#--resume-from /koko/yunshuang/train_out/StreamLTS_fcooper_dairv2x/epoch30.pth
