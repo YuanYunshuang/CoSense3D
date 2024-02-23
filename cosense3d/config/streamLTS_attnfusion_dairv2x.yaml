@@ -7,8 +7,8 @@ DATASET:
   DetectionBenchmark: Car
   data_info: &data_info
     lidar_range: [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
-    voxel_size:  &voxel_size [0.4, 0.4, 4]
-  batch_size_train: 4
+    voxel_size:  &voxel_size [0.4, 0.4, 0.4]
+  batch_size_train: 1
   batch_size_test: 1
   n_workers: 4
 
@@ -35,7 +35,7 @@ TRAIN:
     warmup_steps: 4000
 
 TEST:
-  hooks: 'pycfg.streamLTS_attnfusion_opv2v.test_hooks'
+  hooks: 'pycfg.streamLTS_attnfusion_dairv2x.test_hooks'
 
 
 CONTROLLER:
@@ -53,7 +53,7 @@ CONTROLLER:
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.streamLTS_attnfusion_opv2v.plots'
+    plots: 'pycfg.streamLTS_attnfusion_dairv2x.plots'
 
 
 

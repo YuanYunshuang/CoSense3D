@@ -22,7 +22,8 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
             scatter_keys=['bev_feat', 'multi_scale_bev_feat'],
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
-            neck=dict(type='bev_rpn.CustomRPN', out_channels=256),
+            sparse_cml=True,
+            neck=dict(type='bev_rpn.CustomRPN', out_channels=256, num_layers=2),
         ),
 
         roi_head = dict(

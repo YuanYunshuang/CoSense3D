@@ -31,9 +31,12 @@ class VoxelNet(BaseModule):
         voxels = self.cat_data_from_list(voxels)
         num_points = self.cat_data_from_list(num_points)
         voxel_features = self.voxel_encoder(voxels, coords, num_points)
-        voxel_features = self.to_dense(coords, voxel_features, N)
-        voxel_features = self.cml(voxel_features)
-
+        if self.cml.dense:
+            voxel_features = self.to_dense(coords, voxel_features, N)
+            voxel_features = self.cml(voxel_features)
+        else:
+            voxel_features, voxel_coords = self.cml(voxel_features, coords)
+            voxel_features = self.to_dense(voxel_coords, voxel_features, N, filter_range=True)
         # 3d to 2d feature
         bev_feat = voxel_features.flatten(1, 2)
         x = bev_feat
@@ -56,11 +59,20 @@ class VoxelNet(BaseModule):
 
         return out
 
-    def to_dense(self, coor, feat, N):
+    def to_dense(self, coor, feat, N, filter_range=False):
+        if filter_range:
+            strides = self.cml.out_strides.cpu()
+            grid_size = torch.ceil(self.grid_size[[2, 1, 0]] / strides).int().tolist()
+            mask = (coor[:, 1] >= 0) & (coor[:, 1] < grid_size[0]) & \
+                   (coor[:, 2] >= 0) & (coor[:, 2] < grid_size[1]) & \
+                   (coor[:, 3] >= 0) & (coor[:, 3] < grid_size[2])
+            coor, feat = coor[mask], feat[mask]
+        else:
+            grid_size = self.grid_size[[2, 1, 0]].tolist()
         bev_feat = torch.zeros(N,
-                               self.grid_size[2],
-                               self.grid_size[1],
-                               self.grid_size[0],
+                               grid_size[0],
+                               grid_size[1],
+                               grid_size[2],
                                feat.shape[-1],
                                dtype=feat.dtype,
                                device=feat.device)

@@ -91,20 +91,27 @@ def load_model_dict(model, pretrained_dict):
     try:
         model.load_state_dict(pretrained_dict)
     except:
-        UnmatchedParams = "Unmatched parameters are:\n"
+        UnmatchedParams = ""
         # 1. filter out unnecessary keys
         model_dict = model.state_dict()
         matched_dict = {}
+
+        pretrained_keys = list()
         for k, v in pretrained_dict.items():
+            if 'module' in k:
+                k = k.replace('module.', '')
             if k in model_dict and v.shape == model_dict[k].shape:
                 matched_dict[k] = v
             elif v.shape != model_dict[k].shape:
                 UnmatchedParams += f"{k} : Unmatched shape ({v.shape} -> {model_dict[k].shape})\n"
             else:
                 UnmatchedParams += f"{k} : Pretrained parameters not in model dict\n"
-        for k in set(model_dict.keys()) - set(pretrained_dict.keys()):
+            pretrained_keys.append(k)
+        for k in set(model_dict.keys()) - set(pretrained_keys):
             UnmatchedParams += f"{k} : Model parameters not in pretrained dict\n"
-        warnings.warn("Model state dict does not match pretrained state dict. " + UnmatchedParams)
+        if len(UnmatchedParams) > 0:
+            warnings.warn("Model state dict does not match pretrained state dict. Unmatched parameters are:\n"
+                          + UnmatchedParams)
         # 2. overwrite entries in the existing state dict
         model_dict.update(matched_dict)
         # 3. load the new state dict
