@@ -245,7 +245,8 @@ class DataManager:
                     global_pred[cav_id] = {}
                     if 'preds' in det:
                         det = det['preds'] # todo: without nms hook, keywork preds is not removed
-                    detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+                    if 'box' in det and 'lbl' in det:
+                        detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
                     if 'pred' in det:
                         global_pred[cav_id]['labels'] = self.boxes_to_vis_format(
                             det['pred'].view(-1, 7), det['lbl'].unsqueeze(0).repeat(2, 1).view(-1))
@@ -258,7 +259,8 @@ class DataManager:
                         continue
                     if 'preds' in det:
                         det = det['preds']
-                    detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
+                    if 'box' in det and 'lbl' in det:
+                        detection[cav_id]['labels'] = self.boxes_to_vis_format(det['box'], det['lbl'])
                 gather_dict['detection_local'] = detection
             else:
                 gather_dict[k] = self.gather_batch(batch_idx, k, True)

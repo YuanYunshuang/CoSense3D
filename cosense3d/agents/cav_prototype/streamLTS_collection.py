@@ -20,7 +20,7 @@ class StreamLidarCAV(BaseCAV):
     def refresh_memory(self, prev_exists):
         x = prev_exists.float()
         init_pose = torch.eye(4, device=self.lidar_pose.device).unsqueeze(0).unsqueeze(0)
-        if self.data['memory'] is None:
+        if not x:
             self.data['memory'] = {
                 'embeddings': x.new_zeros(self.memory_len, self.memory_num_propagated, self.memory_emb_dims),
                 'ref_pts': x.new_zeros(self.memory_len, self.memory_num_propagated, self.ref_pts_dim),
@@ -182,7 +182,7 @@ class StreamLidarCAV(BaseCAV):
         #     return_ax=True,
         # )
         #
-        # plt.plot(pts[:, 0], pts[:, 1], ".", markersize=2)
+        # plt.plot(pts[:, 0].cpu(), pts[:, 1].cpu(), ".", markersize=2)
         # plt.show()
         # plt.close()
 
@@ -221,19 +221,20 @@ class StreamLidarCAV(BaseCAV):
 
     @property
     def timestamp(self):
-        if 'timestamp' in self.data:
-            timestamp = self.data['timestamp']
-        elif 'global_time' in self.data:
+        if self.dataset == 'opv2v':
+            timestamp = float(self.data['frame']) * 0.1 / 2
+        elif self.dataset == 'dairv2x':
             timestamp = self.data['global_time']
         else:
-            timestamp = float(self.data['frame']) * 0.1
-        if self.dataset == 'opv2v':
-            timestamp /= 2
+            raise NotImplementedError
         return timestamp
 
     def vis_ref_pts(self, ax=None, label=None, his_len=1, **kwargs):
         import matplotlib.pyplot as plt
         from cosense3d.utils.vislib import draw_points_boxes_plt
+        if ax is None:
+            fig = plt.figure(figsize=(8, 4))
+            ax = fig.add_subplot()
         pcd = self.data['points'][:, :3].detach().cpu().numpy()
         gt_boxes = self.data['local_bboxes_3d'].detach().cpu().numpy()
         ax = draw_points_boxes_plt(
@@ -249,6 +250,8 @@ class StreamLidarCAV(BaseCAV):
         for i in range(his_len):
             plt.plot(ref_pts[i, :, 0], ref_pts[i, :, 1], markers[i], markersize=2)
         ax.set_title(f"{label}: {self.data['scenario']}, {self.data['frame']}")
+        plt.show()
+        plt.close()
 
         return ax
 

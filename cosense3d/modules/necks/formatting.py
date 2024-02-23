@@ -38,6 +38,19 @@ class DenseToSparse(BaseModule):
             bev_local_sparse.append({'scr': x.max(dim=0).values.flatten()})
         out_dict['bev_local_sparse'] = bev_local_sparse
 
+        # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        # draw_points_boxes_plt(
+        #     pc_range=self.lidar_range,
+        #     points=input_dict['points'][0][:, :3].detach().cpu().numpy(),
+        #     filename="/media/yuan/luna/streamLTS/LTS_fcooper_dairv2x/points.png"
+        # )
+        # fig = plt.figure(figsize=(10, 5))
+        # ax = fig.add_subplot()
+        # pts = multi_scale_bev_feat[0]['p2']['ctr'].detach().cpu().numpy()
+        # # colors = det_local_sparse[0]['scr'].sigmoid().detach().cpu().numpy()
+        # colors = multi_scale_bev_feat[0]['p2']['feat'].mean(dim=1).detach().cpu().numpy()
+        # ax.scatter(pts[:, 0], pts[:, 1], c=colors)
+        # plt.savefig("/media/yuan/luna/streamLTS/LTS_fcooper_dairv2x/scores.png")
         return out_dict
 
     def get_centers(self, stride, device):

@@ -4,7 +4,9 @@ voxel_size = [0.4, 0.4, 4]
 out_stride = 2
 
 
-def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
+def get_shared_modules(point_cloud_range,
+                       attn1='MultiheadFlashAttention',
+                       global_ref_time=0.0):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     bev_head_cfg = dict(
         type='heads.bev_dense.BevRoIDenseHead',
@@ -85,7 +87,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
 
         formatting = dict(
             type='necks.formatting.DenseToSparse',
-            gather_keys=['multi_scale_bev_feat', 'det_local_dense', 'bev_local_dense'],
+            gather_keys=['multi_scale_bev_feat', 'det_local_dense', 'bev_local_dense', 'points'],
             scatter_keys=['multi_scale_bev_feat', 'det_local_sparse', 'bev_local_sparse'],
             data_info=data_info,
             strides=[2, 8]
@@ -99,7 +101,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
             ref_pts_stride=2,
             feature_stride=8,
             transformer_itrs=1,
-            global_ref_time=0.05,
+            global_ref_time=global_ref_time,
             lidar_range=point_cloud_range,
             transformer=dict(
                 type='transformer.PETRTemporalTransformer',
@@ -155,7 +157,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
             type='heads.query_guided_petr_head.QueryGuidedPETRHead',
             gather_keys=['temp_fusion_feat'],
             scatter_keys=['detection_local'],
-            gt_keys=['global_bboxes_3d', 'global_labels_3d'],
+            gt_keys=['global_bboxes_3d', 'global_labels_3d', 'detection_local'],
             sparse=False,
             embed_dims=256,
             num_reg_fcs=1,
