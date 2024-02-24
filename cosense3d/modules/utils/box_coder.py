@@ -151,7 +151,10 @@ class CenterBoxCoder(object):
             meter_per_pixel = meter_per_pixel[0]
         if len(gt_boxes) == 0:
             valid = torch.zeros_like(centers[:, 0]).bool()
-            return None, None, None, valid
+            if self.with_velo:
+                return None, None, None, valid, None
+            else:
+                return None, None, None, valid
         # match centers and gt_boxes
         dist_ctr_to_box = torch.norm(centers[:, 1:3].unsqueeze(1)
                                      - gt_boxes[:, 1:3].unsqueeze(0), dim=-1)

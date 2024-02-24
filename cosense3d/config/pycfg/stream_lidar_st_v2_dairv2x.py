@@ -1,7 +1,15 @@
 import copy
+import torch
 from collections import OrderedDict
 from cosense3d.utils.misc import update_dict
 
+device = torch.device("cuda")
+gpu_props = torch.cuda.get_device_properties(device)
+gpu_arc = gpu_props.major * 10 + gpu_props.minor
+if gpu_arc >= 75:
+    use_flash_attn = True
+else:
+    use_flash_attn = False
 
 point_cloud_range = [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
 point_cloud_range_test = [-100, -38.4, -3.0, 100, 38.4, 1.0]
@@ -156,11 +164,11 @@ shared_modules = OrderedDict(
                             dropout=0.1,
                             fp16=False),
                         dict(
-                            type='MultiheadFlashAttention',
+                            type='MultiheadFlashAttention' if use_flash_attn else 'MultiheadAttention',
                             embed_dims=256,
                             num_heads=8,
                             dropout=0.1,
-                            fp16=True
+                            fp16=True if use_flash_attn else False
                         ),
                         ],
                     ffn_cfgs=dict(
