@@ -38,6 +38,9 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention'):
                     gt_keys=['global_bboxes_3d', 'global_labels_3d'],
                     voxel_size=voxel_size,
                     point_cloud_range=point_cloud_range,
+                    pos_threshold=0.3,
+                    neg_threshold=0.1,
+                    score_thrshold=0.15,
                 ),
                 dict(
                     type='heads.bev_dense.BevRoIDenseHead',
