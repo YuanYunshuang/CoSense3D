@@ -33,6 +33,7 @@ TRAIN:
     policy: 'TransformerAdaptiveScheduler'
     dim_embed: 256
     warmup_steps: 4000
+    global_fade_ratio: 0.5
 
 TEST:
   hooks: 'pycfg.streamLTS_attnfusion_dairv2x.test_hooks'
