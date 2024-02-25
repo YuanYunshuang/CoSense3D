@@ -185,3 +185,7 @@ if __name__ == "__main__":
     if args.mode == "train":
         save_config(cfgs, agent_runner.runner.logdir)
     agent_runner.run()
+
+    # test
+    args.mode = "test"
+    agent_runner.run()

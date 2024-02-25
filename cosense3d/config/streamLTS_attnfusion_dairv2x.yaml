@@ -8,7 +8,7 @@ DATASET:
   data_info: &data_info
     lidar_range: [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
     voxel_size:  &voxel_size [0.4, 0.4, 0.4]
-  batch_size_train: 1
+  batch_size_train: 2
   batch_size_test: 1
   n_workers: 4
 
