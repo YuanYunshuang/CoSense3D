@@ -1,4 +1,5 @@
 import copy
+import torch
 from collections import OrderedDict
 from cosense3d.utils.misc import update_dict
 from cosense3d.utils.train_utils import get_gpu_architecture
@@ -9,6 +10,13 @@ if gpu_arc >= 75:
 else:
     use_flash_attn = False
 
+device = torch.device("cuda")
+gpu_props = torch.cuda.get_device_properties(device)
+gpu_arc = gpu_props.major * 10 + gpu_props.minor
+if gpu_arc >= 75:
+    use_flash_attn = True
+else:
+    use_flash_attn = False
 
 point_cloud_range = [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
 point_cloud_range_test = [-100, -38.4, -3.0, 100, 38.4, 1.0]

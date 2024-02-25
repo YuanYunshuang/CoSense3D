@@ -51,9 +51,9 @@ class CMLSparse(nn.Module):
         self.conv3d_1 = ME.MinkowskiConvolution(
             in_channels, in_channels, 3, (2, 1, 1), dimension=3, expand_coordinates=False)
         self.conv3d_2 = ME.MinkowskiConvolution(
-            in_channels, in_channels, 3, (2, 1, 1), dimension=3, expand_coordinates=True)
+            in_channels, in_channels, 3, (2, 1, 1), dimension=3, expand_coordinates=False)
         self.conv3d_3 = ME.MinkowskiConvolution(
-            in_channels, in_channels, 3, (2, 1, 1), dimension=3, expand_coordinates=True)
+            in_channels, in_channels, 3, (2, 1, 1), dimension=3, expand_coordinates=False)
         self.out_strides = nn.Parameter(torch.Tensor([8, 1, 1]))
 
     def forward(self, feats, coords):
