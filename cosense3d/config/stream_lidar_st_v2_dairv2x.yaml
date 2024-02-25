@@ -33,6 +33,7 @@ TRAIN:
     policy: 'TransformerAdaptiveScheduler'
     dim_embed: 256
     warmup_steps: 4000
+    global_fade_ratio: 0.25
 
 TEST:
   hooks: 'pycfg.stream_lidar_st_v2_dairv2x.test_hooks'

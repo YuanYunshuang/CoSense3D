@@ -155,6 +155,7 @@ class CenterBoxCoder(object):
             if self.with_velo:
                 res = res + (None,)
             return res
+
         # match centers and gt_boxes
         dist_ctr_to_box = torch.norm(centers[:, 1:3].unsqueeze(1)
                                      - gt_boxes[:, 1:3].unsqueeze(0), dim=-1)
