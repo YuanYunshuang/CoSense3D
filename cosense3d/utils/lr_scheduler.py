@@ -95,7 +95,7 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     params = torch.nn.Parameter(torch.rand(10, 10))
     optimizer = torch.optim.AdamW([params],
-                                  lr=0.001,
+                                  lr=0.0001,
                                   weight_decay=1e-2,
                                   betas=(0.9, 0.98),
                                   eps=1.0e-9,
@@ -104,20 +104,21 @@ if __name__=="__main__":
     lr_scheduler = TransformerAdaptiveScheduler(
         optimizer,
         dim_embed=256,
-        warmup_steps=4000,
+        warmup_steps=2000,
         itrs_per_epoch=2000,
         last_epoch=-1,
+        global_fade_ratio=0.5
     )
 
-    torch.save(optimizer.state_dict(), 'optimizer_checkpoint.pth')
-    optimizer.load_state_dict(torch.load('optimizer_checkpoint.pth'))
-    lr_scheduler = TransformerAdaptiveScheduler(
-        optimizer,
-        dim_embed=256,
-        warmup_steps=4000,
-        itrs_per_epoch=2000,
-        last_epoch=3,
-    )
+    # torch.save(optimizer.state_dict(), 'optimizer_checkpoint.pth')
+    # optimizer.load_state_dict(torch.load('optimizer_checkpoint.pth'))
+    # lr_scheduler = TransformerAdaptiveScheduler(
+    #     optimizer,
+    #     dim_embed=256,
+    #     warmup_steps=4000,
+    #     itrs_per_epoch=2000,
+    #     last_epoch=3,
+    # )
 
     lrs = []
     for epoch in range(50 * 2000):
