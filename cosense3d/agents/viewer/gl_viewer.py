@@ -1,9 +1,16 @@
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
 from typing import TYPE_CHECKING, List, Tuple, Union
 
 Color4f = Tuple[float, float, float, float]  # type alias for type hinting
 
 import logging
-import ctypes
 import queue
 
 import numpy as np
@@ -433,13 +440,6 @@ class GLViewer(gl.GLViewWidget):
         )
         depth_buffer = depth_buffer[::-1, :]
 
-        # Convert the depth buffer to an image
-        # depth_image = ((1 - depth_buffer) * 500) * 255
-        # depth_image = np.repeat(depth_image[:, :, np.newaxis], 3, axis=2).astype(np.uint8)
-
-        # Save the image to a file
-        # import imageio
-        # imageio.imwrite('/media/hdd/tmp/depth_image.png', depth_image)
         return depth_buffer
 
     def draw_depth_buffer(self):

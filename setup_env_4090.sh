@@ -37,7 +37,7 @@ echo -e "${GREEN}[INFO] Installing cuda_ops...${NC}"
 cd cosense3d/ops && pip install . && cd ../..
 
 echo -e "${GREEN}[INFO] Installing requirements...${NC}"
-pip install -r requirements_cosense_v2.txt
+pip install -r requirements_cosense_4090.txt
 pip install -r requirements_ui.txt
 
 echo -e "${GREEN}[INFO] Done.${NC}"

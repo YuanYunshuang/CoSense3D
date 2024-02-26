@@ -1,3 +1,11 @@
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
 import torch
 import numpy as np
 from scipy.spatial.transform.rotation import Rotation as R
@@ -62,12 +70,6 @@ def apply_transform(data, transform, key):
         if box_key not in data:
             return
         boxes = data[box_key]
-        # boxes_corner = box_utils.boxes_to_corners_3d(boxes[:, :7])  # (N, 8, 3)
-        # boxes_corner = boxes_corner.reshape(-1, 3).T  # (N*8, 3)
-        # boxes_corner = torch.cat([boxes_corner, torch.ones_like(boxes_corner[:1])], dim=0)
-        # # rotate bbx to augmented coords
-        # boxes_corner = (transform @ boxes_corner)[:3].T.reshape(len(boxes), 8, 3)
-        # data[box_key][:, :7] = box_utils.corners_to_boxes_3d(boxes_corner, mode=7)
         data[box_key][:, :7] = box_utils.transform_boxes_3d(boxes[:, :7], transform, mode=7)
     elif key == 'annos_global_pred':
         preds = data['bboxes_3d_pred']
@@ -88,7 +90,6 @@ def filter_range(data, lidar_range, key):
         points = data['points'][mask]
         if len(points) == 0:
             # pad empty point cloud with random points to ensure batch norm validity
-            # print("Empty point cloud found. Pad random points.")
             points = data['points'].new_zeros((8, points.shape[-1]))
             points[:, :2] = torch.rand_like(points[:, :2]) * 2 - 1
             points[:, 3] = -1

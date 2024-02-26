@@ -1,14 +1,19 @@
-import matplotlib
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
 import numpy as np
-
-matplotlib.use('Qt5Agg')
-
-from PyQt5 import QtCore, QtWidgets
-
+import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
 from cosense3d.utils import vislib
+
+matplotlib.use('Qt5Agg')
 
 
 class ImgViewer(FigureCanvasQTAgg):

@@ -1,7 +1,7 @@
 import torch
 import torch_scatter
 from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
-from .multi_modal_cav import BaseCAV
+from cosense3d.agents.cav_prototype.base_cav import BaseCAV
 
 
 class StreamLidarCAV(BaseCAV):

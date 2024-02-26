@@ -1,30 +1,30 @@
 DATASET:
   name: opv2v
   dataset: temporal_cosense
-  meta_path: /koko/cosense3d/opv2vt
-  data_path: /koko/OPV2Vt/temporal
+  meta_path: /mnt/t7/data/cosense3d/opv2v_full
+  data_path: /mnt/t7/data/OPV2V
   DetectionBenchmark: Car
   data_info: &data_info
-    lidar_range: [-144, -41.6, -3.0, 144, 41.6, 1.0]
-    voxel_size:  &voxel_size [0.4, 0.4, 0.4]
+    lidar_range: [-140.8, -38.4, -3, 140.8, 38.4, 3]
+    voxel_size:  &voxel_size [0.2, 0.2, 0.2]
   batch_size_train: 4
   batch_size_test: 1
   n_workers: 4
 
-  max_num_cavs: 7
+  max_num_cavs: 1
   seq_len: &seq_len 4
-  train_pipeline: 'pycfg.streamLTS_v2.pipeline_cpu'
-  test_pipeline: 'pycfg.streamLTS_v2.pipeline_cpu'
+  train_pipeline: 'pycfg.stream_lidar.pipeline_cpu'
+  test_pipeline: 'pycfg.stream_lidar.pipeline_cpu'
 
 TRAIN:
 #  project_name: 'centernet'
   wandb_account: 'opheliayuan'
   log_every: 10
   max_epoch: 50
-  gpus: 0
-  hooks: 'pycfg.streamLTS_v2.train_hooks'
+  gpus: 1
+  hooks: 'pycfg.stream_lidar.train_hooks'
   optimizer:
-    lr: 0.0001
+    lr: 0.001
     weight_decay: 1e-2
     betas: [0.9, 0.98]
   lr_scheduler:
@@ -33,28 +33,21 @@ TRAIN:
     warmup_steps: 4000
 
 TEST:
-  hooks: 'pycfg.streamLTS_v2.test_hooks'
+  hooks: 'pycfg.stream_lidar.test_hooks'
 
 
 CONTROLLER:
   num_loss_frame: 1
-  data_manager: 'pycfg.streamLTS_v2.data_manager'
-  shared_modules: 'pycfg.streamLTS_v2.shared_modules'
+  data_manager: 'pycfg.stream_lidar.data_manager'
+  shared_modules: 'pycfg.stream_lidar.shared_modules'
   cav_manager:
-    prototype: streamLTS_v2.StreamLidarCAV
+    prototype: stream_lidar.StreamLidarCAV
     memory_len: *seq_len
     memory_emb_dims: 256
     memory_num_propagated: 256
     ref_pts_dim: 3
-    all_grad: false
+    all_grad: true
 
 VISUALIZATION:
   output_viewer:
-    plots: 'pycfg.streamLTS_v2.plots'
-
-
-
-
-
-
-
+    plots: 'pycfg.stream_lidar.plots'

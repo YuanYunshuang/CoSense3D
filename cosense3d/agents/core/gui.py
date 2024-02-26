@@ -1,10 +1,15 @@
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
 import functools
 import os
-import time
 
-import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QDesktopWidget, QApplication
 
 from cosense3d.agents.viewer.gl_viewer import GLViewer
 from cosense3d.agents.viewer.output_viewer import OutputViewer

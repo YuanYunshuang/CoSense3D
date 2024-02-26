@@ -7,11 +7,9 @@ setup(
     name='cosense3d',
     version=__version__,
     author='Yunshuang Yuan',
-    author_email='-',
+    author_email='yunshuang.yuan@ikg.uni-hannover.de',
     url='-',
     license='MIT',
-    # packages=find_packages(include=['config', 'dataset', 'dataset.toolkit', 'model', 'ops',
-    #                                 'tools', 'utils']),
-    packages=find_packages(include=['cosense3d', 'interface']),
+    packages=find_packages(include=['cosense3d']),
     zip_safe=False,
 )

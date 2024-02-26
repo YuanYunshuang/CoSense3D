@@ -1,5 +1,10 @@
-import os
-from datetime import datetime
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
 
 from cosense3d.utils.train_utils import *
 from cosense3d.agents.core.hooks import Hooks

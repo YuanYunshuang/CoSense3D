@@ -1,3 +1,11 @@
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
 import os
 import time
 
@@ -124,26 +132,6 @@ class CheckPointsHook(BaseHook):
         }, save_path)
 
 
-class BEVSparseToDenseHook(BaseHook):
-    def __init__(self, lidar_range, voxel_size, stride, **kwargs):
-        super().__init__(**kwargs)
-        self.stride = stride
-        self.lidar_range = lidar_range
-        self.voxel_size = voxel_size
-
-    def __call__(self, runner, **kwargs):
-        pass
-
-
-class EvalDenseBEVHook(BaseHook):
-    def __init__(self, thr, **kwargs):
-        super().__init__(**kwargs)
-        self.thr = thr
-
-    def __call__(self, runner, **kwargs):
-        pass
-
-
 class DetectionNMSHook(BaseHook):
     def __init__(self, nms_thr, pre_max_size,
                  det_key='detection',
@@ -214,50 +202,8 @@ class DetectionNMSHook(BaseHook):
         runner.controller.data_manager.scatter(cav_ids, {self.det_key: preds})
 
 
-class EvalOPV2VDetectionHook(BaseHook):
-    def __init__(self, iou_thr=[0.5, 0.7], range=[""], save_result=False,
-                 det_key='detection', gt_key='global_bboxes_3d', **kwargs):
-        super().__init__(**kwargs)
-        self.iou_thr = iou_thr
-        self.save_result = save_result
-        self.det_key = det_key
-        self.gt_key = gt_key
-        self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
-        # Create the dictionary for evaluation
-        self.result_stat = {iou: {'tp': [], 'fp': [], 'gt': 0, 'score': []} for iou in iou_thr}
-
-    def set_logger(self, logger):
-        super().set_logger(logger)
-        logdir = os.path.join(logger.logdir, 'detection_eval')
-        os.makedirs(logdir, exist_ok=True)
-        self.logdir = logdir
-
-    def post_iter(self, runner, **kwargs):
-        detection = runner.controller.data_manager.gather_ego_data(self.det_key)
-        gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_key)
-        points = runner.controller.data_manager.gather_batch(0, 'points')
-        if self.save_result:
-            ego_key = list(detection.keys())[0]
-            senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
-            frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
-            filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
-            result = {'detection': detection[ego_key],
-                      'gt_boxes': gt_boxes[ego_key],
-                      'points': points}
-            torch.save(result, os.path.join(self.logdir, filename))
-        for cav_id, preds in detection.items():
-            for iou in self.iou_thr:
-                self.eval_funcs.caluclate_tp_fp(
-                    preds['box'], preds['scr'], gt_boxes[cav_id], self.result_stat, iou
-                )
-
-    def post_epoch(self, runner, **kwargs):
-        result = self.eval_funcs.eval_final_results(self.result_stat, self.iou_thr)
-        msg = "##### DETECTION OPV2V AP"
-
-
-class EvalDetectionHook(BaseHook):
-    def __init__(self, pc_range, iou_thr=[0.5, 0.7], metrics=['CoSense3D'], save_result=False,
+class EvalDetectionBEVHook(BaseHook):
+    def __init__(self, pc_range, iou_thr=[0.5, 0.7], save_result=False,
                  det_key='detection', gt_key='global_bboxes_3d', **kwargs):
         super().__init__(**kwargs)
         self.iou_thr = iou_thr
@@ -265,11 +211,7 @@ class EvalDetectionHook(BaseHook):
         self.save_result = save_result
         self.det_key = det_key
         self.gt_key = gt_key
-        for m in metrics:
-            assert m in ['OPV2V', 'CoSense3D']
-            setattr(self, f'{m.lower()}_result',
-                    {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr})
-        self.metrics = metrics
+        self.result = {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr}
         self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
 
     def set_logger(self, logger):
@@ -301,19 +243,9 @@ class EvalDetectionHook(BaseHook):
                 torch.save(result, os.path.join(self.logdir, filename))
 
             for iou in self.iou_thr:
-                if 'OPV2V' in self.metrics:
-                    result_dict = getattr(self, f'opv2v_result')
-                    self.eval_funcs.caluclate_tp_fp(
-                        preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
-                    )
-                if 'CoSense3D' in self.metrics:
-                    result_dict = getattr(self, f'cosense3d_result')
-                    tp = self.eval_funcs.ops_cal_tp(
-                        preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
-                    )
-                    result_dict[iou]['tp'].append(tp.cpu())
-                    result_dict[iou]['gt'] += len(cur_gt_boxes)
-                    result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
+                self.eval_funcs.caluclate_tp_fp(
+                    preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], self.result, iou
+                )
 
     def filter_box_ranges(self, boxes, scores=None, labels=None, indices=None, times=None):
         mask = boxes.new_ones((len(boxes),)).bool()
@@ -341,30 +273,15 @@ class EvalDetectionHook(BaseHook):
         fmt_str = ("################\n"
                    "DETECTION RESULT\n"
                    "################\n")
-        if 'OPV2V' in self.metrics:
-            result_dict = getattr(self, f'opv2v_result')
-            out_dict = self.eval_funcs.eval_final_results(
-                result_dict,
-                self.iou_thr,
-                global_sort_detections=True
-            )
-            fmt_str += "OPV2V BEV Global sorted:\n"
-            fmt_str += self.format_final_result(out_dict)
-            fmt_str += "----------------\n"
+        out_dict = self.eval_funcs.eval_final_results(
+            self.result,
+            self.iou_thr,
+            global_sort_detections=True
+        )
+        fmt_str += "OPV2V BEV Global sorted:\n"
+        fmt_str += self.format_final_result(out_dict)
+        fmt_str += "----------------\n"
 
-            out_dict = self.eval_funcs.eval_final_results(
-                result_dict,
-                self.iou_thr,
-                global_sort_detections=False
-            )
-            fmt_str += "OPV2V BEV Local sorted:\n"
-            fmt_str += self.format_final_result(out_dict)
-            fmt_str += "----------------\n"
-        if 'CoSense3D' in self.metrics:
-            out_dict = self.eval_cosense3d_final()
-            fmt_str += "CoSense3D Global sorted:\n"
-            fmt_str += self.format_final_result(out_dict)
-            fmt_str += "----------------\n"
         print(fmt_str)
         self.logger.log(fmt_str)
 
@@ -373,24 +290,8 @@ class EvalDetectionHook(BaseHook):
         for iou in self.iou_thr:
             iou_str = f"{int(iou * 100)}"
             fmt_str += f"AP@{iou_str}: {out_dict[f'ap_{iou_str}']:.3f}\n"
-            # fmt_str += f"Precision@{iou_str}: {out_dict[f'mpre_{iou_str}']:.3f}\n"
-            # fmt_str += f"Recall@{iou_str}: {out_dict[f'mrec_{iou_str}']:.3f}\n"
         return fmt_str
 
-    def eval_cosense3d_final(self):
-        out_dict = {}
-        result_dict = getattr(self, f'cosense3d_result')
-        for iou in self.iou_thr:
-            scores = torch.cat(result_dict[iou]['scr'], dim=0)
-            tps = torch.cat(result_dict[iou]['tp'], dim=0)
-            n_pred = len(scores)
-            n_gt = result_dict[iou]['gt']
 
-            ap, mpre, mrec, _ = self.eval_funcs.cal_ap_all_point(scores, tps, n_pred, n_gt)
-            iou_str = f"{int(iou * 100)}"
-            out_dict.update({f'ap_{iou_str}': ap,
-                             f'mpre_{iou_str}': mpre,
-                             f'mrec_{iou_str}': mrec})
-        return out_dict
 
 

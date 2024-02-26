@@ -1,4 +1,12 @@
-import os, glob, logging, warnings
+#  Copyright (c) 2024. Yunshuang Yuan.
+#  Project: CoSense3D
+#  Author: Yunshuang Yuan
+#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
+#  Email: yunshuang.yuan@ikg.uni-hannover.de
+#  All rights reserved.
+#  ---------------
+
+import os, glob, logging
 from datetime import datetime
 
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -6,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from cosense3d.utils.train_utils import *
 from cosense3d.utils.lr_scheduler import build_lr_scheduler
 from cosense3d.utils.logger import LogMeter
-from cosense3d.utils.misc import ensure_dir, setup_logger
+from cosense3d.utils.misc import ensure_dir
 from cosense3d.agents.core.base_runner import BaseRunner
 from cosense3d.agents.utils.deco import save_ckpt_on_error
 
