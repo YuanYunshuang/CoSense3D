@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from cosense3d.config.pycfg.base import use_flash_attn, opv2vt, dairv2xt, hooks
 from cosense3d.config.pycfg.template.petr_transformer import get_petr_transformer_cfg
 from cosense3d.config.pycfg.template.spconv import get_spconv_cfg
 from cosense3d.config.pycfg.template.query_guided_petr_head import get_query_guided_petr_head_cfg
@@ -8,7 +9,7 @@ voxel_size = [0.1, 0.1, 0.1]
 out_stride = 8
 
 
-def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention', global_ref_time=0):
+def get_shared_modules(point_cloud_range, global_ref_time=0):
     """
     gather_keys: 
         keys to gather data from cavs, key order is important, should match the forward input arguments order.
@@ -40,9 +41,9 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention', globa
                     voxel_size=voxel_size,
                     point_cloud_range=point_cloud_range,
                     stride=8,
-                    pos_threshold=0.3,
+                    pos_threshold=0.6,
                     neg_threshold=0.1,
-                    score_thrshold=0.15,
+                    score_thrshold=0.25,
                     get_boxes_when_training=True,
                 ),
                 dict(
@@ -63,7 +64,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention', globa
                 type='vsa.VoxelSetAbstraction',
                 voxel_size=voxel_size,
                 point_cloud_range=point_cloud_range,
-                num_keypoints=4096,
+                num_keypoints=2048,
                 num_out_features=256,
                 num_bev_features=128,
                 num_rawpoint_features=3,
@@ -89,7 +90,7 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention', globa
             transformer_itrs=1,
             global_ref_time=global_ref_time,
             lidar_range=point_cloud_range,
-            transformer=get_petr_transformer_cfg(attn1)
+            transformer=get_petr_transformer_cfg(use_flash_attn)
         ),
 
         spatial_fusion=dict(
@@ -123,3 +124,17 @@ def get_shared_modules(point_cloud_range, attn1='MultiheadFlashAttention', globa
 
     )
 
+
+######################################################
+#                     OPV2Vt
+######################################################
+test_hooks_opv2vt = hooks.get_test_nms_eval_hooks(opv2vt.point_cloud_range_test)
+plots_opv2vt = [hooks.get_detection_plot(opv2vt.point_cloud_range_test)]
+shared_modules_opv2vt = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time)
+
+######################################################
+#                     DairV2Xt
+######################################################
+test_hooks_dairv2xt = hooks.get_test_nms_eval_hooks(dairv2xt.point_cloud_range_test)
+plots_dairv2xt = [hooks.get_detection_plot(dairv2xt.point_cloud_range_test)]
+shared_modules_dairv2xt = get_shared_modules(dairv2xt.point_cloud_range, dairv2xt.global_ref_time)

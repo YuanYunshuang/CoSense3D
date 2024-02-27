@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 1.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
+global_ref_time = 0.05
 
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
@@ -29,7 +30,7 @@ data_manager = dict(
 )
 
 
-def get_opv2vt_cfg(voxel_size, seq_len):
+def get_opv2vt_cfg(seq_len, voxel_size):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
         name='opv2vt',
@@ -50,3 +51,8 @@ def get_opv2vt_cfg(voxel_size, seq_len):
         train_pipeline=pipeline_cpu,
         test_pipeline=pipeline_cpu,
     )
+
+
+seq4_pillar04 = get_opv2vt_cfg(4, [0.4, 0.4, 4])
+seq4_vox04 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4])
+seq4_vox01 = get_opv2vt_cfg(4, [0.1, 0.1, 0.1])

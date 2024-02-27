@@ -119,6 +119,14 @@ class StreamLidarCAV(BaseCAV):
         self.data['time_scale_reduced'] = time360 - self.timestamp
         # self.data['points'] = self.data['points'][:, :-1]
 
+    def update_memory_timestamps(self, ref_pts):
+        # transform ref pts to coop coordinates
+        transform = self.lidar_pose.inverse() @ self.T_aug2g
+        pts = self.transform_ref_pts(ref_pts, transform)
+        timestamp = torch.rad2deg(torch.arctan2(pts[:, 1], pts[:, 0])) + 180
+        timestamp = - self.data['time_scale'][(timestamp % 360).floor().long()].unsqueeze(-1)
+        return timestamp
+
     def get_response_cpm(self):
         cpm = {}
         for k in ['temp_fusion_feat']:
@@ -175,27 +183,8 @@ class StreamLidarCAV(BaseCAV):
         ref_pts = x['all_bbox_preds'][-1][:, :self.ref_pts_dim]
         velo = x['all_bbox_preds'][-1][:, -2:]
         embeddings = self.data['temp_fusion_feat']['outs_dec'][-1]
-        # timestamp = torch.zeros_like(ref_pts[..., :1])
-        # transform ref pts to coop coordinates
-        transform = self.lidar_pose.inverse() @ self.T_aug2g
-        pts = self.transform_ref_pts(ref_pts, transform)
 
-        # import matplotlib.pyplot as plt
-        # from cosense3d.utils.vislib import draw_points_boxes_plt
-        # pcd = self.transform_ref_pts(self.data['points'][:, :3], transform).detach().cpu().numpy()
-        # vis_pts = pts.detach().cpu().numpy()
-        # ax = draw_points_boxes_plt(
-        #     pc_range=self.lidar_range.tolist(),
-        #     points=pcd,
-        #     return_ax=True,
-        # )
-        #
-        # plt.plot(pts[:, 0].cpu(), pts[:, 1].cpu(), ".", markersize=2)
-        # plt.show()
-        # plt.close()
-
-        timestamp = torch.rad2deg(torch.arctan2(pts[:, 1], pts[:, 0])) + 180
-        timestamp = - self.data['time_scale'][(timestamp % 360).floor().long()].unsqueeze(-1)
+        timestamp = self.update_memory_timestamps(ref_pts)
         pose_no_aug = torch.eye(4, device=ref_pts.device).unsqueeze(0).repeat(
             timestamp.shape[0], 1, 1)
 
@@ -229,9 +218,9 @@ class StreamLidarCAV(BaseCAV):
 
     @property
     def timestamp(self):
-        if self.dataset == 'opv2v':
+        if self.dataset == 'opv2vt':
             timestamp = float(self.data['frame']) * 0.1 / 2
-        elif self.dataset == 'dairv2x':
+        elif self.dataset == 'dairv2xt':
             timestamp = self.data['global_time']
         else:
             raise NotImplementedError
@@ -325,6 +314,18 @@ class slcFPVRCNN(StreamLidarCAV):
         tasks[grad_mode].append((self.id, '04:formatting', {}))
         tasks[grad_mode].append((self.id, '05:temporal_fusion', {}))
         tasks[grad_mode].append((self.id, '06:det1_head', {}))
+
+
+class slcNoBoxTime(StreamLidarCAV):
+
+    def prepare_data(self):
+        DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+
+    def update_memory_timestamps(self, ref_pts):
+        timestamp = torch.zeros_like(ref_pts[..., :1])
+        return timestamp
 
 
 

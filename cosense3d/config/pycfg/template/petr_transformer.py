@@ -1,5 +1,5 @@
 
-def get_petr_transformer_cfg(attn1, embed_dims=256):
+def get_petr_transformer_cfg(flash_attn=True, embed_dims=256):
     return dict(
                 type='transformer.PETRTemporalTransformer',
                 decoder=dict(
@@ -16,11 +16,11 @@ def get_petr_transformer_cfg(attn1, embed_dims=256):
                                 dropout=0.1,
                                 fp16=False),
                             dict(
-                                type='MultiheadFlashAttention',
+                                type='MultiheadFlashAttention' if flash_attn else 'MultiheadAttention',
                                 embed_dims=embed_dims,
                                 num_heads=8,
                                 dropout=0.1,
-                                fp16=False if attn1 == 'MultiheadAttention' else True
+                                fp16=flash_attn
                             ),
                             ],
                         ffn_cfgs=dict(

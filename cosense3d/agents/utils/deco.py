@@ -19,3 +19,5 @@ def save_ckpt_on_error(func):
             print(f"Exception caught in {func.__name__}: {e}")
             raise e
     return wrapper
+
+

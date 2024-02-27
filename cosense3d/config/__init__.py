@@ -30,10 +30,11 @@ def load_config(args):
         # modules_default = load_yaml("./config/defaults/modules.yaml")
         # update_dict(cfg, modules_default)
         main_cfg = load_yaml(args.config)
-    default_file = f"{path}/defaults/{main_cfg['DATASET']['name']}.yaml"
-    if os.path.exists(default_file):
-        dataset_default = load_yaml(default_file)
-        update_dict(cfg, dataset_default)
+    if not isinstance(main_cfg['DATASET'], str):
+        default_file = f"{path}/defaults/{main_cfg['DATASET']['name']}.yaml"
+        if os.path.exists(default_file):
+            dataset_default = load_yaml(default_file)
+            update_dict(cfg, dataset_default)
     update_dict(cfg, main_cfg)
     parse_pycfg(cfg)
 
@@ -75,6 +76,18 @@ def parse_pycfg(cfg_dict):
             cfg_dict[k] = getattr(module, n)
         elif isinstance(v, dict):
             parse_pycfg(v)
+
+
+def add_cfg_keys(func):
+    def wrapper(*args, **kwargs):
+        interface_keys = ['gather_keys', 'scatter_keys', 'gt_keys']
+        interface_dict = {}
+        for k in interface_keys:
+            interface_dict[k] = kwargs.pop(k, [])
+        result = func(*args, **kwargs)
+        result.update(**interface_dict)
+        return result
+    return wrapper
 
 
 

@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 point_cloud_range = [-102.4, -41.6, -3.0, 102.4, 41.6, 1.0]
 point_cloud_range_test = [-100, -38.4, -3.0, 100, 38.4, 1.0]
+global_ref_time = 0.0
 
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time'], time_offset=1.6261*1e9),
@@ -29,7 +30,7 @@ data_manager = dict(
 )
 
 
-def get_dairv2xt_cfg(voxel_size, seq_len):
+def get_dairv2xt_cfg(seq_len, voxel_size):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
         name='dairv2xt',
@@ -41,12 +42,17 @@ def get_dairv2xt_cfg(voxel_size, seq_len):
         data_info=data_info,
         lidar_range=point_cloud_range,
         voxel_size=voxel_size,
-        batch_size_train=4,
+        batch_size_train=2,
         batch_size_test=1,
         n_workers=4,
-        max_num_cavs=7,
+        max_num_cavs=2,
         com_range=200,
         seq_len=seq_len,
         train_pipeline=pipeline_cpu,
         test_pipeline=pipeline_cpu,
     )
+
+
+seq4_pillar04 = get_dairv2xt_cfg(4, [0.4, 0.4, 4])
+seq4_vox04 = get_dairv2xt_cfg(4, [0.4, 0.4, 0.4])
+seq4_vox01 = get_dairv2xt_cfg(4, [0.1, 0.1, 0.1])
