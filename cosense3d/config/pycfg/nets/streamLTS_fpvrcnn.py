@@ -42,7 +42,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0):
                     point_cloud_range=point_cloud_range,
                     stride=8,
                     pos_threshold=0.6,
-                    neg_threshold=0.1,
+                    neg_threshold=0.2,
                     score_thrshold=0.25,
                     get_boxes_when_training=True,
                 ),
