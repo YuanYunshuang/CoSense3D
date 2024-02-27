@@ -1,0 +1,29 @@
+cosense.agents.utils package
+============================
+
+Submodules
+----------
+
+cosense.agents.utils.deco module
+--------------------------------
+
+.. automodule:: cosense.agents.utils.deco
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cosense.agents.utils.transform module
+-------------------------------------
+
+.. automodule:: cosense.agents.utils.transform
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: cosense.agents.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

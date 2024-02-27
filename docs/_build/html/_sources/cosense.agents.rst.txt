@@ -1,0 +1,32 @@
+cosense.agents package
+======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cosense.agents.cav_prototype
+   cosense.agents.core
+   cosense.agents.utils
+   cosense.agents.viewer
+
+Submodules
+----------
+
+cosense.agents.center\_controller module
+----------------------------------------
+
+.. automodule:: cosense.agents.center_controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: cosense.agents
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,18 @@
+cosense package
+===============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cosense.agents
+
+Module contents
+---------------
+
+.. automodule:: cosense
+   :members:
+   :undoc-members:
+   :show-inheritance:
