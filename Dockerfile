@@ -4,8 +4,8 @@ LABEL hostname="cosense-docker"
 ENV CUDA_HOME=/usr/local/cuda-11.8
 
 #ENTRYPOINT ["top", "-b"]
-WORKDIR /workspace
-COPY requirements.txt /workspace/requirements.txt
+WORKDIR /project
+COPY requirements.txt /project/requirements.txt
 
 #RUN apt-get update && apt-get install -y git
 #RUN apt-get install build-essential python3-dev libopenblas-dev -y
