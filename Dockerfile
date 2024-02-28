@@ -19,7 +19,6 @@ RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
     --global-option="--blas=openblas"
 
 RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0%2Bcu118/torch_scatter-2.1.2%2Bpt21cu118-cp38-cp38-linux_x86_64.whl
-RUN pip install opencv-python numpy PyYAML Shapely scipy rich tqdm open3d plyfile einops timm flash-attn spconv-cu118 pypcd
 
 COPY ./cosense3d/ops /workspace
 RUN cd /workspace/ops && pip install . && cd ..
