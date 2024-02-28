@@ -1,6 +1,7 @@
 FROM pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
 LABEL authors="Yunshuang Yuan"
 LABEL hostname="cosense-docker"
+ENV CUDA_HOME=/usr/local/cuda
 
 ENTRYPOINT ["top", "-b"]
 WORKDIR /workspace
