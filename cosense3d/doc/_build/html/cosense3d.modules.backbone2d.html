@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cosense3d.modules.backbone2d package &mdash; OpenCosense3D 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=af2ce170"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            OpenCosense3D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of OpenCosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules_list.html">cosense3d</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OpenCosense3D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">cosense3d.modules.backbone2d package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cosense3d.modules.backbone2d.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cosense3d-modules-backbone2d-package">
+<h1>cosense3d.modules.backbone2d package<a class="headerlink" href="#cosense3d-modules-backbone2d-package" title="Permalink to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+</section>
+<section id="module-cosense3d.modules.backbone2d.resnet">
+<span id="cosense3d-modules-backbone2d-resnet-module"></span><h2>cosense3d.modules.backbone2d.resnet module<a class="headerlink" href="#module-cosense3d.modules.backbone2d.resnet" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.backbone2d.resnet.</span></span><span class="sig-name descname"><span class="pre">BasicBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inplanes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">planes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_cp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'type':</span> <span class="pre">'BN'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#BasicBlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock.expansion">
+<span class="sig-name descname"><span class="pre">expansion</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock.expansion" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#BasicBlock.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Forward function.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock.norm1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm1</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock.norm1" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: normalization layer after the first convolution layer</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock.norm2">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm2</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock.norm2" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: normalization layer after the second convolution layer</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.BasicBlock.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.BasicBlock.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.backbone2d.resnet.</span></span><span class="sig-name descname"><span class="pre">Bottleneck</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inplanes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">planes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_cp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'type':</span> <span class="pre">'BN'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#Bottleneck"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.expansion">
+<span class="sig-name descname"><span class="pre">expansion</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.expansion" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#Bottleneck.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Forward function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.forward_plugin">
+<span class="sig-name descname"><span class="pre">forward_plugin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugin_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#Bottleneck.forward_plugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.forward_plugin" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.make_block_plugins">
+<span class="sig-name descname"><span class="pre">make_block_plugins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#Bottleneck.make_block_plugins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.make_block_plugins" title="Permalink to this definition"></a></dt>
+<dd><p>make plugins for block.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>in_channels (int): Input channels of plugin.
+plugins (list[dict]): List of plugins cfg to build.</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[str]: List of the names of plugin.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.norm1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm1</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.norm1" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: normalization layer after the first convolution layer</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.norm2">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm2</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.norm2" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: normalization layer after the second convolution layer</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.norm3">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm3</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.norm3" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: normalization layer after the third convolution layer</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.Bottleneck.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.Bottleneck.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.backbone2d.resnet.</span></span><span class="sig-name descname"><span class="pre">ResLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplanes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">planes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_blocks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_down</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'type':</span> <span class="pre">'BN'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsample_first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResLayer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Sequential</span></code></p>
+<p>ResLayer to build ResNet style backbone.</p>
+<dl>
+<dt>Args:</dt><dd><p>block (nn.Module): block used to build ResLayer.
+inplanes (int): inplanes of block.
+planes (int): planes of block.
+num_blocks (int): number of blocks.
+stride (int): stride of the first block. Default: 1
+avg_down (bool): Use AvgPool instead of stride conv when</p>
+<blockquote>
+<div><p>downsampling in the bottleneck. Default: False</p>
+</div></blockquote>
+<dl class="simple">
+<dt>conv_cfg (dict): dictionary to construct and config conv layer.</dt><dd><p>Default: None</p>
+</dd>
+<dt>norm_cfg (dict): dictionary to construct and config norm layer.</dt><dd><p>Default: dict(type=’BN’)</p>
+</dd>
+<dt>downsample_first (bool): Downsample at the first block or last block.</dt><dd><p>False for Hourglass, True for ResNet. Default: True</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.backbone2d.resnet.</span></span><span class="sig-name descname"><span class="pre">ResNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stem_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_stages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">2,</span> <span class="pre">2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1,</span> <span class="pre">1,</span> <span class="pre">1,</span> <span class="pre">1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pytorch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deep_stem</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_down</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_stages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'requires_grad':</span> <span class="pre">True,</span> <span class="pre">'type':</span> <span class="pre">'BN'}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage_with_dcn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(False,</span> <span class="pre">False,</span> <span class="pre">False,</span> <span class="pre">False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_cp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_init_residual</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_cfg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
+<p>ResNet backbone. Modified from mmdet.</p>
+<dl>
+<dt>Args:</dt><dd><p>depth (int): Depth of resnet, from {18, 34, 50, 101, 152}.
+stem_channels (int | None): Number of stem channels. If not specified,</p>
+<blockquote>
+<div><p>it will be the same as <cite>base_channels</cite>. Default: None.</p>
+</div></blockquote>
+<p>base_channels (int): Number of base channels of res layer. Default: 64.
+in_channels (int): Number of input image channels. Default: 3.
+num_stages (int): Resnet stages. Default: 4.
+strides (Sequence[int]): Strides of the first block of each stage.
+dilations (Sequence[int]): Dilation of each stage.
+out_indices (Sequence[int]): Output from which stages.
+style (str): <cite>pytorch</cite> or <cite>caffe</cite>. If set to “pytorch”, the stride-two</p>
+<blockquote>
+<div><p>layer is the 3x3 conv layer, otherwise the stride-two layer is
+the first 1x1 conv layer.</p>
+</div></blockquote>
+<p>deep_stem (bool): Replace 7x7 conv in input stem with 3 3x3 conv
+avg_down (bool): Use AvgPool instead of stride conv when</p>
+<blockquote>
+<div><p>downsampling in the bottleneck.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>frozen_stages (int): Stages to be frozen (stop grad and set eval mode).</dt><dd><p>-1 means not freezing any parameters.</p>
+</dd>
+</dl>
+<p>norm_cfg (dict): Dictionary to construct and config norm layer.
+norm_eval (bool): Whether to set norm layers to eval mode, namely,</p>
+<blockquote>
+<div><p>freeze running stats (mean and var). Note: Effect on Batch Norm
+and its variants only.</p>
+</div></blockquote>
+<p>plugins (list[dict]): List of plugins for stages, each dict contains:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>cfg (dict, required): Cfg dict to build plugin.</p></li>
+<li><p>position (str, required): Position inside block to insert
+plugin, options are ‘after_conv1’, ‘after_conv2’, ‘after_conv3’.</p></li>
+<li><p>stages (tuple[bool], optional): Stages to apply plugin, length
+should be same as ‘num_stages’.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>with_cp (bool): Use checkpoint or not. Using checkpoint will save some</dt><dd><p>memory while slowing down the training speed.</p>
+</dd>
+<dt>zero_init_residual (bool): Whether to use zero init for last norm layer</dt><dd><p>in resblocks to let them behave as identity.</p>
+</dd>
+</dl>
+<p>pretrained (str, optional): model pretrained path. Default: None
+init_cfg (dict or list[dict], optional): Initialization config dict.</p>
+<blockquote>
+<div><p>Default: None</p>
+</div></blockquote>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span> <span class="o">=</span> <span class="n">ResNet</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">level_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">level_out</span> <span class="ow">in</span> <span class="n">level_outputs</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">level_out</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+<span class="go">(1, 64, 8, 8)</span>
+<span class="go">(1, 128, 4, 4)</span>
+<span class="go">(1, 256, 2, 2)</span>
+<span class="go">(1, 512, 1, 1)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.arch_settings">
+<span class="sig-name descname"><span class="pre">arch_settings</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{18:</span> <span class="pre">(&lt;class</span> <span class="pre">'cosense3d.modules.backbone2d.resnet.BasicBlock'&gt;,</span> <span class="pre">(2,</span> <span class="pre">2,</span> <span class="pre">2,</span> <span class="pre">2)),</span> <span class="pre">34:</span> <span class="pre">(&lt;class</span> <span class="pre">'cosense3d.modules.backbone2d.resnet.BasicBlock'&gt;,</span> <span class="pre">(3,</span> <span class="pre">4,</span> <span class="pre">6,</span> <span class="pre">3)),</span> <span class="pre">50:</span> <span class="pre">(&lt;class</span> <span class="pre">'cosense3d.modules.backbone2d.resnet.Bottleneck'&gt;,</span> <span class="pre">(3,</span> <span class="pre">4,</span> <span class="pre">6,</span> <span class="pre">3)),</span> <span class="pre">101:</span> <span class="pre">(&lt;class</span> <span class="pre">'cosense3d.modules.backbone2d.resnet.Bottleneck'&gt;,</span> <span class="pre">(3,</span> <span class="pre">4,</span> <span class="pre">23,</span> <span class="pre">3)),</span> <span class="pre">152:</span> <span class="pre">(&lt;class</span> <span class="pre">'cosense3d.modules.backbone2d.resnet.Bottleneck'&gt;,</span> <span class="pre">(3,</span> <span class="pre">8,</span> <span class="pre">36,</span> <span class="pre">3))}</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.arch_settings" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResNet.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Forward function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.make_res_layer">
+<span class="sig-name descname"><span class="pre">make_res_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResNet.make_res_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.make_res_layer" title="Permalink to this definition"></a></dt>
+<dd><p>Pack all blocks in a stage into a <code class="docutils literal notranslate"><span class="pre">ResLayer</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.make_stage_plugins">
+<span class="sig-name descname"><span class="pre">make_stage_plugins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plugins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResNet.make_stage_plugins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.make_stage_plugins" title="Permalink to this definition"></a></dt>
+<dd><p>Make plugins for ResNet <code class="docutils literal notranslate"><span class="pre">stage_idx</span></code> th stage.</p>
+<p>Currently we support to insert <code class="docutils literal notranslate"><span class="pre">context_block</span></code>,
+<code class="docutils literal notranslate"><span class="pre">empirical_attention_block</span></code>, <code class="docutils literal notranslate"><span class="pre">nonlocal_block</span></code> into the backbone
+like ResNet/ResNeXt. They could be inserted after conv1/conv2/conv3 of
+Bottleneck.</p>
+<p>An example of plugins format could be:</p>
+<dl>
+<dt>Examples:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plugins</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>    <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;xxx&#39;</span><span class="p">,</span> <span class="n">arg1</span><span class="o">=</span><span class="s1">&#39;xxx&#39;</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">stages</span><span class="o">=</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">position</span><span class="o">=</span><span class="s1">&#39;after_conv2&#39;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;yyy&#39;</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">stages</span><span class="o">=</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">position</span><span class="o">=</span><span class="s1">&#39;after_conv3&#39;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;zzz&#39;</span><span class="p">,</span> <span class="n">postfix</span><span class="o">=</span><span class="s1">&#39;1&#39;</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">stages</span><span class="o">=</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">position</span><span class="o">=</span><span class="s1">&#39;after_conv3&#39;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="nb">dict</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;zzz&#39;</span><span class="p">,</span> <span class="n">postfix</span><span class="o">=</span><span class="s1">&#39;2&#39;</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">stages</span><span class="o">=</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+<span class="gp">... </span>         <span class="n">position</span><span class="o">=</span><span class="s1">&#39;after_conv3&#39;</span><span class="p">)</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span> <span class="o">=</span> <span class="n">ResNet</span><span class="p">(</span><span class="n">depth</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stage_plugins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_stage_plugins</span><span class="p">(</span><span class="n">plugins</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_plugins</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Suppose <code class="docutils literal notranslate"><span class="pre">stage_idx=0</span></code>, the structure of blocks in the stage would be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conv1-&gt; conv2-&gt;conv3-&gt;yyy-&gt;zzz1-&gt;zzz2
+</pre></div>
+</div>
+<p>Suppose ‘stage_idx=1’, the structure of blocks in the stage would be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conv1-&gt; conv2-&gt;xxx-&gt;conv3-&gt;yyy-&gt;zzz1-&gt;zzz2
+</pre></div>
+</div>
+<p>If stages is missing, the plugin would be applied to all stages.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>plugins (list[dict]): List of plugins cfg to build. The postfix is</dt><dd><p>required if multiple same type plugins are inserted.</p>
+</dd>
+</dl>
+<p>stage_idx (int): Index of stage to build</p>
+</dd>
+<dt>Returns:</dt><dd><p>list[dict]: Plugins for current stage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.norm1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">norm1</span></span><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.norm1" title="Permalink to this definition"></a></dt>
+<dd><p>nn.Module: the normalization layer named “norm1”</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet.html#ResNet.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.train" title="Permalink to this definition"></a></dt>
+<dd><p>Convert the model into training mode while keep normalization layer
+freezed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet.ResNet.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet.ResNet.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cosense3d.modules.backbone2d.resnet_encoder">
+<span id="cosense3d-modules-backbone2d-resnet-encoder-module"></span><h2>cosense3d.modules.backbone2d.resnet_encoder module<a class="headerlink" href="#module-cosense3d.modules.backbone2d.resnet_encoder" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.backbone2d.resnet_encoder.</span></span><span class="sig-name descname"><span class="pre">ResnetEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feat_indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neck</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet_encoder.html#ResnetEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
+<p>Resnet family to encode image.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.format_output">
+<span class="sig-name descname"><span class="pre">format_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_imgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet_encoder.html#ResnetEncoder.format_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.format_output" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_images</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/backbone2d/resnet_encoder.html#ResnetEncoder.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.forward" title="Permalink to this definition"></a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.training">
+<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.backbone2d.resnet_encoder.ResnetEncoder.training" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-cosense3d.modules.backbone2d">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cosense3d.modules.backbone2d" title="Permalink to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

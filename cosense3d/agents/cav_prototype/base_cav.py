@@ -3,8 +3,23 @@ from cosense3d.agents.utils.transform import DataOnlineProcessor as DOP
 
 
 class BaseCAV:
-    def __init__(self, id, mapped_id, is_ego, lidar_range, memory_len,
-                 lidar_pose=None, require_grad=False, seq_len=1, **kwargs):
+    def __init__(self, id: str, mapped_id: int, is_ego: bool,
+                 lidar_range: torch.Tensor, memory_len: int,
+                 lidar_pose: torch.Tensor=None, require_grad: bool=False,
+                 seq_len: int=1, **kwargs):
+        """
+        Base class for CAV prototype.
+
+        :param id: agent id.
+        :param mapped_id: remapped id.
+        :param is_ego: if the agent is an ego agent.
+        :param lidar_range: visible lidar range,
+        :param memory_len: memory length for memory queue.
+        :param lidar_pose: lidar pose in shape (4, 4).
+        :param require_grad: if True, the gradients will be calculated for this agent during training.
+        :param seq_len: sequence length of the input data.
+        :param kwargs: additional key-value arguments.
+        """
         self.id = id
         self.mapped_id = mapped_id
         self.is_ego = is_ego
