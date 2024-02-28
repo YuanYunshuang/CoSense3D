@@ -23,7 +23,7 @@ RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0%2Bcu118/to
 
 COPY ./cosense3d/ops /workspace/ops
 WORKDIR /workspace/ops
-RUN pip install --force-reinstall . && cd ..
+RUN pip install --force-reinstall .
 
 COPY requirements_cosense_4090.txt /workspace
 WORKDIR /workspace
