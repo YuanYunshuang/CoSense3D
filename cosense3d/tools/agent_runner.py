@@ -103,12 +103,14 @@ def parse_opv2v_paths(cfgs):
             "data": "/koko/OPV2V/temporal",
             "meta": "/koko/cosense3d/opv2vt"
         },
-        "lavander": {
-            "data": "/koko/OPV2V/temporal",
-            "meta": "/koko/cosense3d/opv2vt"
-        },
+        "default": {
+            "data": "/data/OPV2Vt",
+            "meta": "/data/OPV2Vt/opv2vt"
+        }
     }
     name = socket.gethostname()
+    if name not in path_map:
+        name = "default"
     cfgs['DATASET']['data_path'] = path_map[name]['data']
     cfgs['DATASET']['meta_path'] = path_map[name]['meta']
     cfgs['DATASET']['enable_split_sub_folder'] = True
