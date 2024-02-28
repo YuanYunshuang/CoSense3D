@@ -23,8 +23,7 @@ RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0%2Bcu118/to
 
 COPY ./cosense3d/ops /workspace/ops
 WORKDIR /workspace/ops
-ENV CUDA_HOME=/usr/local/cuda
-RUN pip install . && cd ..
+RUN export CUDA_HOME=/usr/local/cuda && pip install . && cd ..
 
 COPY requirements_cosense_4090.txt /workspace
 WORKDIR /workspace
