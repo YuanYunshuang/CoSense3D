@@ -103,6 +103,10 @@ def parse_opv2v_paths(cfgs):
             "data": "/koko/OPV2V/temporal",
             "meta": "/koko/cosense3d/opv2vt"
         },
+        "lavander": {
+            "data": "/koko/OPV2V/temporal",
+            "meta": "/koko/cosense3d/opv2vt"
+        },
     }
     name = socket.gethostname()
     cfgs['DATASET']['data_path'] = path_map[name]['data']
@@ -120,7 +124,7 @@ def parse_dairv2x_paths(cfgs):
         },
         "mars": {
             "data": "/koko/DAIR-V2X",
-            "meta": "/media/yuan/luna/cosense3d/meta_with_pred"
+            "meta": "/media/yuan/luna/data/DairV2Xt/meta_with_pred"
         },
         "ominotago": {
             "data": "/koko/yunshuang/DAIR-V2X",
@@ -159,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("--run-name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--eval", action="store_true")
     parser.add_argument("--gpus", type=int, default=0)
     parser.add_argument("--data-path", type=str)
     parser.add_argument("--meta-path", type=str)
@@ -186,6 +191,7 @@ if __name__ == "__main__":
         save_config(cfgs, agent_runner.runner.logdir)
     agent_runner.run()
 
-    # test
-    args.mode = "test"
-    agent_runner.run()
+    if args.mode == "train" and args.eval:
+        args.mode = "test"
+        agent_runner = AgentRunner(args, cfgs)
+        agent_runner.run()
