@@ -3,7 +3,7 @@ LABEL authors="Yunshuang Yuan"
 LABEL hostname="cosense-docker"
 ENV CUDA_HOME=/usr/local/cuda
 
-ENTRYPOINT ["top", "-b"]
+#ENTRYPOINT ["top", "-b"]
 WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y git
