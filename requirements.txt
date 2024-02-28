@@ -1,3 +1,4 @@
+flash-attn
 opencv-python
 numpy
 torch-scatter
@@ -12,4 +13,3 @@ einops
 timm
 spconv-cu118
 pypcd
-flash-attn
