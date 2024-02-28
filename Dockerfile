@@ -20,7 +20,7 @@ RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
 
 RUN pip install torch-scatter -f https://data.pyg.org/whl/torch-2.1.0%2Bcu118/torch_scatter-2.1.2%2Bpt21cu118-cp38-cp38-linux_x86_64.whl
 
-COPY ./cosense3d/ops /workspace
+COPY ./cosense3d/ops /workspace/ops
 WORKDIR /workspace/ops
 RUN pip install . && cd ..
 
