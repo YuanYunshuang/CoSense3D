@@ -24,6 +24,7 @@ RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
 
 #COPY requirements.txt /workspace/requirements.txt
 #WORKDIR /workspace
+ENV CUDA_HOME=/usr/local/cuda-11.8
 RUN pip install -r requirements.txt
 
 #COPY ./cosense3d/ops/ /workspace/ops/
