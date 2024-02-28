@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y git
 RUN apt-get install build-essential python3-dev libopenblas-dev -y
 
 RUN conda update conda
-RUN conda install openblas-devel pybind11 -y
+RUN conda install openblas-devel -y
+RUN conda install pybind11 -y
 RUN conda install -c conda-forge libstdcxx-ng libffi -y
 
 RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
