@@ -137,8 +137,8 @@ def parse_dairv2x_paths(cfgs):
             "meta": "/home/data/DAIR-V2X/meta_with_pred"
         },
         "default": {
-            "data": "/data/OPV2Vt",
-            "meta": "/data/OPV2Vt/opv2vt",
+            "data": "/data/DairV2Xt",
+            "meta": "/data/DairV2Xt/meta_with_pred",
         }
     }
     name = socket.gethostname()
