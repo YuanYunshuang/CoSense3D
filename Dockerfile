@@ -23,7 +23,7 @@ RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
 
 COPY requirements_cosense_4090.txt /workspace
 WORKDIR /workspace
-RUN pip install -r requirements_cosense_4090.txt
+RUN pip install -r requirements.txt
 
 COPY ./cosense3d/ops /workspace/ops
 WORKDIR /workspace/ops

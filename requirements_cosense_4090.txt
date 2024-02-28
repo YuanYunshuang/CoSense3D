@@ -10,6 +10,6 @@ open3d
 plyfile
 einops
 timm
-flash-attn
 spconv-cu118
 pypcd
+flash-attn
