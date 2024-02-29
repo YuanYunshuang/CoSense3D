@@ -89,6 +89,7 @@ class VoxelSetAbstraction(nn.Module):
                  num_rawpoint_features=3,
                  enlarge_selection_boxes=True,
                  sa_layer=None,
+                 min_selected_kpts=128,
                  **kwargs):
         super().__init__()
         self.voxel_size = voxel_size
@@ -103,6 +104,7 @@ class VoxelSetAbstraction(nn.Module):
         self.bev_stride = bev_stride
         self.num_rawpoint_features = num_rawpoint_features
         self.enlarge_selection_boxes = enlarge_selection_boxes
+        self.min_selected_kpts = min_selected_kpts
 
         self.SA_layers = nn.ModuleList()
         self.SA_layer_names = []
@@ -232,13 +234,13 @@ class VoxelSetAbstraction(nn.Module):
         else:
             pts_idx_of_box = torch.full((len(keypoints),), fill_value=-1)
         kpt_mask = pts_idx_of_box >= 0
-        # Ensure there are more than 2 points are selected to satisfy the
+        # Ensure enough points are selected to satisfy the
         # condition of batch norm in the FC layers of feature fusion module
         for i in range(B):
             batch_mask = keypoints[:, 0] == i
-            if kpt_mask[batch_mask].sum() < 2:
+            if kpt_mask[batch_mask].sum() < self.min_selected_kpts:
                 tmp = kpt_mask[batch_mask].clone()
-                tmp[torch.randint(0, batch_mask.sum().item(), (2,))] = True
+                tmp[torch.randint(0, batch_mask.sum().item(), (self.min_selected_kpts,))] = True
                 kpt_mask[batch_mask] = tmp
 
         point_features_list = []
