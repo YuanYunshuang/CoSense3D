@@ -308,10 +308,10 @@ class slcFPVRCNN(StreamLidarCAV):
             grad_mode = 'no_grad'
         tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
         tasks[grad_mode].append((self.id, '02:roi_head', {}))
-        tasks[grad_mode].append((self.id, '03:keypoint_composer', {}))
-        tasks[grad_mode].append((self.id, '04:formatting', {}))
-        tasks[grad_mode].append((self.id, '05:temporal_fusion', {}))
-        tasks[grad_mode].append((self.id, '06:det1_head', {}))
+        # tasks[grad_mode].append((self.id, '03:keypoint_composer', {}))
+        # tasks[grad_mode].append((self.id, '04:formatting', {}))
+        # tasks[grad_mode].append((self.id, '05:temporal_fusion', {}))
+        # tasks[grad_mode].append((self.id, '06:det1_head', {}))
 
     def forward_fusion(self, tasks, training_mode):
         # if self.is_ego:
