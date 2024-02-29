@@ -121,7 +121,7 @@ class Spconv(BaseModule):
     def forward(self, points: list, **kwargs):
         B = len(points)
         res_dict = {}
-        voxels, coords, num_points = self.voxel_generator(points)
+        voxels, coords, num_points = self.voxel_generator(x[:, :4] for x in points)
         res_dict['coords'] = coords
         coords = self.cat_data_from_list(coords, pad_idx=True)
         voxels = self.cat_data_from_list(voxels)
