@@ -227,7 +227,10 @@ class VoxelSetAbstraction(nn.Module):
         if self.enlarge_selection_boxes:
             boxes_tmp[:, 4:7] += 0.5
         keypoints = cat_coor_with_idx(keypoints_list)
-        pts_idx_of_box = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1]
+        if len(boxes_tmp) > 0:
+            pts_idx_of_box = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1]
+        else:
+            pts_idx_of_box = torch.full(len(keypoints), fill_value=-1)
         kpt_mask = pts_idx_of_box >= 0
         # Ensure there are more than 2 points are selected to satisfy the
         # condition of batch norm in the FC layers of feature fusion module
