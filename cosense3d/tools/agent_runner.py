@@ -136,8 +136,14 @@ def parse_dairv2x_paths(cfgs):
             "data": "/home/data/DAIR-V2X",
             "meta": "/home/data/DAIR-V2X/meta_with_pred"
         },
+        "default": {
+            "data": "/data/DairV2Xt",
+            "meta": "/data/DairV2Xt/meta_with_pred",
+        }
     }
     name = socket.gethostname()
+    if name not in path_map:
+        name = "default"
     cfgs['DATASET']['data_path'] = path_map[name]['data']
     cfgs['DATASET']['meta_path'] = path_map[name]['meta']
     cfgs['DATASET']['enable_split_sub_folder'] = False
