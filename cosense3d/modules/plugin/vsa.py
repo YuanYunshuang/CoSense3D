@@ -232,7 +232,7 @@ class VoxelSetAbstraction(nn.Module):
         if len(boxes_tmp) > 0:
             pts_idx_of_box = points_in_boxes_gpu(keypoints[:, :4], boxes_tmp, batch_size=B)[1]
         else:
-            pts_idx_of_box = torch.full((len(keypoints),), fill_value=-1)
+            pts_idx_of_box = torch.full((len(keypoints),), fill_value=-1, device=keypoints.device)
         kpt_mask = pts_idx_of_box >= 0
         # Ensure enough points are selected to satisfy the
         # condition of batch norm in the FC layers of feature fusion module
