@@ -158,7 +158,6 @@ def parse_paths(cfgs):
     return cfgs
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="./config/config.yaml")
@@ -171,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--run-name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--eval", action="store_true")
+    parser.add_argument("--eval", action="store_false")
     parser.add_argument("--gpus", type=int, default=0)
     parser.add_argument("--data-path", type=str)
     parser.add_argument("--meta-path", type=str)
@@ -198,8 +197,3 @@ if __name__ == "__main__":
     if args.mode == "train":
         save_config(cfgs, agent_runner.runner.logdir)
     agent_runner.run()
-
-    if args.mode == "train" and args.eval:
-        args.mode = "test"
-        agent_runner = AgentRunner(args, cfgs)
-        agent_runner.run()

@@ -238,7 +238,7 @@ class VoxelSetAbstraction(nn.Module):
         # condition of batch norm in the FC layers of feature fusion module
         for i in range(B):
             batch_mask = keypoints[:, 0] == i
-            if kpt_mask[batch_mask].sum() < self.min_selected_kpts:
+            if kpt_mask[batch_mask].sum().item() < self.min_selected_kpts:
                 tmp = kpt_mask[batch_mask].clone()
                 tmp[torch.randint(0, batch_mask.sum().item(), (self.min_selected_kpts,))] = True
                 kpt_mask[batch_mask] = tmp
