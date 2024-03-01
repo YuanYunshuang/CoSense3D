@@ -251,7 +251,9 @@ class VoxelSetAbstraction(nn.Module):
             point_features_list.append(point_bev_features[kpt_mask])
 
         new_xyz = keypoints[kpt_mask]
-        new_xyz_scrs = scores[pts_idx_of_box[kpt_mask]]
+        new_xyz_scrs = torch.zeros((kpt_mask.sum().item(),), device=keypoints.device)
+        valid = pts_idx_of_box[kpt_mask] >= 0
+        new_xyz_scrs[valid] = scores[pts_idx_of_box[kpt_mask][valid]]
         new_xyz_batch_cnt = torch.tensor([(new_xyz[:, 0] == b).sum() for b in range(B)],
                                          device=new_xyz.device).int()
 
