@@ -67,6 +67,7 @@ class CosenseDataset(Dataset):
         """Load all necessary meta information"""
         self.load_meta()
         self.parse_samples()
+        self.samples = self.samples[700:]
 
     def parse_samples(self):
         """List all frame-wise instances"""
