@@ -267,7 +267,7 @@ if __name__=="__main__":
     #     "/koko/train_out/StreamLTS_fcooper_dairv2x_02-21-18-40-44/epoch50/detection_eval",
     #     [-100, -38.4, -3.0, 100, 38.4, 1.0],
     # )
-    for i in range(0, 51, 10):
+    for i in range(10, 51, 10):
         shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.pth",
                     f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.bak.pth")
         shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.pth",
