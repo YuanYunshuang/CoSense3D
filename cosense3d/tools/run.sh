@@ -1,6 +1,13 @@
 #!/bin/bash
 
 PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_dairv2xt.yaml --mode train --resume-from /media/yuan/luna/streamLTS/LTS_dairv2x/epoch50.pth --batch-size 4
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_dairv2xt.yaml --mode test --load-from /media/yuan/luna/streamLTS/LTS_dairv2x/epoch55.pth
+
 PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_opv2vt.yaml --mode train --resume-from /media/yuan/luna/streamLTS/streamLTS_opv2v/epoch50.pth
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_opv2vt.yaml --mode test --load-from /media/yuan/luna/streamLTS/streamLTS_opv2v/epoch55.pth
+
 PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_fcooper_dairv2x.yaml --mode train --resume-from /media/yuan/luna/streamLTS/LTS_fcooper_dairv2x/epoch50.pth
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_fcooper_dairv2x.yaml --mode test --load-from /media/yuan/luna/streamLTS/LTS_fcooper_dairv2x/epoch55.pth
+
 PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_fcooper_opv2vt.yaml --mode train --resume-from /media/yuan/luna/streamLTS/LTS_fcooper_opv2v/epoch50.pth
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./cosense3d/config/streamLTS_fcooper_opv2vt.yaml --mode test --load-from /media/yuan/luna/streamLTS/LTS_fcooper_opv2v/epoch54.pth
