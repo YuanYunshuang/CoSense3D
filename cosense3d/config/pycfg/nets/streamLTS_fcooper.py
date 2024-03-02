@@ -28,7 +28,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0.0):
                 get_det_anchor_dense_cfg(
                     voxel_size=voxel_size,
                     point_cloud_range=point_cloud_range,
-                    pos_threshold=0.6, neg_threshold=0.2, score_thrshold=0.25,
+                    pos_threshold=0.6, neg_threshold=0.2,
                 ),
                 dict(
                     type='heads.bev_dense.BevRoIDenseHead',

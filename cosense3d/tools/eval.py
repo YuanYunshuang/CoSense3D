@@ -1,4 +1,7 @@
+import copy
 import os, glob, tqdm
+import shutil
+
 import torch
 from cosense3d.utils.eval_detection_utils import *
 from cosense3d.utils.box_utils import corners_to_boxes_3d
@@ -46,7 +49,6 @@ def eval_detection_opv2v(test_dir, iou_thr=[0.5, 0.7], global_sort_detections=Tr
                 pred_boxes, pred_scores, gt_boxes, result_stat, iou
             )
     result = eval_final_results(result_stat, iou_thr, global_sort_detections=global_sort_detections)
-
 
 
 def eval_detection_opv2v_with_opencood_gt(test_dir_opencood, test_dir_cosense3d, iou_thr=[0.5, 0.7], global_sort_detections=True):
@@ -232,6 +234,16 @@ def eval_cosense_detection_with_pth(result_path, pc_range, iou_thr=[0.5, 0.7], m
         fh.writelines(fmt_str)
 
 
+def tmp(ckpt_path):
+    ckpt = torch.load(ckpt_path)
+    reg_key = 'reg_branches.0.2'
+    for k, v in ckpt['model'].items():
+        if reg_key in k:
+            ckpt['model'][k] = v[:20]
+    torch.save(ckpt, ckpt_path)
+
+
+
 if __name__=="__main__":
     # compare_detection(
     #     "/media/yuan/luna/official_proj/OpenCOOD/ckpt/voxelnet_attentive_fusion/voxelnet_attentive_fusion/result",
@@ -251,7 +263,20 @@ if __name__=="__main__":
     #     "/media/yuan/luna/cosense3d/score_sampling_11-16-17-04-22/epoch37/detection_eval",
     #     global_sort_detections=False,
     # )
-    eval_cosense_detection_with_pth(
-        "/koko/train_out/StreamLTS_fcooper_dairv2x_02-21-18-40-44/epoch50/detection_eval",
-        [-100, -38.4, -3.0, 100, 38.4, 1.0],
-    )
+    # eval_cosense_detection_with_pth(
+    #     "/koko/train_out/StreamLTS_fcooper_dairv2x_02-21-18-40-44/epoch50/detection_eval",
+    #     [-100, -38.4, -3.0, 100, 38.4, 1.0],
+    # )
+    for i in range(0, 51, 10):
+        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.pth",
+                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.bak.pth")
+        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.pth",
+                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.bak.pth")
+        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.pth",
+                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.bak.pth")
+        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.pth",
+                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.pth")
