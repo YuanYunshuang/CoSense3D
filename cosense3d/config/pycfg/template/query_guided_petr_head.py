@@ -18,7 +18,7 @@ def get_query_guided_petr_head_cfg(gather_keys, scatter_keys, gt_keys,
             cls_assigner=dict(
                 type='target_assigners.BEVHardCenternessAssigner',
                 n_cls=1,
-                min_radius=1.0,
+                min_radius=1.6,
                 pos_neg_ratio=0,
                 mining_thr=0,
             ),
