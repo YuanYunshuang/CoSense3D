@@ -12,12 +12,12 @@ TRAIN:
     weight_decay: 1e-2
     betas: [0.9, 0.98]
   lr_scheduler:
-#    policy: 'TransformerAdaptiveScheduler'
-#    dim_embed: 256
-#    warmup_steps: 4000
-    policy: 'MultiStepLR'
-    milestones: [50]
-    gamma: 0.1
+    policy: 'TransformerAdaptiveScheduler'
+    dim_embed: 256
+    warmup_steps: 4000
+#    policy: 'MultiStepLR'
+#    milestones: [50]
+#    gamma: 0.1
 
 TEST:
   hooks: 'pycfg.nets.streamLTS.test_hooks_dairv2xt'
