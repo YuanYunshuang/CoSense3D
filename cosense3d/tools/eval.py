@@ -248,6 +248,66 @@ def tmp(ckpt_path):
     torch.save(ckpt, ckpt_path)
 
 
+def plot_model_efficiency():
+    import matplotlib.ticker as ticker
+    data = {
+        'fcooper_opv2vt': {'0.5': 54.4, '0.7': 17.0, 'mem': 16.132, 'time': 20},
+        'fcooper_dairv2xt': {'0.5': 41.8, '0.7': 17.7, 'mem': 11.811, 'time': 20},
+        'fpvrcnn_opv2vt': {'0.5': 70.8, '0.7': 41.2, 'mem': 17.678, 'time': 20},
+        'fpvrcnn_dairv2xt': {'0.5': 51.8, '0.7': 23.9, 'mem': 11.971, 'time': 20},
+        'attnfusion_opv2vt': {'0.5': 78.7, '0.7': 41.4, 'mem': 20.021, 'time': 20},
+        'attnfusion_dairv2xt': {'0.5': 62.1, '0.7': 34.0, 'mem': 15.224, 'time': 20},
+        'LTS_opv2vt': {'0.5': 81.2, '0.7': 59.5, 'mem': 12.587, 'time': 20},
+        'LTS_dairv2xt': {'0.5': 63.0, '0.7': 34.8, 'mem': 10.420, 'time': 20},
+    }
+
+    models = ['fcooper', 'fpvrcnn', 'attnfusion', 'LTS']
+    markers = ['^', '*', 'o', 's']
+    fig = plt.figure(figsize=(10, 3))
+    axs = fig.subplots(1, 4)
+    # opv2vt memory
+    for i in range(4):
+        axs[0].plot(data[f'{models[i]}_opv2vt']['mem'], data[f'{models[i]}_opv2vt']['0.5'],
+                    color='green', marker=markers[i], markersize=12)
+        axs[0].plot(data[f'{models[i]}_opv2vt']['mem'], data[f'{models[i]}_opv2vt']['0.7'],
+                    color='orange', marker=markers[i], markersize=12)
+        axs[0].set_title('OPV2Vt: AP vs Memory')
+        axs[0].set_xlabel('Memory usage peak (GB)')
+        axs[0].set_ylabel('AP (%)')
+        axs[0].set_xlim(11, 21)
+        axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    # opv2vt time
+    for i in range(4):
+        axs[1].plot(data[f'{models[i]}_opv2vt']['time'], data[f'{models[i]}_opv2vt']['0.5'],
+                    color='green', marker=markers[i], markersize=12)
+        axs[1].plot(data[f'{models[i]}_opv2vt']['time'], data[f'{models[i]}_opv2vt']['0.7'],
+                    color='orange', marker=markers[i], markersize=12)
+        axs[1].set_title('OPV2Vt: AP vs Time', fontsize=12)
+        axs[1].set_xlabel('Epochal training time (Hour)')
+    # dairv2xt memory
+    for i in range(4):
+        axs[2].plot(data[f'{models[i]}_dairv2xt']['mem'], data[f'{models[i]}_dairv2xt']['0.5'],
+                    color='green', marker=markers[i], markersize=12)
+        axs[2].plot(data[f'{models[i]}_dairv2xt']['mem'], data[f'{models[i]}_dairv2xt']['0.7'],
+                    color='orange', marker=markers[i], markersize=12)
+        axs[2].set_title('DairV2Xt: AP vs Memory')
+        axs[2].set_xlabel('Memory usage peak (GB)')
+        axs[2].set_xlim(9.5, 16)
+        axs[2].xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    # dairv2xt time
+    for i in range(4):
+        axs[3].plot(data[f'{models[i]}_dairv2xt']['time'], data[f'{models[i]}_dairv2xt']['0.5'],
+                    color='green', marker=markers[i], markersize=12)
+        axs[3].plot(data[f'{models[i]}_dairv2xt']['time'], data[f'{models[i]}_dairv2xt']['0.7'],
+                    color='orange', marker=markers[i], markersize=12)
+        axs[3].set_title('DairV2Xt: AP vs Time')
+        axs[3].set_xlabel('Epochal training time (Hour)')
+
+    plt.tight_layout()
+    plt.show()
+    plt.close()
+
+
 
 if __name__=="__main__":
     # compare_detection(
@@ -272,16 +332,17 @@ if __name__=="__main__":
     #     "/koko/train_out/StreamLTS_fcooper_dairv2x_02-21-18-40-44/epoch50/detection_eval",
     #     [-100, -38.4, -3.0, 100, 38.4, 1.0],
     # )
-    for i in range(10, 51, 10):
-        shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
-        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth",
-        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
-        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth",
-        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
-        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.pth",
-        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+    # for i in range(10, 51, 10):
+    #     shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.pth",
+    #                 f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
+    #     # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth",
+    #     #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
+    #     # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth",
+    #     #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
+    #     # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.pth",
+    #     #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+    #     tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
+    #     tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
+    #     tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
+    #     tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+    plot_model_efficiency()
