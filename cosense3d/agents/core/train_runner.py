@@ -91,13 +91,13 @@ class TrainRunner(BaseRunner):
             if resume_from is not None:
                 self.start_epoch = ckpt['epoch'] + 1
                 self.epoch = ckpt['epoch'] + 1
-                self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
-                try:
-                    self.optimizer.load_state_dict(ckpt['optimizer'])
-                except:
-                    warnings.warn("Cannot load optimizer state_dict, "
-                                  "there might be training parameter changes, "
-                                  "please consider using 'load-from'.")
+                # self.lr_scheduler.load_state_dict(ckpt['lr_scheduler'])
+                # try:
+                #     self.optimizer.load_state_dict(ckpt['optimizer'])
+                # except:
+                #     warnings.warn("Cannot load optimizer state_dict, "
+                #                   "there might be training parameter changes, "
+                #                   "please consider using 'load-from'.")
 
     def run(self):
         with torch.autograd.set_detect_anomaly(True):
