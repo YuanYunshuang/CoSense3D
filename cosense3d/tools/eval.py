@@ -273,15 +273,15 @@ if __name__=="__main__":
     #     [-100, -38.4, -3.0, 100, 38.4, 1.0],
     # )
     for i in range(10, 51, 10):
-        shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
+        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.pth",
+        #             f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
         # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth",
         #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
         # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth",
         #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
         # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.pth",
         #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
