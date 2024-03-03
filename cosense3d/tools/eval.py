@@ -251,13 +251,13 @@ def tmp(ckpt_path):
 def plot_model_efficiency():
     import matplotlib.ticker as ticker
     data = {
-        'fcooper_opv2vt': {'0.5': 54.4, '0.7': 17.0, 'mem': 16.132, 'time': 20},
+        'fcooper_opv2vt': {'0.5': 54.4, '0.7': 17.0, 'mem': 16.132, 'time': 0.79},
         'fcooper_dairv2xt': {'0.5': 41.8, '0.7': 17.7, 'mem': 11.811, 'time': 20},
         'fpvrcnn_opv2vt': {'0.5': 70.8, '0.7': 41.2, 'mem': 17.678, 'time': 20},
         'fpvrcnn_dairv2xt': {'0.5': 51.8, '0.7': 23.9, 'mem': 11.971, 'time': 20},
-        'attnfusion_opv2vt': {'0.5': 78.7, '0.7': 41.4, 'mem': 20.021, 'time': 20},
+        'attnfusion_opv2vt': {'0.5': 78.7, '0.7': 41.4, 'mem': 20.021, 'time': 0.8335},
         'attnfusion_dairv2xt': {'0.5': 62.1, '0.7': 34.0, 'mem': 15.224, 'time': 20},
-        'LTS_opv2vt': {'0.5': 81.2, '0.7': 59.5, 'mem': 12.587, 'time': 20},
+        'LTS_opv2vt': {'0.5': 81.2, '0.7': 59.5, 'mem': 12.587, 'time': 1.3},
         'LTS_dairv2xt': {'0.5': 63.0, '0.7': 34.8, 'mem': 10.420, 'time': 20},
     }
 
