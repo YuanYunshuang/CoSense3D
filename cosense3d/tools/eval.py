@@ -236,10 +236,15 @@ def eval_cosense_detection_with_pth(result_path, pc_range, iou_thr=[0.5, 0.7], m
 
 def tmp(ckpt_path):
     ckpt = torch.load(ckpt_path)
+    for k, v in ckpt['optimizer']['state'].items():
+        if len(v['exp_avg']) == 22:
+            v['exp_avg'] = v['exp_avg'][:20]
+            v['exp_avg_sq'] = v['exp_avg'][:20]
     reg_key = 'reg_branches.0.2'
     for k, v in ckpt['model'].items():
         if reg_key in k:
             ckpt['model'][k] = v[:20]
+
     torch.save(ckpt, ckpt_path)
 
 
@@ -268,15 +273,15 @@ if __name__=="__main__":
     #     [-100, -38.4, -3.0, 100, 38.4, 1.0],
     # )
     for i in range(10, 51, 10):
-        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.bak.pth")
-        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.bak.pth")
-        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.bak.pth")
-        shutil.copy(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.pth",
-                    f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.bak.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.pth")
-        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.pth")
+        shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.pth",
+                    f"/media/yuan/luna/streamLTS/LTS_opv2v/epoch{i}.bak.pth")
+        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth",
+        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch{i}.bak.pth")
+        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth",
+        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_t/epoch{i}.bak.pth")
+        # shutil.copy(f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.pth",
+        #             f"/media/yuan/luna/streamLTS/LTS_opv2v_no_global_attn/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_reg/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_t/epoch{i}.bak.pth")
+        tmp(f"/media/yuan/luna/streamLTS/streamLTS_opv2v_no_global_attn/epoch{i}.bak.pth")
