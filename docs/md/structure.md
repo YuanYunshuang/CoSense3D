@@ -1,4 +1,4 @@
-# The Structure of OpenCosense3D
+# The Structure of Cosense3D
 
 ## Overall View
 

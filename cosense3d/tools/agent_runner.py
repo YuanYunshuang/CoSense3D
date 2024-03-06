@@ -170,7 +170,6 @@ if __name__ == "__main__":
     parser.add_argument("--run-name", type=str, default="default")
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--eval", action="store_false")
     parser.add_argument("--gpus", type=int, default=0)
     parser.add_argument("--data-path", type=str)
     parser.add_argument("--meta-path", type=str)

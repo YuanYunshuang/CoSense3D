@@ -1,34 +1,66 @@
+# CoSense3D
+Welcome to the CoSense3D! This is an agent-oriented framework specially designed for cooperative perception for autonomous driving.
+The agent-based structure of this framework aims to accelerate the development process of cooperative perception models by 
+more efficient and flexible data loading and distributing process, as well as the forward and gradient calculation scheduling.
+More details of the structure of this framework can be found in the [documentations](docs%2F_build%2Fhtml%2Findex.html).
+
+
+This repo contains the official implementation of the paper
+
+__StreamLTS: Query-based Temporal-Spatial LiDAR Fusion for Cooperative Object Detection__
 
 ## Installation
-1. create conda environment
-```shell
+You can install the environment with our provided batch script with the following commands. 
+For more detailed information about the installation, please refer to [Installation](docs/_build/html/md/installation.html) page.
+```bash
 conda create -n consense3d python=3.8
 conda activate cosense3d
+cd OpenCosense3D 
+# for Nvidia RTX 3090
+bash setup_env_3090.sh
+# for Nvidia RTX 4090
+bash setup_env_4090.sh
 ```
 
-2. Install pytorch and compile local Pytorch Extensions(CUDA nvcc compiler needed)
-```shell
-pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 \
---extra-index-url https://download.pytorch.org/whl/cu113
-cd cosense3d/ops
-pip install . && cd ..
+## Datasets
+> **NOTE:** 
+> Since the dataset link is related to the authors' affiliation and personal accounts,  violating the anonymity of the reviewing process.
+Therefore, they will be accessible after the publication of this paper.
+
+## Quick start
+The main entry of this project is at ```cosense3d/tools/agent_runner.py```. 
+
+Required arguments: 
+- ```config```: the yaml configuration file path.
+- ```mode```: runner mode. ```vis_train``` and ```vis_test``` for visualizing the training and the testing data, respectively. 
+```train``` and ```test``` for training and testing the model.
+Optional arguments:
+- ```visualize```: visualize the data during the training and the testing process.
+- ```resume-from```: resume training from the give checkpoint path.
+- ```load-from```: load checkpoint to initialize model for training or testing.
+- ```log-dir```: logging path for training output. If not provided, it will log to the 
+```cosense3d/logs/default_[Month-Day-Hour-Minute-Second]``` path.
+- ```run-name```: if given, the logging path will be formatted as ```cosense3d/logs/[run-name]_[Month-Day-Hour-Minute-Second]```.
+- ```seed```: global random seed.
+- ```gpus```: number of gpus for training. The default is 0 means no parallel training. This number can only to set to >= 1 
+when using ```tochrun``` for parallel training on multiple GPUs.
+- ```data-path```: overwrite the data path in the yaml config file.
+- ```meta-path```: overwrite the meta path in the yaml config file.
+- ```batch-size```: overwrite the training batch size in the yaml config file.
+- ```n-workers```: overwrite the number of the workers in the yaml config file.
+
+### GUI
+Our framework provides a graphical user interface for interactive visualization of the data and the training and testing process.
+To have a quick look into your dataset, run 
+```bash
+cd OpenCoSense3D 
+python cosense3d cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
+# visualize OPV2Vt dataset
+python cosense3d cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
 ```
 
-3. install python packages
-```shell
-pip install -r reququirements_cosense.txt
-```
 
-3. install MinkovskiEngine
-```shell
-pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps \
-    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include" \
-    --global-option="--blas=openblas"
-export OMP_NUM_THREADS=16
-```
+### Train
 
-## Training
-```shell
-cd cosense3d
-python tools/agent_runner.py -config config/sp3d_cav.yaml --mode train
-```
+
+## Benchmark and model zoo
