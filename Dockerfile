@@ -29,6 +29,7 @@ RUN cd MinkowskiEngine; python setup.py install --force_cuda --blas=openblas
 RUN cd ..
 
 RUN conda update conda -y
+RUN apt-get update
 RUN apt install python3-dev  -y
 RUN apt install libgl1-mesa-glx libglib2.0-0 -y
 
