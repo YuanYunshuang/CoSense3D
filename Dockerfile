@@ -1,19 +1,35 @@
 FROM pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
 LABEL hostname="cosense3d-docker"
-ENV OMP_NUM_THREADS=16
-ENV CUDA_HOME='/usr/local/cuda-11.8'
-ENV PATH /opt/conda/bin:/usr/local/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/cuda/lib64/stubs/:/usr/lib/x86_64-linux-gnu:/usr/local/cuda-11.8/compat/:/usr/local/cuda-11.8/targets/x86_64-linux/lib/stubs:$LD_LIBRARY_PATH
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES video,compute,utility
 
-#ENTRYPOINT ["top", "-b"]
+##############################################
+# You should modify this to match your GPU compute capability
+# ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
+ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 6.2 7.0 7.2 7.5 8.0 8.6"
+##############################################
+
+ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
+ENV OMP_NUM_THREADS 16
+
 WORKDIR /project
 COPY requirements.txt /project/requirements.txt
 COPY ./cosense3d/ops/ /project/ops/
 
-RUN apt-get update -y && apt-get install git -y && conda update conda -y
-RUN apt-get install build-essential python3-dev libopenblas-dev -y
+# Install dependencies
+RUN apt-get update
+RUN apt-get install -y git ninja-build cmake build-essential libopenblas-dev \
+    xterm xauth openssh-server tmux wget mate-desktop-environment-core
+
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
+
+# For faster build, use more jobs.
+ENV MAX_JOBS=4
+RUN git clone --recursive "https://github.com/NVIDIA/MinkowskiEngine"
+RUN cd MinkowskiEngine; python setup.py install --force_cuda --blas=openblas
+RUN cd ..
+
+RUN conda update conda -y
+RUN apt-get install python3-dev  -y
 RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
 
 RUN cd ops && pip install . && cd ..
@@ -27,10 +43,10 @@ RUN pip install -r requirements.txt
 RUN conda install pybind11 -y
 RUN conda install -c conda-forge libstdcxx-ng -y
 
-RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
-    -v --no-deps     \
-    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
-    --global-option="--blas=openblas" \
-    --global-option="--force_cuda"
+#RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
+#    -v --no-deps     \
+#    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
+#    --global-option="--blas=openblas" \
+#    --global-option="--force_cuda"
 
 WORKDIR /workspace
