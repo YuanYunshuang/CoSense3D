@@ -20,7 +20,8 @@ RUN conda install -c conda-forge libstdcxx-ng -y
 RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
     -v --no-deps     \
     --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
-    --global-option="--blas=openblas"
+    --global-option="--blas=openblas" \
+    --install-option="--gpu"
 
 
 RUN pip install -r requirements.txt
