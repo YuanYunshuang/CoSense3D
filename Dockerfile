@@ -14,13 +14,13 @@ RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
 RUN cd ops && pip install .
 
 #RUN conda install openblas-devel -y
+RUN apt install ninja-build
+RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
+    -v --no-deps     \
+    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
+    --global-option="--blas=openblas" \
+    --global-option="--force_cuda"
 
-#RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
-#    -v --no-deps     \
-#    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
-#    --global-option="--blas=openblas" \
-#    --global-option="--force_cuda"
-#
 #RUN pip install -r requirements.txt
 
 #RUN conda install pybind11 -y
