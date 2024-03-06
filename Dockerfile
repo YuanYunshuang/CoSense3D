@@ -1,6 +1,7 @@
 FROM pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
 LABEL hostname="cosense3d-docker"
 ENV OMP_NUM_THREADS=16
+ENV CUDA_HOME='/usr/local/cuda-11.8'
 
 #ENTRYPOINT ["top", "-b"]
 WORKDIR /project
@@ -11,7 +12,7 @@ RUN apt-get update -y && apt-get install git -y && conda update conda -y
 RUN apt-get install build-essential python3-dev libopenblas-dev -y
 RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
 
-RUN cd ops && pip install .
+RUN cd ops && pip install . && cd ..
 
 #RUN conda install openblas-devel -y
 RUN apt install ninja-build
