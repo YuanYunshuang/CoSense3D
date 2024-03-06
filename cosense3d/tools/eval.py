@@ -266,7 +266,7 @@ def plot_model_efficiency():
         'attnfusion_opv2vt': {'0.5': 78.7, '0.7': 41.4, 'mem': 20.021, 'time': 0.8335},
         'attnfusion_dairv2xt': {'0.5': 62.1, '0.7': 34.0, 'mem': 15.224, 'time': 0.5890},
         'streamlts_opv2vt': {'0.5': 81.2, '0.7': 59.5, 'mem': 12.587, 'time': 1.3012},
-        'streamlts_dairv2xt': {'0.5': 63.0, '0.7': 34.8, 'mem': 10.420, 'time': 0.8400},
+        'streamlts_dairv2xt': {'0.5': 61.2, '0.7': 33.4, 'mem': 10.420, 'time': 0.8400},
     }
 
     models = ['Fcooper', 'FPVRCNN', 'AttnFusion', 'StreamLTS']
@@ -282,6 +282,7 @@ def plot_model_efficiency():
         axs[0].set_xlabel('Memory usage peak (GB)')
         axs[0].set_ylabel('AP (%)')
         axs[0].set_xlim(11, 21)
+        axs[0].set_ylim(10, 90)
         axs[0].xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
 
     # dairv2xt memory
@@ -294,6 +295,7 @@ def plot_model_efficiency():
         axs[1].set_xlabel('Memory usage peak (GB)')
         axs[1].set_xlim(9.5, 16)
         axs[1].xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+        axs[1].set_ylim(10, 70)
 
     # opv2vt time
     for i in range(4):
@@ -301,6 +303,9 @@ def plot_model_efficiency():
                     color='green', marker=markers[i], markersize=12, linestyle='')
         axs[2].plot(data[f'{models[i].lower()}_opv2vt']['time'], data[f'{models[i].lower()}_opv2vt']['0.7'],
                     color='orange', marker=markers[i], markersize=12, linestyle='')
+        axs[2].set_xlim(0.7, 1.7)
+        axs[2].set_ylim(10, 90)
+        axs[2].xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
         axs[2].set_title('OPV2Vt: AP vs Time', fontsize=11)
         axs[2].set_xlabel('Epochal training time (Hour)')
 
@@ -310,6 +315,8 @@ def plot_model_efficiency():
                     color='green', marker=markers[i], markersize=12, linestyle='')
         axs[3].plot(data[f'{models[i].lower()}_dairv2xt']['time'], data[f'{models[i].lower()}_dairv2xt']['0.7'],
                     color='orange', marker=markers[i], markersize=12, linestyle='')
+        axs[3].set_xlim(0.5, 1.1)
+        axs[3].set_ylim(10, 70)
         axs[3].set_title('DairV2Xt: AP vs Time', fontsize=11)
         axs[3].set_xlabel('Epochal training time (Hour)')
 
@@ -317,16 +324,15 @@ def plot_model_efficiency():
     fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.0), ncol=4)
     plt.subplots_adjust(bottom=0.35)
     # plt.tight_layout()
-    plt.savefig("/home/yuan/Pictures/LTS_mem_time_compare.pdf")
+    plt.savefig("/home/yys/Pictures/streamLTS/LTS_mem_time_compare.pdf")
     plt.close()
 
 
-
-compare_detection(
-    "/media/yuan/luna/streamLTS/LTS_opv2v/epoch3/detection_eval",
-    "/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch50/detection_eval",
-    "/media/yuan/luna/images/opv2v",
-    [-20, -38.4, -3.0, 80, 38.4, 1.0]
-)
 if __name__=="__main__":
-    pass
+    # compare_detection(
+    #     "/media/yuan/luna/streamLTS/LTS_opv2v/epoch3/detection_eval",
+    #     "/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch50/detection_eval",
+    #     "/media/yuan/luna/images/opv2v",
+    #     [-20, -38.4, -3.0, 80, 38.4, 1.0]
+    # )
+    plot_model_efficiency()
