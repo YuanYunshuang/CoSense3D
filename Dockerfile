@@ -29,19 +29,15 @@ RUN cd MinkowskiEngine; python setup.py install --force_cuda --blas=openblas
 RUN cd ..
 
 RUN conda update conda -y
-RUN apt-get install python3-dev  -y
-RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
+RUN apt install python3-dev  -y
+RUN apt install libgl1-mesa-glx libglib2.0-0 -y
 
 RUN cd ops && pip install . && cd ..
 
-#RUN conda install openblas-devel -y
-RUN apt install ninja-build
-RUN pip install -U setuptools
-
 RUN pip install -r requirements.txt
 
-RUN conda install pybind11 -y
-RUN conda install -c conda-forge libstdcxx-ng -y
+#RUN conda install pybind11 -y
+#RUN conda install -c conda-forge libstdcxx-ng -y
 
 #RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
 #    -v --no-deps     \
