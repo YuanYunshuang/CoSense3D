@@ -9,8 +9,10 @@ COPY ./cosense3d/ops/ /project/ops/
 
 RUN apt-get update -y && apt-get install git -y && conda update conda -y
 RUN apt-get install build-essential python3-dev libopenblas-dev -y
-#RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
-#
+RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
+
+RUN cd ops && pip install .
+
 #RUN conda install openblas-devel -y
 #RUN conda install pybind11 -y
 #RUN conda install -c conda-forge libstdcxx-ng -y
@@ -20,7 +22,7 @@ RUN apt-get install build-essential python3-dev libopenblas-dev -y
 #    --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
 #    --global-option="--blas=openblas"
 #
-#RUN cd ops && pip install .
+
 #RUN pip install torch-scatter
 #RUN pip install -r requirements.txt
 #
