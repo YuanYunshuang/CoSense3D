@@ -15,7 +15,7 @@ RUN cd ops && pip install .
 
 #RUN conda install openblas-devel -y
 RUN apt install ninja-build
-RUN pip install -U setuptools -y
+RUN pip install -U setuptools
 RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
     -v --no-deps     \
     --global-option="--blas_include_dirs=${CONDA_PREFIX}/include"     \
