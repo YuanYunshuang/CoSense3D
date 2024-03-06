@@ -391,5 +391,82 @@ class slcNoBoxTime(StreamLidarCAV):
         return timestamp
 
 
+class slcCIASSD(StreamLidarCAV):
+    def prepare_data(self):
+        self.prepare_time_scale()
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+
+    def forward_local(self, tasks, training_mode):
+        if (self.is_ego or self.require_grad) and training_mode:
+            grad_mode = 'with_grad'
+        else:
+            grad_mode = 'no_grad'
+        tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
+        tasks[grad_mode].append((self.id, '02:roi_head', {}))
+
+    def forward_fusion(self, tasks, training_mode):
+        return tasks
+
+    def forward_head(self, tasks, training_mode):
+        return tasks
+
+    def pre_update_memory(self):
+        pass
+
+    def post_update_memory(self):
+        pass
+
+    def get_response_cpm(self):
+        return {}
+
+    def loss(self, tasks):
+        if self.is_ego:
+            tasks['loss'].append((self.id, '21:roi_head', {}))
+        return tasks
+
+    def apply_transform(self):
+        if self.use_aug:
+            if self.is_ego:
+                T_e2g = self.lidar_pose
+                T_g2e = self.lidar_pose.inverse()
+                T_c2e = torch.eye(4).to(self.lidar_pose.device)
+            else:
+                # cav to ego
+                T_e2g = self.data['received_request']['lidar_pose']
+                T_g2e = self.data['received_request']['lidar_pose'].inverse()
+                T_c2e = T_g2e @ self.lidar_pose
+
+            if self.aug_transform is None:
+                self.aug_transform = DOP.update_transform_with_aug(
+                    torch.eye(4).to(self.lidar_pose.device), self.data['augment_params'])
+                T_e2aug = self.aug_transform
+            else:
+                # adapt aug params to the current ego frame
+                T_e2aug = self.T_g2aug @ T_e2g
+
+            T_c2aug = T_e2aug @ T_c2e
+            T_g2aug = T_e2aug @ T_g2e
+
+            DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+
+            self.T_e2g = T_e2g
+            self.T_g2aug = T_g2aug
+            self.T_aug2g = T_g2aug.inverse() # ego aug to global
+
+        else:
+            if self.is_ego:
+                transform = torch.eye(4).to(self.lidar_pose.device)
+            else:
+                # cav to ego
+                request = self.data['received_request']
+                transform = request['lidar_pose'].inverse() @ self.lidar_pose
+
+            T_c2aug = DOP.update_transform_with_aug(transform, self.data['augment_params'])
+            DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            self.T_aug2g = T_c2aug
+
+
+
 
 
