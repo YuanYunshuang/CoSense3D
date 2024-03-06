@@ -54,11 +54,23 @@ Our framework provides a graphical user interface for interactive visualization 
 To have a quick look into your dataset, run 
 ```bash
 cd OpenCoSense3D 
-python cosense3d cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
-# visualize OPV2Vt dataset
-python cosense3d cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
-```
+python cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
+# check if the OPV2Vt data is correctly loaded during training
+python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_opv2vt.yaml --mode train --visualize
 
+```
+Demos:
+```bash
+# visualize OPV2Vt dataset test set
+python cosense3d/tools/agent_runner.py --config ./config/opv2vt.yaml --mode vis_test
+```
+![DEMO OPV2Vt](docs/_static/opv2vt.gif)
+
+```bash
+# visualize DairV2Xt dataset test set
+python cosense3d/tools/agent_runner.py --config ./config/dairv2xt.yaml --mode vis_test
+```
+![DEMO DairV2Xt](docs/_static/dairv2xt.gif)
 
 ### Train
 

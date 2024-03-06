@@ -1,10 +1,4 @@
-#  Copyright (c) 2024. Yunshuang Yuan.
-#  Project: CoSense3D
-#  Author: Yunshuang Yuan
-#  Affiliation: Institut für Kartographie und Geoinformatik, Lebniz University Hannover, Germany
-#  Email: yunshuang.yuan@ikg.uni-hannover.de
-#  All rights reserved.
-#  ---------------
+
 
 import torch
 import numpy as np
@@ -175,39 +169,56 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def adaptive_free_space_augmentation(data, min_h=-1.5, steps=20, alpha=0.05, time_idx=None):
-        """
+    def adaptive_free_space_augmentation(data: dict, min_h: float=-1.5, steps: int=20,
+                                         alpha: float=0.05, time_idx: int=None):
+        r"""
         Add free space points according to the distance of points to the origin.
 
-        lidar origin ->  *
-                      *  *
-                   *     * h
-                *  ele   *
-              ************
-                     d
+        .. raw:: html
 
-        Assume the theta = pi / 2 - ele (elevation angle),
-        alpha = average angle between two lidar rings,
-        d_k is the ground distance of the n_th lidar ring to lidar origin, k=1,...,n,
-        delta_d is the distance between two neighboring lidar rings,
+           <pre>
+           lidar origin ->  *
+                         *  *
+                      *     * h
+                   *  ele   *
+                 ************
+                        d
+
+           </pre>
+
+        Assume the :math:`\theta = \frac{\\pi}{2} - \text{ele}` (elevation angle),
+        :math:`\alpha` = average angle between two lidar rings,
+        :math:`d_k` is the ground distance of the :math:`n_{th}` lidar ring to lidar origin, :math:`k=1,...,n`,
+        :math:`\delta_d` is the distance between two neighboring lidar rings,
         then
-        d = h*tan(theta)
-        delta_d = d_n - d_{n-1} = dn - h*tan(arctan(h / d_n) - alpha)
-        we sample free space points in the ground distance of delta_d relative to each ring
+
+        .. math::
+            d &= h \tan(\theta) \\
+            \delta_d &= d_n - d_{n-1} = d_n - h\tan(\arctan(\frac{h}{d_n}) - \alpha)
+
+        we sample free space points in the ground distance of :math:`\delta_d` relative to each ring
         with the given 'step' distance.
 
         Parameters
         ----------
-        data: input data dict containing 'points'
-        min_h: mininum sample height relative to lidar origin
-        steps: number of points to be sampled for each lidar ray
-        alpha: average angle offset between two neighboring lidar casting rays
-        time_idx: if provided, time will be copied from the original points to free space points
+        data : dict
+            Input data dict containing 'points'.
+        min_h : float, optional
+            Minimum sample height relative to lidar origin. Default is -1.5.
+        steps : int, optional
+            Number of points to be sampled for each lidar ray. Default is 20.
+        alpha : float, optional
+            Average angle offset between two neighboring lidar casting rays. Default is 0.05.
+        time_idx : int, optional
+            If provided, time will be copied from the original points to free space points.
 
         Returns
         -------
+        dict
+            Updated data.
 
         """
+
         lidar = data['points']
         # get point lower than z_min=1.5m
         m = lidar[:, 2] < min_h

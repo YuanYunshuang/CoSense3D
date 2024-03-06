@@ -7,6 +7,5 @@ wandb
 dataset/metas/
 data
 *.so
-mmdetection3d
 */build/
 cosense3d/ops/build
