@@ -20,7 +20,9 @@
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cosense3d.modules.heads package" href="cosense3d.modules.heads.html" />
+    <link rel="prev" title="cosense3d.modules.backbone3d package" href="cosense3d.modules.backbone3d.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,158 +44,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.modules.fusion package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.attn_fusion">cosense3d.modules.fusion.attn_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.DenseAttentionFusion"><code class="docutils literal notranslate"><span class="pre">DenseAttentionFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.DenseAttentionFusion.forward"><code class="docutils literal notranslate"><span class="pre">DenseAttentionFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.DenseAttentionFusion.training"><code class="docutils literal notranslate"><span class="pre">DenseAttentionFusion.training</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.SparseAttentionFusion"><code class="docutils literal notranslate"><span class="pre">SparseAttentionFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.SparseAttentionFusion.format_output"><code class="docutils literal notranslate"><span class="pre">SparseAttentionFusion.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.SparseAttentionFusion.forward"><code class="docutils literal notranslate"><span class="pre">SparseAttentionFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.attn_fusion.SparseAttentionFusion.training"><code class="docutils literal notranslate"><span class="pre">SparseAttentionFusion.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.box_fusion">cosense3d.modules.fusion.box_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion"><code class="docutils literal notranslate"><span class="pre">BoxFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.cluster_fusion"><code class="docutils literal notranslate"><span class="pre">BoxFusion.cluster_fusion()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.clustering"><code class="docutils literal notranslate"><span class="pre">BoxFusion.clustering()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.forward"><code class="docutils literal notranslate"><span class="pre">BoxFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.merge_sync_boxes"><code class="docutils literal notranslate"><span class="pre">BoxFusion.merge_sync_boxes()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.temporal_cluster_fusion"><code class="docutils literal notranslate"><span class="pre">BoxFusion.temporal_cluster_fusion()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.BoxFusion.training"><code class="docutils literal notranslate"><span class="pre">BoxFusion.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.box_fusion.limit_period"><code class="docutils literal notranslate"><span class="pre">limit_period()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.fax">cosense3d.modules.fusion.fax module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.Attention"><code class="docutils literal notranslate"><span class="pre">Attention</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.Attention.forward"><code class="docutils literal notranslate"><span class="pre">Attention.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.Attention.training"><code class="docutils literal notranslate"><span class="pre">Attention.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.FeedForward"><code class="docutils literal notranslate"><span class="pre">FeedForward</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.FeedForward.forward"><code class="docutils literal notranslate"><span class="pre">FeedForward.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.FeedForward.training"><code class="docutils literal notranslate"><span class="pre">FeedForward.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.PreNormResidual"><code class="docutils literal notranslate"><span class="pre">PreNormResidual</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.PreNormResidual.forward"><code class="docutils literal notranslate"><span class="pre">PreNormResidual.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.PreNormResidual.training"><code class="docutils literal notranslate"><span class="pre">PreNormResidual.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlock"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlock</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlock.forward"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlock.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlock.training"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlock.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlockMask"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlockMask</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlockMask.forward"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlockMask.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionBlockMask.training"><code class="docutils literal notranslate"><span class="pre">SwapFusionBlockMask.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionEncoder"><code class="docutils literal notranslate"><span class="pre">SwapFusionEncoder</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionEncoder.forward"><code class="docutils literal notranslate"><span class="pre">SwapFusionEncoder.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.fax.SwapFusionEncoder.training"><code class="docutils literal notranslate"><span class="pre">SwapFusionEncoder.training</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.keypoints">cosense3d.modules.fusion.keypoints module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.KeypointsFusion"><code class="docutils literal notranslate"><span class="pre">KeypointsFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.KeypointsFusion.cluster_fusion"><code class="docutils literal notranslate"><span class="pre">KeypointsFusion.cluster_fusion()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.KeypointsFusion.clustering"><code class="docutils literal notranslate"><span class="pre">KeypointsFusion.clustering()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.KeypointsFusion.forward"><code class="docutils literal notranslate"><span class="pre">KeypointsFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.KeypointsFusion.training"><code class="docutils literal notranslate"><span class="pre">KeypointsFusion.training</span></code></a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.keypoints.limit_period"><code class="docutils literal notranslate"><span class="pre">limit_period()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.maxout_fusion">cosense3d.modules.fusion.maxout_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.BEVMaxoutFusion"><code class="docutils literal notranslate"><span class="pre">BEVMaxoutFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.BEVMaxoutFusion.forward"><code class="docutils literal notranslate"><span class="pre">BEVMaxoutFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.BEVMaxoutFusion.training"><code class="docutils literal notranslate"><span class="pre">BEVMaxoutFusion.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.SparseBEVMaxoutFusion"><code class="docutils literal notranslate"><span class="pre">SparseBEVMaxoutFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.SparseBEVMaxoutFusion.format_output"><code class="docutils literal notranslate"><span class="pre">SparseBEVMaxoutFusion.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.SparseBEVMaxoutFusion.forward"><code class="docutils literal notranslate"><span class="pre">SparseBEVMaxoutFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.maxout_fusion.SparseBEVMaxoutFusion.training"><code class="docutils literal notranslate"><span class="pre">SparseBEVMaxoutFusion.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.naive_fusion">cosense3d.modules.fusion.naive_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.naive_fusion.NaiveFusion"><code class="docutils literal notranslate"><span class="pre">NaiveFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.naive_fusion.NaiveFusion.format_output"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.naive_fusion.NaiveFusion.forward"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.naive_fusion.NaiveFusion.training"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.spatial_query_fusion">cosense3d.modules.fusion.spatial_query_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion"><code class="docutils literal notranslate"><span class="pre">SpatialQueryFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion.format_output"><code class="docutils literal notranslate"><span class="pre">SpatialQueryFusion.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion.forward"><code class="docutils literal notranslate"><span class="pre">SpatialQueryFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion.training"><code class="docutils literal notranslate"><span class="pre">SpatialQueryFusion.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion.temporal_fusion">cosense3d.modules.fusion.temporal_fusion module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.embed_pos"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.embed_pos()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.forward"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.gather_topk"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.gather_topk()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.init_weights"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.temporal_alignment"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.temporal_alignment()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion.training"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusion.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV1"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV1</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV1.forward"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV1.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV1.training"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV1.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV2"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV2</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV2.forward"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV2.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV2.training"><code class="docutils literal notranslate"><span class="pre">LocalTemporalFusionV2.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion"><code class="docutils literal notranslate"><span class="pre">TemporalFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.embed_pos"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.embed_pos()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.forward"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.gather_topk"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.gather_topk()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.init_weights"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.temporal_alignment"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.temporal_alignment()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalFusion.training"><code class="docutils literal notranslate"><span class="pre">TemporalFusion.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.embed_pos"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.embed_pos()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.forward"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.gather_topk"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.gather_topk()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.init_weights"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.temporal_alignment"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.temporal_alignment()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.fusion.temporal_fusion.TemporalLidarFusion.training"><code class="docutils literal notranslate"><span class="pre">TemporalLidarFusion.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.fusion">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</div>
+
         </div>
       </div>
     </nav>
@@ -208,6 +82,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.fusion package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.modules.fusion.rst.txt" rel="nofollow"> View page source</a>
@@ -873,12 +750,15 @@ registered hooks while the latter silently ignores them.</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.modules.backbone3d.html" class="btn btn-neutral float-left" title="cosense3d.modules.backbone3d package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.modules.heads.html" class="btn btn-neutral float-right" title="cosense3d.modules.heads package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

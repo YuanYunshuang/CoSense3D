@@ -18,9 +18,12 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=af2ce170"></script>
         <script src="_static/doctools.js?v=888ff710"></script>
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cosense3d.agents.viewer package" href="cosense3d.agents.viewer.html" />
+    <link rel="prev" title="cosense3d.agents.core package" href="cosense3d.agents.core.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,37 +45,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.agents.utils package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.agents.utils.deco">cosense3d.agents.utils.deco module</a><ul>
-<li><a class="reference internal" href="#cosense3d.agents.utils.deco.save_ckpt_on_error"><code class="docutils literal notranslate"><span class="pre">save_ckpt_on_error()</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-cosense3d.agents.utils.transform">cosense3d.agents.utils.transform module</a><ul>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.adaptive_free_space_augmentation"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.adaptive_free_space_augmentation()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.apply_transform"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.apply_transform()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.cav_aug_transform"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.cav_aug_transform()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.filter_range"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.filter_range()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.free_space_augmentation"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.free_space_augmentation()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.update_transform_with_aug"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.update_transform_with_aug()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.add_flip"><code class="docutils literal notranslate"><span class="pre">add_flip()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.add_rotate"><code class="docutils literal notranslate"><span class="pre">add_rotate()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.add_scale"><code class="docutils literal notranslate"><span class="pre">add_scale()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.apply_transform"><code class="docutils literal notranslate"><span class="pre">apply_transform()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.filter_range"><code class="docutils literal notranslate"><span class="pre">filter_range()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.agents.utils.transform.filter_range_mask"><code class="docutils literal notranslate"><span class="pre">filter_range_mask()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.agents.utils">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
-</div>
+</li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -87,6 +83,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.agents.html">cosense3d.agents package</a></li>
       <li class="breadcrumb-item active">cosense3d.agents.utils package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.agents.utils.rst.txt" rel="nofollow"> View page source</a>
@@ -102,13 +101,8 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
 </section>
-<section id="module-cosense3d.agents.utils.deco">
-<span id="cosense3d-agents-utils-deco-module"></span><h2>cosense3d.agents.utils.deco module<a class="headerlink" href="#module-cosense3d.agents.utils.deco" title="Permalink to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.agents.utils.deco.save_ckpt_on_error">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.agents.utils.deco.</span></span><span class="sig-name descname"><span class="pre">save_ckpt_on_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/utils/deco.html#save_ckpt_on_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.utils.deco.save_ckpt_on_error" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="cosense3d-agents-utils-deco-module">
+<h2>cosense3d.agents.utils.deco module<a class="headerlink" href="#cosense3d-agents-utils-deco-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="module-cosense3d.agents.utils.transform">
 <span id="cosense3d-agents-utils-transform-module"></span><h2>cosense3d.agents.utils.transform module<a class="headerlink" href="#module-cosense3d.agents.utils.transform" title="Permalink to this heading"></a></h2>
@@ -118,54 +112,47 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.agents.utils.transform.DataOnlineProcessor.adaptive_free_space_augmentation">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">adaptive_free_space_augmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/utils/transform.html#DataOnlineProcessor.adaptive_free_space_augmentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.adaptive_free_space_augmentation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">adaptive_free_space_augmentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_h</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/utils/transform.html#DataOnlineProcessor.adaptive_free_space_augmentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.utils.transform.DataOnlineProcessor.adaptive_free_space_augmentation" title="Permalink to this definition"></a></dt>
 <dd><p>Add free space points according to the distance of points to the origin.</p>
-<dl>
-<dt>lidar origin -&gt;  *</dt><dd><blockquote>
-<div><blockquote>
-<div><blockquote>
-<div><ul class="simple">
-<li><ul>
-<li></li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
-<ul class="simple">
-<li><ul>
-<li><p>h</p></li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
-<ul class="simple">
-<li><p>ele   *</p></li>
-</ul>
-</div></blockquote>
-<blockquote>
-<div><p>d</p>
-</div></blockquote>
-</dd>
-</dl>
-<p>Assume the theta = pi / 2 - ele (elevation angle),
-alpha = average angle between two lidar rings,
-d_k is the ground distance of the n_th lidar ring to lidar origin, k=1,…,n,
-delta_d is the distance between two neighboring lidar rings,
-then
-d = h*tan(theta)
-delta_d = d_n - d_{n-1} = dn - h*tan(arctan(h / d_n) - alpha)
-we sample free space points in the ground distance of delta_d relative to each ring
+<pre>
+lidar origin ->  *
+              *  *
+           *     * h
+        *  ele   *
+      ************
+             d
+
+</pre><p>Assume the <span class="math notranslate nohighlight">\(\theta = \frac{\\pi}{2} - \text{ele}\)</span> (elevation angle),
+<span class="math notranslate nohighlight">\(\alpha\)</span> = average angle between two lidar rings,
+<span class="math notranslate nohighlight">\(d_k\)</span> is the ground distance of the <span class="math notranslate nohighlight">\(n_{th}\)</span> lidar ring to lidar origin, <span class="math notranslate nohighlight">\(k=1,...,n\)</span>,
+<span class="math notranslate nohighlight">\(\delta_d\)</span> is the distance between two neighboring lidar rings,
+then</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}d &amp;= h \tan(\theta) \\
+\delta_d &amp;= d_n - d_{n-1} = d_n - h\tan(\arctan(\frac{h}{d_n}) - \alpha)\end{split}\]</div>
+<p>we sample free space points in the ground distance of <span class="math notranslate nohighlight">\(\delta_d\)</span> relative to each ring
 with the given ‘step’ distance.</p>
 <section id="parameters">
 <h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h3>
-<p>data: input data dict containing ‘points’
-min_h: mininum sample height relative to lidar origin
-steps: number of points to be sampled for each lidar ray
-alpha: average angle offset between two neighboring lidar casting rays
-time_idx: if provided, time will be copied from the original points to free space points</p>
+<dl class="simple">
+<dt>data<span class="classifier">dict</span></dt><dd><p>Input data dict containing ‘points’.</p>
+</dd>
+<dt>min_h<span class="classifier">float, optional</span></dt><dd><p>Minimum sample height relative to lidar origin. Default is -1.5.</p>
+</dd>
+<dt>steps<span class="classifier">int, optional</span></dt><dd><p>Number of points to be sampled for each lidar ray. Default is 20.</p>
+</dd>
+<dt>alpha<span class="classifier">float, optional</span></dt><dd><p>Average angle offset between two neighboring lidar casting rays. Default is 0.05.</p>
+</dd>
+<dt>time_idx<span class="classifier">int, optional</span></dt><dd><p>If provided, time will be copied from the original points to free space points.</p>
+</dd>
+</dl>
 </section>
 <section id="returns">
 <h3>Returns<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h3>
+<dl class="simple">
+<dt>dict</dt><dd><p>Updated data.</p>
+</dd>
+</dl>
 </section>
 </dd></dl>
 
@@ -235,12 +222,15 @@ time_idx: if provided, time will be copied from the original points to free spac
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.agents.core.html" class="btn btn-neutral float-left" title="cosense3d.agents.core package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.agents.viewer.html" class="btn btn-neutral float-right" title="cosense3d.agents.viewer package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

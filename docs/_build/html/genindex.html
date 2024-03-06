@@ -45,7 +45,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of OpenCosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">CoSense3d</a></li>
 </ul>
 
@@ -156,14 +156,16 @@
 </li>
       <li><a href="cosense3d.modules.heads.html#cosense3d.modules.heads.img_focal.ImgFocal.apply_ltrb">apply_ltrb() (cosense3d.modules.heads.img_focal.ImgFocal static method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.apply_preprocess">apply_preprocess() (cosense3d.agents.core.data_manager.DataManager method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseCAV.apply_transform">apply_transform() (cosense3d.agents.cav_prototype.base_cav.BaseCAV method)</a>
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.apply_transform">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.apply_transform">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.apply_transform">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
@@ -452,7 +454,13 @@
 </li>
       <li><a href="cosense3d.ops.html#cosense3d.ops.iou3d_nms_utils.centroid_to_corners">centroid_to_corners() (in module cosense3d.ops.iou3d_nms_utils)</a>
 </li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.change_color_mode">change_color_mode() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.change_glcolor">change_glcolor() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
       <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.change_visibility">change_visibility() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.change_visible">change_visible() (cosense3d.agents.core.gui.GUI method)</a>
 </li>
       <li><a href="cosense3d.ops.html#cosense3d.ops.utils.check_numpy_to_torch">check_numpy_to_torch() (in module cosense3d.ops.utils)</a>
 
@@ -507,6 +515,8 @@
       <li><a href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.pillar_encoder.PillarEncoder.compose_voxel_feature">compose_voxel_feature() (cosense3d.modules.plugin.pillar_encoder.PillarEncoder method)</a>
 </li>
       <li><a href="cosense3d.utils.html#cosense3d.utils.box_utils.compute_iou">compute_iou() (in module cosense3d.utils.box_utils)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.connect_events_to_funcs">connect_events_to_funcs() (cosense3d.agents.core.gui.GUI method)</a>
 </li>
       <li><a href="cosense3d.modules.utils.html#cosense3d.modules.utils.init.constant_init">constant_init() (in module cosense3d.modules.utils.init)</a>
 </li>
@@ -622,6 +632,13 @@
 </li>
       </ul></li>
       <li>
+    cosense3d.agents.core.gui
+
+      <ul>
+        <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.gui">module</a>
+</li>
+      </ul></li>
+      <li>
     cosense3d.agents.core.hooks
 
       <ul>
@@ -661,13 +678,6 @@
 
       <ul>
         <li><a href="cosense3d.agents.utils.html#module-cosense3d.agents.utils">module</a>
-</li>
-      </ul></li>
-      <li>
-    cosense3d.agents.utils.deco
-
-      <ul>
-        <li><a href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.deco">module</a>
 </li>
       </ul></li>
       <li>
@@ -955,27 +965,6 @@
 
       <ul>
         <li><a href="cosense3d.dataset.toolkit.html#module-cosense3d.dataset.toolkit.opv2v_t">module</a>
-</li>
-      </ul></li>
-      <li>
-    cosense3d.doc
-
-      <ul>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc">module</a>
-</li>
-      </ul></li>
-      <li>
-    cosense3d.doc.conf
-
-      <ul>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc.conf">module</a>
-</li>
-      </ul></li>
-      <li>
-    cosense3d.doc.conf_
-
-      <ul>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc.conf_">module</a>
 </li>
       </ul></li>
       <li>
@@ -2218,6 +2207,8 @@
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.forward_fusion">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
 </li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.forward_fusion">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
+</li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.forward_fusion">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
       </ul></li>
@@ -2225,6 +2216,8 @@
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.forward_head">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.forward_head">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.forward_head">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
@@ -2235,6 +2228,8 @@
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.forward_local">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.forward_local">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcDenseToSparse.forward_local">(cosense3d.agents.cav_prototype.streamLTS_collection.slcDenseToSparse method)</a>
 </li>
@@ -2405,14 +2400,14 @@
 </li>
       <li><a href="cosense3d.config.pycfg.template.html#cosense3d.config.pycfg.template.minkunet.get_minkunet_cfg">get_minkunet_cfg() (in module cosense3d.config.pycfg.template.minkunet)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.attn.NeighborhoodAttention.get_nbr_mapping">get_nbr_mapping() (cosense3d.modules.plugin.attn.NeighborhoodAttention method)</a>
 
       <ul>
         <li><a href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.gevbev_decoder.GevBEVDecoder.get_nbr_mapping">(cosense3d.modules.plugin.gevbev_decoder.GevBEVDecoder method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.modules.utils.html#cosense3d.modules.utils.common.get_norm_layer">get_norm_layer() (in module cosense3d.modules.utils.common)</a>
 </li>
       <li><a href="cosense3d.config.pycfg.base.html#cosense3d.config.pycfg.base.opv2vt.get_opv2vt_cfg">get_opv2vt_cfg() (in module cosense3d.config.pycfg.base.opv2vt)</a>
@@ -2462,6 +2457,8 @@
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.get_response_cpm">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
 </li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.get_response_cpm">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
+</li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.get_response_cpm">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
       </ul></li>
@@ -2492,6 +2489,8 @@
       <li><a href="cosense3d.utils.html#cosense3d.utils.pclib.get_tf_matrix_torch">get_tf_matrix_torch() (in module cosense3d.utils.pclib)</a>
 </li>
       <li><a href="cosense3d.modules.heads.html#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.get_tgt">get_tgt() (cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV method)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.get_toolbar">get_toolbar() (cosense3d.agents.core.gui.GUI method)</a>
 </li>
       <li><a href="cosense3d.modules.utils.html#cosense3d.modules.utils.cobevt_utils.get_transformation_matrix">get_transformation_matrix() (in module cosense3d.modules.utils.cobevt_utils)</a>
 </li>
@@ -2532,6 +2531,8 @@
       <li><a href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.grouping_operation">grouping_operation() (in module cosense3d.ops.pointnet2_utils)</a>
 </li>
       <li><a href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.GroupingOperation">GroupingOperation (class in cosense3d.ops.pointnet2_utils)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI">GUI (class in cosense3d.agents.core.gui)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -2647,6 +2648,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.initGUI">initGUI() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
       <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.initializeGL">initializeGL() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
 </li>
       <li><a href="cosense3d.modules.utils.html#cosense3d.modules.utils.common.instantiate">instantiate() (in module cosense3d.modules.utils.common)</a>
@@ -2791,10 +2794,10 @@
 </li>
       <li><a href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadMultiViewImg">LoadMultiViewImg (class in cosense3d.dataset.pipeline.loading)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps">LoadOPV2VBevMaps (class in cosense3d.dataset.pipeline.loading)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusion">LocalTemporalFusion (class in cosense3d.modules.fusion.temporal_fusion)</a>
 </li>
       <li><a href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.temporal_fusion.LocalTemporalFusionV1">LocalTemporalFusionV1 (class in cosense3d.modules.fusion.temporal_fusion)</a>
@@ -2819,6 +2822,8 @@
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.loss">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.loss">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.loss">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
@@ -2993,6 +2998,8 @@
 </li>
         <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.forward_runner">cosense3d.agents.core.forward_runner</a>
 </li>
+        <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.gui">cosense3d.agents.core.gui</a>
+</li>
         <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.hooks">cosense3d.agents.core.hooks</a>
 </li>
         <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.task_manager">cosense3d.agents.core.task_manager</a>
@@ -3004,8 +3011,6 @@
         <li><a href="cosense3d.agents.core.html#module-cosense3d.agents.core.vis_runner">cosense3d.agents.core.vis_runner</a>
 </li>
         <li><a href="cosense3d.agents.utils.html#module-cosense3d.agents.utils">cosense3d.agents.utils</a>
-</li>
-        <li><a href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.deco">cosense3d.agents.utils.deco</a>
 </li>
         <li><a href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.transform">cosense3d.agents.utils.transform</a>
 </li>
@@ -3088,12 +3093,6 @@
         <li><a href="cosense3d.dataset.toolkit.html#module-cosense3d.dataset.toolkit.opv2v">cosense3d.dataset.toolkit.opv2v</a>
 </li>
         <li><a href="cosense3d.dataset.toolkit.html#module-cosense3d.dataset.toolkit.opv2v_t">cosense3d.dataset.toolkit.opv2v_t</a>
-</li>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc">cosense3d.doc</a>
-</li>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc.conf">cosense3d.doc.conf</a>
-</li>
-        <li><a href="cosense3d.doc.html#module-cosense3d.doc.conf_">cosense3d.doc.conf_</a>
 </li>
         <li><a href="cosense3d.modules.html#module-cosense3d.modules">cosense3d.modules</a>
 </li>
@@ -3520,14 +3519,14 @@
 </li>
       <li><a href="cosense3d.utils.html#cosense3d.utils.pclib.pose_err_global2relative_torch">pose_err_global2relative_torch() (in module cosense3d.utils.pclib)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.pose_to_transformation">pose_to_transformation() (in module cosense3d.dataset.toolkit.opv2v)</a>
 
       <ul>
         <li><a href="cosense3d.utils.html#cosense3d.utils.pclib.pose_to_transformation">(in module cosense3d.utils.pclib)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="cosense3d.modules.backbone3d.html#cosense3d.modules.backbone3d.spconv.post_act_block">post_act_block() (in module cosense3d.modules.backbone3d.spconv)</a>
 </li>
       <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.hooks.BaseHook.post_epoch">post_epoch() (cosense3d.agents.core.hooks.BaseHook method)</a>
@@ -3557,6 +3556,8 @@
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.post_update_memory">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
 </li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.post_update_memory">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
+</li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.post_update_memory">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
       </ul></li>
@@ -3572,6 +3573,8 @@
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.pre_update_memory">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.pre_update_memory">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV.pre_update_memory">(cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV method)</a>
 </li>
@@ -3594,6 +3597,8 @@
 
       <ul>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV.prepare_data">(cosense3d.agents.cav_prototype.base_cav.BaseSeqCAV method)</a>
+</li>
+        <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD.prepare_data">(cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD method)</a>
 </li>
         <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcDenseToSparse.prepare_data">(cosense3d.agents.cav_prototype.streamLTS_collection.slcDenseToSparse method)</a>
 </li>
@@ -3684,9 +3689,11 @@
 </li>
       <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.task_manager.TaskManager.reformat_tasks">reformat_tasks() (cosense3d.agents.core.task_manager.TaskManager method)</a>
 </li>
-      <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.refresh">refresh() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.refresh">refresh() (cosense3d.agents.core.gui.GUI method)</a>
 
       <ul>
+        <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.refresh">(cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
+</li>
         <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.img_anno3d_viewer.ImgAnno3DViewer.refresh">(cosense3d.agents.viewer.img_anno3d_viewer.ImgAnno3DViewer method)</a>
 </li>
         <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.img_viewer.ImgViewer.refresh">(cosense3d.agents.viewer.img_viewer.ImgViewer method)</a>
@@ -3724,10 +3731,10 @@
 </li>
       <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.removeHeilight">removeHeilight() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
 </li>
-      <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.removeRectangle">removeRectangle() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cosense3d.agents.viewer.html#cosense3d.agents.viewer.gl_viewer.GLViewer.removeRectangle">removeRectangle() (cosense3d.agents.viewer.gl_viewer.GLViewer method)</a>
+</li>
       <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.cav_manager.CAVManager.reset">reset() (cosense3d.agents.core.cav_manager.CAVManager method)</a>
 </li>
       <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseCAV.reset_data">reset_data() (cosense3d.agents.cav_prototype.base_cav.BaseCAV method)</a>
@@ -3822,8 +3829,6 @@
         <li><a href="cosense3d.utils.html#cosense3d.utils.pcdio.PointCloud.save">(cosense3d.utils.pcdio.PointCloud method)</a>
 </li>
       </ul></li>
-      <li><a href="cosense3d.agents.utils.html#cosense3d.agents.utils.deco.save_ckpt_on_error">save_ckpt_on_error() (in module cosense3d.agents.utils.deco)</a>
-</li>
       <li><a href="cosense3d.config.html#cosense3d.config.save_config">save_config() (in module cosense3d.config)</a>
 </li>
       <li><a href="cosense3d.utils.html#cosense3d.utils.pclib.save_cosense_ply">save_cosense_ply() (in module cosense3d.utils.pclib)</a>
@@ -3892,6 +3897,8 @@
         <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.hooks.Hooks.set_logger">(cosense3d.agents.core.hooks.Hooks method)</a>
 </li>
       </ul></li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.setRunner">setRunner() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
       <li><a href="cosense3d.agents.html#cosense3d.agents.center_controller.CenterController.setup_core">setup_core() (cosense3d.agents.center_controller.CenterController method)</a>
 </li>
       <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.base_runner.BaseRunner.setup_logger">setup_logger() (cosense3d.agents.core.base_runner.BaseRunner method)</a>
@@ -3906,11 +3913,15 @@
         <li><a href="cosense3d.utils.html#cosense3d.utils.misc.setup_logger">(in module cosense3d.utils.misc)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.setupUI">setupUI() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
       <li><a href="cosense3d.modules.losses.html#cosense3d.modules.losses.common.sigmoid_binary_cross_entropy">sigmoid_binary_cross_entropy() (in module cosense3d.modules.losses.common)</a>
 </li>
       <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcAttnFusion">slcAttnFusion (in module cosense3d.agents.cav_prototype.streamLTS_collection)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcCIASSD">slcCIASSD (class in cosense3d.agents.cav_prototype.streamLTS_collection)</a>
 </li>
       <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.slcDenseToSparse">slcDenseToSparse (class in cosense3d.agents.cav_prototype.streamLTS_collection)</a>
 </li>
@@ -3952,6 +3963,8 @@
 </li>
       <li><a href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.StackSAModuleMSG">StackSAModuleMSG (class in cosense3d.ops.pointnet2_utils)</a>
 </li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.start">start() (cosense3d.agents.core.gui.GUI method)</a>
+</li>
       <li><a href="cosense3d.modules.utils.html#cosense3d.modules.utils.amp.LossScaler.state_dict">state_dict() (cosense3d.modules.utils.amp.LossScaler method)</a>
 
       <ul>
@@ -3962,9 +3975,11 @@
 </li>
       <li><a href="cosense3d.modules.backbone3d.html#cosense3d.modules.backbone3d.mink_unet.MinkUnet.stensor_to_dense">stensor_to_dense() (cosense3d.modules.backbone3d.mink_unet.MinkUnet method)</a>
 </li>
-      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.test_runner.TestRunner.step">step() (cosense3d.agents.core.test_runner.TestRunner method)</a>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.step">step() (cosense3d.agents.core.gui.GUI method)</a>
 
       <ul>
+        <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.test_runner.TestRunner.step">(cosense3d.agents.core.test_runner.TestRunner method)</a>
+</li>
         <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.train_runner.TrainRunner.step">(cosense3d.agents.core.train_runner.TrainRunner method)</a>
 </li>
         <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.vis_runner.VisRunner.step">(cosense3d.agents.core.vis_runner.VisRunner method)</a>
@@ -3973,6 +3988,8 @@
       <li><a href="cosense3d.utils.html#cosense3d.utils.lr_scheduler.LRUpdater.step_epoch">step_epoch() (cosense3d.utils.lr_scheduler.LRUpdater method)</a>
 </li>
       <li><a href="cosense3d.utils.html#cosense3d.utils.lr_scheduler.LRUpdater.step_itr">step_itr() (cosense3d.utils.lr_scheduler.LRUpdater method)</a>
+</li>
+      <li><a href="cosense3d.agents.core.html#cosense3d.agents.core.gui.GUI.stop">stop() (cosense3d.agents.core.gui.GUI method)</a>
 </li>
       <li><a href="cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.streamLTS_collection.StreamLidarCAV">StreamLidarCAV (class in cosense3d.agents.cav_prototype.streamLTS_collection)</a>
 </li>
@@ -4544,7 +4561,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

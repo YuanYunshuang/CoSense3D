@@ -13,8 +13,8 @@ sys.path.append('/code/CoSense3d/cosense3d')
 
 
 project = 'OpenCosense3D'
-copyright = '2024, Yunshuang Yuan'
-author = 'Yunshuang Yuan'
+copyright = '2024, Anonymous Author'
+author = 'Anonymous'
 release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------

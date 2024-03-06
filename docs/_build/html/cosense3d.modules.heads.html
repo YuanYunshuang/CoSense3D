@@ -20,7 +20,9 @@
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cosense3d.modules.losses package" href="cosense3d.modules.losses.html" />
+    <link rel="prev" title="cosense3d.modules.fusion package" href="cosense3d.modules.fusion.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,211 +44,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.modules.heads package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.bev">cosense3d.modules.heads.bev module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV"><code class="docutils literal notranslate"><span class="pre">BEV</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.down_sample"><code class="docutils literal notranslate"><span class="pre">BEV.down_sample()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.format_input"><code class="docutils literal notranslate"><span class="pre">BEV.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.format_output"><code class="docutils literal notranslate"><span class="pre">BEV.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.forward"><code class="docutils literal notranslate"><span class="pre">BEV.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.loss"><code class="docutils literal notranslate"><span class="pre">BEV.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEV.training"><code class="docutils literal notranslate"><span class="pre">BEV.training</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEVMultiResolution"><code class="docutils literal notranslate"><span class="pre">BEVMultiResolution</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEVMultiResolution.forward"><code class="docutils literal notranslate"><span class="pre">BEVMultiResolution.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEVMultiResolution.loss"><code class="docutils literal notranslate"><span class="pre">BEVMultiResolution.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.BEVMultiResolution.training"><code class="docutils literal notranslate"><span class="pre">BEVMultiResolution.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiAttnBEV"><code class="docutils literal notranslate"><span class="pre">ContiAttnBEV</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiAttnBEV.get_evidence"><code class="docutils literal notranslate"><span class="pre">ContiAttnBEV.get_evidence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiAttnBEV.training"><code class="docutils literal notranslate"><span class="pre">ContiAttnBEV.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiGevBEV"><code class="docutils literal notranslate"><span class="pre">ContiGevBEV</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiGevBEV.get_evidence"><code class="docutils literal notranslate"><span class="pre">ContiGevBEV.get_evidence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContiGevBEV.training"><code class="docutils literal notranslate"><span class="pre">ContiGevBEV.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.down_sample"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.down_sample()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.format_input"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.format_output"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.forward"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.get_evidence"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.get_evidence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.loss"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.sample_reference_points"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.sample_reference_points()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev.ContinuousBEV.training"><code class="docutils literal notranslate"><span class="pre">ContinuousBEV.training</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.bev_dense">cosense3d.modules.heads.bev_dense module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevRoIDenseHead"><code class="docutils literal notranslate"><span class="pre">BevRoIDenseHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevRoIDenseHead.forward"><code class="docutils literal notranslate"><span class="pre">BevRoIDenseHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevRoIDenseHead.loss"><code class="docutils literal notranslate"><span class="pre">BevRoIDenseHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevRoIDenseHead.training"><code class="docutils literal notranslate"><span class="pre">BevRoIDenseHead.training</span></code></a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevSegHead"><code class="docutils literal notranslate"><span class="pre">BevSegHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevSegHead.forward"><code class="docutils literal notranslate"><span class="pre">BevSegHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevSegHead.loss"><code class="docutils literal notranslate"><span class="pre">BevSegHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.bev_dense.BevSegHead.training"><code class="docutils literal notranslate"><span class="pre">BevSegHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.det_anchor_dense">cosense3d.modules.heads.det_anchor_dense module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.add_sin_difference"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.add_sin_difference()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.format_output"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.forward"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.init_weights"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.loss"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.predictions"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_dense.DetAnchorDense.training"><code class="docutils literal notranslate"><span class="pre">DetAnchorDense.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.det_anchor_sparse">cosense3d.modules.heads.det_anchor_sparse module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.add_sin_difference"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.add_sin_difference()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.format"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.format()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.forward"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.init_weights"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.loss"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.predictions"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_anchor_sparse.DetAnchorSparse.training"><code class="docutils literal notranslate"><span class="pre">DetAnchorSparse.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.det_center_sparse">cosense3d.modules.heads.det_center_sparse module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.format_input"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.format_output"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.forward"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.loss"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.predictions"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.training"><code class="docutils literal notranslate"><span class="pre">DetCenterSparse.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.format_input"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.format_output"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.forward"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.loss"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.predictions"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.MultiLvlDetCenterSparse.training"><code class="docutils literal notranslate"><span class="pre">MultiLvlDetCenterSparse.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.SeparatedClsHead"><code class="docutils literal notranslate"><span class="pre">SeparatedClsHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.SeparatedClsHead.forward"><code class="docutils literal notranslate"><span class="pre">SeparatedClsHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.SeparatedClsHead.training"><code class="docutils literal notranslate"><span class="pre">SeparatedClsHead.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedClsHead"><code class="docutils literal notranslate"><span class="pre">UnitedClsHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedClsHead.forward"><code class="docutils literal notranslate"><span class="pre">UnitedClsHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedClsHead.training"><code class="docutils literal notranslate"><span class="pre">UnitedClsHead.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedRegHead"><code class="docutils literal notranslate"><span class="pre">UnitedRegHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedRegHead.forward"><code class="docutils literal notranslate"><span class="pre">UnitedRegHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_center_sparse.UnitedRegHead.training"><code class="docutils literal notranslate"><span class="pre">UnitedRegHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.det_roi_refine">cosense3d.modules.heads.det_roi_refine module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.forward"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.get_dense_grid_points"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.get_dense_grid_points()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.get_global_grid_points_of_roi"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.get_global_grid_points_of_roi()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.loss"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.roi_grid_pool"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.roi_grid_pool()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.det_roi_refine.KeypointRoIHead.training"><code class="docutils literal notranslate"><span class="pre">KeypointRoIHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.img_focal">cosense3d.modules.heads.img_focal module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal"><code class="docutils literal notranslate"><span class="pre">ImgFocal</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.apply_center_offset"><code class="docutils literal notranslate"><span class="pre">ImgFocal.apply_center_offset()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.apply_ltrb"><code class="docutils literal notranslate"><span class="pre">ImgFocal.apply_ltrb()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.format_output"><code class="docutils literal notranslate"><span class="pre">ImgFocal.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.forward"><code class="docutils literal notranslate"><span class="pre">ImgFocal.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.loss"><code class="docutils literal notranslate"><span class="pre">ImgFocal.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.img_focal.ImgFocal.training"><code class="docutils literal notranslate"><span class="pre">ImgFocal.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.lidar_petr_head">cosense3d.modules.heads.lidar_petr_head module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.format_input"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.forward"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.gather_topk"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead.gather_topk()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.init_weights"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.training"><code class="docutils literal notranslate"><span class="pre">LidarPETRHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.multitask_head">cosense3d.modules.heads.multitask_head module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.multitask_head.MultiTaskHead"><code class="docutils literal notranslate"><span class="pre">MultiTaskHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.multitask_head.MultiTaskHead.forward"><code class="docutils literal notranslate"><span class="pre">MultiTaskHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.multitask_head.MultiTaskHead.loss"><code class="docutils literal notranslate"><span class="pre">MultiTaskHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.multitask_head.MultiTaskHead.training"><code class="docutils literal notranslate"><span class="pre">MultiTaskHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.nbr_attn_bev">cosense3d.modules.heads.nbr_attn_bev module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.downsample_tgt_pts"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.downsample_tgt_pts()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_input"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.format_input()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_output"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.format_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.forward"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.generate_reference_points"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.generate_reference_points()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.get_tgt"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.get_tgt()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.loss"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.training"><code class="docutils literal notranslate"><span class="pre">NbrAttentionBEV.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.petr_head">cosense3d.modules.heads.petr_head module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.petr_head.PETRHead"><code class="docutils literal notranslate"><span class="pre">PETRHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.petr_head.PETRHead.forward"><code class="docutils literal notranslate"><span class="pre">PETRHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.petr_head.PETRHead.init_weights"><code class="docutils literal notranslate"><span class="pre">PETRHead.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.petr_head.PETRHead.loss"><code class="docutils literal notranslate"><span class="pre">PETRHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.petr_head.PETRHead.training"><code class="docutils literal notranslate"><span class="pre">PETRHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads.query_guided_petr_head">cosense3d.modules.heads.query_guided_petr_head module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.forward"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_pred_boxes"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.get_pred_boxes()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_predictions"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.get_predictions()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.init_weights"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.loss"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.training"><code class="docutils literal notranslate"><span class="pre">QueryGuidedPETRHead.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.heads">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</div>
+
         </div>
       </div>
     </nav>
@@ -261,6 +82,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.heads package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.modules.heads.rst.txt" rel="nofollow"> View page source</a>
@@ -1140,12 +964,15 @@ registered hooks while the latter silently ignores them.</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.modules.fusion.html" class="btn btn-neutral float-left" title="cosense3d.modules.fusion package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.modules.losses.html" class="btn btn-neutral float-right" title="cosense3d.modules.losses package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

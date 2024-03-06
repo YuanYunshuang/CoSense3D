@@ -21,7 +21,9 @@
         <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cosense3d.ops package" href="cosense3d.ops.html" />
+    <link rel="prev" title="cosense3d.modules.projection package" href="cosense3d.modules.projection.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,218 +45,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.modules.utils package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.amp">cosense3d.modules.utils.amp module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler"><code class="docutils literal notranslate"><span class="pre">LossScaler</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler.has_overflow"><code class="docutils literal notranslate"><span class="pre">LossScaler.has_overflow()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler.load_state_dict"><code class="docutils literal notranslate"><span class="pre">LossScaler.load_state_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler.loss_scale"><code class="docutils literal notranslate"><span class="pre">LossScaler.loss_scale</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler.state_dict"><code class="docutils literal notranslate"><span class="pre">LossScaler.state_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.LossScaler.update_scale"><code class="docutils literal notranslate"><span class="pre">LossScaler.update_scale()</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.auto_fp16"><code class="docutils literal notranslate"><span class="pre">auto_fp16()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.cast_tensor_type"><code class="docutils literal notranslate"><span class="pre">cast_tensor_type()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.force_fp32"><code class="docutils literal notranslate"><span class="pre">force_fp32()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.patch_forward_method"><code class="docutils literal notranslate"><span class="pre">patch_forward_method()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.patch_norm_fp32"><code class="docutils literal notranslate"><span class="pre">patch_norm_fp32()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.amp.wrap_fp16_model"><code class="docutils literal notranslate"><span class="pre">wrap_fp16_model()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.box_coder">cosense3d.modules.utils.box_coder module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.CenterBoxCoder"><code class="docutils literal notranslate"><span class="pre">CenterBoxCoder</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.CenterBoxCoder.decode"><code class="docutils literal notranslate"><span class="pre">CenterBoxCoder.decode()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.CenterBoxCoder.encode"><code class="docutils literal notranslate"><span class="pre">CenterBoxCoder.encode()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.ResidualBoxCoder"><code class="docutils literal notranslate"><span class="pre">ResidualBoxCoder</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.ResidualBoxCoder.decode"><code class="docutils literal notranslate"><span class="pre">ResidualBoxCoder.decode()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.ResidualBoxCoder.decode_direction"><code class="docutils literal notranslate"><span class="pre">ResidualBoxCoder.decode_direction()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.ResidualBoxCoder.encode"><code class="docutils literal notranslate"><span class="pre">ResidualBoxCoder.encode()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.ResidualBoxCoder.encode_direction"><code class="docutils literal notranslate"><span class="pre">ResidualBoxCoder.encode_direction()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.box_coder.build_box_coder"><code class="docutils literal notranslate"><span class="pre">build_box_coder()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.cobevt_utils">cosense3d.modules.utils.cobevt_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test"><code class="docutils literal notranslate"><span class="pre">Test</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test.load_img"><code class="docutils literal notranslate"><span class="pre">Test.load_img()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test.load_raw_transformation_matrix"><code class="docutils literal notranslate"><span class="pre">Test.load_raw_transformation_matrix()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test.load_raw_transformation_matrix2"><code class="docutils literal notranslate"><span class="pre">Test.load_raw_transformation_matrix2()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test.test"><code class="docutils literal notranslate"><span class="pre">Test.test()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.Test.test_combine_roi_and_cav_mask"><code class="docutils literal notranslate"><span class="pre">Test.test_combine_roi_and_cav_mask()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.combine_roi_and_cav_mask"><code class="docutils literal notranslate"><span class="pre">combine_roi_and_cav_mask()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.convert_affinematrix_to_homography"><code class="docutils literal notranslate"><span class="pre">convert_affinematrix_to_homography()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.eye_like"><code class="docutils literal notranslate"><span class="pre">eye_like()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.get_discretized_transformation_matrix"><code class="docutils literal notranslate"><span class="pre">get_discretized_transformation_matrix()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.get_roi_and_cav_mask"><code class="docutils literal notranslate"><span class="pre">get_roi_and_cav_mask()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.get_rotated_roi"><code class="docutils literal notranslate"><span class="pre">get_rotated_roi()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.get_rotation_matrix2d"><code class="docutils literal notranslate"><span class="pre">get_rotation_matrix2d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.get_transformation_matrix"><code class="docutils literal notranslate"><span class="pre">get_transformation_matrix()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.normal_transform_pixel"><code class="docutils literal notranslate"><span class="pre">normal_transform_pixel()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.normalize_homography"><code class="docutils literal notranslate"><span class="pre">normalize_homography()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.cobevt_utils.warp_affine"><code class="docutils literal notranslate"><span class="pre">warp_affine()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.common">cosense3d.modules.utils.common module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.bias_init_with_prob"><code class="docutils literal notranslate"><span class="pre">bias_init_with_prob()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.cat_coor_with_idx"><code class="docutils literal notranslate"><span class="pre">cat_coor_with_idx()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.cat_name_str"><code class="docutils literal notranslate"><span class="pre">cat_name_str()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.clip_sigmoid"><code class="docutils literal notranslate"><span class="pre">clip_sigmoid()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.draw_sample_prob"><code class="docutils literal notranslate"><span class="pre">draw_sample_prob()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.fuse_batch_indices"><code class="docutils literal notranslate"><span class="pre">fuse_batch_indices()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.get_conv2d_layers"><code class="docutils literal notranslate"><span class="pre">get_conv2d_layers()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.get_norm_layer"><code class="docutils literal notranslate"><span class="pre">get_norm_layer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.get_voxel_centers"><code class="docutils literal notranslate"><span class="pre">get_voxel_centers()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.instantiate"><code class="docutils literal notranslate"><span class="pre">instantiate()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.inverse_sigmoid"><code class="docutils literal notranslate"><span class="pre">inverse_sigmoid()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.limit_period"><code class="docutils literal notranslate"><span class="pre">limit_period()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.linear_last"><code class="docutils literal notranslate"><span class="pre">linear_last()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.linear_layers"><code class="docutils literal notranslate"><span class="pre">linear_layers()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.meshgrid"><code class="docutils literal notranslate"><span class="pre">meshgrid()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.meshgrid_cross"><code class="docutils literal notranslate"><span class="pre">meshgrid_cross()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.pad_l"><code class="docutils literal notranslate"><span class="pre">pad_l()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.pad_r"><code class="docutils literal notranslate"><span class="pre">pad_r()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.topk_gather"><code class="docutils literal notranslate"><span class="pre">topk_gather()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.weighted_mahalanobis_dists"><code class="docutils literal notranslate"><span class="pre">weighted_mahalanobis_dists()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.common.xavier_init"><code class="docutils literal notranslate"><span class="pre">xavier_init()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.conv">cosense3d.modules.utils.conv module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.ConvModule"><code class="docutils literal notranslate"><span class="pre">ConvModule</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.ConvModule.forward"><code class="docutils literal notranslate"><span class="pre">ConvModule.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.ConvModule.init_weights"><code class="docutils literal notranslate"><span class="pre">ConvModule.init_weights()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.ConvModule.norm"><code class="docutils literal notranslate"><span class="pre">ConvModule.norm</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.ConvModule.training"><code class="docutils literal notranslate"><span class="pre">ConvModule.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.build_conv_layer"><code class="docutils literal notranslate"><span class="pre">build_conv_layer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.conv.build_padding_layer"><code class="docutils literal notranslate"><span class="pre">build_padding_layer()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.edl_utils">cosense3d.modules.utils.edl_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.edl_utils.logit_to_edl"><code class="docutils literal notranslate"><span class="pre">logit_to_edl()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.gaussian_utils">cosense3d.modules.utils.gaussian_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.center_to_img_coor"><code class="docutils literal notranslate"><span class="pre">center_to_img_coor()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.cornernet_gaussian_radius"><code class="docutils literal notranslate"><span class="pre">cornernet_gaussian_radius()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.draw_gaussian_map"><code class="docutils literal notranslate"><span class="pre">draw_gaussian_map()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.gaussian_2d"><code class="docutils literal notranslate"><span class="pre">gaussian_2d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.gaussian_radius"><code class="docutils literal notranslate"><span class="pre">gaussian_radius()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.gaussian_utils.weighted_mahalanobis_dists"><code class="docutils literal notranslate"><span class="pre">weighted_mahalanobis_dists()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.init">cosense3d.modules.utils.init module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.bias_init_with_prob"><code class="docutils literal notranslate"><span class="pre">bias_init_with_prob()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.constant_init"><code class="docutils literal notranslate"><span class="pre">constant_init()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.kaiming_init"><code class="docutils literal notranslate"><span class="pre">kaiming_init()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.normal_init"><code class="docutils literal notranslate"><span class="pre">normal_init()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.trunc_normal_init"><code class="docutils literal notranslate"><span class="pre">trunc_normal_init()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.uniform_init"><code class="docutils literal notranslate"><span class="pre">uniform_init()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.init.xavier_init"><code class="docutils literal notranslate"><span class="pre">xavier_init()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.me_utils">cosense3d.modules.utils.me_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.bev_sparse_to_dense"><code class="docutils literal notranslate"><span class="pre">bev_sparse_to_dense()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.devoxelize_with_centroids"><code class="docutils literal notranslate"><span class="pre">devoxelize_with_centroids()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.downsample_embeddings"><code class="docutils literal notranslate"><span class="pre">downsample_embeddings()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.downsample_points"><code class="docutils literal notranslate"><span class="pre">downsample_points()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.get_conv_block"><code class="docutils literal notranslate"><span class="pre">get_conv_block()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.get_kernel_map_and_out_key"><code class="docutils literal notranslate"><span class="pre">get_kernel_map_and_out_key()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.indices2metric"><code class="docutils literal notranslate"><span class="pre">indices2metric()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.me_coor_to_grid_indices"><code class="docutils literal notranslate"><span class="pre">me_coor_to_grid_indices()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.metric2indices"><code class="docutils literal notranslate"><span class="pre">metric2indices()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.mink_coor_limit"><code class="docutils literal notranslate"><span class="pre">mink_coor_limit()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.minkconv_conv_block"><code class="docutils literal notranslate"><span class="pre">minkconv_conv_block()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.minkconv_layer"><code class="docutils literal notranslate"><span class="pre">minkconv_layer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.normalize_centroids"><code class="docutils literal notranslate"><span class="pre">normalize_centroids()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.normalize_points"><code class="docutils literal notranslate"><span class="pre">normalize_points()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.prepare_input_data"><code class="docutils literal notranslate"><span class="pre">prepare_input_data()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.sparse_to_dense"><code class="docutils literal notranslate"><span class="pre">sparse_to_dense()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.stride_centroids"><code class="docutils literal notranslate"><span class="pre">stride_centroids()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.update_me_essentials"><code class="docutils literal notranslate"><span class="pre">update_me_essentials()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.me_utils.voxelize_with_centroids"><code class="docutils literal notranslate"><span class="pre">voxelize_with_centroids()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.misc">cosense3d.modules.utils.misc module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN"><code class="docutils literal notranslate"><span class="pre">MLN</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN.forward"><code class="docutils literal notranslate"><span class="pre">MLN.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN.reset_parameters"><code class="docutils literal notranslate"><span class="pre">MLN.reset_parameters()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN.training"><code class="docutils literal notranslate"><span class="pre">MLN.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN2"><code class="docutils literal notranslate"><span class="pre">MLN2</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN2.forward"><code class="docutils literal notranslate"><span class="pre">MLN2.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN2.reset_parameters"><code class="docutils literal notranslate"><span class="pre">MLN2.reset_parameters()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.MLN2.training"><code class="docutils literal notranslate"><span class="pre">MLN2.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.SELayer_Linear"><code class="docutils literal notranslate"><span class="pre">SELayer_Linear</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.SELayer_Linear.forward"><code class="docutils literal notranslate"><span class="pre">SELayer_Linear.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.misc.SELayer_Linear.training"><code class="docutils literal notranslate"><span class="pre">SELayer_Linear.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.nbr_attn">cosense3d.modules.utils.nbr_attn module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.nbr_attn.NeighborhoodAttention"><code class="docutils literal notranslate"><span class="pre">NeighborhoodAttention</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.nbr_attn.NeighborhoodAttention.forward"><code class="docutils literal notranslate"><span class="pre">NeighborhoodAttention.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.nbr_attn.NeighborhoodAttention.training"><code class="docutils literal notranslate"><span class="pre">NeighborhoodAttention.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.norm">cosense3d.modules.utils.norm module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.norm.build_norm_layer"><code class="docutils literal notranslate"><span class="pre">build_norm_layer()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.positional_encoding">cosense3d.modules.utils.positional_encoding module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.coor2ratio"><code class="docutils literal notranslate"><span class="pre">coor2ratio()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.img_locations"><code class="docutils literal notranslate"><span class="pre">img_locations()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.nerf_positional_encoding"><code class="docutils literal notranslate"><span class="pre">nerf_positional_encoding()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.pos2posemb1d"><code class="docutils literal notranslate"><span class="pre">pos2posemb1d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.pos2posemb2d"><code class="docutils literal notranslate"><span class="pre">pos2posemb2d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.pos2posemb3d"><code class="docutils literal notranslate"><span class="pre">pos2posemb3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.positional_encoding.ratio2coord"><code class="docutils literal notranslate"><span class="pre">ratio2coord()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils.test_flash_attn">cosense3d.modules.utils.test_flash_attn module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.attention_blocksparse_ref"><code class="docutils literal notranslate"><span class="pre">attention_blocksparse_ref()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.attention_kvpacked_ref"><code class="docutils literal notranslate"><span class="pre">attention_kvpacked_ref()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.attention_qkvpacked_ref"><code class="docutils literal notranslate"><span class="pre">attention_qkvpacked_ref()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.attention_ref"><code class="docutils literal notranslate"><span class="pre">attention_ref()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.convert_flash_attn_S_to_softmax"><code class="docutils literal notranslate"><span class="pre">convert_flash_attn_S_to_softmax()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.generate_qkv"><code class="docutils literal notranslate"><span class="pre">generate_qkv()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.generate_random_padding_mask"><code class="docutils literal notranslate"><span class="pre">generate_random_padding_mask()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.generate_sparsity_mask"><code class="docutils literal notranslate"><span class="pre">generate_sparsity_mask()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.get_dropout_fraction"><code class="docutils literal notranslate"><span class="pre">get_dropout_fraction()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.index_first_axis"><code class="docutils literal notranslate"><span class="pre">index_first_axis()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.normalize_flash_attn_S"><code class="docutils literal notranslate"><span class="pre">normalize_flash_attn_S()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_multigpu"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_multigpu()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_race_condition"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_race_condition()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_split"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_split()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_output"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_triton_output()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_race_condition"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_triton_race_condition()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_kvpacked"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded_kvpacked()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_qkvpacked"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded_qkvpacked()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.utils">Module contents</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.utils.build_torch_module"><code class="docutils literal notranslate"><span class="pre">build_torch_module()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-</div>
+
         </div>
       </div>
     </nav>
@@ -269,6 +83,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.utils package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.modules.utils.rst.txt" rel="nofollow"> View page source</a>
@@ -1778,12 +1595,15 @@ softmax_max: (batch_size, nheads, seqlen_q)</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.modules.projection.html" class="btn btn-neutral float-left" title="cosense3d.modules.projection package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.ops.html" class="btn btn-neutral float-right" title="cosense3d.ops package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

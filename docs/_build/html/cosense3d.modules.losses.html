@@ -20,7 +20,9 @@
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="cosense3d.modules.necks package" href="cosense3d.modules.necks.html" />
+    <link rel="prev" title="cosense3d.modules.heads package" href="cosense3d.modules.heads.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,111 +44,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.modules.losses package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.base_loss">cosense3d.modules.losses.base_loss module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.base_loss.BaseLoss"><code class="docutils literal notranslate"><span class="pre">BaseLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.base_loss.BaseLoss.forward"><code class="docutils literal notranslate"><span class="pre">BaseLoss.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.base_loss.BaseLoss.loss"><code class="docutils literal notranslate"><span class="pre">BaseLoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.base_loss.BaseLoss.name"><code class="docutils literal notranslate"><span class="pre">BaseLoss.name</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.base_loss.BaseLoss.training"><code class="docutils literal notranslate"><span class="pre">BaseLoss.training</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.common">cosense3d.modules.losses.common module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.cross_entroy_with_logits"><code class="docutils literal notranslate"><span class="pre">cross_entroy_with_logits()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.focal_loss"><code class="docutils literal notranslate"><span class="pre">focal_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.indices_to_dense_vector"><code class="docutils literal notranslate"><span class="pre">indices_to_dense_vector()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.sigmoid_binary_cross_entropy"><code class="docutils literal notranslate"><span class="pre">sigmoid_binary_cross_entropy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.weighted_l1_loss"><code class="docutils literal notranslate"><span class="pre">weighted_l1_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.weighted_sigmoid_binary_cross_entropy"><code class="docutils literal notranslate"><span class="pre">weighted_sigmoid_binary_cross_entropy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.common.weighted_smooth_l1_loss"><code class="docutils literal notranslate"><span class="pre">weighted_smooth_l1_loss()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.edl">cosense3d.modules.losses.edl module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.EDLLoss"><code class="docutils literal notranslate"><span class="pre">EDLLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.EDLLoss.loss"><code class="docutils literal notranslate"><span class="pre">EDLLoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.EDLLoss.training"><code class="docutils literal notranslate"><span class="pre">EDLLoss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.edl_mse_loss"><code class="docutils literal notranslate"><span class="pre">edl_mse_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.evidence_to_conf_unc"><code class="docutils literal notranslate"><span class="pre">evidence_to_conf_unc()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.exp_evidence"><code class="docutils literal notranslate"><span class="pre">exp_evidence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.kl_divergence"><code class="docutils literal notranslate"><span class="pre">kl_divergence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.loglikelihood_loss"><code class="docutils literal notranslate"><span class="pre">loglikelihood_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.mse_loss"><code class="docutils literal notranslate"><span class="pre">mse_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.pred_to_conf_unc"><code class="docutils literal notranslate"><span class="pre">pred_to_conf_unc()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.relu_evidence"><code class="docutils literal notranslate"><span class="pre">relu_evidence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.edl.softplus_evidence"><code class="docutils literal notranslate"><span class="pre">softplus_evidence()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.focal_loss">cosense3d.modules.losses.focal_loss module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.FocalLoss"><code class="docutils literal notranslate"><span class="pre">FocalLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.FocalLoss.loss"><code class="docutils literal notranslate"><span class="pre">FocalLoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.FocalLoss.training"><code class="docutils literal notranslate"><span class="pre">FocalLoss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.GaussianFocalLoss"><code class="docutils literal notranslate"><span class="pre">GaussianFocalLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.GaussianFocalLoss.loss"><code class="docutils literal notranslate"><span class="pre">GaussianFocalLoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.GaussianFocalLoss.training"><code class="docutils literal notranslate"><span class="pre">GaussianFocalLoss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.QualityFocalLoss"><code class="docutils literal notranslate"><span class="pre">QualityFocalLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.QualityFocalLoss.loss"><code class="docutils literal notranslate"><span class="pre">QualityFocalLoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.QualityFocalLoss.training"><code class="docutils literal notranslate"><span class="pre">QualityFocalLoss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.py_focal_loss_with_prob"><code class="docutils literal notranslate"><span class="pre">py_focal_loss_with_prob()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.py_sigmoid_focal_loss"><code class="docutils literal notranslate"><span class="pre">py_sigmoid_focal_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.quality_focal_loss"><code class="docutils literal notranslate"><span class="pre">quality_focal_loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.focal_loss.quality_focal_loss_with_prob"><code class="docutils literal notranslate"><span class="pre">quality_focal_loss_with_prob()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.iou_loss">cosense3d.modules.losses.iou_loss module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.GIoULoss"><code class="docutils literal notranslate"><span class="pre">GIoULoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.GIoULoss.loss"><code class="docutils literal notranslate"><span class="pre">GIoULoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.GIoULoss.training"><code class="docutils literal notranslate"><span class="pre">GIoULoss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.IoULoss"><code class="docutils literal notranslate"><span class="pre">IoULoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.IoULoss.loss"><code class="docutils literal notranslate"><span class="pre">IoULoss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.iou_loss.IoULoss.training"><code class="docutils literal notranslate"><span class="pre">IoULoss.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.l1_loss">cosense3d.modules.losses.l1_loss module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.L1Loss"><code class="docutils literal notranslate"><span class="pre">L1Loss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.L1Loss.loss"><code class="docutils literal notranslate"><span class="pre">L1Loss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.L1Loss.training"><code class="docutils literal notranslate"><span class="pre">L1Loss.training</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.SmoothL1Loss"><code class="docutils literal notranslate"><span class="pre">SmoothL1Loss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.SmoothL1Loss.loss"><code class="docutils literal notranslate"><span class="pre">SmoothL1Loss.loss()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.l1_loss.SmoothL1Loss.training"><code class="docutils literal notranslate"><span class="pre">SmoothL1Loss.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses.vanilla_seg_loss">cosense3d.modules.losses.vanilla_seg_loss module</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.vanilla_seg_loss.VanillaSegLoss"><code class="docutils literal notranslate"><span class="pre">VanillaSegLoss</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.vanilla_seg_loss.VanillaSegLoss.forward"><code class="docutils literal notranslate"><span class="pre">VanillaSegLoss.forward()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.modules.losses.vanilla_seg_loss.VanillaSegLoss.training"><code class="docutils literal notranslate"><span class="pre">VanillaSegLoss.training</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.modules.losses">Module contents</a><ul>
-<li><a class="reference internal" href="#cosense3d.modules.losses.build_loss"><code class="docutils literal notranslate"><span class="pre">build_loss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-</div>
+
         </div>
       </div>
     </nav>
@@ -161,6 +82,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.losses package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.modules.losses.rst.txt" rel="nofollow"> View page source</a>
@@ -744,12 +668,15 @@ mode (str): Loss scaling mode, including “linear”, “square”, and “log�
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.modules.heads.html" class="btn btn-neutral float-left" title="cosense3d.modules.heads package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.modules.necks.html" class="btn btn-neutral float-right" title="cosense3d.modules.necks package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

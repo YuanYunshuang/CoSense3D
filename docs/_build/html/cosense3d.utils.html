@@ -20,7 +20,8 @@
         <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="cosense3d.ops package" href="cosense3d.ops.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,268 +43,30 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">cosense3d.utils package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-cosense3d.utils.box_utils">cosense3d.utils.box_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.bbox_cxcywh_to_xyxy"><code class="docutils literal notranslate"><span class="pre">bbox_cxcywh_to_xyxy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.bbox_xyxy_to_cxcywh"><code class="docutils literal notranslate"><span class="pre">bbox_xyxy_to_cxcywh()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.boxes3d_to_standup_bboxes"><code class="docutils literal notranslate"><span class="pre">boxes3d_to_standup_bboxes()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.boxes_to_corners_2d"><code class="docutils literal notranslate"><span class="pre">boxes_to_corners_2d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.boxes_to_corners_3d"><code class="docutils literal notranslate"><span class="pre">boxes_to_corners_3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.compute_iou"><code class="docutils literal notranslate"><span class="pre">compute_iou()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.convert_box_to_polygon"><code class="docutils literal notranslate"><span class="pre">convert_box_to_polygon()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.corners_to_boxes_3d"><code class="docutils literal notranslate"><span class="pre">corners_to_boxes_3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.decode_boxes"><code class="docutils literal notranslate"><span class="pre">decode_boxes()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.denormalize_bbox"><code class="docutils literal notranslate"><span class="pre">denormalize_bbox()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.enlarge_box3d"><code class="docutils literal notranslate"><span class="pre">enlarge_box3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.find_rigid_alignment"><code class="docutils literal notranslate"><span class="pre">find_rigid_alignment()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.limit_period"><code class="docutils literal notranslate"><span class="pre">limit_period()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.mask_boxes_outside_range_numpy"><code class="docutils literal notranslate"><span class="pre">mask_boxes_outside_range_numpy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.mask_boxes_outside_range_torch"><code class="docutils literal notranslate"><span class="pre">mask_boxes_outside_range_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.normalize_bbox"><code class="docutils literal notranslate"><span class="pre">normalize_bbox()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.remove_points_in_boxes3d"><code class="docutils literal notranslate"><span class="pre">remove_points_in_boxes3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.box_utils.transform_boxes_3d"><code class="docutils literal notranslate"><span class="pre">transform_boxes_3d()</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">cosense3d.utils package</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-cosense3d.utils.data_statistics">cosense3d.utils.data_statistics module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.data_statistics.StatsRecorder"><code class="docutils literal notranslate"><span class="pre">StatsRecorder</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.data_statistics.StatsRecorder.update"><code class="docutils literal notranslate"><span class="pre">StatsRecorder.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-cosense3d.utils.eval_detection_utils">cosense3d.utils.eval_detection_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.cal_ap_all_point"><code class="docutils literal notranslate"><span class="pre">cal_ap_all_point()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.cal_precision_recall"><code class="docutils literal notranslate"><span class="pre">cal_precision_recall()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.calculate_ap"><code class="docutils literal notranslate"><span class="pre">calculate_ap()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.caluclate_tp_fp"><code class="docutils literal notranslate"><span class="pre">caluclate_tp_fp()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.eval_final_results"><code class="docutils literal notranslate"><span class="pre">eval_final_results()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.ops_cal_tp"><code class="docutils literal notranslate"><span class="pre">ops_cal_tp()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.eval_detection_utils.voc_ap"><code class="docutils literal notranslate"><span class="pre">voc_ap()</span></code></a></li>
 </ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.iou2d_calculator">cosense3d.utils.iou2d_calculator module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.iou2d_calculator.bbox_overlaps"><code class="docutils literal notranslate"><span class="pre">bbox_overlaps()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.iou2d_calculator.cast_tensor_type"><code class="docutils literal notranslate"><span class="pre">cast_tensor_type()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.iou2d_calculator.fp16_clamp"><code class="docutils literal notranslate"><span class="pre">fp16_clamp()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.logger">cosense3d.utils.logger module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.logger.LogMeter"><code class="docutils literal notranslate"><span class="pre">LogMeter</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.logger.LogMeter.add_meter"><code class="docutils literal notranslate"><span class="pre">LogMeter.add_meter()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.LogMeter.log"><code class="docutils literal notranslate"><span class="pre">LogMeter.log()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.LogMeter.update"><code class="docutils literal notranslate"><span class="pre">LogMeter.update()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue"><code class="docutils literal notranslate"><span class="pre">SmoothedValue</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.avg"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.avg</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.global_avg"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.global_avg</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.max"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.max</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.median"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.median</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.update"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.update()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.SmoothedValue.value"><code class="docutils literal notranslate"><span class="pre">SmoothedValue.value</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.TestLogger"><code class="docutils literal notranslate"><span class="pre">TestLogger</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.logger.TestLogger.log"><code class="docutils literal notranslate"><span class="pre">TestLogger.log()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.lr_scheduler">cosense3d.utils.lr_scheduler module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater"><code class="docutils literal notranslate"><span class="pre">LRUpdater</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater.get_last_lr"><code class="docutils literal notranslate"><span class="pre">LRUpdater.get_last_lr()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater.load_state_dict"><code class="docutils literal notranslate"><span class="pre">LRUpdater.load_state_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater.state_dict"><code class="docutils literal notranslate"><span class="pre">LRUpdater.state_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater.step_epoch"><code class="docutils literal notranslate"><span class="pre">LRUpdater.step_epoch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.LRUpdater.step_itr"><code class="docutils literal notranslate"><span class="pre">LRUpdater.step_itr()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.TransformerAdaptiveScheduler"><code class="docutils literal notranslate"><span class="pre">TransformerAdaptiveScheduler</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.TransformerAdaptiveScheduler.calc_lr"><code class="docutils literal notranslate"><span class="pre">TransformerAdaptiveScheduler.calc_lr()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.TransformerAdaptiveScheduler.get_lr"><code class="docutils literal notranslate"><span class="pre">TransformerAdaptiveScheduler.get_lr()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.lr_scheduler.build_lr_scheduler"><code class="docutils literal notranslate"><span class="pre">build_lr_scheduler()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.metrics">cosense3d.utils.metrics module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.Metric"><code class="docutils literal notranslate"><span class="pre">Metric</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.Metric.add_samples"><code class="docutils literal notranslate"><span class="pre">Metric.add_samples()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.Metric.save_detections"><code class="docutils literal notranslate"><span class="pre">Metric.save_detections()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.Metric.summary"><code class="docutils literal notranslate"><span class="pre">Metric.summary()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev"><code class="docutils literal notranslate"><span class="pre">MetricBev</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev.add_samples"><code class="docutils literal notranslate"><span class="pre">MetricBev.add_samples()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev.format_str"><code class="docutils literal notranslate"><span class="pre">MetricBev.format_str()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev.iou"><code class="docutils literal notranslate"><span class="pre">MetricBev.iou()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev.summary"><code class="docutils literal notranslate"><span class="pre">MetricBev.summary()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricBev.summary_hook"><code class="docutils literal notranslate"><span class="pre">MetricBev.summary_hook()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricMOT"><code class="docutils literal notranslate"><span class="pre">MetricMOT</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricMOT.add_samples"><code class="docutils literal notranslate"><span class="pre">MetricMOT.add_samples()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet"><code class="docutils literal notranslate"><span class="pre">MetricObjDet</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.add_sample"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.add_sample()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.add_samples"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.add_samples()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.cal_ap_11_point"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.cal_ap_11_point()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.cal_ap_all_point"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.cal_ap_all_point()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.cal_precision_recall"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.cal_precision_recall()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.save_detections"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.save_detections()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricObjDet.summary"><code class="docutils literal notranslate"><span class="pre">MetricObjDet.summary()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricSemSeg"><code class="docutils literal notranslate"><span class="pre">MetricSemSeg</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricSemSeg.add_samples"><code class="docutils literal notranslate"><span class="pre">MetricSemSeg.add_samples()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricSemSeg.cal_ious_and_accs"><code class="docutils literal notranslate"><span class="pre">MetricSemSeg.cal_ious_and_accs()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.metrics.MetricSemSeg.save_detections"><code class="docutils literal notranslate"><span class="pre">MetricSemSeg.save_detections()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.misc">cosense3d.utils.misc module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.misc.check_numpy_to_torch"><code class="docutils literal notranslate"><span class="pre">check_numpy_to_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.ensure_dir"><code class="docutils literal notranslate"><span class="pre">ensure_dir()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.list_dirs"><code class="docutils literal notranslate"><span class="pre">list_dirs()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.load_from_pl_state_dict"><code class="docutils literal notranslate"><span class="pre">load_from_pl_state_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.load_json"><code class="docutils literal notranslate"><span class="pre">load_json()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.load_yaml"><code class="docutils literal notranslate"><span class="pre">load_yaml()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.multi_apply"><code class="docutils literal notranslate"><span class="pre">multi_apply()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.pad_list_to_array_np"><code class="docutils literal notranslate"><span class="pre">pad_list_to_array_np()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.save_json"><code class="docutils literal notranslate"><span class="pre">save_json()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.save_yaml"><code class="docutils literal notranslate"><span class="pre">save_yaml()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.torch_tensor_to_numpy"><code class="docutils literal notranslate"><span class="pre">torch_tensor_to_numpy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.misc.update_dict"><code class="docutils literal notranslate"><span class="pre">update_dict()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.module_utils">cosense3d.utils.module_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.module_utils.build_dropout"><code class="docutils literal notranslate"><span class="pre">build_dropout()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.module_utils.build_norm_layer"><code class="docutils literal notranslate"><span class="pre">build_norm_layer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.module_utils.digit_version"><code class="docutils literal notranslate"><span class="pre">digit_version()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.module_utils.get_target_module"><code class="docutils literal notranslate"><span class="pre">get_target_module()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.module_utils.instantiate_target_module"><code class="docutils literal notranslate"><span class="pre">instantiate_target_module()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.pcdio">cosense3d.utils.pcdio module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud"><code class="docutils literal notranslate"><span class="pre">PointCloud</span></code></a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.check_sanity"><code class="docutils literal notranslate"><span class="pre">PointCloud.check_sanity()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.copy"><code class="docutils literal notranslate"><span class="pre">PointCloud.copy()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.from_array"><code class="docutils literal notranslate"><span class="pre">PointCloud.from_array()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.from_buffer"><code class="docutils literal notranslate"><span class="pre">PointCloud.from_buffer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.from_fileobj"><code class="docutils literal notranslate"><span class="pre">PointCloud.from_fileobj()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.from_msg"><code class="docutils literal notranslate"><span class="pre">PointCloud.from_msg()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.from_path"><code class="docutils literal notranslate"><span class="pre">PointCloud.from_path()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.get_metadata"><code class="docutils literal notranslate"><span class="pre">PointCloud.get_metadata()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save"><code class="docutils literal notranslate"><span class="pre">PointCloud.save()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_pcd"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_pcd()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_pcd_to_buffer"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_pcd_to_buffer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_pcd_to_fileobj"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_pcd_to_fileobj()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_txt"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_txt()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_xyz_intensity_label"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_xyz_intensity_label()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.save_xyz_label"><code class="docutils literal notranslate"><span class="pre">PointCloud.save_xyz_label()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.PointCloud.to_msg"><code class="docutils literal notranslate"><span class="pre">PointCloud.to_msg()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.add_fields"><code class="docutils literal notranslate"><span class="pre">add_fields()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.build_ascii_fmtstr"><code class="docutils literal notranslate"><span class="pre">build_ascii_fmtstr()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.cat_point_clouds"><code class="docutils literal notranslate"><span class="pre">cat_point_clouds()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.decode_rgb_from_pcl"><code class="docutils literal notranslate"><span class="pre">decode_rgb_from_pcl()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.encode_rgb_for_pcl"><code class="docutils literal notranslate"><span class="pre">encode_rgb_for_pcl()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.make_xyz_label_point_cloud"><code class="docutils literal notranslate"><span class="pre">make_xyz_label_point_cloud()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.make_xyz_point_cloud"><code class="docutils literal notranslate"><span class="pre">make_xyz_point_cloud()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.make_xyz_rgb_point_cloud"><code class="docutils literal notranslate"><span class="pre">make_xyz_rgb_point_cloud()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_from_buffer"><code class="docutils literal notranslate"><span class="pre">point_cloud_from_buffer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_from_fileobj"><code class="docutils literal notranslate"><span class="pre">point_cloud_from_fileobj()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_from_path"><code class="docutils literal notranslate"><span class="pre">point_cloud_from_path()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_to_buffer"><code class="docutils literal notranslate"><span class="pre">point_cloud_to_buffer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_to_fileobj"><code class="docutils literal notranslate"><span class="pre">point_cloud_to_fileobj()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.point_cloud_to_path"><code class="docutils literal notranslate"><span class="pre">point_cloud_to_path()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.save_point_cloud"><code class="docutils literal notranslate"><span class="pre">save_point_cloud()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.save_point_cloud_bin"><code class="docutils literal notranslate"><span class="pre">save_point_cloud_bin()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.save_point_cloud_bin_compressed"><code class="docutils literal notranslate"><span class="pre">save_point_cloud_bin_compressed()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.save_txt"><code class="docutils literal notranslate"><span class="pre">save_txt()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pcdio.update_field"><code class="docutils literal notranslate"><span class="pre">update_field()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.pclib">cosense3d.utils.pclib module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.cart2cyl"><code class="docutils literal notranslate"><span class="pre">cart2cyl()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.cyl2cart"><code class="docutils literal notranslate"><span class="pre">cyl2cart()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.get_tf_matrix_torch"><code class="docutils literal notranslate"><span class="pre">get_tf_matrix_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.header"><code class="docutils literal notranslate"><span class="pre">header()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.lidar_bin2bin"><code class="docutils literal notranslate"><span class="pre">lidar_bin2bin()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.lidar_bin2pcd"><code class="docutils literal notranslate"><span class="pre">lidar_bin2pcd()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.lidar_bin2pcd_o3d"><code class="docutils literal notranslate"><span class="pre">lidar_bin2pcd_o3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.lidar_ply2bin"><code class="docutils literal notranslate"><span class="pre">lidar_ply2bin()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.load_pcd"><code class="docutils literal notranslate"><span class="pre">load_pcd()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mask_points_in_box"><code class="docutils literal notranslate"><span class="pre">mask_points_in_box()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mask_points_in_range"><code class="docutils literal notranslate"><span class="pre">mask_points_in_range()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mask_values_in_range"><code class="docutils literal notranslate"><span class="pre">mask_values_in_range()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mat_pitch"><code class="docutils literal notranslate"><span class="pre">mat_pitch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mat_roll"><code class="docutils literal notranslate"><span class="pre">mat_roll()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.mat_yaw"><code class="docutils literal notranslate"><span class="pre">mat_yaw()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.pose2tf"><code class="docutils literal notranslate"><span class="pre">pose2tf()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.pose_err_global2relative_torch"><code class="docutils literal notranslate"><span class="pre">pose_err_global2relative_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.pose_to_transformation"><code class="docutils literal notranslate"><span class="pre">pose_to_transformation()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.project_points_by_matrix_torch"><code class="docutils literal notranslate"><span class="pre">project_points_by_matrix_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.read_ply"><code class="docutils literal notranslate"><span class="pre">read_ply()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate3d"><code class="docutils literal notranslate"><span class="pre">rotate3d()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate_box_corners_with_tf_np"><code class="docutils literal notranslate"><span class="pre">rotate_box_corners_with_tf_np()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate_points_along_z_np"><code class="docutils literal notranslate"><span class="pre">rotate_points_along_z_np()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate_points_along_z_torch"><code class="docutils literal notranslate"><span class="pre">rotate_points_along_z_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate_points_batch"><code class="docutils literal notranslate"><span class="pre">rotate_points_batch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotate_points_with_tf_np"><code class="docutils literal notranslate"><span class="pre">rotate_points_with_tf_np()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotation_mat2euler_torch"><code class="docutils literal notranslate"><span class="pre">rotation_mat2euler_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.rotation_matrix"><code class="docutils literal notranslate"><span class="pre">rotation_matrix()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.save_cosense_ply"><code class="docutils literal notranslate"><span class="pre">save_cosense_ply()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.pclib.tf2pose"><code class="docutils literal notranslate"><span class="pre">tf2pose()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.tensor_utils">cosense3d.utils.tensor_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.tensor_utils.check_numpy_to_torch"><code class="docutils literal notranslate"><span class="pre">check_numpy_to_torch()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.tensor_utils.pad_list_to_array_torch"><code class="docutils literal notranslate"><span class="pre">pad_list_to_array_torch()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.train_utils">cosense3d.utils.train_utils module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.build_lr_scheduler"><code class="docutils literal notranslate"><span class="pre">build_lr_scheduler()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.build_optimizer"><code class="docutils literal notranslate"><span class="pre">build_optimizer()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.clip_grads"><code class="docutils literal notranslate"><span class="pre">clip_grads()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.get_gpu_architecture"><code class="docutils literal notranslate"><span class="pre">get_gpu_architecture()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.is_tensor_to_cuda"><code class="docutils literal notranslate"><span class="pre">is_tensor_to_cuda()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.load_model_dict"><code class="docutils literal notranslate"><span class="pre">load_model_dict()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.load_tensors_to_gpu"><code class="docutils literal notranslate"><span class="pre">load_tensors_to_gpu()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.train_utils.seed_everything"><code class="docutils literal notranslate"><span class="pre">seed_everything()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils.vislib">cosense3d.utils.vislib module</a><ul>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.bbx2linset"><code class="docutils literal notranslate"><span class="pre">bbx2linset()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.draw_2d_bboxes_on_img"><code class="docutils literal notranslate"><span class="pre">draw_2d_bboxes_on_img()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.draw_3d_points_boxes_on_img"><code class="docutils literal notranslate"><span class="pre">draw_3d_points_boxes_on_img()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.draw_box_plt"><code class="docutils literal notranslate"><span class="pre">draw_box_plt()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.draw_matched_boxes"><code class="docutils literal notranslate"><span class="pre">draw_matched_boxes()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.draw_points_boxes_plt"><code class="docutils literal notranslate"><span class="pre">draw_points_boxes_plt()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.get_palette_colors"><code class="docutils literal notranslate"><span class="pre">get_palette_colors()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.o3d_draw_agent_data"><code class="docutils literal notranslate"><span class="pre">o3d_draw_agent_data()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.o3d_draw_frame_data"><code class="docutils literal notranslate"><span class="pre">o3d_draw_frame_data()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.o3d_draw_pcds_bbxs"><code class="docutils literal notranslate"><span class="pre">o3d_draw_pcds_bbxs()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.o3d_play_sequence"><code class="docutils literal notranslate"><span class="pre">o3d_play_sequence()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.plt_draw_frame_data"><code class="docutils literal notranslate"><span class="pre">plt_draw_frame_data()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.update_axis_linset"><code class="docutils literal notranslate"><span class="pre">update_axis_linset()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.update_lineset_vbo"><code class="docutils literal notranslate"><span class="pre">update_lineset_vbo()</span></code></a></li>
-<li><a class="reference internal" href="#cosense3d.utils.vislib.visualization"><code class="docutils literal notranslate"><span class="pre">visualization()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-cosense3d.utils">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</div>
+
         </div>
       </div>
     </nav>
@@ -318,6 +81,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
       <li class="breadcrumb-item active">cosense3d.utils package</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/cosense3d.utils.rst.txt" rel="nofollow"> View page source</a>
@@ -1939,7 +1704,7 @@ boxes: np.ndarray, (N, 8, 3) or (N, 7), in lidar coordinates</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="cosense3d.utils.vislib.draw_points_boxes_plt">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.utils.vislib.</span></span><span class="sig-name descname"><span class="pre">draw_points_boxes_plt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pc_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes_gt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_gt_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'green'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_pred_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_pred_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_gt_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/vislib.html#draw_points_boxes_plt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.vislib.draw_points_boxes_plt" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">cosense3d.utils.vislib.</span></span><span class="sig-name descname"><span class="pre">draw_points_boxes_plt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pc_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boxes_gt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wandb_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_gt_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'green'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_pred_c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_pred_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bbox_gt_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/vislib.html#draw_points_boxes_plt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.vislib.draw_points_boxes_plt" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -2006,12 +1771,14 @@ pcds_colors: list of np array, shape same as pcds</p>
 
            </div>
           </div>
-          <footer>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cosense3d.ops.html" class="btn btn-neutral float-left" title="cosense3d.ops package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
