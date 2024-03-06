@@ -7,14 +7,13 @@ WORKDIR /project
 COPY requirements.txt /project/requirements.txt
 COPY ./cosense3d/ops/ /project/ops/
 
-RUN apt-get update -y && apt-get install git -y
+RUN apt-get update -y && apt-get install git -y && conda update conda -y
 RUN apt-get install build-essential python3-dev libopenblas-dev -y
-RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
-
-RUN conda update conda -y
-RUN conda install openblas-devel -y
-RUN conda install pybind11 -y
-RUN conda install -c conda-forge libstdcxx-ng -y
+#RUN apt-get install libgl1-mesa-glx libglib2.0-0 -y
+#
+#RUN conda install openblas-devel -y
+#RUN conda install pybind11 -y
+#RUN conda install -c conda-forge libstdcxx-ng -y
 
 #RUN pip install -U git+https://github.com/NVIDIA/MinkowskiEngine \
 #    -v --no-deps     \
