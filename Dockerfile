@@ -2,6 +2,10 @@ FROM pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
 LABEL hostname="cosense3d-docker"
 ENV OMP_NUM_THREADS=16
 ENV CUDA_HOME='/usr/local/cuda-11.8'
+ENV PATH /opt/conda/bin:/usr/local/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/cuda/lib64/stubs/:/usr/lib/x86_64-linux-gnu:/usr/local/cuda-11.8/compat/:/usr/local/cuda-11.8/targets/x86_64-linux/lib/stubs:$LD_LIBRARY_PATH
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES video,compute,utility
 
 #ENTRYPOINT ["top", "-b"]
 WORKDIR /project
