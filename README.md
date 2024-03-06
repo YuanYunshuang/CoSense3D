@@ -34,6 +34,7 @@ Required arguments:
 - ```config```: the yaml configuration file path.
 - ```mode```: runner mode. ```vis_train``` and ```vis_test``` for visualizing the training and the testing data, respectively. 
 ```train``` and ```test``` for training and testing the model.
+
 Optional arguments:
 - ```visualize```: visualize the data during the training and the testing process.
 - ```resume-from```: resume training from the give checkpoint path.
@@ -54,25 +55,47 @@ Our framework provides a graphical user interface for interactive visualization 
 To have a quick look into your dataset, run 
 ```bash
 cd OpenCoSense3D 
-python cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config [CONFIG FILE] --mode [vis_train | vis_test]
 # check if the OPV2Vt data is correctly loaded during training
-python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_opv2vt.yaml --mode train --visualize
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_opv2vt.yaml --mode train --visualize
 
 ```
 Demos:
 ```bash
 # visualize OPV2Vt dataset test set
-python cosense3d/tools/agent_runner.py --config ./config/opv2vt.yaml --mode vis_test
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/opv2vt.yaml --mode vis_test
 ```
 ![DEMO OPV2Vt](docs/_static/opv2vt.gif)
 
 ```bash
 # visualize DairV2Xt dataset test set
-python cosense3d/tools/agent_runner.py --config ./config/dairv2xt.yaml --mode vis_test
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/dairv2xt.yaml --mode vis_test
 ```
 ![DEMO DairV2Xt](docs/_static/dairv2xt.gif)
 
 ### Train
-
-
+```bash
+# Train on a single GPU
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_opv2vt.yaml --mode train --run-name sLTS-opv2vt
+# Parallel training on multiple GPUs
+PYTHONPATH=. OMP_NUM_THREADS=16 torchrun \
+--nproc_per_node=2 \
+cosense3d/tools/agent_runner.py \
+--config ./cosense3d/config/stream_lidar_st_v3.yaml \
+--mode train \
+--gpus 2 \
+--batch-size 2
+```
+### Test
+```bash
+# Train on a single GPU
+PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_opv2vt.yaml --mode test --load-from path/to/ckpt.pth
+```
 ## Benchmark and model zoo
+
+| Model      | OPV2Vt AP@0.5 | OPV2Vt AP@0.7 | DairV2Xt AP@0.5 | DairV2Xt AP@0.7 | OPV2Vt ckpt                                                                                      | DairV2Xt ckpt                                                                                     |
+|------------|---------------|---------------|-----------------|-----------------|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| Fcooper    | 54.4          | 17.0          | 41.8            | 17.7            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)   | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    |
+| FPVRCNN    | 70.8          | 41.2          | 51.8            | 23.9            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)   | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    |
+| AttnFusion | 78.7          | 41.4          | 62.1            | 34.0            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)   | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    |
+| StreamLTS  | 81.2          | 59.5          | 61.2            | 33.4            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)   | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    | 
