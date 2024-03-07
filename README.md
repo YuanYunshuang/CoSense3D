@@ -1,17 +1,11 @@
-# CoSense3D
-Welcome to the CoSense3D! This is an agent-oriented framework specially designed for cooperative perception for autonomous driving.
+# StreamLTS: Query-based Temporal-Spatial LiDAR Fusion for Cooperative Object Detection
+Welcome to the official implementation of StreamLTS! This is an agent-oriented framework specially designed for cooperative perception for autonomous driving.
 The agent-based structure of this framework aims to accelerate the development process of cooperative perception models by 
 more efficient and flexible data loading and distributing process, as well as the forward and gradient calculation scheduling.
-More details of the structure of this framework can be found in the [documentations](docs%2F_build%2Fhtml%2Findex.html).
-
-
-This repo contains the official implementation of the paper
-
-__StreamLTS: Query-based Temporal-Spatial LiDAR Fusion for Cooperative Object Detection__
 
 ## Installation
 You can install the environment with our provided batch script with the following commands. 
-For more detailed information about the installation, please refer to [Installation](docs/_build/html/md/installation.html) page.
+For more detailed information about the installation, please refer to [Installation](docs/md/installation.md) page.
 ```bash
 conda create -n consense3d python=3.8
 conda activate cosense3d
