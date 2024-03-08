@@ -25,7 +25,7 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                 class_names_each_head=[['vehicle.car']],
                 reg_channels=['box:6', 'dir:8', 'scr:4'],
                 cls_assigner=dict(
-                    type='target_assigners.BEVHardCenternessAssigner',
+                    type='target_assigners.BEVCenternessAssigner',
                     n_cls=1,
                     min_radius=1.0,
                     pos_neg_ratio=0,
