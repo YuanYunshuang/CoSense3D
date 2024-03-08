@@ -158,12 +158,13 @@ class DetCenterSparse(BaseModule):
         }
 
         if self.generate_roi_scr:
-            conf = [pred_to_conf_unc(x, self.loss_cls.activation)[0] for x in cls]
+            is_edl = 'edl' in self.loss_cls.name.lower()
+            conf = [pred_to_conf_unc(x, self.loss_cls.activation, edl=is_edl)[0] for x in cls]
             conf = torch.stack(conf, dim=0).max(dim=0).values
             if len(conf) == 0:
                 print('det_coor', coor.shape)
                 print('det_feat', feat.shape)
-            if 'edl' in self.loss_cls.name.lower():
+            if is_edl:
                 out_dict['scr'] = conf[:, 1:].max(dim=-1).values
             else:
                 out_dict['scr'] = conf.max(dim=-1).values
@@ -237,17 +238,28 @@ class DetCenterSparse(BaseModule):
             # convert one-hot to labels
             cur_labels = torch.zeros_like(cur_cls_tgt[..., 0]).long()
             lbl_inds, cls_inds = torch.where(cur_cls_tgt)
-            cur_labels[lbl_inds] = cls_inds + 1
-
-            if self.cls_assigner.pos_neg_ratio:
-                avg_factor = None
+            if 'edl' in self.loss_cls.name.lower():
+                cur_labels[lbl_inds] = cls_inds + 1
+                cur_num_cls = n_classes[h] + 1
+                avg_factor = None if self.cls_assigner.pos_neg_ratio else max((cur_labels > 0).sum(), 1)
+            elif 'focal' in self.loss_cls.name.lower():
+                cur_num_cls = n_classes[h]
+                cur_labels += n_classes[h]
+                cur_labels[lbl_inds] = cls_inds
+                avg_factor = max(len(cls_inds), 1)
             else:
-                avg_factor = max((cur_labels > 0).sum(), 1)
+                raise NotImplementedError
+
+            # focal loss encode the last dim of tgt as background
+            # labels = pos_mask.new_full((len(pos_mask),), self.num_classes, dtype=torch.long)
+            # labels[pos_mask] = 0
+
+
             lcenter = self.loss_cls(
                 cur_cls_src,
                 cur_labels,
                 temp=epoch,
-                n_cls_override=n_classes[h] + 1,
+                n_cls_override=cur_num_cls,
                 avg_factor=avg_factor
             )
             loss_cls = loss_cls + lcenter

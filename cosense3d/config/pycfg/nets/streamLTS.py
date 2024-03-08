@@ -4,7 +4,7 @@ from cosense3d.config.pycfg.base import use_flash_attn, opv2vt, dairv2xt, hooks
 from cosense3d.config.pycfg.template.petr_transformer import get_petr_transformer_cfg
 from cosense3d.config.pycfg.template.minkunet import get_minkunet_cfg
 from cosense3d.config.pycfg.template.query_guided_petr_head import get_query_guided_petr_head_cfg
-from cosense3d.config.pycfg.template.det_anchor_sparse import get_det_anchor_sparse_cfg
+from cosense3d.config.pycfg.template.det_center_sparse import get_det_center_sparse_cfg
 from cosense3d.config.pycfg.template.bev_head import get_bev_head_cfg, get_bev_multi_resolution_head_cfg
 
 
@@ -47,7 +47,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0):
             scatter_keys=['det_local', 'bev_local'],
             gt_keys=['local_bboxes_3d', 'local_labels_3d'],
             heads=[
-                get_det_anchor_sparse_cfg(
+                get_det_center_sparse_cfg(
                     voxel_size=voxel_size,
                     point_cloud_range=point_cloud_range,
                     in_channels=256,
@@ -145,7 +145,7 @@ shared_modules_opv2vt_no_global_attn['roi_head'] = dict(
             scatter_keys=['det_local'],
             gt_keys=['local_bboxes_3d', 'local_labels_3d'],
             heads=[
-                get_det_anchor_sparse_cfg(
+                get_det_center_sparse_cfg(
                     voxel_size=voxel_size,
                     point_cloud_range=opv2vt.point_cloud_range,
                     in_channels=256,
@@ -196,7 +196,7 @@ shared_modules_dairv2xt_no_global_attn['roi_head'] = dict(
             scatter_keys=['det_local'],
             gt_keys=['local_bboxes_3d', 'local_labels_3d'],
             heads=[
-                get_det_anchor_sparse_cfg(
+                get_det_center_sparse_cfg(
                     voxel_size=voxel_size,
                     point_cloud_range=opv2vt.point_cloud_range,
                     in_channels=256,
@@ -206,3 +206,15 @@ shared_modules_dairv2xt_no_global_attn['roi_head'] = dict(
             strides=[2],
             losses=[True],
         )
+
+#--------- Ablation 4 : Focal loss for RoI ------------
+shared_modules_dairv2xt_roi_focal_loss = copy.deepcopy(shared_modules_dairv2xt)
+shared_modules_dairv2xt_roi_focal_loss['roi_head']['heads'][0] = get_det_center_sparse_cfg(
+    voxel_size=voxel_size,
+    point_cloud_range=opv2vt.point_cloud_range,
+    in_channels=256,
+    generate_roi_scr=True,
+    cls_loss="FocalLoss"
+)
+shared_modules_dairv2xt_roi_focal_loss['roi_head']['heads'][0]['cls_head_cfg'] = (
+    dict(name='UnitedClsHead', one_hot_encoding=False))

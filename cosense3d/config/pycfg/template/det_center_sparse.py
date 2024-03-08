@@ -1,9 +1,13 @@
 
 
-def get_det_anchor_sparse_cfg(voxel_size, point_cloud_range,
+def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                               in_channels=256, stride=2,
-                              generate_roi_scr=False,
+                              generate_roi_scr=False, cls_loss="EDLLoss",
                               gather_keys=[], scatter_keys=[], gt_keys=[]):
+    if cls_loss == "EDLLoss":
+        cls_loss = dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=5.0)
+    elif cls_loss == "FocalLoss":
+        cls_loss = dict(type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0)
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
                 type='heads.det_center_sparse.DetCenterSparse',
@@ -16,7 +20,7 @@ def get_det_anchor_sparse_cfg(voxel_size, point_cloud_range,
                 shared_conv_channel=256,
                 get_predictions=True,
                 stride=stride,
-                cls_head_cfg=dict(name='UnitedClsHead'),
+                cls_head_cfg=dict(name='UnitedClsHead', one_hot_encoding=True),
                 reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
                 class_names_each_head=[['vehicle.car']],
                 reg_channels=['box:6', 'dir:8', 'scr:4'],
@@ -24,7 +28,7 @@ def get_det_anchor_sparse_cfg(voxel_size, point_cloud_range,
                     type='target_assigners.BEVHardCenternessAssigner',
                     n_cls=1,
                     min_radius=1.0,
-                    pos_neg_ratio=2,
+                    pos_neg_ratio=0,
                     max_mining_ratio=0,
                 ),
                 box_assigner=dict(
@@ -37,6 +41,6 @@ def get_det_anchor_sparse_cfg(voxel_size, point_cloud_range,
                     center_threshold=0.5,
                     box_coder=dict(type='CenterBoxCoder'),
                 ),
-                loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=5.0),
+                loss_cls=cls_loss,
                 loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
             )
