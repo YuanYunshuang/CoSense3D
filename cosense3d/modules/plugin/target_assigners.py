@@ -898,7 +898,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         return roi, confs
 
 
-class BEVHardCenternessAssigner(BaseAssigner):
+class BEVCenternessAssigner(BaseAssigner):
     def __init__(self,
                  n_cls,
                  min_radius=1.0,
@@ -906,7 +906,8 @@ class BEVHardCenternessAssigner(BaseAssigner):
                  mining_thr=0,
                  max_mining_ratio=3,
                  mining_start_epoch=5,
-                 merge_all_classes=False
+                 merge_all_classes=False,
+                 use_gaussian=False,
                  ):
         super().__init__()
         self.n_cls = n_cls
@@ -916,6 +917,7 @@ class BEVHardCenternessAssigner(BaseAssigner):
         self.max_mining_ratio = max_mining_ratio
         self.mining_start_epoch = mining_start_epoch
         self.merge_all_classes = merge_all_classes
+        self.use_gaussian = use_gaussian
 
     def get_labels_single_head(self, centers, gt_boxes, pred_scores=None, **kwargs):
         dists = torch.norm(centers[:, :2].unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0), dim=-1)

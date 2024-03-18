@@ -93,3 +93,17 @@ PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./config/StreamLTS_
 | FPVRCNN    | 70.8          | 41.2          | 51.8            | 23.9            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)  | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    |
 | AttnFusion | 78.7          | 41.4          | 62.1            | 34.0            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)  | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    |
 | StreamLTS  | 81.2          | 59.5          | 61.2            | 33.4            | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)  | [<img src="./docs/_static/download.png" alt="drawing" width="20"/>](https://will_be_available)    | 
+
+
+
+ #my account
+ Host github.com-me
+      HostName github.com
+      User git
+      IdentityFile ~/.ssh/id_ed25519
+
+ #anonymous account
+ Host github.com-nihil
+      HostName github.com
+      User git
+      IdentityFile ~/.ssh/id_ed25519_nihil
