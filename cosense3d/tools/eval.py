@@ -242,18 +242,17 @@ def eval_cosense_detection_with_pth(result_path, pc_range, iou_thr=[0.5, 0.7], m
         fh.writelines(fmt_str)
 
 
-def tmp(ckpt_path):
+def tmp(ckpt_path, ckpt_path_template, out_path):
     ckpt = torch.load(ckpt_path)
-    for k, v in ckpt['optimizer']['state'].items():
-        if len(v['exp_avg']) == 22:
-            v['exp_avg'] = v['exp_avg'][:20]
-            v['exp_avg_sq'] = v['exp_avg'][:20]
-    reg_key = 'reg_branches.0.2'
-    for k, v in ckpt['model'].items():
-        if reg_key in k:
-            ckpt['model'][k] = v[:20]
+    ckpt_template = torch.load(ckpt_path_template)
+    ckpt_template['model'] = ckpt['model']
+    ckpt_template['optimizer']['param_groups'][0]['params'] = ckpt['optimizer']['param_groups'][0]['params']
+    step = ckpt_template['optimizer']['state'][0]['step']
+    ckpt_template['optimizer']['state'] = ckpt['optimizer']['state']
+    for k, v in ckpt_template['optimizer']['state'].items():
+        ckpt_template['optimizer']['state'][k]['step'] = step
 
-    torch.save(ckpt, ckpt_path)
+    torch.save(ckpt_template, out_path)
 
 
 def plot_model_efficiency():
