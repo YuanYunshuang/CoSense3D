@@ -5,6 +5,18 @@ import numpy as np
 
 
 def weighted_mahalanobis_dists(vars, dists, weights=None):
+    """
+    Compute the squared mahalanobis distances.
+
+    Parameters
+    ----------
+    sigmas: (N, 2), variances of Gaussian distribution
+    dists: (N, 2), distances to gaussian center at each axis
+
+    Returns
+    -------
+    Mdists: (N), squared mahalanobis
+    """
     vars = vars.squeeze()
     if len(vars.shape) == 1:
         vars = torch.stack([vars, vars], dim=-1)
@@ -19,6 +31,26 @@ def weighted_mahalanobis_dists(vars, dists, weights=None):
         probs = probs * weights
 
     return probs
+
+
+def mahalanobis_dists_2d(sigmas, dists):
+    """
+    Compute the squared mahalanobis distances.
+
+    Parameters
+    ----------
+    sigmas: (N, 2), standard deviation of Gaussian distribution
+    dists: (N, 2), distances to gaussian center
+
+    Returns
+    -------
+    Mdists: (N), squared mahalanobis
+    """
+    vars = sigmas ** 2
+    covs = torch.diag_embed(vars, dim1=1)
+    unbroadcasted_scale_tril = covs.unsqueeze(1)  # 1 1 2 2
+    M = -0.5 * _batch_mahalanobis(unbroadcasted_scale_tril, dists.unsqueeze(0))  # N M
+    return M
 
 
 def center_to_img_coor(center_in, lidar_range, pixel_sz):

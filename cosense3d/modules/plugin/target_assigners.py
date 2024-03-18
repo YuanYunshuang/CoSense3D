@@ -1,3 +1,4 @@
+import math
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from typing import List, Dict, Optional
@@ -13,7 +14,7 @@ from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
                                        rotate_points_batch)
 from cosense3d.utils.pclib import rotate_points_along_z_torch
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
-from cosense3d.modules.utils.gaussian_utils import gaussian_2d
+from cosense3d.modules.utils.gaussian_utils import gaussian_2d, weighted_mahalanobis_dists
 from cosense3d.modules.utils.box_coder import build_box_coder
 from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
@@ -416,7 +417,7 @@ class HeatmapAssigner(BaseAssigner):
             heatmap (torch.Tensor): Heatmap to be masked.
             center (torch.Tensor): Center coord of the heatmap.
             radius (int): Radius of gaussian.
-            K (int, optional): Multiple of masked_gaussian. Defaults to 1.
+            k (int, optional): Multiple of masked_gaussian. Defaults to 1.
 
         Returns:
             torch.Tensor: Masked heatmap.
@@ -908,6 +909,7 @@ class BEVCenternessAssigner(BaseAssigner):
                  mining_start_epoch=5,
                  merge_all_classes=False,
                  use_gaussian=False,
+                 sigma=1.0
                  ):
         super().__init__()
         self.n_cls = n_cls
@@ -918,11 +920,20 @@ class BEVCenternessAssigner(BaseAssigner):
         self.mining_start_epoch = mining_start_epoch
         self.merge_all_classes = merge_all_classes
         self.use_gaussian = use_gaussian
+        self.sigma = sigma
 
     def get_labels_single_head(self, centers, gt_boxes, pred_scores=None, **kwargs):
-        dists = torch.norm(centers[:, :2].unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0), dim=-1)
-        dists_min = dists.min(dim=1).values
-        labels = (dists_min < self.min_radius).float()
+        diff = centers[:, :2].unsqueeze(1) - gt_boxes[:, :2].unsqueeze(0)
+        dists = torch.norm(diff, dim=-1)
+        dists_min, dists_min_arg = dists.min(dim=1)
+        if self.use_gaussian:
+            labels = torch.exp(-0.5 * torch.sqrt(dists_min) / self.sigma ** 2)
+            # sigmas = gt_boxes[:, 3:5][dists_min_arg] / 4 * self.sigma
+            # labels = weighted_mahalanobis_dists(
+            #     sigmas ** 2, diff[torch.arange(len(diff)), dists_min_arg].abs().unsqueeze(1))
+            labels[labels < 1e-4] = 0
+        else:
+            labels = (dists_min < self.min_radius).float()
 
         if self.pos_neg_ratio:
             labels = pos_neg_sampling(labels, self.pos_neg_ratio)
@@ -950,35 +961,22 @@ class BEVCenternessAssigner(BaseAssigner):
                 labels.append(self.get_labels_single_head(centers, cur_boxes, cur_scores, **kwargs))
             labels = torch.stack(labels, dim=-1)
 
-
+        # import matplotlib.pyplot as plt
+        #
         # from cosense3d.utils import vislib
-        # pc_range = [-144, -41.6, -3.0, 144, 41.6, 3.0]
-        # label = labels.int().detach().cpu().numpy()
+        # pc_range = [-100, -41.6, -3.0, 100, 41.6, 3.0]
+        # label = labels.detach().cpu().numpy()
         # label = label[:, 0]
         # points = centers.detach().cpu().numpy()
         # boxes = gt_boxes.cpu().numpy()
         # ax = vislib.draw_points_boxes_plt(
         #     pc_range=pc_range,
-        #     points=points,
-        #     return_ax=True
-        # )
-        # ax = vislib.draw_points_boxes_plt(
-        #     pc_range=pc_range,
-        #     points=points[label == 0],
-        #     points_c='k',
-        #     ax=ax,
-        #     return_ax=True
-        # )
-        # vislib.draw_points_boxes_plt(
-        #     pc_range=pc_range,
-        #     points=points[label == 1],
-        #     points_c='r',
         #     boxes_gt=boxes,
-        #     ax=ax,
-        #     filename='/koko/logs/tmp.png'
+        #     return_ax=True
         # )
-        #
-        # pass
+        # ax.scatter(points[:, 0], points[:, 1], cmap='jet', c=label, s=1)
+        # plt.savefig("/home/yuan/Downloads/tmp.png")
+        # plt.close()
 
         return labels
 

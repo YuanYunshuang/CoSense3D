@@ -3,6 +3,7 @@
 def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                               in_channels=256, stride=2,
                               generate_roi_scr=False, cls_loss="EDLLoss",
+                              use_gaussian=False, sigma=1.0,
                               gather_keys=[], scatter_keys=[], gt_keys=[]):
     if cls_loss == "EDLLoss":
         cls_loss = dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=5.0)
@@ -30,6 +31,8 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                     min_radius=1.0,
                     pos_neg_ratio=0,
                     max_mining_ratio=0,
+                    use_gaussian=use_gaussian,
+                    sigma=sigma
                 ),
                 box_assigner=dict(
                     type='target_assigners.BoxCenterAssigner',

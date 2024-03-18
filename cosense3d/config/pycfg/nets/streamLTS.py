@@ -218,3 +218,17 @@ shared_modules_dairv2xt_roi_focal_loss['roi_head']['heads'][0] = get_det_center_
 )
 shared_modules_dairv2xt_roi_focal_loss['roi_head']['heads'][0]['cls_head_cfg'] = (
     dict(name='UnitedClsHead', one_hot_encoding=False))
+
+#--------- Ablation 5 : Focal loss and Gaussian GT for RoI ------------
+shared_modules_dairv2xt_roi_focal_loss_gaussian = copy.deepcopy(shared_modules_dairv2xt)
+shared_modules_dairv2xt_roi_focal_loss_gaussian['roi_head']['heads'][0] = get_det_center_sparse_cfg(
+    voxel_size=voxel_size,
+    point_cloud_range=opv2vt.point_cloud_range,
+    in_channels=256,
+    generate_roi_scr=True,
+    cls_loss="FocalLoss",
+    use_gaussian=True,
+    sigma=1.0
+)
+shared_modules_dairv2xt_roi_focal_loss_gaussian['roi_head']['heads'][0]['cls_head_cfg'] = (
+    dict(name='UnitedClsHead', one_hot_encoding=False))
