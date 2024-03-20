@@ -5,10 +5,15 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                               generate_roi_scr=False, cls_loss="EDLLoss",
                               use_gaussian=False, sigma=1.0,
                               gather_keys=[], scatter_keys=[], gt_keys=[]):
+    scr_activation = "relu" # default
+    edl = True
     if cls_loss == "EDLLoss":
         cls_loss = dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=5.0)
+        scr_activation = "exp"
     elif cls_loss == "FocalLoss":
         cls_loss = dict(type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0)
+        scr_activation = "sigmoid"
+        edl = False
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
                 type='heads.det_center_sparse.DetCenterSparse',
@@ -43,6 +48,8 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                     class_names_each_head=[['vehicle.car']],
                     center_threshold=0.5,
                     box_coder=dict(type='CenterBoxCoder'),
+                    activation=scr_activation,
+                    edl=edl
                 ),
                 loss_cls=cls_loss,
                 loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),

@@ -769,7 +769,8 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                  class_names_each_head,
                  center_threshold,
                  box_coder,
-                 edl_activation='relu'
+                 activation='relu',
+                 edl=True,
                  ):
         super().__init__()
         self.voxel_size = voxel_size
@@ -777,9 +778,10 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         self.meter_per_pixel = (voxel_size[0] * stride, voxel_size[1] * stride)
         self.csb = csb.get(detection_benchmark)
         self.class_names_each_head = class_names_each_head
-        self.edl_activation = edl_activation
+        self.activation = activation
         self.center_threshold = center_threshold
         self.box_coder = build_box_coder(**box_coder)
+        self.edl = edl
 
     def pts_to_indices(self, bev_pts):
         """
@@ -841,7 +843,7 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
         confs = []
         for h, center_cls in enumerate(preds['cls']):
             if center_cls.ndim == 4:
-                conf, _ = pred_to_conf_unc(center_cls.permute(0, 2, 3, 1), self.edl_activation)
+                conf, _ = pred_to_conf_unc(center_cls.permute(0, 2, 3, 1), self.activation)
                 center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
                 center_indices = torch.stack(torch.where(center_mask), dim=0)
                 centers = self.indices_to_pts(center_indices[1:]).T
@@ -849,9 +851,12 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
                 cur_reg = {k: preds['reg'][k][h].permute(0, 2, 3, 1)[center_mask]
                            for k in ['box', 'dir', 'scr']}
             else:
-                conf, _ = pred_to_conf_unc(center_cls, self.edl_activation)
+                conf, _ = pred_to_conf_unc(center_cls, self.activation, self.edl)
                 centers = preds['ctr']
-                center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                if self.edl:
+                    center_mask = conf[..., 1:].max(dim=-1).values > self.center_threshold  # b, h, w
+                else:
+                    center_mask = conf.max(dim=-1).values > self.center_threshold  # b, h, w
 
                 if center_cls.ndim == 3:
                     indices = torch.stack([torch.zeros_like(centers[i, :, :1]) + i for i in range(centers.shape[0])], dim=0)
