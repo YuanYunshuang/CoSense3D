@@ -450,3 +450,11 @@ class LoadOPV2VBevMaps:
         return out
 
 
+class LoadBevTargetPoints:
+    def __init__(self, num_points=3000):
+        self.num_points = num_points
+
+    def __call__(self, data_dict):
+        pass
+
+

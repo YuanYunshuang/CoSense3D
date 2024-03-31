@@ -588,16 +588,48 @@ def update_global_boxes(root_dir, meta_in, meta_out, split):
         sdict.pop(frames[-1])
         save_json(sdict, os.path.join(meta_out, f"{s}.json"))
 
-def tmp(root_dir, meta_in, meta_out, split):
-    split_dir = os.path.join(root_dir, split)
-    scenes = os.listdir(split_dir)
-    for s in scenes:
-        scene_dir = os.path.join(split_dir, s)
-        sdict = load_json(os.path.join(meta_out, f"{s}.json"))
-        frames = sorted(list(sdict.keys()))
-        sdict.pop(frames[-1])
-        save_json(sdict, os.path.join(meta_out, f"{s}.json"))
 
+def update_bev_map(root_dir, meta_in, meta_out, split):
+    from cosense3d.dataset.const import OPV2V_TOWN_DICTIONARY
+    resolution = 0.2
+    pixels_per_meter = 1 / resolution
+    radius = 100
+    map_bounds = load_json(f'../../carla/assets/map_bounds.json')
+    split_dir = os.path.join(root_dir, split)
+    scenes = os.listdir(split_dir)[3:]
+    x = np.linspace(- radius + 0.5 * resolution, radius,
+                    int(radius * 2 / resolution) - 1)
+    bev_points = np.stack(np.meshgrid(x, x), axis=0)
+    bev_points = np.r_[bev_points, [np.zeros(bev_points.shape[1:]),
+                                    np.ones(bev_points.shape[1:])]].reshape(4, -1)
+
+    for s in scenes:
+        town = OPV2V_TOWN_DICTIONARY[s]
+        bev_map = cv2.imread(f'../../carla/assets/maps/{town}.png')
+        sx, sy, _ = bev_map.shape
+        map_bound = map_bounds[town]
+        scene_dir = os.path.join(split_dir, s)
+        sdict = load_json(os.path.join(meta_in, f"{s}.json"))
+        for f, fdict in sdict.items():
+            adict = fdict['agents'][fdict['meta']['ego_id']]
+            lidar_pose = adict['lidar']['0']['pose']
+            lidar_file = os.path.join(split_dir, adict['lidar']['0']['filename'])
+            pcd = load_pcd(lidar_file)['xyz']
+            transform = pose_to_transformation(lidar_pose)
+            cords = np.dot(transform, bev_points).T
+            xs = np.floor((cords[:, 0] - map_bound[0]) * pixels_per_meter).astype(int)
+            ys = np.floor((cords[:, 1] - map_bound[1]) * pixels_per_meter).astype(int)
+            xs = np.maximum(np.minimum(xs, sx - 1), 0)
+            ys = np.maximum(np.minimum(ys, sy - 1), 0)
+            road_mask = bev_map[xs, ys] / 255.
+            mask = road_mask[:, :2].any(axis=1)
+
+            import matplotlib.pyplot as plt
+            plt.plot(bev_points[0][mask], bev_points[1][mask], '.g')
+            plt.plot(pcd[:, 0], pcd[:, 1], '.r', markersize=1)
+            plt.show()
+            plt.close()
+            break
 
 
 if __name__=="__main__":
@@ -623,15 +655,10 @@ if __name__=="__main__":
     # update_velo(
     #     "/media/yuan/luna/data/OPV2Vt/meta/2021_08_16_22_26_54.json",
     # )
-    tmp(
-        "/home/yuan/data/OPV2V/temporal_dump",
-        "/home/yuan/data/cosense3d/opv2v_temporal",
-        "/home/yuan/data/cosense3d/opv2vt",
+    update_bev_map(
+        "/koko/OPV2V/temporal",
+        "/koko/cosense3d/opv2vt",
+        "/koko/cosense3d/opv2vt_bev",
         "train"
     )
-    tmp(
-        "/home/yuan/data/OPV2V/temporal_dump",
-        "/home/yuan/data/cosense3d/opv2v_temporal",
-        "/home/yuan/data/cosense3d/opv2vt",
-        "test"
-    )
+
