@@ -32,8 +32,8 @@ def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
         LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     )
     if load_bev_map:
-        pipeline_cpu['LoadBevTargetPoints'] = dict(num_points=3000)
-        inference_pipeline_cpu['LoadBevTargetPoints'] = dict(num_points=3000)
+        pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
+        inference_pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
 
     return dict(
         name='opv2v',
@@ -53,7 +53,6 @@ def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
         seq_len=seq_len,
         train_pipeline=pipeline_cpu,
         test_pipeline=pipeline_cpu,
-        load_bev_map=load_bev_map,
     )
 
 
@@ -62,5 +61,5 @@ seq4_vox04 = get_opv2v_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox01 = get_opv2v_cfg(4, [0.1, 0.1, 0.1])
 
 seq4_pillar04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 4], True)
-seq4_vox04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 0.4], True)
+seq4_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2], True)
 seq4_vox01_bevmap = get_opv2v_cfg(4, [0.1, 0.1, 0.1], True)

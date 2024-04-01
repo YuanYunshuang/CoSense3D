@@ -1,4 +1,5 @@
 import os, random, copy
+import glob
 from collections import OrderedDict
 
 import numpy as np
@@ -8,6 +9,7 @@ import cv2
 
 from cosense3d.utils.pclib import pose_to_transformation
 from cosense3d.utils.pcdio import point_cloud_from_path
+from cosense3d.utils.misc import load_json
 
 
 class LoadLidarPoints:
@@ -417,44 +419,94 @@ class LoadAnnotations:
 
 
 class LoadOPV2VBevMaps:
-    def __init__(self, keys, ego_only=True):
-        assert len(keys) > 0
+    def __init__(self, keys=None, use_global_map=True, ego_only=True, range=75):
         self.keys = keys
+        self.use_global_map = use_global_map
         self.ego_only = ego_only
+        self.range = range
+        self.map_res = 0.2
+        if self.use_global_map:
+            self.keys = ['bevmap', 'bevmap_coor']
+            map_path = "carla/assets/maps"
+            assets_path = "carla/assets"
+            map_files = glob.glob(os.path.join(map_path, '*.png'))
+            self.scene_maps = load_json(os.path.join(assets_path, 'scenario_town_map.json'))
+            self.map_bounds = load_json(os.path.join(assets_path, 'map_bounds.json'))
+            self.bevmaps = {}
+            for mf in map_files:
+                town = os.path.basename(mf).split('.')[0]
+                self.bevmaps[town] = cv2.imread(mf) / 255.
+        else:
+            assert keys is not None and len(keys) > 0
 
     def __call__(self, data_dict):
         path = os.path.join(data_dict['data_path'], data_dict['scenario'])
+        load_dict = {k: [] for k in self.keys}
+        ego_id = data_dict['sample_info']['meta']['ego_id']
 
-        if self.ego_only:
-            ai = data_dict['valid_agent_ids'][0]
-            load_dict = self.load_single(path, ai, data_dict['frame'])
-        else:
-            load_dict = {k: [] for k in self.keys}
-            agents = data_dict['valid_agent_ids']
-            for ai in agents:
-                out = self.load_single(path, ai, data_dict['frame'])
-                for k in self.keys:
-                    load_dict[k].append(out[k])
+        agents = data_dict['valid_agent_ids']
+        for ai in agents:
+            if self.ego_only and ego_id == ai:
+                out = self.load_single(path, ai, data_dict)
+            else:
+                out = {k: None for k in self.keys}
+            for k in self.keys:
+                load_dict[k].append(out[k])
+
         data_dict.update(load_dict)
         return data_dict
 
-    def load_single(self, path, ai, frame):
+    def load_single(self, path, ai, data_dict):
         out = {}
-        for k in self.keys:
-            filename = os.path.join(path, ai, f"{frame}_{k}.png")
-            bev_map = cv2.imread(filename)
-            bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
-            bev_map = np.array(bev_map, dtype=float) / 255.
-            bev_map[bev_map > 0] = 1
-            out[k] = bev_map
+        if self.use_global_map:
+            scenario = data_dict['scenario']
+            town = self.scene_maps[scenario]
+            lidar_pose = data_dict['sample_info']['agents'][ai]['lidar']['0']['pose']
+            bevmap = self.bevmaps[town]
+            bound = self.map_bounds[town]
+            offset_x = int((lidar_pose[0] - self.range - bound[0]) // self.map_res)
+            offset_y = int((lidar_pose[1] - self.range - bound[1]) // self.map_res)
+            size = int(self.range * 2 / self.map_res)
+            out['bevmap'] = bevmap[offset_x:offset_x+size, offset_y:offset_y+size]
+            out['bevmap_coor'] = [bound[0] + offset_x * self.map_res, bound[1] + offset_y * self.map_res]
+        else:
+            frame = data_dict['frame']
+            for k in self.keys:
+                filename = os.path.join(path, ai, f"{frame}_{k}.png")
+                bev_map = cv2.imread(filename)
+                bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
+                bev_map = np.array(bev_map, dtype=float) / 255.
+                bev_map[bev_map > 0] = 1
+                out[k] = bev_map
         return out
 
+    def crop_map_for_pose(self, pose):
 
-class LoadBevTargetPoints:
-    def __init__(self, num_points=3000):
+        return None
+
+
+class LoadSparseBevTargetPoints:
+    def __init__(self, num_points=3000, ego_only=False):
         self.num_points = num_points
+        self.ego_only = ego_only
 
     def __call__(self, data_dict):
+        bev_pts = []
+        agents = data_dict['sample_info']['agents']
+        ego_id = data_dict['sample_info']['meta']['ego_id']
+        for ai in data_dict['valid_agent_ids']:
+            if ai not in agents:
+                # previous agents might not in current frame when load sequential data
+                continue
+            if self.ego_only and ai != ego_id:
+                bev_pts.append(np.empty((0, 3)))
+            else:
+                pass
+
+    def generate_sparse_bev_pts(self, pcd):
         pass
+
+
+
 
 

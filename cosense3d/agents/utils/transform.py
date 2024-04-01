@@ -252,6 +252,43 @@ class DataOnlineProcessor:
         xyz_new = torch.cat([xyz_new[:, :3], - torch.ones_like(xyz_new[:, :1]), xyz_new[:, 3:]], dim=-1)
         data['points'] = torch.cat([lidar, xyz_new], dim=0)
 
+    @staticmethod
+    @torch.no_grad()
+    def generate_sparse_target_bev_points(data: dict, res=0.4, max_num_pts=5000):
+        bevmap = data['bevmap']
+        bevmap_coor = data['bevmap_coor']
+
+        if bevmap is not None:
+            sx, sy = bevmap.shape[:2]
+            points2d = data['points'][:, :2]
+            # TODO clip range
+            device = points2d.device
+
+            # sample random points
+            offsets = torch.randn((len(points2d), 5, 2), device=device) * 3
+            points2d = (points2d.reshape(-1, 1, 2) + offsets).reshape(-1, 2)
+            points2d = torch.unique(torch.floor(points2d / res).int(), dim=0) * res
+            points2d = points2d + torch.randn_like(points2d)
+
+            # transform points to global coordinates
+            transform = data['lidar_poses']
+            points3d = torch.cat([points2d,
+                                  torch.zeros_like(points2d[:, :1]),
+                                  torch.ones_like(points2d[:, :1])],
+                                 dim=-1)
+            points3d = transform @ points3d.T
+
+            xs = torch.floor((points3d[0] - bevmap_coor[0]) / res).int()
+            ys = torch.floor((points3d[1] - bevmap_coor[1]) / res).int()
+            xs = torch.clamp(xs, 0, sx - 1).long()
+            ys = torch.clamp(ys, 0, sy - 1).long()
+            road_mask = bevmap[xs, ys]
+            mask = road_mask[:, :2].any(dim=1)
+
+            points3d[2] = mask.float()
+            bev_pts = points3d[:3].T
+            data['bev_tgt_pts'] = bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
+
 
 
 

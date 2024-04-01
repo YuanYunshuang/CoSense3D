@@ -12,6 +12,7 @@ from cosense3d.agents.center_controller import CenterController
 from cosense3d.agents.core.train_runner import TrainRunner
 from cosense3d.agents.core.test_runner import TestRunner
 from cosense3d.agents.core.vis_runner import VisRunner
+from cosense3d.tools.path_cfgs import parse_paths
 
 
 def ddp_setup():
@@ -82,80 +83,6 @@ class AgentRunner:
             if self.dist:
                 from torch.distributed import destroy_process_group
                 destroy_process_group()
-
-
-def parse_opv2v_paths(cfgs):
-    import socket
-    path_map = {
-        "ISI": {
-            "data": "/home/yuan/data/OPV2V/temporal",
-            "meta": "/home/yuan/data/cosense3d/opv2vt"
-        },
-        "mars": {
-            "data": "/koko/OPV2V/temporal",
-            "meta": "/koko/cosense3d/opv2vt"
-        },
-        "ominotago": {
-            "data": "/koko/OPV2V/temporal",
-            "meta": "/koko/cosense3d/opv2vt"
-        },
-        "lavander": {
-            "data": "/koko/OPV2V/temporal",
-            "meta": "/koko/cosense3d/opv2vt"
-        },
-        "default": {
-            "data": "/data/OPV2Vt",
-            "meta": "/data/OPV2Vt/opv2vt"
-        }
-    }
-    name = socket.gethostname()
-    if name not in path_map:
-        name = "default"
-    cfgs['DATASET']['data_path'] = path_map[name]['data']
-    cfgs['DATASET']['meta_path'] = path_map[name]['meta']
-    cfgs['DATASET']['enable_split_sub_folder'] = True
-    return cfgs
-
-
-def parse_dairv2x_paths(cfgs):
-    import socket
-    path_map = {
-        "ISI": {
-            "data": "/home/yuan/data/DAIR-V2X",
-            "meta": "/home/yuan/data/DAIR-V2X/meta_with_pred"
-        },
-        "mars": {
-            "data": "/koko/DAIR-V2X",
-            "meta": "/media/yuan/luna/data/DairV2Xt/meta_with_pred"
-        },
-        "ominotago": {
-            "data": "/koko/yunshuang/DAIR-V2X",
-            "meta": "/koko/yunshuang/DAIR-V2X/meta_with_pred"
-        },
-        "lavander": {
-            "data": "/home/data/DAIR-V2X",
-            "meta": "/home/data/DAIR-V2X/meta_with_pred"
-        },
-        "default": {
-            "data": "/data/DairV2Xt",
-            "meta": "/data/DairV2Xt/meta_with_pred",
-        }
-    }
-    name = socket.gethostname()
-    if name not in path_map:
-        name = "default"
-    cfgs['DATASET']['data_path'] = path_map[name]['data']
-    cfgs['DATASET']['meta_path'] = path_map[name]['meta']
-    cfgs['DATASET']['enable_split_sub_folder'] = False
-    return cfgs
-
-
-def parse_paths(cfgs):
-    if 'opv2v' in cfgs['DATASET']['data_path'].lower():
-        cfgs = parse_opv2v_paths(cfgs)
-    elif 'dair' in cfgs['DATASET']['data_path'].lower():
-        cfgs = parse_dairv2x_paths(cfgs)
-    return cfgs
 
 
 if __name__ == "__main__":

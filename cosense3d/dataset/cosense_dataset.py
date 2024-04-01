@@ -1,3 +1,4 @@
+import glob
 import os
 import logging
 import time
@@ -100,9 +101,6 @@ class CosenseDataset(Dataset):
             scenario_dict = load_json(meta_file)
             # scenario_dict = {s: scenario_dict[s] for s in list(scenario_dict.keys())[:1]}
             self.meta_dict[scenario] = scenario_dict
-
-        # load raster maps
-
 
     def load_sample_info(self, item: int, prev_agents: Optional[List] = None, prev_item: Optional[int] = None) -> dict:
         """
