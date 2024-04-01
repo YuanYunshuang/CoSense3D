@@ -216,6 +216,7 @@ class LoadAnnotations:
 
     def _load_essential(self, data_dict):
         lidar_poses = []
+        vehicle_poses = []
         timestampes = []
         agents = data_dict['sample_info']['agents']
         ego_pose = agents[data_dict['sample_info']['meta']['ego_id']]['lidar']['0']['pose']
@@ -227,6 +228,7 @@ class LoadAnnotations:
             adict = agents[ai]
             lidar_pose = pose_to_transformation(adict['lidar']['0']['pose'])
             lidar_poses.append(lidar_pose)
+            vehicle_poses.append(adict['pose'])
             if adict['lidar']['0']['time'] is not None:
                 # dairv2x
                 timestampes.append(adict['lidar']['0']['time'] - self.time_offset)
@@ -239,6 +241,7 @@ class LoadAnnotations:
             'lidar_poses': lidar_poses,
             'ego_poses': ego_pose,
             'timestamp': timestampes,
+            'vehicle_poses': vehicle_poses
         })
 
         return data_dict

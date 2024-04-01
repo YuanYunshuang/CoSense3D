@@ -254,14 +254,14 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def generate_sparse_target_bev_points(data: dict, res=0.4, max_num_pts=5000):
+    def generate_sparse_target_bev_points(data: dict, res=0.4, range=50, max_num_pts=5000):
         bevmap = data['bevmap']
         bevmap_coor = data['bevmap_coor']
 
         if bevmap is not None:
             sx, sy = bevmap.shape[:2]
             points2d = data['points'][:, :2]
-            # TODO clip range
+            points2d = points2d[points2d.abs() <= range]
             device = points2d.device
 
             # sample random points
@@ -283,9 +283,12 @@ class DataOnlineProcessor:
             xs = torch.clamp(xs, 0, sx - 1).long()
             ys = torch.clamp(ys, 0, sy - 1).long()
             road_mask = bevmap[xs, ys]
-            mask = road_mask[:, :2].any(dim=1)
+            if data['vehicle_poses'][2] > 0.5:
+                mask = road_mask[:, :2].any(dim=1).float()
+            else:
+                mask = road_mask[:, 0]
 
-            points3d[2] = mask.float()
+            points3d[2] = mask
             bev_pts = points3d[:3].T
             data['bev_tgt_pts'] = bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
 
