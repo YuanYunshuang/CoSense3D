@@ -76,6 +76,12 @@ def apply_transform(data, transform, key):
         for i in range(len(data['img'])):
             data['extrinsics'][i] = data['extrinsics'][i] @ transform.inverse()
             data['lidar2img'][i] = data['intrinsics'][i] @ data['extrinsics'][i]
+    elif key == 'bev_tgt_pts' and key in data:
+        points = data['bev_tgt_pts'].clone()
+        points[:, 2] = 0
+        points = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
+        points = (transform @ points).T
+        data['bev_tgt_pts'][:, :2] = points[:, :2]
 
 
 def filter_range(data, lidar_range, key):
@@ -105,6 +111,44 @@ def filter_range_mask(points, lidar_range, eps=1e-4):
     lr = lidar_range.to(points.device)
     mask = (points[:, :3] > lr[:3].view(1, 3) + eps) & (points[:, :3] < lr[3:].view(1, 3) - eps)
     return mask.all(dim=-1)
+
+
+def generate_bev_tgt_pts(points, data, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
+    bevmap = data['bevmap']
+    bevmap_coor = data['bevmap_coor']
+    sx, sy = bevmap.shape[:2]
+    points2d = points[:, :2]
+    points2d = points2d[(points2d.abs() <= range).all(1)]
+    device = points2d.device
+
+    # sample random points
+    offsets = torch.randn((len(points2d), 5, 2), device=device) * 3
+    points2d = (points2d.reshape(-1, 1, 2) + offsets).reshape(-1, 2)
+    points2d = torch.unique(torch.floor(points2d / sam_res).int(), dim=0) * sam_res
+    if not discrete:
+        points2d = points2d + torch.randn_like(points2d)
+
+    # transform points to global coordinates
+    transform = data['lidar_poses']
+    points3d = torch.cat([points2d,
+                          torch.zeros_like(points2d[:, :1]),
+                          torch.ones_like(points2d[:, :1])],
+                         dim=-1)
+    points3d = transform @ points3d.T
+
+    xs = torch.floor((points3d[0] - bevmap_coor[0]) / map_res).int()
+    ys = torch.floor((points3d[1] - bevmap_coor[1]) / map_res).int()
+    xs = torch.clamp(xs, 0, sx - 1).long()
+    ys = torch.clamp(ys, 0, sy - 1).long()
+    road_mask = bevmap[xs, ys]
+    if data['vehicle_poses'][2] > 0.5:
+        mask = road_mask[:, :2].any(dim=1).float()
+    else:
+        mask = road_mask[:, 0]
+
+    bev_pts = torch.cat([points2d, mask.unsqueeze(1)], dim=1)
+    return bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
+
 
 
 class DataOnlineProcessor:
@@ -254,43 +298,27 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def generate_sparse_target_bev_points(data: dict, res=0.4, range=50, max_num_pts=5000):
+    def generate_sparse_target_bev_points(data: dict, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
         bevmap = data['bevmap']
-        bevmap_coor = data['bevmap_coor']
 
         if bevmap is not None:
-            sx, sy = bevmap.shape[:2]
-            points2d = data['points'][:, :2]
-            points2d = points2d[points2d.abs() <= range]
-            device = points2d.device
+            data['bev_tgt_pts'] = generate_bev_tgt_pts(
+                data['points'], data, sam_res, map_res, range, max_num_pts, discrete
+            )
 
-            # sample random points
-            offsets = torch.randn((len(points2d), 5, 2), device=device) * 3
-            points2d = (points2d.reshape(-1, 1, 2) + offsets).reshape(-1, 2)
-            points2d = torch.unique(torch.floor(points2d / res).int(), dim=0) * res
-            points2d = points2d + torch.randn_like(points2d)
+            # import matplotlib.pyplot as plt
+            # lidar = data['points'].cpu().numpy()
+            # pts = data['bev_tgt_pts'].cpu().numpy()
+            # pos = pts[:, 2] == 1
+            # neg = pts[:, 2] == 0
+            #
+            # fig = plt.figure(figsize=(16, 10))
+            # plt.plot(pts[pos, 0], pts[pos, 1], '.', c='r', markersize=1)
+            # plt.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
+            # plt.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
+            # plt.savefig("/home/yuan/Downloads/tmp.png")
+            # plt.close()
 
-            # transform points to global coordinates
-            transform = data['lidar_poses']
-            points3d = torch.cat([points2d,
-                                  torch.zeros_like(points2d[:, :1]),
-                                  torch.ones_like(points2d[:, :1])],
-                                 dim=-1)
-            points3d = transform @ points3d.T
-
-            xs = torch.floor((points3d[0] - bevmap_coor[0]) / res).int()
-            ys = torch.floor((points3d[1] - bevmap_coor[1]) / res).int()
-            xs = torch.clamp(xs, 0, sx - 1).long()
-            ys = torch.clamp(ys, 0, sy - 1).long()
-            road_mask = bevmap[xs, ys]
-            if data['vehicle_poses'][2] > 0.5:
-                mask = road_mask[:, :2].any(dim=1).float()
-            else:
-                mask = road_mask[:, 0]
-
-            points3d[2] = mask
-            bev_pts = points3d[:3].T
-            data['bev_tgt_pts'] = bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
 
 
 

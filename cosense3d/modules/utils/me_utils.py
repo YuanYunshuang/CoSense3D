@@ -8,8 +8,11 @@ from MinkowskiEngine.MinkowskiKernelGenerator import KernelGenerator
 def metric2indices(coor, voxel_size):
     """"Round towards floor"""
     indices = coor.clone()
-    indices[:, 1] = indices[:, 1] / voxel_size[0]
-    indices[:, 2] = indices[:, 2] / voxel_size[1]
+    if isinstance(voxel_size, float):
+        indices[:, 1:3] = indices[:, 1:3] / voxel_size
+    else:
+        indices[:, 1] = indices[:, 1] / voxel_size[0]
+        indices[:, 2] = indices[:, 2] / voxel_size[1]
     return torch.floor(indices).long()
 
 

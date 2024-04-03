@@ -5,6 +5,7 @@ from typing import List, Dict, Optional
 
 import torch
 from torch import nn
+import torch_scatter
 from scipy.optimize import linear_sum_assignment
 
 from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
@@ -15,10 +16,12 @@ from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
 from cosense3d.utils.pclib import rotate_points_along_z_torch
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
 from cosense3d.modules.utils.gaussian_utils import gaussian_2d, weighted_mahalanobis_dists
+from cosense3d.modules.utils.gevbev_utils import draw_sample_evis
+from cosense3d.modules.utils.me_utils import metric2indices, update_me_essentials
 from cosense3d.modules.utils.box_coder import build_box_coder
 from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
-from cosense3d.modules.utils.common import pad_r
+from cosense3d.modules.utils.common import pad_r, meshgrid
 from cosense3d.ops.utils import points_in_boxes_gpu
 from cosense3d.modules.losses import pred_to_conf_unc
 from cosense3d.utils.misc import PI
@@ -1073,6 +1076,240 @@ class BEVPointAssigner(BaseAssigner):
     def get_predictions(self, x, edl=True, activation='none'):
         conf, unc = pred_to_conf_unc(x, activation, edl)
         return conf, unc
+
+
+class BEVSemsegAssigner(BaseAssigner):
+    def __init__(self,
+                 data_info,
+                 stride,
+                 tgt_range=None,
+                 down_sample=False,
+                 annealing_step=None,
+                 ):
+        super().__init__()
+        update_me_essentials(self, data_info, stride)
+        self.tgt_range = tgt_range
+        self.downsample = down_sample
+        self.annealing_step = annealing_step
+
+    def pts_to_inds(self, pts):
+        """Calculate indices of samples in the bev map"""
+        ixy = metric2indices(pts[:, :3], self.res).long()
+        ixy[:, 1] -= self.offset_sz_x
+        ixy[:, 2] -= self.offset_sz_y
+        maskx = torch.logical_and(ixy[:, 1] >= 0, ixy[:, 1] < self.size_x)
+        masky = torch.logical_and(ixy[:, 2] >= 0, ixy[:, 2] < self.size_y)
+        mask = torch.logical_and(maskx, masky)
+        indices = ixy[mask]
+        return indices.T, mask
+
+    def get_obs_mask(self, inds, B):
+        obs_mask = torch.zeros((B, self.size_x, self.size_y), device=inds.device)
+        inds = inds.clone().T
+        inds[1] -= self.offset_sz_x
+        inds[2] -= self.offset_sz_y
+        obs_mask[inds[0], inds[1], inds[2]] = 1
+        return obs_mask.bool()
+
+    @staticmethod
+    def down_sample_pred_pts(ctr_pts):
+        keep = torch.rand_like(ctr_pts['coor'][:, 0]) > 0.5
+        for k in ctr_pts.keys():
+            ctr_pts[k] = ctr_pts[k][keep]
+
+        return ctr_pts
+
+    @torch.no_grad()
+    def downsample_tgt_pts(self, tgt_label, max_sam):
+        selected = torch.ones_like(tgt_label.bool())
+        pos = tgt_label == 1
+        if pos.sum() > max_sam:
+            mask = torch.rand_like(tgt_label[pos].float()) < max_sam / pos.sum()
+            selected[pos] = mask
+
+        neg = tgt_label == 0
+        if neg.sum() > max_sam:
+            mask = torch.rand_like(tgt_label[neg].float()) < max_sam / neg.sum()
+            selected[neg] = mask
+        return selected
+
+    def filter_range(self, ctr_pts, samples):
+        mask = (ctr_pts['ctr'].abs() < self.tgt_range).all(1)
+        for k in ctr_pts.keys():
+            ctr_pts[k] = ctr_pts[k][mask]
+
+        mask = (samples[:, 1:3].abs() < self.tgt_range).all(1)
+        samples = samples[mask]
+        return ctr_pts, samples
+
+    def assign(self, ctr_pts, samples, B, gt_boxes=None, **kwargs):
+        raise NotImplementedError
+
+    def get_predictions(self, data_dict, B, edl=True, activation='none', **kwargs):
+        raise NotImplementedError
+
+
+class ContiBEVAssigner(BEVSemsegAssigner):
+    def __init__(self,
+                 distr_r=2.0,
+                 var0=0.1,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.distr_r = distr_r
+        self.var0 = var0
+        steps = int(self.distr_r / self.res[0]) * 2 + 1
+        offset = meshgrid(-self.distr_r, self.distr_r, 2,
+                          n_steps=steps).cuda().view(-1, 2)
+        self.nbrs = offset[torch.norm(offset, dim=1) < 2].view(1, -1, 2)
+
+    def sample_dynamic_tgt_pts(self, ctr_pts, gt_boxes, B):
+        tgt_pts = ctr_pts['ctr'].clone()
+        tgt_pts[:, :2] = tgt_pts[:, :2] + torch.randn_like(tgt_pts[:, :2]) * 3
+        tgt_pts = torch.cat([ctr_pts['coor'][:, :1], tgt_pts], dim=-1)
+        obs_mask = self.get_obs_mask(ctr_pts['coor'], B)
+        inds, mask = self.pts_to_inds(tgt_pts)
+        tgt_pts = tgt_pts[mask]
+        mask = obs_mask[inds[0], inds[1], inds[2]]
+        tgt_pts = tgt_pts[mask]
+        inds = inds.T[mask]
+
+        boxes = gt_boxes.clone()
+        boxes[:, 3] = 0
+        pts = pad_r(tgt_pts)
+        _, box_idx_of_pts = points_in_boxes_gpu(
+            pts, boxes, batch_size=B
+        )
+        boxes[:, 4:6] *= 4
+        _, box_idx_of_pts2 = points_in_boxes_gpu(
+            pts, boxes, batch_size=B
+        )
+        tgt_label = - (box_idx_of_pts2 >= 0).int()
+        tgt_label[box_idx_of_pts >= 0] = 1
+
+        n_sam = len(gt_boxes) * 50
+        mask = self.downsample_tgt_pts(tgt_label, max_sam=n_sam)
+        tgt_label = tgt_label > 0
+        return tgt_pts[mask], tgt_label[mask], inds[mask].T
+
+    def assign(self, ctr_pts, samples, B, gt_boxes=None, **kwargs):
+        lr = self.lidar_range
+        if self.tgt_range is not None:
+            ctr_pts, samples = self.filter_range(ctr_pts, samples)
+            lr = [-self.tgt_range, -self.tgt_range, -3, self.tgt_range, self.tgt_range, 1]
+        if self.downsample:
+            ctr_pts = self.down_sample_pred_pts(ctr_pts)
+
+        tgt = {}
+        if 'reg_static' in ctr_pts:
+            tgt['evi_static'] = draw_sample_evis(
+                ctr_pts, samples, 'static',self.res[0], self.distr_r, lr, B, self.var0)
+            tgt['lbl_static'] = samples[:, -1]
+        if 'reg_dynamic' in ctr_pts:
+            assert gt_boxes is not None
+            tgt_pts, tgt_label, inds = self.sample_dynamic_tgt_pts(ctr_pts, gt_boxes, B)
+            tgt['evi_dynamic'] = draw_sample_evis(
+                ctr_pts, tgt_pts, 'dynamic', self.res[0], self.distr_r, lr, B, self.var0)
+            tgt['lbl_dynamic'] = tgt_label
+
+        return tgt
+
+    def get_predictions(self, data_dict, B, **kwargs):
+        reg = data_dict['reg'].relu()
+        reg_evi = reg[:, :2]
+        reg_var = reg[:, 2:].view(-1, 2, 2)
+        ctr = data_dict['ctr']
+        coor = data_dict['coor']
+
+        nbrs = self.nbrs.to(reg_evi.device)
+        dists = torch.zeros_like(ctr.view(-1, 1, 2)) + nbrs
+        probs_weighted = weighted_mahalanobis_dists(reg_evi, reg_var, dists, self.var0)
+        voxel_new = ctr.view(-1, 1, 2) + nbrs
+        # convert metric voxel points to map indices
+        x = (torch.floor(voxel_new[..., 0] / self.res[0]) - self.offset_sz_x).long()
+        y = (torch.floor(voxel_new[..., 1] / self.res[1]) - self.offset_sz_y).long()
+        batch_indices = (torch.ones_like(probs_weighted[:, :, 0]) * coor[:, :1]).long()
+        mask = (x >= 0) & (x < self.size_x) & (y >= 0) & (y < self.size_y)
+        x, y = x[mask], y[mask]
+        batch_indices = batch_indices[mask]
+
+        # copy sparse probs to the dense evidence map
+        indices = batch_indices * self.size_x * self.size_y + x * self.size_y + y
+        batch_size = coor[:, 0].max().int().item() + 1
+        probs_weighted = probs_weighted[mask].view(-1, 2)
+        evidence = torch.zeros((batch_size, self.size_x, self.size_y, 2),
+                               device=probs_weighted.device).view(-1, 2)
+        torch_scatter.scatter(probs_weighted, indices,
+                              dim=0, out=evidence, reduce='sum')
+        evidence = evidence.view(batch_size, self.size_x, self.size_y, 2)
+
+        # create observation mask
+        obs_mask = torch.zeros_like(evidence[..., 0]).view(-1)
+        obs = indices.unique().long()
+        obs_mask[obs] = 1
+        obs_mask = obs_mask.view(batch_size, self.size_x, self.size_y).bool()
+        conf, unc = pred_to_conf_unc(evidence)
+        return conf, unc, obs_mask
+
+
+class DiscreteBEVAssigner(BaseAssigner):
+    def __init__(self,
+                 data_info,
+                 stride,
+                 down_sample=False,
+                 annealing_step=None,
+                 ):
+        super().__init__()
+        update_me_essentials(self, data_info, stride)
+        self.down_sample = down_sample
+        self.annealing_step = annealing_step
+
+    def pts_to_inds(self, samples):
+        """Calculate indices of samples in the bev map"""
+        ixy = metric2indices(samples[:, :3], self.res).long()
+        ixy[:, 1] -= self.offset_sz_x
+        ixy[:, 2] -= self.offset_sz_y
+        maskx = torch.logical_and(ixy[:, 1] >= 0, ixy[:, 1] < self.size_x)
+        masky = torch.logical_and(ixy[:, 2] >= 0, ixy[:, 2] < self.size_y)
+        mask = torch.logical_and(maskx, masky)
+        indices = ixy[mask]
+        return indices.T, mask
+
+    def get_obs_mask(self, inds, B):
+        obs_mask = torch.zeros((B, self.size_x, self.size_y), device=inds.device)
+        inds = inds.T
+        inds[1] -= self.offset_sz_x
+        inds[2] -= self.offset_sz_y
+        obs_mask[inds[0], inds[1], inds[2]] = 1
+        return obs_mask.bool()
+
+
+    def assign(self, ctr_pts, samples, B, gt_boxes=None, **kwargs):
+        bevmap = self.get_predictions(ctr_pts, B)
+        inds, mask = self.pts_to_inds(samples)
+        labels = samples[mask][:, -1]
+        preds = bevmap[inds[0], inds[1], inds[2]]
+
+        # import matplotlib.pyplot as plt
+        # img = pred_to_conf_unc(bevmap)[0][..., 1].detach().cpu().numpy()
+        # plt.imshow(img[0].T)
+        # plt.show()
+        # plt.close()
+        return preds, labels
+
+    def get_predictions(self, data_dict, B, edl=True, activation='none', **kwargs):
+        reg = data_dict['reg']
+        inds = data_dict['coor']
+        reg_evi = reg.relu()
+
+        bevmap = torch.zeros((B, self.size_x, self.size_y, reg_evi.shape[-1]),
+                             device=reg_evi.device)
+        inds = inds.T
+        inds[1] -= self.offset_sz_x
+        inds[2] -= self.offset_sz_y
+        # obs_mask = evidence[..., 0].bool()
+        # obs_mask[inds[0], inds[1], inds[2]] = True
+        bevmap[inds[0], inds[1], inds[2]] = reg_evi
+        return bevmap
 
 
 class RoIBox3DAssigner(BaseAssigner):

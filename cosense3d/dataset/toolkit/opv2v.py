@@ -288,14 +288,15 @@ def update_local_boxes3d(fdict, objects_dict, ref_pose, order, data_dir, cav_id)
             object_bbx[0, :6].tolist() +
             [0, 0, object_bbx[0, 6]]
         )
-        if 'velo' in object_content:
+        if 'velo' in object_content and object_content['velo'] is not None:
             velos.append(object_content['velo'].tolist())
+
     cs.update_agent(fdict, cav_id, gt_boxes=boxes_local)
     if len(velos) == len(boxes_local):
         cs.update_agent(fdict, cav_id, velos=velos)
 
     # get visibility of local boxes
-    lidar = load_pcd(os.path.join(data_dir, fdict['agents'][cav_id]['lidar'][0]['filename']))['xyz']
+    lidar = load_pcd(os.path.join(data_dir, fdict['agents'][cav_id]['lidar']['0']['filename']))['xyz']
     if len(boxes_local) > 0:
         boxes = np.array(boxes_local)[:, [2, 3, 4, 5, 6, 7, 10]]
         res = points_in_boxes_cpu(lidar, boxes)
@@ -400,7 +401,7 @@ def update_2d_bboxes(fdict, cav_id, lidar_pose, data_dir):
             cam_params['num_pts'] = []
 
 
-def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
+def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False, pcd_ext='pcd'):
     if isSim:
         order = 'lwh'
     else:
@@ -450,9 +451,9 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
 
                     # get cav lidar pose in cosense format
                     cs.update_agent(fdict, cav_id, 'cav')
-                    cs.update_agent_lidar(fdict, cav_id, 0,
+                    cs.update_agent_lidar(fdict, cav_id, '0',
                                           lidar_pose=opv2v_pose_to_cosense(params['lidar_pose']),
-                                          lidar_file=os.path.join(s, cav_id, f'{f}.pcd'))
+                                          lidar_file=os.path.join(s, cav_id, f'{f}.{pcd_ext}'))
 
                     objects_dict = params['vehicles']
                     output_dict = {}
@@ -488,9 +489,10 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                 unique_indices = \
                     [object_id_stack.index(x) for x in set(object_id_stack)]
                 object_stack = np.vstack(object_stack)
-                object_velo_stack = np.vstack(object_velo_stack)
                 object_stack = object_stack[unique_indices]
-                object_velo_stack = object_velo_stack[unique_indices]
+                if len(object_velo_stack) == len(object_stack):
+                    object_velo_stack = np.vstack(object_velo_stack)
+                    object_velo_stack = object_velo_stack[unique_indices]
                 if order == 'hwl':
                     object_stack = object_stack[:, [0, 1, 2, 5, 4, 3, 6]]
 
@@ -499,12 +501,18 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False):
                 cosense_bbx_center[:, 2:8] = object_stack[:, :6]
                 cosense_bbx_center[:, 10] = object_stack[:, 6]
                 cs.update_frame_bbx(fdict, cosense_bbx_center.tolist())
-                fdict['agents'].pop(0)  # remove template agent
+                fdict['agents'].pop('0')  # remove template agent
 
                 fdict['meta']['ego_id'] = ego_id
                 fdict['meta']['ego_lidar_pose'] = opv2v_pose_to_cosense(ego_lidar_pose)
                 if len(object_velo_stack) == len(object_stack):
                     fdict['meta']['bbx_velo_global'] = object_velo_stack.tolist()
+
+                boxes_num_pts = {int(i): 0 for i in cosense_bbx_center[:, 0]}
+                for adict in fdict['agents'].values():
+                    for box, num_pts in zip(adict['gt_boxes'], adict['num_pts']):
+                        boxes_num_pts[int(box[0])] += num_pts
+                fdict['meta']['num_pts'] = [boxes_num_pts[int(i)] for i in cosense_bbx_center[:, 0]]
 
                 sdict[f] = fdict
 
@@ -570,11 +578,11 @@ def update_global_bboxes_num_pts(data_dir, meta_path):
         save_json(meta, jf.replace('opv2v', 'opv2v_full_'))
 
 
-
 if __name__=="__main__":
     opv2v_to_cosense(
-        "/koko/OPV2V",
-        "/koko/cosense3d/tmp",
-        isSim=True
+        "/home/yuan/data/OPV2Va",
+        "/home/yuan/data/OPV2Va/meta",
+        isSim=True,
+        pcd_ext='bin'
     )
-    update_global_bboxes_num_pts("/koko/OPV2V", "/koko/cosense3d/opv2v")
+

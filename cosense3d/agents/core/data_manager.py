@@ -8,6 +8,7 @@ import torch
 import torch_scatter
 
 from cosense3d.ops.utils import points_in_boxes_gpu
+from cosense3d.agents.utils.transform import generate_bev_tgt_pts
 
 
 class DataManager:
@@ -60,6 +61,13 @@ class DataManager:
                 mask = num_pts > 3
                 cav.data['local_bboxes_3d'] = local_boxes[mask]
                 cav.data['local_labels_3d'] = cav.data['local_labels_3d'][mask]
+
+    def sample_global_bev_tgt_pts(self, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
+        for cavs in self.cav_manager.cavs:
+            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
+            assert cavs[0].is_ego
+            bev_pts = generate_bev_tgt_pts(points, cavs[0].data, sam_res, map_res, range, max_num_pts, discrete)
+            cavs[0].data['global_bev_tgt_pts'] = bev_pts
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []

@@ -11,7 +11,7 @@ class BEVSemsegCAV(BaseCAV):
         super().__init__(*args, **kwargs)
         self.dataset = kwargs.get('dataset', None)
         self.lidar_range = torch.nn.Parameter(self.lidar_range)
-        self.prepare_data_keys = ['points', 'annos_local', 'annos_global']
+        self.prepare_data_keys = ['points', 'annos_local', 'annos_global', 'bev_tgt_pts']
         self.data['memory'] = None
         self.aug_transform = None
         self.T_aug2g = None
@@ -67,9 +67,12 @@ class BEVSemsegCAV(BaseCAV):
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
         # self.vis_data('transformed', 4)
 
+    def get_request_cpm(self):
+        return {'lidar_pose': self.lidar_pose}
+
     def get_response_cpm(self):
         cpm = {}
-        for k in ['temp_fusion_feat']:
+        for k in ['bev_feat']:
             if k in self.data:
                 cpm[k] = self.data[k]
         return cpm
@@ -81,6 +84,7 @@ class BEVSemsegCAV(BaseCAV):
             grad_mode = 'no_grad'
         tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
         tasks[grad_mode].append((self.id, '02:backbone_neck', {}))
+        tasks[grad_mode].append((self.id, '03:semseg_head_local', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
@@ -89,14 +93,24 @@ class BEVSemsegCAV(BaseCAV):
 
     def forward_head(self, tasks, training_mode):
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '12:det_head', {}))
+        #     tasks['with_grad'].append((self.id, '12:det_head', {}))
             tasks['with_grad'].append((self.id, '13:semseg_head', {}))
         return tasks
 
     def loss(self, tasks):
         if self.is_ego:
-            tasks['loss'].append((self.id, '21:det_head', {}))
-            tasks['loss'].append((self.id, '22:semseg_head', {}))
+            tasks['loss'].append((self.id, '21:semseg_head_local', {}))
+            # tasks['loss'].append((self.id, '22:det_head', {}))
+            tasks['loss'].append((self.id, '23:semseg_head', {}))
         return tasks
 
 
+GevBEV = BEVSemsegCAV
+
+
+class EviBEV(BEVSemsegCAV):
+    def prepare_data(self):
+        DOP.adaptive_free_space_augmentation(self.data)
+        DOP.generate_sparse_target_bev_points(self.data, discrete=True)
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)

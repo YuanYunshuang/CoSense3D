@@ -23,10 +23,14 @@ TEST:
 CONTROLLER:
   num_loss_frame: 1
   data_manager: 'pycfg.base.opv2v.data_manager'
-  shared_modules: 'pycfg.nets.gevBEV.shared_modules_gevbev_opv2v'
+  shared_modules: 'pycfg.nets.gevBEV.shared_modules_evibev_opv2v'
   cav_manager:
-    prototype: gevBEV_collection.GevBEV
+    prototype: gevBEV_collection.EviBEV
     dataset: opv2v
+    memory_len: 4
+    memory_emb_dims: 256
+    memory_num_propagated: 256
+    ref_pts_dim: 3
     all_grad: false
 
 VISUALIZATION:

@@ -3,8 +3,8 @@ def parse_opv2v_paths(cfgs):
     import socket
     path_map = {
         "ISI": {
-            "data": "/home/yuan/data/OPV2V/temporal",
-            "meta": "/home/yuan/data/cosense3d/opv2vt"
+            "data": "/home/yuan/data/OPV2Va",
+            "meta": "/home/yuan/data/OPV2Va/meta"
         },
         "mars": {
             "data": "/koko/OPV2V/temporal",

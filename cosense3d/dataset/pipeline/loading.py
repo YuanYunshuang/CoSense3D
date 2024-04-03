@@ -462,16 +462,7 @@ class LoadOPV2VBevMaps:
     def load_single(self, path, ai, data_dict):
         out = {}
         if self.use_global_map:
-            scenario = data_dict['scenario']
-            town = self.scene_maps[scenario]
-            lidar_pose = data_dict['sample_info']['agents'][ai]['lidar']['0']['pose']
-            bevmap = self.bevmaps[town]
-            bound = self.map_bounds[town]
-            offset_x = int((lidar_pose[0] - self.range - bound[0]) // self.map_res)
-            offset_y = int((lidar_pose[1] - self.range - bound[1]) // self.map_res)
-            size = int(self.range * 2 / self.map_res)
-            out['bevmap'] = bevmap[offset_x:offset_x+size, offset_y:offset_y+size]
-            out['bevmap_coor'] = [bound[0] + offset_x * self.map_res, bound[1] + offset_y * self.map_res]
+            out['bevmap'], out['bevmap_coor'] = self.crop_map_for_pose(data_dict, ai)
         else:
             frame = data_dict['frame']
             for k in self.keys:
@@ -483,9 +474,24 @@ class LoadOPV2VBevMaps:
                 out[k] = bev_map
         return out
 
-    def crop_map_for_pose(self, pose):
+    def crop_map_for_pose(self, data_dict, ai):
+        scenario = data_dict['scenario']
+        town = self.scene_maps[scenario]
+        lidar_pose = data_dict['sample_info']['agents'][ai]['lidar']['0']['pose']
+        bevmap = self.bevmaps[town]
+        bound = self.map_bounds[town]
+        offset_x = int((lidar_pose[0] - self.range - bound[0]) // self.map_res)
+        offset_y = int((lidar_pose[1] - self.range - bound[1]) // self.map_res)
+        size = int(self.range * 2 / self.map_res)
 
-        return None
+        xmin = max(offset_x, 0)
+        xmax = min(offset_x + size, bevmap.shape[0] - 1)
+        ymin = max(offset_y, 0)
+        ymax = min(offset_y + size, bevmap.shape[1] - 1)
+        bevmap_crop = bevmap[xmin:xmax, ymin:ymax]
+        bevmap_coor = [bound[0] + xmin * self.map_res, bound[1] + ymin * self.map_res]
+
+        return bevmap_crop, bevmap_coor
 
 
 class LoadSparseBevTargetPoints:

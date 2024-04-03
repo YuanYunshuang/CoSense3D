@@ -1,15 +1,20 @@
+import math
 from collections import OrderedDict
 
 
 def get_minkunet_cfg(gather_keys, scatter_keys, voxel_size, point_cloud_range,
-                     in_dim=4, dim=3, out_stride=2, height_compression=True,
+                     in_dim=4, dim=3, out_stride=2, height_compression=[2, 8],
                      cache_strides=[2, 8]):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
-    if height_compression:
-        hc = OrderedDict(
-            p2=dict(channels=[128, 256, 384], steps=[5, 2]),
-            p8=dict(channels=[128, 256], steps=[2])
-        )
+    if len(height_compression) > 0:
+        hc = OrderedDict()
+        height = (point_cloud_range[5] - point_cloud_range[2]) / voxel_size[2]
+        for stride in height_compression:
+            downx = math.ceil(height / stride)
+            if downx > 4:
+                hc[f'p{stride}'] = dict(channels=[128, 256, 384], steps=[5, downx // 5])
+            else:
+                hc[f'p{stride}'] = dict(channels=[128, 256], steps=[downx])
     else:
         hc = None
     return dict(

@@ -15,17 +15,19 @@ class NaiveFusion(BaseModule):
 
     def forward(self, ego_feats, coop_feats=None, **kwargs):
         fused_feat = []
+        fuse_key = self.gather_keys[0]
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
             coor = [ego_feat[f'p{self.stride}']['coor']]
             feat = [ego_feat[f'p{self.stride}']['feat']]
             ctr = [ego_feat[f'p{self.stride}']['ctr']]
             # fuse coop to ego
             for cpfeat in coop_feat.values():
-                if 'pts_feat' not in cpfeat:
+                if fuse_key not in cpfeat:
                     continue
-                coor.append(cpfeat['pts_feat'][f'p{self.stride}']['coor'])
-                feat.append(cpfeat['pts_feat'][f'p{self.stride}']['feat'])
-                ctr.append(cpfeat['pts_feat'][f'p{self.stride}']['ctr'])
+                cpm = cpfeat[fuse_key][f'p{self.stride}']
+                coor.append(cpm['coor'])
+                feat.append(cpm['feat'])
+                ctr.append(cpm['ctr'])
             coor = torch.cat(coor, dim=0)
             feat = torch.cat(feat, dim=0)
             ctr = torch.cat(ctr, dim=0)

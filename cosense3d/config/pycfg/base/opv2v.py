@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
-point_cloud_range = [-144, -41.6, -3.0, 144, 41.6, 1.0]
+point_cloud_range = [-144, -51.2, -3.0, 144, 51.2, 1.0]
+point_cloud_range_bev = [-51.2, -51.2, -3.0, 51.2, 51.2, 1.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
 global_ref_time = 0.05
 
@@ -12,8 +13,11 @@ data_manager = dict(
             flip='xy',
             scale_ratio_range=[0.95, 1.05],
         ),
-        pre_process=['remove_local_empty_boxes',
-                     'remove_global_empty_boxes']
+        pre_process=OrderedDict(
+            remove_local_empty_boxes=dict(),
+            remove_global_empty_boxes=dict(),
+            sample_global_bev_tgt_pts=dict(sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False)
+        )
     ),
     test=dict(
         aug=dict()

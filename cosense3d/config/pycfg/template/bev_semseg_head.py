@@ -1,0 +1,30 @@
+from cosense3d.config import add_cfg_keys
+
+@add_cfg_keys
+def get_bev_semseg_head_cfg(
+        semseg_head_type,
+        data_info,
+        stride,
+        tgt_assigner_type
+):
+    return dict(
+            type=semseg_head_type,
+            gather_keys=['bev_feat'],
+            scatter_keys=['bev_semseg_local'],
+            gt_keys=['bev_tgt_pts', 'local_bboxes_3d'],
+            data_info=data_info,
+            in_dim=256,
+            stride=stride,
+            # dynamic_head=False,
+            target_assigner=dict(
+                type=tgt_assigner_type,
+                down_sample=False,
+                data_info=data_info,
+                stride=stride,
+                tgt_range=51.2
+            ),
+            loss_cls=dict(type='EDLLoss', activation='relu', annealing_step=20,
+                          n_cls=2, loss_weight=1.0),
+        )
+
+

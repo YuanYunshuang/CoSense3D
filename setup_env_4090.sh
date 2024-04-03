@@ -19,7 +19,7 @@ conda install -c conda-forge libstdcxx-ng libffi -y
 sudo apt install build-essential python3-dev libopenblas-dev -y
 
 echo -e "${GREEN}[INFO] Installing pytorch essentials...${NC}"
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 echo - e "${GREEN}[INFO] Installing MinkowskiEngine...${NC}"
 # for old version of pip
