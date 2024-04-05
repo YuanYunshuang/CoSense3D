@@ -7,8 +7,8 @@ def parse_opv2v_paths(cfgs):
             "meta": "/home/yuan/data/OPV2Va/meta"
         },
         "mars": {
-            "data": "/koko/OPV2V/temporal",
-            "meta": "/koko/cosense3d/opv2vt"
+            "data": "/media/yuan/luna/data/OPV2Va",
+            "meta": "/media/yuan/luna/data/OPV2Va/meta"
         },
         "ominotago": {
             "data": "/koko/OPV2V/temporal",
