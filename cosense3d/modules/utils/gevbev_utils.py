@@ -65,6 +65,7 @@ def draw_sample_evis(ctr_pts: dict, samples: torch.Tensor, tag: str,
     ctridx = coor.clone().T
     ctridx[1] -= round(lr[0] / res)
     ctridx[2] -= round(lr[1] / res)
+    ctridx = ctridx.long()
     centers_map[ctridx[0], ctridx[1], ctridx[2]] = torch.arange(ctridx.shape[1],
                                                                 device=ctridx.device)
 

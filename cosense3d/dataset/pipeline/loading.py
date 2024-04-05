@@ -430,8 +430,8 @@ class LoadOPV2VBevMaps:
         self.map_res = 0.2
         if self.use_global_map:
             self.keys = ['bevmap', 'bevmap_coor']
-            map_path = "carla/assets/maps"
-            assets_path = "carla/assets"
+            assets_path = f"{os.path.dirname(__file__)}/../../carla/assets"
+            map_path = f"{assets_path}/maps"
             map_files = glob.glob(os.path.join(map_path, '*.png'))
             self.scene_maps = load_json(os.path.join(assets_path, 'scenario_town_map.json'))
             self.map_bounds = load_json(os.path.join(assets_path, 'map_bounds.json'))

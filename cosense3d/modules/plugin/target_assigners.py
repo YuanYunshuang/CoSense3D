@@ -1105,7 +1105,7 @@ class BEVSemsegAssigner(BaseAssigner):
 
     def get_obs_mask(self, inds, B):
         obs_mask = torch.zeros((B, self.size_x, self.size_y), device=inds.device)
-        inds = inds.clone().T
+        inds = inds.clone().long().T
         inds[1] -= self.offset_sz_x
         inds[2] -= self.offset_sz_y
         obs_mask[inds[0], inds[1], inds[2]] = 1
