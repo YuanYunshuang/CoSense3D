@@ -41,8 +41,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -77,6 +83,18 @@
 
 
 <div class="viewcode-block" id="weighted_mahalanobis_dists"><a class="viewcode-back" href="../../../../cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.weighted_mahalanobis_dists">[docs]</a><span class="k">def</span> <span class="nf">weighted_mahalanobis_dists</span><span class="p">(</span><span class="nb">vars</span><span class="p">,</span> <span class="n">dists</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the squared mahalanobis distances.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigmas: (N, 2), variances of Gaussian distribution</span>
+<span class="sd">    dists: (N, 2), distances to gaussian center at each axis</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Mdists: (N), squared mahalanobis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">vars</span> <span class="o">=</span> <span class="nb">vars</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="nb">vars</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="nb">vars</span><span class="p">,</span> <span class="nb">vars</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -91,6 +109,26 @@
         <span class="n">probs</span> <span class="o">=</span> <span class="n">probs</span> <span class="o">*</span> <span class="n">weights</span>
 
     <span class="k">return</span> <span class="n">probs</span></div>
+
+
+<div class="viewcode-block" id="mahalanobis_dists_2d"><a class="viewcode-back" href="../../../../cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.mahalanobis_dists_2d">[docs]</a><span class="k">def</span> <span class="nf">mahalanobis_dists_2d</span><span class="p">(</span><span class="n">sigmas</span><span class="p">,</span> <span class="n">dists</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the squared mahalanobis distances.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigmas: (N, 2), standard deviation of Gaussian distribution</span>
+<span class="sd">    dists: (N, 2), distances to gaussian center</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Mdists: (N), squared mahalanobis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="n">sigmas</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">covs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag_embed</span><span class="p">(</span><span class="nb">vars</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">unbroadcasted_scale_tril</span> <span class="o">=</span> <span class="n">covs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># 1 1 2 2</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">_batch_mahalanobis</span><span class="p">(</span><span class="n">unbroadcasted_scale_tril</span><span class="p">,</span> <span class="n">dists</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>  <span class="c1"># N M</span>
+    <span class="k">return</span> <span class="n">M</span></div>
 
 
 <div class="viewcode-block" id="center_to_img_coor"><a class="viewcode-back" href="../../../../cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.center_to_img_coor">[docs]</a><span class="k">def</span> <span class="nf">center_to_img_coor</span><span class="p">(</span><span class="n">center_in</span><span class="p">,</span> <span class="n">lidar_range</span><span class="p">,</span> <span class="n">pixel_sz</span><span class="p">):</span>
@@ -216,7 +254,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

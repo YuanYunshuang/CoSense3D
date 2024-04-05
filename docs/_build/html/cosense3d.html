@@ -48,7 +48,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">cosense3d package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
@@ -125,7 +125,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html">cosense3d.agents.utils package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d-agents-utils-deco-module">cosense3d.agents.utils.deco module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.deco">cosense3d.agents.utils.deco module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.transform">cosense3d.agents.utils.transform module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils">Module contents</a></li>
 </ul>
@@ -310,8 +310,8 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.box_stamper">cosense3d.modules.plugin.box_stamper module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.cobevt">cosense3d.modules.plugin.cobevt module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.downsample_conv">cosense3d.modules.plugin.downsample_conv module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.flash_attn">cosense3d.modules.plugin.flash_attn module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d-modules-plugin-flash-attn-new-module">cosense3d.modules.plugin.flash_attn_new module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d-modules-plugin-flash-attn-module">cosense3d.modules.plugin.flash_attn module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.flash_attn_new">cosense3d.modules.plugin.flash_attn_new module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.fpn">cosense3d.modules.plugin.fpn module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.gevbev_decoder">cosense3d.modules.plugin.gevbev_decoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.mink_spconv">cosense3d.modules.plugin.mink_spconv module</a></li>
@@ -350,7 +350,7 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils.nbr_attn">cosense3d.modules.utils.nbr_attn module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils.norm">cosense3d.modules.utils.norm module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils.positional_encoding">cosense3d.modules.utils.positional_encoding module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils.test_flash_attn">cosense3d.modules.utils.test_flash_attn module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d-modules-utils-test-flash-attn-module">cosense3d.modules.utils.test_flash_attn module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils">Module contents</a></li>
 </ul>
 </li>
@@ -442,11 +442,6 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.ThreeNN.forward"><code class="docutils literal notranslate"><span class="pre">ThreeNN.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.ball_query"><code class="docutils literal notranslate"><span class="pre">ball_query()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.furthest_point_sample"><code class="docutils literal notranslate"><span class="pre">furthest_point_sample()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.grouping_operation"><code class="docutils literal notranslate"><span class="pre">grouping_operation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.three_interpolate"><code class="docutils literal notranslate"><span class="pre">three_interpolate()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.pointnet2_utils.three_nn"><code class="docutils literal notranslate"><span class="pre">three_nn()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.ops.html#cosense3d-ops-setup-module">cosense3d.ops.setup module</a></li>
@@ -466,9 +461,6 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.sparse_ops.ScalarAttention.forward"><code class="docutils literal notranslate"><span class="pre">ScalarAttention.forward()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.sparse_ops.dot_product_cuda"><code class="docutils literal notranslate"><span class="pre">dot_product_cuda()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.sparse_ops.index_pooling_cuda"><code class="docutils literal notranslate"><span class="pre">index_pooling_cuda()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.ops.html#cosense3d.ops.sparse_ops.scalar_attention_cuda"><code class="docutils literal notranslate"><span class="pre">scalar_attention_cuda()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.ops.html#module-cosense3d.ops.utils">cosense3d.ops.utils module</a><ul>

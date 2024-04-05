@@ -48,7 +48,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
@@ -113,7 +113,12 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadMultiViewImg"><code class="docutils literal notranslate"><span class="pre">LoadMultiViewImg</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps"><code class="docutils literal notranslate"><span class="pre">LoadOPV2VBevMaps</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps.crop_map_for_pose"><code class="docutils literal notranslate"><span class="pre">LoadOPV2VBevMaps.crop_map_for_pose()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps.load_single"><code class="docutils literal notranslate"><span class="pre">LoadOPV2VBevMaps.load_single()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadSparseBevTargetPoints"><code class="docutils literal notranslate"><span class="pre">LoadSparseBevTargetPoints</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadSparseBevTargetPoints.generate_sparse_bev_pts"><code class="docutils literal notranslate"><span class="pre">LoadSparseBevTargetPoints.generate_sparse_bev_pts()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -196,8 +201,8 @@
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.read_ply"><code class="docutils literal notranslate"><span class="pre">read_ply()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.read_ply_to_dict"><code class="docutils literal notranslate"><span class="pre">read_ply_to_dict()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.read_sub_frame"><code class="docutils literal notranslate"><span class="pre">read_sub_frame()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.tmp"><code class="docutils literal notranslate"><span class="pre">tmp()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.transform_boxes_global_to_ref"><code class="docutils literal notranslate"><span class="pre">transform_boxes_global_to_ref()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.update_bev_map"><code class="docutils literal notranslate"><span class="pre">update_bev_map()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.update_global_boxes"><code class="docutils literal notranslate"><span class="pre">update_global_boxes()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.update_velo"><code class="docutils literal notranslate"><span class="pre">update_velo()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v_t.vis_cosense_scenario"><code class="docutils literal notranslate"><span class="pre">vis_cosense_scenario()</span></code></a></li>

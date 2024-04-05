@@ -41,8 +41,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -360,14 +366,15 @@
             <span class="n">object_bbx</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span>
             <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">object_bbx</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">]]</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="s1">&#39;velo&#39;</span> <span class="ow">in</span> <span class="n">object_content</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;velo&#39;</span> <span class="ow">in</span> <span class="n">object_content</span> <span class="ow">and</span> <span class="n">object_content</span><span class="p">[</span><span class="s1">&#39;velo&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">velos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">object_content</span><span class="p">[</span><span class="s1">&#39;velo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
     <span class="n">cs</span><span class="o">.</span><span class="n">update_agent</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="n">gt_boxes</span><span class="o">=</span><span class="n">boxes_local</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">velos</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_local</span><span class="p">):</span>
         <span class="n">cs</span><span class="o">.</span><span class="n">update_agent</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="n">velos</span><span class="o">=</span><span class="n">velos</span><span class="p">)</span>
 
     <span class="c1"># get visibility of local boxes</span>
-    <span class="n">lidar</span> <span class="o">=</span> <span class="n">load_pcd</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">][</span><span class="n">cav_id</span><span class="p">][</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;filename&#39;</span><span class="p">]))[</span><span class="s1">&#39;xyz&#39;</span><span class="p">]</span>
+    <span class="n">lidar</span> <span class="o">=</span> <span class="n">load_pcd</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">][</span><span class="n">cav_id</span><span class="p">][</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;filename&#39;</span><span class="p">]))[</span><span class="s1">&#39;xyz&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_local</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">boxes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">boxes_local</span><span class="p">)[:,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">]]</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">points_in_boxes_cpu</span><span class="p">(</span><span class="n">lidar</span><span class="p">,</span> <span class="n">boxes</span><span class="p">)</span>
@@ -472,7 +479,7 @@
             <span class="n">cam_params</span><span class="p">[</span><span class="s1">&#39;num_pts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
 
 
-<div class="viewcode-block" id="opv2v_to_cosense"><a class="viewcode-back" href="../../../../cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.opv2v_to_cosense">[docs]</a><span class="k">def</span> <span class="nf">opv2v_to_cosense</span><span class="p">(</span><span class="n">path_in</span><span class="p">,</span> <span class="n">path_out</span><span class="p">,</span> <span class="n">isSim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">correct_transf</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="opv2v_to_cosense"><a class="viewcode-back" href="../../../../cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.opv2v_to_cosense">[docs]</a><span class="k">def</span> <span class="nf">opv2v_to_cosense</span><span class="p">(</span><span class="n">path_in</span><span class="p">,</span> <span class="n">path_out</span><span class="p">,</span> <span class="n">isSim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">correct_transf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pcd_ext</span><span class="o">=</span><span class="s1">&#39;pcd&#39;</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">isSim</span><span class="p">:</span>
         <span class="n">order</span> <span class="o">=</span> <span class="s1">&#39;lwh&#39;</span>
     <span class="k">else</span><span class="p">:</span>
@@ -522,9 +529,9 @@
 
                     <span class="c1"># get cav lidar pose in cosense format</span>
                     <span class="n">cs</span><span class="o">.</span><span class="n">update_agent</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="s1">&#39;cav&#39;</span><span class="p">)</span>
-                    <span class="n">cs</span><span class="o">.</span><span class="n">update_agent_lidar</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="n">cs</span><span class="o">.</span><span class="n">update_agent_lidar</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span>
                                           <span class="n">lidar_pose</span><span class="o">=</span><span class="n">opv2v_pose_to_cosense</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;lidar_pose&#39;</span><span class="p">]),</span>
-                                          <span class="n">lidar_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">.pcd&#39;</span><span class="p">))</span>
+                                          <span class="n">lidar_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">cav_id</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">pcd_ext</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
 
                     <span class="n">objects_dict</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;vehicles&#39;</span><span class="p">]</span>
                     <span class="n">output_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -560,9 +567,10 @@
                 <span class="n">unique_indices</span> <span class="o">=</span> \
                     <span class="p">[</span><span class="n">object_id_stack</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">object_id_stack</span><span class="p">)]</span>
                 <span class="n">object_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">object_stack</span><span class="p">)</span>
-                <span class="n">object_velo_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">object_velo_stack</span><span class="p">)</span>
                 <span class="n">object_stack</span> <span class="o">=</span> <span class="n">object_stack</span><span class="p">[</span><span class="n">unique_indices</span><span class="p">]</span>
-                <span class="n">object_velo_stack</span> <span class="o">=</span> <span class="n">object_velo_stack</span><span class="p">[</span><span class="n">unique_indices</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_velo_stack</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_stack</span><span class="p">):</span>
+                    <span class="n">object_velo_stack</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">object_velo_stack</span><span class="p">)</span>
+                    <span class="n">object_velo_stack</span> <span class="o">=</span> <span class="n">object_velo_stack</span><span class="p">[</span><span class="n">unique_indices</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">order</span> <span class="o">==</span> <span class="s1">&#39;hwl&#39;</span><span class="p">:</span>
                     <span class="n">object_stack</span> <span class="o">=</span> <span class="n">object_stack</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">]]</span>
 
@@ -571,12 +579,18 @@
                 <span class="n">cosense_bbx_center</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">object_stack</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">6</span><span class="p">]</span>
                 <span class="n">cosense_bbx_center</span><span class="p">[:,</span> <span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">object_stack</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">]</span>
                 <span class="n">cs</span><span class="o">.</span><span class="n">update_frame_bbx</span><span class="p">(</span><span class="n">fdict</span><span class="p">,</span> <span class="n">cosense_bbx_center</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-                <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># remove template agent</span>
+                <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span>  <span class="c1"># remove template agent</span>
 
                 <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;ego_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ego_id</span>
                 <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;ego_lidar_pose&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">opv2v_pose_to_cosense</span><span class="p">(</span><span class="n">ego_lidar_pose</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_velo_stack</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">object_stack</span><span class="p">):</span>
                     <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;bbx_velo_global&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">object_velo_stack</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+                <span class="n">boxes_num_pts</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cosense_bbx_center</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]}</span>
+                <span class="k">for</span> <span class="n">adict</span> <span class="ow">in</span> <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">box</span><span class="p">,</span> <span class="n">num_pts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">adict</span><span class="p">[</span><span class="s1">&#39;gt_boxes&#39;</span><span class="p">],</span> <span class="n">adict</span><span class="p">[</span><span class="s1">&#39;num_pts&#39;</span><span class="p">]):</span>
+                        <span class="n">boxes_num_pts</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">+=</span> <span class="n">num_pts</span>
+                <span class="n">fdict</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;num_pts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">boxes_num_pts</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cosense_bbx_center</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span>
 
                 <span class="n">sdict</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdict</span>
 
@@ -642,14 +656,14 @@
         <span class="n">save_json</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">jf</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;opv2v&#39;</span><span class="p">,</span> <span class="s1">&#39;opv2v_full_&#39;</span><span class="p">))</span></div>
 
 
-
 <span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">opv2v_to_cosense</span><span class="p">(</span>
-        <span class="s2">&quot;/koko/OPV2V&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;/koko/cosense3d/tmp&quot;</span><span class="p">,</span>
-        <span class="n">isSim</span><span class="o">=</span><span class="kc">True</span>
+        <span class="s2">&quot;/home/yuan/data/OPV2Va&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;/home/yuan/data/OPV2Va/meta&quot;</span><span class="p">,</span>
+        <span class="n">isSim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">pcd_ext</span><span class="o">=</span><span class="s1">&#39;bin&#39;</span>
     <span class="p">)</span>
-    <span class="n">update_global_bboxes_num_pts</span><span class="p">(</span><span class="s2">&quot;/koko/OPV2V&quot;</span><span class="p">,</span> <span class="s2">&quot;/koko/cosense3d/opv2v&quot;</span><span class="p">)</span>
+
 </pre></div>
 
            </div>
@@ -659,7 +673,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

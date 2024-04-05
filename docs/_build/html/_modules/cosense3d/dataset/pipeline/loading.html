@@ -41,8 +41,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -71,6 +77,7 @@
              
   <h1>Source code for cosense3d.dataset.pipeline.loading</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">random</span><span class="o">,</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -80,6 +87,7 @@
 
 <span class="kn">from</span> <span class="nn">cosense3d.utils.pclib</span> <span class="kn">import</span> <span class="n">pose_to_transformation</span>
 <span class="kn">from</span> <span class="nn">cosense3d.utils.pcdio</span> <span class="kn">import</span> <span class="n">point_cloud_from_path</span>
+<span class="kn">from</span> <span class="nn">cosense3d.utils.misc</span> <span class="kn">import</span> <span class="n">load_json</span>
 
 
 <div class="viewcode-block" id="LoadLidarPoints"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadLidarPoints">[docs]</a><span class="k">class</span> <span class="nc">LoadLidarPoints</span><span class="p">:</span>
@@ -286,6 +294,7 @@
 
     <span class="k">def</span> <span class="nf">_load_essential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">):</span>
         <span class="n">lidar_poses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vehicle_poses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">timestampes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">agents</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span>
         <span class="n">ego_pose</span> <span class="o">=</span> <span class="n">agents</span><span class="p">[</span><span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;ego_id&#39;</span><span class="p">]][</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;pose&#39;</span><span class="p">]</span>
@@ -297,6 +306,7 @@
             <span class="n">adict</span> <span class="o">=</span> <span class="n">agents</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span>
             <span class="n">lidar_pose</span> <span class="o">=</span> <span class="n">pose_to_transformation</span><span class="p">(</span><span class="n">adict</span><span class="p">[</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;pose&#39;</span><span class="p">])</span>
             <span class="n">lidar_poses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lidar_pose</span><span class="p">)</span>
+            <span class="n">vehicle_poses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adict</span><span class="p">[</span><span class="s1">&#39;pose&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">adict</span><span class="p">[</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="c1"># dairv2x</span>
                 <span class="n">timestampes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adict</span><span class="p">[</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_offset</span><span class="p">)</span>
@@ -309,6 +319,7 @@
             <span class="s1">&#39;lidar_poses&#39;</span><span class="p">:</span> <span class="n">lidar_poses</span><span class="p">,</span>
             <span class="s1">&#39;ego_poses&#39;</span><span class="p">:</span> <span class="n">ego_pose</span><span class="p">,</span>
             <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">timestampes</span><span class="p">,</span>
+            <span class="s1">&#39;vehicle_poses&#39;</span><span class="p">:</span> <span class="n">vehicle_poses</span>
         <span class="p">})</span>
 
         <span class="k">return</span> <span class="n">data_dict</span>
@@ -489,37 +500,101 @@
 
 
 <div class="viewcode-block" id="LoadOPV2VBevMaps"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps">[docs]</a><span class="k">class</span> <span class="nc">LoadOPV2VBevMaps</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">ego_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_global_map</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ego_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="mi">75</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_global_map</span> <span class="o">=</span> <span class="n">use_global_map</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ego_only</span> <span class="o">=</span> <span class="n">ego_only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">range</span> <span class="o">=</span> <span class="nb">range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span> <span class="o">=</span> <span class="mf">0.2</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_global_map</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bevmap&#39;</span><span class="p">,</span> <span class="s1">&#39;bevmap_coor&#39;</span><span class="p">]</span>
+            <span class="n">assets_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="si">}</span><span class="s2">/../../carla/assets&quot;</span>
+            <span class="n">map_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">assets_path</span><span class="si">}</span><span class="s2">/maps&quot;</span>
+            <span class="n">map_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">map_path</span><span class="p">,</span> <span class="s1">&#39;*.png&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scene_maps</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">assets_path</span><span class="p">,</span> <span class="s1">&#39;scenario_town_map.json&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">map_bounds</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">assets_path</span><span class="p">,</span> <span class="s1">&#39;map_bounds.json&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bevmaps</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">mf</span> <span class="ow">in</span> <span class="n">map_files</span><span class="p">:</span>
+                <span class="n">town</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">mf</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bevmaps</span><span class="p">[</span><span class="n">town</span><span class="p">]</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">mf</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">):</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;data_path&#39;</span><span class="p">],</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;scenario&#39;</span><span class="p">])</span>
+        <span class="n">load_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">}</span>
+        <span class="n">ego_id</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;ego_id&#39;</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ego_only</span><span class="p">:</span>
-            <span class="n">ai</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;valid_agent_ids&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">load_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;frame&#39;</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">load_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">}</span>
-            <span class="n">agents</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;valid_agent_ids&#39;</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">agents</span><span class="p">:</span>
-                <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;frame&#39;</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-                    <span class="n">load_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">agents</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;valid_agent_ids&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">agents</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ego_only</span> <span class="ow">and</span> <span class="n">ego_id</span> <span class="o">==</span> <span class="n">ai</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+                <span class="n">load_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
         <span class="n">data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">load_dict</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data_dict</span>
 
-<div class="viewcode-block" id="LoadOPV2VBevMaps.load_single"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps.load_single">[docs]</a>    <span class="k">def</span> <span class="nf">load_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadOPV2VBevMaps.load_single"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps.load_single">[docs]</a>    <span class="k">def</span> <span class="nf">load_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">):</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">frame</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
-            <span class="n">bev_map</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-            <span class="n">bev_map</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">bev_map</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
-            <span class="n">bev_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bev_map</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span>
-            <span class="n">bev_map</span><span class="p">[</span><span class="n">bev_map</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">bev_map</span>
-        <span class="k">return</span> <span class="n">out</span></div></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_global_map</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;bevmap&#39;</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;bevmap_coor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crop_map_for_pose</span><span class="p">(</span><span class="n">data_dict</span><span class="p">,</span> <span class="n">ai</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">frame</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;frame&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ai</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">frame</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+                <span class="n">bev_map</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+                <span class="n">bev_map</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">bev_map</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+                <span class="n">bev_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bev_map</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span>
+                <span class="n">bev_map</span><span class="p">[</span><span class="n">bev_map</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">bev_map</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="LoadOPV2VBevMaps.crop_map_for_pose"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadOPV2VBevMaps.crop_map_for_pose">[docs]</a>    <span class="k">def</span> <span class="nf">crop_map_for_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">,</span> <span class="n">ai</span><span class="p">):</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;scenario&#39;</span><span class="p">]</span>
+        <span class="n">town</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene_maps</span><span class="p">[</span><span class="n">scenario</span><span class="p">]</span>
+        <span class="n">lidar_pose</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;agents&#39;</span><span class="p">][</span><span class="n">ai</span><span class="p">][</span><span class="s1">&#39;lidar&#39;</span><span class="p">][</span><span class="s1">&#39;0&#39;</span><span class="p">][</span><span class="s1">&#39;pose&#39;</span><span class="p">]</span>
+        <span class="n">bevmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bevmaps</span><span class="p">[</span><span class="n">town</span><span class="p">]</span>
+        <span class="n">bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_bounds</span><span class="p">[</span><span class="n">town</span><span class="p">]</span>
+        <span class="n">offset_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">lidar_pose</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span> <span class="o">-</span> <span class="n">bound</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span><span class="p">)</span>
+        <span class="n">offset_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">lidar_pose</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span> <span class="o">-</span> <span class="n">bound</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span><span class="p">)</span>
+
+        <span class="n">xmin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">offset_x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">xmax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">offset_x</span> <span class="o">+</span> <span class="n">size</span><span class="p">,</span> <span class="n">bevmap</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">ymin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">offset_y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">ymax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">offset_y</span> <span class="o">+</span> <span class="n">size</span><span class="p">,</span> <span class="n">bevmap</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">bevmap_crop</span> <span class="o">=</span> <span class="n">bevmap</span><span class="p">[</span><span class="n">xmin</span><span class="p">:</span><span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">:</span><span class="n">ymax</span><span class="p">]</span>
+        <span class="n">bevmap_coor</span> <span class="o">=</span> <span class="p">[</span><span class="n">bound</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">xmin</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span><span class="p">,</span> <span class="n">bound</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">ymin</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_res</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">bevmap_crop</span><span class="p">,</span> <span class="n">bevmap_coor</span></div></div>
+
+
+<div class="viewcode-block" id="LoadSparseBevTargetPoints"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadSparseBevTargetPoints">[docs]</a><span class="k">class</span> <span class="nc">LoadSparseBevTargetPoints</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="n">ego_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_points</span> <span class="o">=</span> <span class="n">num_points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ego_only</span> <span class="o">=</span> <span class="n">ego_only</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_dict</span><span class="p">):</span>
+        <span class="n">bev_pts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">agents</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;agents&#39;</span><span class="p">]</span>
+        <span class="n">ego_id</span> <span class="o">=</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;sample_info&#39;</span><span class="p">][</span><span class="s1">&#39;meta&#39;</span><span class="p">][</span><span class="s1">&#39;ego_id&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">ai</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="p">[</span><span class="s1">&#39;valid_agent_ids&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ai</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">agents</span><span class="p">:</span>
+                <span class="c1"># previous agents might not in current frame when load sequential data</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ego_only</span> <span class="ow">and</span> <span class="n">ai</span> <span class="o">!=</span> <span class="n">ego_id</span><span class="p">:</span>
+                <span class="n">bev_pts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+<div class="viewcode-block" id="LoadSparseBevTargetPoints.generate_sparse_bev_pts"><a class="viewcode-back" href="../../../../cosense3d.dataset.pipeline.html#cosense3d.dataset.pipeline.loading.LoadSparseBevTargetPoints.generate_sparse_bev_pts">[docs]</a>    <span class="k">def</span> <span class="nf">generate_sparse_bev_pts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pcd</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+
 
 
 </pre></div>
@@ -531,7 +606,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -49,7 +49,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
@@ -925,7 +925,7 @@ Default: (‘conv’, ‘norm’, ‘act’).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.utils.conv.ConvModule.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tensor</span></span></span><a class="reference internal" href="_modules/cosense3d/modules/utils/conv.html#ConvModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.conv.ConvModule.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1048,9 +1048,34 @@ sigma (float, optional): Sigma to generate gaussian map.</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="cosense3d.modules.utils.gaussian_utils.mahalanobis_dists_2d">
+<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.gaussian_utils.</span></span><span class="sig-name descname"><span class="pre">mahalanobis_dists_2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigmas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/gaussian_utils.html#mahalanobis_dists_2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.gaussian_utils.mahalanobis_dists_2d" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the squared mahalanobis distances.</p>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h3>
+<p>sigmas: (N, 2), standard deviation of Gaussian distribution
+dists: (N, 2), distances to gaussian center</p>
+</section>
+<section id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h3>
+<p>Mdists: (N), squared mahalanobis</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="cosense3d.modules.utils.gaussian_utils.weighted_mahalanobis_dists">
 <span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.gaussian_utils.</span></span><span class="sig-name descname"><span class="pre">weighted_mahalanobis_dists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/gaussian_utils.html#weighted_mahalanobis_dists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.gaussian_utils.weighted_mahalanobis_dists" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Compute the squared mahalanobis distances.</p>
+<section id="id13">
+<h3>Parameters<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h3>
+<p>sigmas: (N, 2), variances of Gaussian distribution
+dists: (N, 2), distances to gaussian center at each axis</p>
+</section>
+<section id="id14">
+<h3>Returns<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h3>
+<p>Mdists: (N), squared mahalanobis</p>
+</section>
+</dd></dl>
 
 </section>
 <section id="module-cosense3d.modules.utils.init">
@@ -1230,7 +1255,7 @@ f_dim (int): feature dimension</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.utils.misc.MLN.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/misc.html#MLN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.misc.MLN.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1265,7 +1290,7 @@ f_dim (int): feature dimension</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.utils.misc.MLN2.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/misc.html#MLN2.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.misc.MLN2.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1295,7 +1320,7 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.utils.misc.SELayer_Linear.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_se</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/misc.html#SELayer_Linear.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.misc.SELayer_Linear.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1424,163 +1449,8 @@ encoding_size (optional, int): Number of encoding functions used to compute</p>
 <dd></dd></dl>
 
 </section>
-<section id="module-cosense3d.modules.utils.test_flash_attn">
-<span id="cosense3d-modules-utils-test-flash-attn-module"></span><h2>cosense3d.modules.utils.test_flash_attn module<a class="headerlink" href="#module-cosense3d.modules.utils.test_flash_attn" title="Permalink to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.attention_blocksparse_ref">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">attention_blocksparse_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qkv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blockmask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attn_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_mask</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#attention_blocksparse_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.attention_blocksparse_ref" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Arguments:</dt><dd><p>qkv: (batch_size, seqlen, 3, nheads, head_dim)
-blockmask: (seqlen / 16, seqlen / 256)
-attn_mask: (batch_size, seqlen)
-dropout_p: float
-dropout_mask: (batch_size, nheads, seqlen, seqlen)</p>
-</dd>
-<dt>Output:</dt><dd><p>output: (batch_size, seqlen, nheads, head_dim)
-attention: softmax after dropout</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.attention_kvpacked_ref">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">attention_kvpacked_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upcast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reorder_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#attention_kvpacked_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.attention_kvpacked_ref" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.attention_qkvpacked_ref">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">attention_qkvpacked_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qkv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upcast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reorder_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#attention_qkvpacked_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.attention_qkvpacked_ref" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.attention_ref">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">attention_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upcast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reorder_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#attention_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.attention_ref" title="Permalink to this definition"></a></dt>
-<dd><dl>
-<dt>Arguments:</dt><dd><p>q: (batch_size, seqlen_q, nheads, head_dim)
-k: (batch_size, seqlen_k, nheads, head_dim)
-v: (batch_size, seqlen_k, nheads, head_dim)
-query_padding_mask: (batch_size, seqlen_q)
-key_padding_mask: (batch_size, seqlen_k)
-dropout_p: float
-dropout_mask: (batch_size, nheads, seqlen_q, seqlen_k)
-bias: (batch_size, nheads, seqlen_q, seqlen_k)
-upcast: whether to cast all inputs to fp32, do all computation in fp32, then cast</p>
-<blockquote>
-<div><p>output back to fp16/bf16.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>reorder_ops: whether to change the order of operations (scaling k instead of scaling k, etc.)</dt><dd><p>without changing the math. This is to estimate the numerical error from operation
-reordering.</p>
-</dd>
-</dl>
-</dd>
-<dt>Output:</dt><dd><p>output: (batch_size, seqlen_q, nheads, head_dim)
-attention: (batch_size, nheads, seqlen_q, seqlen_k), softmax after dropout</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.convert_flash_attn_S_to_softmax">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">convert_flash_attn_S_to_softmax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dropout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#convert_flash_attn_S_to_softmax"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.convert_flash_attn_S_to_softmax" title="Permalink to this definition"></a></dt>
-<dd><p>FlashAttention stores the S matrix in a different way.
-Arguments:</p>
-<blockquote>
-<div><p>S: (batch_size, nheads, seqlen_q, seqlen_k)
-query_padding_mask: (batch_size, seqlen_q)
-key_padding_mask: (batch_size, seqlen_k)</p>
-</div></blockquote>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.generate_qkv">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">generate_qkv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Wqkv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nheads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kvpacked</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qkvpacked</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#generate_qkv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.generate_qkv" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Arguments:</dt><dd><p>x: (batch_size, seqlen, nheads * d)
-Wqkv: nn.Linear(nheads * d, 3 * nheads * d)
-query_padding_mask: (batch_size, seqlen), bool
-key_padding_mask: (batch_size, seqlen), bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.generate_random_padding_mask">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">generate_random_padding_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'random'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#generate_random_padding_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.generate_random_padding_mask" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.generate_sparsity_mask">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">generate_sparsity_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#generate_sparsity_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.generate_sparsity_mask" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.get_dropout_fraction">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">get_dropout_fraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dropout_mask</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#get_dropout_fraction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.get_dropout_fraction" title="Permalink to this definition"></a></dt>
-<dd><p>dropout_mask: (batch_size, nheads, seqlen_q, seqlen_k), bool. True means keep, False means drop.
-query_padding_mask: (batch_size, seqlen_q)
-key_padding_mask: (batch_size, seqlen_k)</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.index_first_axis">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">index_first_axis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.index_first_axis" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.normalize_flash_attn_S">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">normalize_flash_attn_S</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attn_unnorm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dropout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#normalize_flash_attn_S"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.normalize_flash_attn_S" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Arguments:</dt><dd><p>q: (batch_size, seqlen_q, nheads, head_dim)
-k, v: (batch_size, seqlen_k, nheads, head_dim)
-key_padding_mask: (batch_size, seqlen_q)</p>
-</dd>
-<dt>Output:</dt><dd><p>softmax_lse: (batch_size, nheads, seqlen_q)
-softmax_max: (batch_size, nheads, seqlen_q)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_multigpu">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_multigpu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_multigpu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_multigpu" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_race_condition">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_race_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_race_condition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_race_condition" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_split">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_split" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_output">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_triton_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_triton_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_output" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_race_condition">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_triton_race_condition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias_shape</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_triton_race_condition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_race_condition" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_unpadded</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_unpadded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_kvpacked">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_unpadded_kvpacked</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seqlen_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_unpadded_kvpacked"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_kvpacked" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_qkvpacked">
-<span class="sig-prename descclassname"><span class="pre">cosense3d.modules.utils.test_flash_attn.</span></span><span class="sig-name descname"><span class="pre">test_flash_attn_unpadded_qkvpacked</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqlen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">causal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/utils/test_flash_attn.html#test_flash_attn_unpadded_qkvpacked"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_qkvpacked" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="cosense3d-modules-utils-test-flash-attn-module">
+<h2>cosense3d.modules.utils.test_flash_attn module<a class="headerlink" href="#cosense3d-modules-utils-test-flash-attn-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="module-cosense3d.modules.utils">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cosense3d.modules.utils" title="Permalink to this heading"></a></h2>

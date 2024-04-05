@@ -48,7 +48,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
@@ -257,6 +257,7 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.remove_empty_boxes"><code class="docutils literal notranslate"><span class="pre">DataManager.remove_empty_boxes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.remove_global_empty_boxes"><code class="docutils literal notranslate"><span class="pre">DataManager.remove_global_empty_boxes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.remove_local_empty_boxes"><code class="docutils literal notranslate"><span class="pre">DataManager.remove_local_empty_boxes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.sample_global_bev_tgt_pts"><code class="docutils literal notranslate"><span class="pre">DataManager.sample_global_bev_tgt_pts()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.scatter"><code class="docutils literal notranslate"><span class="pre">DataManager.scatter()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.update"><code class="docutils literal notranslate"><span class="pre">DataManager.update()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.vis_global_data_plt"><code class="docutils literal notranslate"><span class="pre">DataManager.vis_global_data_plt()</span></code></a></li>
@@ -384,7 +385,10 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cosense3d.agents.utils.html">cosense3d.agents.utils package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.agents.utils.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d-agents-utils-deco-module">cosense3d.agents.utils.deco module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.deco">cosense3d.agents.utils.deco module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.deco.save_ckpt_on_error"><code class="docutils literal notranslate"><span class="pre">save_ckpt_on_error()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils.transform">cosense3d.agents.utils.transform module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.adaptive_free_space_augmentation"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.adaptive_free_space_augmentation()</span></code></a></li>
@@ -392,6 +396,7 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.cav_aug_transform"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.cav_aug_transform()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.filter_range"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.filter_range()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.free_space_augmentation"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.free_space_augmentation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.generate_sparse_target_bev_points"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.generate_sparse_target_bev_points()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.DataOnlineProcessor.update_transform_with_aug"><code class="docutils literal notranslate"><span class="pre">DataOnlineProcessor.update_transform_with_aug()</span></code></a></li>
 </ul>
 </li>
@@ -401,6 +406,7 @@
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.apply_transform"><code class="docutils literal notranslate"><span class="pre">apply_transform()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.filter_range"><code class="docutils literal notranslate"><span class="pre">filter_range()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.filter_range_mask"><code class="docutils literal notranslate"><span class="pre">filter_range_mask()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.agents.utils.html#cosense3d.agents.utils.transform.generate_bev_tgt_pts"><code class="docutils literal notranslate"><span class="pre">generate_bev_tgt_pts()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.agents.utils.html#module-cosense3d.agents.utils">Module contents</a></li>

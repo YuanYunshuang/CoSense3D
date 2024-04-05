@@ -48,7 +48,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
@@ -290,6 +290,7 @@
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.naive_fusion.NaiveFusion"><code class="docutils literal notranslate"><span class="pre">NaiveFusion</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.naive_fusion.NaiveFusion.format_output"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.format_output()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.naive_fusion.NaiveFusion.forward"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.naive_fusion.NaiveFusion.fuse_feature_at_stride"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.fuse_feature_at_stride()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.fusion.html#cosense3d.modules.fusion.naive_fusion.NaiveFusion.training"><code class="docutils literal notranslate"><span class="pre">NaiveFusion.training</span></code></a></li>
 </ul>
 </li>
@@ -783,22 +784,55 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.flash_attn">cosense3d.modules.plugin.flash_attn module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashAttention"><code class="docutils literal notranslate"><span class="pre">FlashAttention</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashAttention.forward"><code class="docutils literal notranslate"><span class="pre">FlashAttention.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashAttention.training"><code class="docutils literal notranslate"><span class="pre">FlashAttention.training</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d-modules-plugin-flash-attn-module">cosense3d.modules.plugin.flash_attn module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.flash_attn_new">cosense3d.modules.plugin.flash_attn_new module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.CrossAttention"><code class="docutils literal notranslate"><span class="pre">CrossAttention</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.CrossAttention.forward"><code class="docutils literal notranslate"><span class="pre">CrossAttention.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.CrossAttention.training"><code class="docutils literal notranslate"><span class="pre">CrossAttention.training</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashMHA"><code class="docutils literal notranslate"><span class="pre">FlashMHA</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashMHA.forward"><code class="docutils literal notranslate"><span class="pre">FlashMHA.forward()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.FlashMHA.training"><code class="docutils literal notranslate"><span class="pre">FlashMHA.training</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashCrossAttention"><code class="docutils literal notranslate"><span class="pre">FlashCrossAttention</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashCrossAttention.forward"><code class="docutils literal notranslate"><span class="pre">FlashCrossAttention.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashCrossAttention.training"><code class="docutils literal notranslate"><span class="pre">FlashCrossAttention.training</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.flash_attn_unpadded_kvpacked_test"><code class="docutils literal notranslate"><span class="pre">flash_attn_unpadded_kvpacked_test()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn.index_first_axis"><code class="docutils literal notranslate"><span class="pre">index_first_axis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashMHA"><code class="docutils literal notranslate"><span class="pre">FlashMHA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashMHA.forward"><code class="docutils literal notranslate"><span class="pre">FlashMHA.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashMHA.training"><code class="docutils literal notranslate"><span class="pre">FlashMHA.training</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d-modules-plugin-flash-attn-new-module">cosense3d.modules.plugin.flash_attn_new module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashSelfAttention"><code class="docutils literal notranslate"><span class="pre">FlashSelfAttention</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashSelfAttention.forward"><code class="docutils literal notranslate"><span class="pre">FlashSelfAttention.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.FlashSelfAttention.training"><code class="docutils literal notranslate"><span class="pre">FlashSelfAttention.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.LinearResidual"><code class="docutils literal notranslate"><span class="pre">LinearResidual</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.LinearResidual.forward"><code class="docutils literal notranslate"><span class="pre">LinearResidual.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.LinearResidual.in_features"><code class="docutils literal notranslate"><span class="pre">LinearResidual.in_features</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.LinearResidual.out_features"><code class="docutils literal notranslate"><span class="pre">LinearResidual.out_features</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.LinearResidual.weight"><code class="docutils literal notranslate"><span class="pre">LinearResidual.weight</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.MHA"><code class="docutils literal notranslate"><span class="pre">MHA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.MHA.allocate_inference_cache"><code class="docutils literal notranslate"><span class="pre">MHA.allocate_inference_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.MHA.forward"><code class="docutils literal notranslate"><span class="pre">MHA.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.MHA.training"><code class="docutils literal notranslate"><span class="pre">MHA.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.ParallelMHA"><code class="docutils literal notranslate"><span class="pre">ParallelMHA</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.ParallelMHA.allocate_inference_cache"><code class="docutils literal notranslate"><span class="pre">ParallelMHA.allocate_inference_cache()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.ParallelMHA.forward"><code class="docutils literal notranslate"><span class="pre">ParallelMHA.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.ParallelMHA.training"><code class="docutils literal notranslate"><span class="pre">ParallelMHA.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.SelfAttention"><code class="docutils literal notranslate"><span class="pre">SelfAttention</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.SelfAttention.forward"><code class="docutils literal notranslate"><span class="pre">SelfAttention.forward()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.SelfAttention.training"><code class="docutils literal notranslate"><span class="pre">SelfAttention.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.flash_attn_new.get_alibi_slopes"><code class="docutils literal notranslate"><span class="pre">get_alibi_slopes()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.fpn">cosense3d.modules.plugin.fpn module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.fpn.FPN"><code class="docutils literal notranslate"><span class="pre">FPN</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.fpn.FPN.forward"><code class="docutils literal notranslate"><span class="pre">FPN.forward()</span></code></a></li>
@@ -866,15 +900,25 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.plugin.html#module-cosense3d.modules.plugin.target_assigners">cosense3d.modules.plugin.target_assigners module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVHardCenternessAssigner"><code class="docutils literal notranslate"><span class="pre">BEVHardCenternessAssigner</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVHardCenternessAssigner.assign"><code class="docutils literal notranslate"><span class="pre">BEVHardCenternessAssigner.assign()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVHardCenternessAssigner.get_labels_single_head"><code class="docutils literal notranslate"><span class="pre">BEVHardCenternessAssigner.get_labels_single_head()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner"><code class="docutils literal notranslate"><span class="pre">BEVCenternessAssigner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner.assign"><code class="docutils literal notranslate"><span class="pre">BEVCenternessAssigner.assign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner.get_labels_single_head"><code class="docutils literal notranslate"><span class="pre">BEVCenternessAssigner.get_labels_single_head()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVPointAssigner"><code class="docutils literal notranslate"><span class="pre">BEVPointAssigner</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVPointAssigner.assign"><code class="docutils literal notranslate"><span class="pre">BEVPointAssigner.assign()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVPointAssigner.downsample_tgt_pts"><code class="docutils literal notranslate"><span class="pre">BEVPointAssigner.downsample_tgt_pts()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVPointAssigner.get_predictions"><code class="docutils literal notranslate"><span class="pre">BEVPointAssigner.get_predictions()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.assign"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.assign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.down_sample_pred_pts"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.down_sample_pred_pts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.downsample_tgt_pts"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.downsample_tgt_pts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.filter_range"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.filter_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.get_obs_mask"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.get_obs_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.get_predictions"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.get_predictions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BEVSemsegAssigner.pts_to_inds"><code class="docutils literal notranslate"><span class="pre">BEVSemsegAssigner.pts_to_inds()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BaseAssigner"><code class="docutils literal notranslate"><span class="pre">BaseAssigner</span></code></a><ul>
@@ -903,6 +947,19 @@
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BoxSparseAnchorAssigner.get_predictions"><code class="docutils literal notranslate"><span class="pre">BoxSparseAnchorAssigner.get_predictions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BoxSparseAnchorAssigner.me_coor_to_grid_indices"><code class="docutils literal notranslate"><span class="pre">BoxSparseAnchorAssigner.me_coor_to_grid_indices()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.BoxSparseAnchorAssigner.training"><code class="docutils literal notranslate"><span class="pre">BoxSparseAnchorAssigner.training</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner"><code class="docutils literal notranslate"><span class="pre">ContiBEVAssigner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.assign"><code class="docutils literal notranslate"><span class="pre">ContiBEVAssigner.assign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.get_predictions"><code class="docutils literal notranslate"><span class="pre">ContiBEVAssigner.get_predictions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.sample_dynamic_tgt_pts"><code class="docutils literal notranslate"><span class="pre">ContiBEVAssigner.sample_dynamic_tgt_pts()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.DiscreteBEVAssigner"><code class="docutils literal notranslate"><span class="pre">DiscreteBEVAssigner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.DiscreteBEVAssigner.assign"><code class="docutils literal notranslate"><span class="pre">DiscreteBEVAssigner.assign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.DiscreteBEVAssigner.get_obs_mask"><code class="docutils literal notranslate"><span class="pre">DiscreteBEVAssigner.get_obs_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.DiscreteBEVAssigner.get_predictions"><code class="docutils literal notranslate"><span class="pre">DiscreteBEVAssigner.get_predictions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.DiscreteBEVAssigner.pts_to_inds"><code class="docutils literal notranslate"><span class="pre">DiscreteBEVAssigner.pts_to_inds()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.plugin.html#cosense3d.modules.plugin.target_assigners.HeatmapAssigner"><code class="docutils literal notranslate"><span class="pre">HeatmapAssigner</span></code></a><ul>
@@ -1179,6 +1236,7 @@
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.draw_gaussian_map"><code class="docutils literal notranslate"><span class="pre">draw_gaussian_map()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.gaussian_2d"><code class="docutils literal notranslate"><span class="pre">gaussian_2d()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.gaussian_radius"><code class="docutils literal notranslate"><span class="pre">gaussian_radius()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.mahalanobis_dists_2d"><code class="docutils literal notranslate"><span class="pre">mahalanobis_dists_2d()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.gaussian_utils.weighted_mahalanobis_dists"><code class="docutils literal notranslate"><span class="pre">weighted_mahalanobis_dists()</span></code></a></li>
 </ul>
 </li>
@@ -1256,28 +1314,7 @@
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.positional_encoding.ratio2coord"><code class="docutils literal notranslate"><span class="pre">ratio2coord()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils.test_flash_attn">cosense3d.modules.utils.test_flash_attn module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.attention_blocksparse_ref"><code class="docutils literal notranslate"><span class="pre">attention_blocksparse_ref()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.attention_kvpacked_ref"><code class="docutils literal notranslate"><span class="pre">attention_kvpacked_ref()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.attention_qkvpacked_ref"><code class="docutils literal notranslate"><span class="pre">attention_qkvpacked_ref()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.attention_ref"><code class="docutils literal notranslate"><span class="pre">attention_ref()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.convert_flash_attn_S_to_softmax"><code class="docutils literal notranslate"><span class="pre">convert_flash_attn_S_to_softmax()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.generate_qkv"><code class="docutils literal notranslate"><span class="pre">generate_qkv()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.generate_random_padding_mask"><code class="docutils literal notranslate"><span class="pre">generate_random_padding_mask()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.generate_sparsity_mask"><code class="docutils literal notranslate"><span class="pre">generate_sparsity_mask()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.get_dropout_fraction"><code class="docutils literal notranslate"><span class="pre">get_dropout_fraction()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.index_first_axis"><code class="docutils literal notranslate"><span class="pre">index_first_axis()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.normalize_flash_attn_S"><code class="docutils literal notranslate"><span class="pre">normalize_flash_attn_S()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_multigpu"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_multigpu()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_race_condition"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_race_condition()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_split"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_split()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_output"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_triton_output()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_triton_race_condition"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_triton_race_condition()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_kvpacked"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded_kvpacked()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.test_flash_attn.test_flash_attn_unpadded_qkvpacked"><code class="docutils literal notranslate"><span class="pre">test_flash_attn_unpadded_qkvpacked()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d-modules-utils-test-flash-attn-module">cosense3d.modules.utils.test_flash_attn module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.modules.utils.html#module-cosense3d.modules.utils">Module contents</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.modules.utils.html#cosense3d.modules.utils.build_torch_module"><code class="docutils literal notranslate"><span class="pre">build_torch_module()</span></code></a></li>
 </ul>
@@ -1353,7 +1390,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.BaseModule.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules.html#BaseModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.BaseModule.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Defines the computation performed at every call.</p>
+<dd><p>Define the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

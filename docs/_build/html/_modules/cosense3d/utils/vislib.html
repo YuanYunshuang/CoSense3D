@@ -41,8 +41,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">CoSense3d</a></li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -170,7 +176,7 @@
 
 
 <div class="viewcode-block" id="draw_points_boxes_plt"><a class="viewcode-back" href="../../../cosense3d.utils.html#cosense3d.utils.vislib.draw_points_boxes_plt">[docs]</a><span class="k">def</span> <span class="nf">draw_points_boxes_plt</span><span class="p">(</span><span class="n">pc_range</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">boxes_pred</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">boxes_gt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wandb_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                          <span class="n">points_c</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">bbox_gt_c</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">bbox_pred_c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span>
+                          <span class="n">points_c</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">bbox_gt_c</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">bbox_pred_c</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">linewidth_scale</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
                           <span class="n">bbox_pred_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bbox_gt_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                           <span class="n">return_ax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker_size</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">pc_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -192,13 +198,13 @@
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
                 <span class="n">color</span><span class="o">=</span><span class="n">points_c</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="n">marker_size</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">boxes_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_pred</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">ax</span> <span class="o">=</span> <span class="n">draw_box_plt</span><span class="p">(</span><span class="n">boxes_pred</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bbox_pred_c</span><span class="p">,</span> <span class="n">linewidth_scale</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">draw_box_plt</span><span class="p">(</span><span class="n">boxes_pred</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bbox_pred_c</span><span class="p">,</span> <span class="n">linewidth_scale</span><span class="o">=</span><span class="n">linewidth_scale</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">bbox_pred_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_pred</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">bbox_pred_label</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">box</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">boxes_pred</span><span class="p">,</span> <span class="n">bbox_pred_label</span><span class="p">):</span>
                 <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s2">&quot;offset points&quot;</span><span class="p">,</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">boxes_gt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_gt</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">ax</span> <span class="o">=</span> <span class="n">draw_box_plt</span><span class="p">(</span><span class="n">boxes_gt</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bbox_gt_c</span><span class="p">,</span> <span class="n">linewidth_scale</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">draw_box_plt</span><span class="p">(</span><span class="n">boxes_gt</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">bbox_gt_c</span><span class="p">,</span> <span class="n">linewidth_scale</span><span class="o">=</span><span class="n">linewidth_scale</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">bbox_gt_label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes_gt</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">bbox_gt_label</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">box</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">boxes_gt</span><span class="p">,</span> <span class="n">bbox_gt_label</span><span class="p">):</span>
@@ -671,7 +677,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

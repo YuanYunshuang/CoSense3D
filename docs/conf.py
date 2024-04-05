@@ -8,8 +8,9 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("/code/CoSense3d"))
-sys.path.append('/code/CoSense3d/cosense3d')
+cur_path = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.abspath(f"{cur_path}/.."))
+sys.path.append(f'{cur_path}/../cosense3d')
 
 
 project = 'OpenCosense3D'
@@ -35,3 +36,6 @@ source_suffix = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_context = {
+    'image_path': '_static/imgs'  # Relative to html_static_path
+}

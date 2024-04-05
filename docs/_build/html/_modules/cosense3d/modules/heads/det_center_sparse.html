@@ -41,8 +41,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
+</ul>
+
         </div>
       </div>
     </nav>
@@ -229,12 +235,13 @@
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_roi_scr</span><span class="p">:</span>
-            <span class="n">conf</span> <span class="o">=</span> <span class="p">[</span><span class="n">pred_to_conf_unc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">activation</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">cls</span><span class="p">]</span>
+            <span class="n">is_edl</span> <span class="o">=</span> <span class="s1">&#39;edl&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="p">[</span><span class="n">pred_to_conf_unc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">activation</span><span class="p">,</span> <span class="n">edl</span><span class="o">=</span><span class="n">is_edl</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">cls</span><span class="p">]</span>
             <span class="n">conf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">conf</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;det_coor&#39;</span><span class="p">,</span> <span class="n">coor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;det_feat&#39;</span><span class="p">,</span> <span class="n">feat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s1">&#39;edl&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">is_edl</span><span class="p">:</span>
                 <span class="n">out_dict</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">out_dict</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -308,17 +315,28 @@
             <span class="c1"># convert one-hot to labels</span>
             <span class="n">cur_labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">cur_cls_tgt</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
             <span class="n">lbl_inds</span><span class="p">,</span> <span class="n">cls_inds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cur_cls_tgt</span><span class="p">)</span>
-            <span class="n">cur_labels</span><span class="p">[</span><span class="n">lbl_inds</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls_inds</span> <span class="o">+</span> <span class="mi">1</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cls_assigner</span><span class="o">.</span><span class="n">pos_neg_ratio</span><span class="p">:</span>
-                <span class="n">avg_factor</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s1">&#39;edl&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">cur_labels</span><span class="p">[</span><span class="n">lbl_inds</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls_inds</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">cur_num_cls</span> <span class="o">=</span> <span class="n">n_classes</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">avg_factor</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cls_assigner</span><span class="o">.</span><span class="n">pos_neg_ratio</span> <span class="k">else</span> <span class="nb">max</span><span class="p">((</span><span class="n">cur_labels</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s1">&#39;focal&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">cur_num_cls</span> <span class="o">=</span> <span class="n">n_classes</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+                <span class="n">cur_labels</span> <span class="o">+=</span> <span class="n">n_classes</span><span class="p">[</span><span class="n">h</span><span class="p">]</span>
+                <span class="n">cur_labels</span><span class="p">[</span><span class="n">lbl_inds</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls_inds</span>
+                <span class="n">avg_factor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cls_inds</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">avg_factor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">cur_labels</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+            <span class="c1"># focal loss encode the last dim of tgt as background</span>
+            <span class="c1"># labels = pos_mask.new_full((len(pos_mask),), self.num_classes, dtype=torch.long)</span>
+            <span class="c1"># labels[pos_mask] = 0</span>
+
+
             <span class="n">lcenter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_cls</span><span class="p">(</span>
                 <span class="n">cur_cls_src</span><span class="p">,</span>
                 <span class="n">cur_labels</span><span class="p">,</span>
                 <span class="n">temp</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
-                <span class="n">n_cls_override</span><span class="o">=</span><span class="n">n_classes</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">n_cls_override</span><span class="o">=</span><span class="n">cur_num_cls</span><span class="p">,</span>
                 <span class="n">avg_factor</span><span class="o">=</span><span class="n">avg_factor</span>
             <span class="p">)</span>
             <span class="n">loss_cls</span> <span class="o">=</span> <span class="n">loss_cls</span> <span class="o">+</span> <span class="n">lcenter</span>
@@ -505,7 +523,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+    <p>&#169; Copyright 2024, Anonymous Author.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

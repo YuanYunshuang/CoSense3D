@@ -45,7 +45,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of Cosense3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
 </ul>
 
@@ -84,6 +84,7 @@
 <span class="kn">import</span> <span class="nn">torch_scatter</span>
 
 <span class="kn">from</span> <span class="nn">cosense3d.ops.utils</span> <span class="kn">import</span> <span class="n">points_in_boxes_gpu</span>
+<span class="kn">from</span> <span class="nn">cosense3d.agents.utils.transform</span> <span class="kn">import</span> <span class="n">generate_bev_tgt_pts</span>
 
 
 <div class="viewcode-block" id="DataManager"><a class="viewcode-back" href="../../../../cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager">[docs]</a><span class="k">class</span> <span class="nc">DataManager</span><span class="p">:</span>
@@ -136,6 +137,14 @@
                 <span class="n">mask</span> <span class="o">=</span> <span class="n">num_pts</span> <span class="o">&gt;</span> <span class="mi">3</span>
                 <span class="n">cav</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;local_bboxes_3d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_boxes</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
                 <span class="n">cav</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;local_labels_3d&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cav</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;local_labels_3d&#39;</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataManager.sample_global_bev_tgt_pts"><a class="viewcode-back" href="../../../../cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.sample_global_bev_tgt_pts">[docs]</a>    <span class="k">def</span> <span class="nf">sample_global_bev_tgt_pts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sam_res</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">map_res</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">max_num_pts</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">discrete</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">cavs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cav_manager</span><span class="o">.</span><span class="n">cavs</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">cav</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;points&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">cav</span> <span class="ow">in</span> <span class="n">cavs</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">cavs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">is_ego</span>
+            <span class="n">bev_pts</span> <span class="o">=</span> <span class="n">generate_bev_tgt_pts</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">cavs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">cavs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T_aug2g</span><span class="p">,</span>
+                                           <span class="n">sam_res</span><span class="p">,</span> <span class="n">map_res</span><span class="p">,</span> <span class="nb">range</span><span class="p">,</span> <span class="n">max_num_pts</span><span class="p">,</span> <span class="n">discrete</span><span class="p">)</span>
+            <span class="n">cavs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;global_bev_tgt_pts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bev_pts</span></div>
 
 <div class="viewcode-block" id="DataManager.distribute_to_seq_list"><a class="viewcode-back" href="../../../../cosense3d.agents.core.html#cosense3d.agents.core.data_manager.DataManager.distribute_to_seq_list">[docs]</a>    <span class="k">def</span> <span class="nf">distribute_to_seq_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_dict</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
