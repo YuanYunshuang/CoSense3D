@@ -1,10 +1,11 @@
+from cosense3d.config import add_cfg_keys
 
 
+@add_cfg_keys
 def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                               in_channels=256, stride=2,
                               generate_roi_scr=False, cls_loss="EDLLoss",
-                              use_gaussian=False, sigma=1.0,
-                              gather_keys=[], scatter_keys=[], gt_keys=[]):
+                              use_gaussian=False, sigma=1.0):
     scr_activation = "relu" # default
     edl = True
     if cls_loss == "EDLLoss":
@@ -17,9 +18,6 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
                 type='heads.det_center_sparse.DetCenterSparse',
-                gather_keys=gather_keys,
-                scatter_keys=scatter_keys,
-                gt_keys=gt_keys,
                 data_info=data_info,
                 generate_roi_scr=generate_roi_scr,
                 input_channels=in_channels,

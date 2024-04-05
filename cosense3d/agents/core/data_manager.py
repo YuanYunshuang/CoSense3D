@@ -66,7 +66,8 @@ class DataManager:
         for cavs in self.cav_manager.cavs:
             points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             assert cavs[0].is_ego
-            bev_pts = generate_bev_tgt_pts(points, cavs[0].data, sam_res, map_res, range, max_num_pts, discrete)
+            bev_pts = generate_bev_tgt_pts(points, cavs[0].data, cavs[0].T_aug2g,
+                                           sam_res, map_res, range, max_num_pts, discrete)
             cavs[0].data['global_bev_tgt_pts'] = bev_pts
 
     def distribute_to_seq_list(self, batch_dict, seq_len):

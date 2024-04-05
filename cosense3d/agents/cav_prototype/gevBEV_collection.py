@@ -108,6 +108,23 @@ class BEVSemsegCAV(BaseCAV):
 GevBEV = BEVSemsegCAV
 
 
+class GevBEVwDet(BEVSemsegCAV):
+    """GevBEV with object detection."""
+
+    def forward_head(self, tasks, training_mode):
+        if self.is_ego:
+            tasks['with_grad'].append((self.id, '12:det_head', {}))
+            tasks['with_grad'].append((self.id, '13:semseg_head', {}))
+        return tasks
+
+    def loss(self, tasks):
+        if self.is_ego:
+            tasks['loss'].append((self.id, '21:semseg_head_local', {}))
+            tasks['loss'].append((self.id, '22:det_head', {}))
+            tasks['loss'].append((self.id, '23:semseg_head', {}))
+        return tasks
+
+
 class EviBEV(BEVSemsegCAV):
     def prepare_data(self):
         DOP.adaptive_free_space_augmentation(self.data)

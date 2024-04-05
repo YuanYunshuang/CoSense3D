@@ -113,7 +113,8 @@ def filter_range_mask(points, lidar_range, eps=1e-4):
     return mask.all(dim=-1)
 
 
-def generate_bev_tgt_pts(points, data, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
+def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2, range=50,
+                         max_num_pts=5000, discrete=False):
     bevmap = data['bevmap']
     bevmap_coor = data['bevmap_coor']
     sx, sy = bevmap.shape[:2]
@@ -129,7 +130,8 @@ def generate_bev_tgt_pts(points, data, sam_res=0.4, map_res=0.2, range=50, max_n
         points2d = points2d + torch.randn_like(points2d)
 
     # transform points to global coordinates
-    transform = data['lidar_poses']
+    if transform is None:
+        transform = data['lidar_poses']
     points3d = torch.cat([points2d,
                           torch.zeros_like(points2d[:, :1]),
                           torch.ones_like(points2d[:, :1])],
@@ -303,7 +305,8 @@ class DataOnlineProcessor:
 
         if bevmap is not None:
             data['bev_tgt_pts'] = generate_bev_tgt_pts(
-                data['points'], data, sam_res, map_res, range, max_num_pts, discrete
+                data['points'], data,
+                None, sam_res, map_res, range, max_num_pts, discrete
             )
 
             # import matplotlib.pyplot as plt

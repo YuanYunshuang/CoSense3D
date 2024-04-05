@@ -9,9 +9,6 @@ def get_bev_semseg_head_cfg(
 ):
     return dict(
             type=semseg_head_type,
-            gather_keys=['bev_feat'],
-            scatter_keys=['bev_semseg_local'],
-            gt_keys=['bev_tgt_pts', 'local_bboxes_3d'],
             data_info=data_info,
             in_dim=256,
             stride=stride,
