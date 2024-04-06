@@ -14,6 +14,10 @@ def get_test_nms_eval_hooks(point_cloud_range_test):
         ]
 
 
+def get_test_bev_semseg_hooks(point_cloud_range_test):
+    return [dict(type='EvalBEVSemsegHook', test_range=point_cloud_range_test)]
+
+
 def get_detection_plot(point_cloud_range_test, data_keys=['detection', 'global_labels']):
     return dict(title='DetectionCanvas', lidar_range=point_cloud_range_test,
                 width=10, height=4, nrows=1, ncols=1, data_keys=data_keys)

@@ -1,7 +1,7 @@
 import math
 from abc import ABCMeta, abstractmethod
 from functools import partial
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 import torch
 from torch import nn
@@ -15,8 +15,8 @@ from cosense3d.utils.box_utils import (bbox_xyxy_to_cxcywh,
                                        rotate_points_batch)
 from cosense3d.utils.pclib import rotate_points_along_z_torch
 from cosense3d.utils.iou2d_calculator import bbox_overlaps
-from cosense3d.modules.utils.gaussian_utils import gaussian_2d, weighted_mahalanobis_dists
-from cosense3d.modules.utils.gevbev_utils import draw_sample_evis
+from cosense3d.modules.utils.gaussian_utils import gaussian_2d
+from cosense3d.modules.utils.gevbev_utils import draw_sample_evis, weighted_mahalanobis_dists
 from cosense3d.modules.utils.me_utils import metric2indices, update_me_essentials
 from cosense3d.modules.utils.box_coder import build_box_coder
 from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
@@ -1162,7 +1162,25 @@ class ContiBEVAssigner(BEVSemsegAssigner):
                           n_steps=steps).cuda().view(-1, 2)
         self.nbrs = offset[torch.norm(offset, dim=1) < 2].view(1, -1, 2)
 
-    def sample_dynamic_tgt_pts(self, ctr_pts, gt_boxes, B):
+    def sample_dynamic_tgt_pts(self, ctr_pts: dict, gt_boxes: torch.Tensor, B: int) \
+            -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Given the input coordinates of the center points and the ground truth BBoxes,
+        sample the BEV target points for BEV semantic segmentation following the buffer-based sampling as illustrated
+        in the following image:
+
+        .. image:: _static/imgs/buffer_based_sampling.png
+          :width: 400
+          :alt: Buffer-based sampling of the BEV target
+
+        :param ctr_pts: center points of bev maps, including indices, metric centers and regression results.
+        :param gt_boxes: ground truth BBoxes.
+        :param B: batch size.
+        :return:
+             - tgt_pts: sampled target points.
+             - tgt_lbl: labels of the sampled target points.
+             - inds: map indices of the sampled target points.
+        """
         tgt_pts = ctr_pts['ctr'].clone()
         tgt_pts[:, :2] = tgt_pts[:, :2] + torch.randn_like(tgt_pts[:, :2]) * 3
         tgt_pts = torch.cat([ctr_pts['coor'][:, :1], tgt_pts], dim=-1)
@@ -1191,7 +1209,17 @@ class ContiBEVAssigner(BEVSemsegAssigner):
         tgt_label = tgt_label > 0
         return tgt_pts[mask], tgt_label[mask], inds[mask].T
 
-    def assign(self, ctr_pts, samples, B, gt_boxes=None, **kwargs):
+    def assign(self, ctr_pts, samples, B, gt_boxes=None, **kwargs) -> dict:
+        """
+        Assign target.
+
+        :param ctr_pts: center points of bev maps, including indices, metric centers and regression results.
+        :param samples: BEV target point samples.
+        :param B: batch size.
+        :param gt_boxes: ground truth BBoxes.
+        :param kwargs: keyword arguments.
+        :return: target_dict that contains the static or/and dynamic target points and their corresponding labels.
+        """
         lr = self.lidar_range
         if self.tgt_range is not None:
             ctr_pts, samples = self.filter_range(ctr_pts, samples)
@@ -1213,16 +1241,30 @@ class ContiBEVAssigner(BEVSemsegAssigner):
 
         return tgt
 
-    def get_predictions(self, data_dict, B, **kwargs):
-        reg = data_dict['reg'].relu()
+    def get_predictions(self, ctr_pts, B, tag, **kwargs):
+        """
+        Given center points and its corresponding regressions, generate the dense bev semseg maps
+        and its uncertainty and observation mask.
+
+        :param ctr_pts: center points of bev maps, including indices, metric centers and regression results.
+        :param B: batch size.
+        :param tag: tag for regression key "static | dynamic".
+        :param kwargs: keyword arguments
+        :return:
+            - conf: confidence bev map.
+            - unc: uncertainty bev map.
+            - obs_mask: observation mask of the bev map.
+        """
+        reg = ctr_pts[f'reg_{tag}'].relu()
         reg_evi = reg[:, :2]
         reg_var = reg[:, 2:].view(-1, 2, 2)
-        ctr = data_dict['ctr']
-        coor = data_dict['coor']
+        ctr = ctr_pts['ctr']
+        coor = ctr_pts['coor']
 
         nbrs = self.nbrs.to(reg_evi.device)
         dists = torch.zeros_like(ctr.view(-1, 1, 2)) + nbrs
-        probs_weighted = weighted_mahalanobis_dists(reg_evi, reg_var, dists, self.var0)
+        vars0 = [self.var0, self.var0]
+        probs_weighted = weighted_mahalanobis_dists(reg_evi, reg_var, dists, vars0)
         voxel_new = ctr.view(-1, 1, 2) + nbrs
         # convert metric voxel points to map indices
         x = (torch.floor(voxel_new[..., 0] / self.res[0]) - self.offset_sz_x).long()
@@ -1248,7 +1290,12 @@ class ContiBEVAssigner(BEVSemsegAssigner):
         obs_mask[obs] = 1
         obs_mask = obs_mask.view(batch_size, self.size_x, self.size_y).bool()
         conf, unc = pred_to_conf_unc(evidence)
-        return conf, unc, obs_mask
+
+        # import matplotlib.pyplot as plt
+        # plt.imshow(conf[0, :, :, 1].T.detach().cpu().numpy())
+        # plt.show()
+        # plt.close()
+        return {f'conf_map_{tag}': conf, f'unc_map_{tag}': unc, f'obs_mask_{tag}': obs_mask}
 
 
 class DiscreteBEVAssigner(BaseAssigner):

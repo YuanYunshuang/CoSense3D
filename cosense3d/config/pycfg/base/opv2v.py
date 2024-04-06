@@ -1,7 +1,8 @@
 from collections import OrderedDict
 
 point_cloud_range = [-144, -51.2, -3.0, 144, 51.2, 1.0]
-point_cloud_range_bev = [-51.2, -51.2, -3.0, 51.2, 51.2, 1.0]
+point_cloud_range_bev = [-50, -50, -3.0, 50, 50, 1.0]
+# point_cloud_range_bev = [-51.2, -51.2, -3.0, 51.2, 51.2, 1.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
 global_ref_time = 0.05
 
@@ -32,11 +33,17 @@ def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
         LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
     )
 
+    pipeline_cpu_test = OrderedDict(
+        LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
+        LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
+    )
+
     inference_pipeline_cpu = OrderedDict(
         LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     )
     if load_bev_map:
         pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
+        pipeline_cpu_test['LoadOPV2VBevMaps'] = dict(use_global_map=True, range=50)
         inference_pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
 
     return dict(
@@ -56,7 +63,7 @@ def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
         com_range=70,
         seq_len=seq_len,
         train_pipeline=pipeline_cpu,
-        test_pipeline=pipeline_cpu,
+        test_pipeline=pipeline_cpu_test,
     )
 
 

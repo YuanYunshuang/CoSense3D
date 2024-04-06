@@ -143,12 +143,8 @@ def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2,
     xs = torch.clamp(xs, 0, sx - 1).long()
     ys = torch.clamp(ys, 0, sy - 1).long()
     road_mask = bevmap[xs, ys]
-    if data['vehicle_poses'][2] > 0.5:
-        mask = road_mask[:, :2].any(dim=1).float()
-    else:
-        mask = road_mask[:, 0]
 
-    bev_pts = torch.cat([points2d, mask.unsqueeze(1)], dim=1)
+    bev_pts = torch.cat([points2d, road_mask.unsqueeze(1)], dim=1)
     return bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
 
 

@@ -491,6 +491,11 @@ class LoadOPV2VBevMaps:
         bevmap_crop = bevmap[xmin:xmax, ymin:ymax]
         bevmap_coor = [bound[0] + xmin * self.map_res, bound[1] + ymin * self.map_res]
 
+        if data_dict['sample_info']['agents'][ai]['pose'][2] > 0.5:
+            bevmap_crop = bevmap_crop[..., :2].any(dim=1).float()
+        else:
+            bevmap_crop = bevmap_crop[..., 0]
+
         return bevmap_crop, bevmap_coor
 
 

@@ -44,8 +44,12 @@ class SemsegHead(BaseModule):
         out = {'ctr': ctr, 'coor': coor}
         if hasattr(self, 'static_head'):
             out['reg_static'] = self.static_head(feat)
+            if not self.training:
+                out.update(self.tgt_assigner.get_predictions(out, B, 'static'))
         if hasattr(self, 'dynamic_head'):
             out['reg_dynamic'] = self.dynamic_head(feat)
+            if not self.training:
+                out.update(self.tgt_assigner.get_predictions(out, B, 'dynamic'))
 
         return self.format_output(out, B)
 
@@ -57,12 +61,14 @@ class SemsegHead(BaseModule):
         output_new = {k: [] for k in output.keys()}
         batch_inds = output['coor'][:, 0]
         output['coor'] = output['coor'][:, 1:]
+
         for i in range(B):
             mask = batch_inds == i
             for k in output.keys():
-                output_new[k].append(output[k][mask])
-        if 'bevmap' in output:
-            output_new['bevmap'] = output['bevmap']
+                if 'map' in k or 'mask' in k:
+                    output_new[k].append(output[k][i])
+                else:
+                    output_new[k].append(output[k][mask])
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 

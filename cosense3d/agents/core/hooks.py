@@ -4,7 +4,10 @@ import os
 import time
 
 import torch
+import torch.nn.functional as F
 from importlib import import_module
+
+from cosense3d.ops.utils import points_in_boxes_gpu
 
 
 class Hooks:
@@ -285,6 +288,250 @@ class EvalDetectionBEVHook(BaseHook):
             iou_str = f"{int(iou * 100)}"
             fmt_str += f"AP@{iou_str}: {out_dict[f'ap_{iou_str}']:.3f}\n"
         return fmt_str
+
+
+class EvalDetectionHook(BaseHook):
+    def __init__(self, pc_range, iou_thr=[0.5, 0.7], metrics=['CoSense3D'], save_result=False,
+                 det_key='detection', gt_key='global_bboxes_3d', **kwargs):
+        super().__init__(**kwargs)
+        self.iou_thr = iou_thr
+        self.pc_range = pc_range
+        self.save_result = save_result
+        self.det_key = det_key
+        self.gt_key = gt_key
+        for m in metrics:
+            assert m in ['OPV2V', 'CoSense3D']
+            setattr(self, f'{m.lower()}_result',
+                    {iou: {'tp': [], 'fp': [], 'gt': 0, 'scr': []} for iou in iou_thr})
+        self.metrics = metrics
+        self.eval_funcs = import_module('cosense3d.utils.eval_detection_utils')
+
+    def set_logger(self, logger):
+        super().set_logger(logger)
+        logdir = os.path.join(logger.logdir, 'detection_eval')
+        os.makedirs(logdir, exist_ok=True)
+        self.logdir = logdir
+
+    def post_iter(self, runner, **kwargs):
+        detection = runner.controller.data_manager.gather_ego_data(self.det_key)
+        gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_key)
+
+        for i, (cav_id, preds) in enumerate(detection.items()):
+            if 'preds' in preds:
+                preds = preds['preds']
+            preds['box'], preds['scr'], preds['lbl'], preds['idx'], preds['time'] = \
+            self.filter_box_ranges(preds['box'], preds['scr'], preds['lbl'], preds['idx'], preds.get('time', None))
+            cur_gt_boxes = self.filter_box_ranges(gt_boxes[cav_id])[0]
+            cur_points = runner.controller.data_manager.gather_batch(i, 'points')
+
+            if self.save_result:
+                ego_key = cav_id
+                senario = runner.controller.data_manager.gather_ego_data('scenario')[ego_key]
+                frame = runner.controller.data_manager.gather_ego_data('frame')[ego_key]
+                filename = f"{senario}.{frame}.{ego_key.split('.')[1]}.pth"
+                result = {'detection': preds,
+                          'gt_boxes': cur_gt_boxes,
+                          'points': cur_points}
+                torch.save(result, os.path.join(self.logdir, filename))
+
+            for iou in self.iou_thr:
+                if 'OPV2V' in self.metrics:
+                    result_dict = getattr(self, f'opv2v_result')
+                    self.eval_funcs.caluclate_tp_fp(
+                        preds['box'][..., :7], preds['scr'], cur_gt_boxes[..., :7], result_dict, iou
+                    )
+                if 'CoSense3D' in self.metrics:
+                    result_dict = getattr(self, f'cosense3d_result')
+                    tp = self.eval_funcs.ops_cal_tp(
+                        preds['box'][..., :7].detach(), cur_gt_boxes[..., :7].detach(), IoU_thr=iou
+                    )
+                    result_dict[iou]['tp'].append(tp.cpu())
+                    result_dict[iou]['gt'] += len(cur_gt_boxes)
+                    result_dict[iou]['scr'].append(preds['scr'].detach().cpu())
+
+    def filter_box_ranges(self, boxes, scores=None, labels=None, indices=None, times=None):
+        mask = boxes.new_ones((len(boxes),)).bool()
+        if boxes.ndim == 3:
+            centers = boxes.mean(dim=1)
+        else:
+            centers = boxes[:, :3]
+        for i in range(3):
+            mask = mask & (centers[:, i] > self.pc_range[i]) & (centers[:, i] < self.pc_range[i + 3])
+        boxes = boxes[mask]
+        if scores is not None:
+            scores = scores[mask]
+        if labels is not None:
+            labels = labels[mask]
+        if indices is not None:
+            try:
+                indices = indices[mask]
+            except:
+                print("Number of boxes doesn't match the number of indices")
+        if times is not None:
+            times = times[mask]
+        return boxes, scores, labels, indices, times
+
+    def post_epoch(self, runner, **kwargs):
+        fmt_str = ("################\n"
+                   "DETECTION RESULT\n"
+                   "################\n")
+        if 'OPV2V' in self.metrics:
+            result_dict = getattr(self, f'opv2v_result')
+            out_dict = self.eval_funcs.eval_final_results(
+                result_dict,
+                self.iou_thr,
+                global_sort_detections=True
+            )
+            fmt_str += "OPV2V BEV Global sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+
+            out_dict = self.eval_funcs.eval_final_results(
+                result_dict,
+                self.iou_thr,
+                global_sort_detections=False
+            )
+            fmt_str += "OPV2V BEV Local sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+        if 'CoSense3D' in self.metrics:
+            out_dict = self.eval_cosense3d_final()
+            fmt_str += "CoSense3D Global sorted:\n"
+            fmt_str += self.format_final_result(out_dict)
+            fmt_str += "----------------\n"
+        print(fmt_str)
+        self.logger.log(fmt_str)
+
+    def format_final_result(self, out_dict):
+        fmt_str = ""
+        for iou in self.iou_thr:
+            iou_str = f"{int(iou * 100)}"
+            fmt_str += f"AP@{iou_str}: {out_dict[f'ap_{iou_str}']:.3f}\n"
+            # fmt_str += f"Precision@{iou_str}: {out_dict[f'mpre_{iou_str}']:.3f}\n"
+            # fmt_str += f"Recall@{iou_str}: {out_dict[f'mrec_{iou_str}']:.3f}\n"
+        return fmt_str
+
+    def eval_cosense3d_final(self):
+        out_dict = {}
+        result_dict = getattr(self, f'cosense3d_result')
+        for iou in self.iou_thr:
+            scores = torch.cat(result_dict[iou]['scr'], dim=0)
+            tps = torch.cat(result_dict[iou]['tp'], dim=0)
+            n_pred = len(scores)
+            n_gt = result_dict[iou]['gt']
+
+            ap, mpre, mrec, _ = self.eval_funcs.cal_ap_all_point(scores, tps, n_pred, n_gt)
+            iou_str = f"{int(iou * 100)}"
+            out_dict.update({f'ap_{iou_str}': ap,
+                             f'mpre_{iou_str}': mpre,
+                             f'mrec_{iou_str}': mrec})
+        return out_dict
+
+
+class EvalBEVSemsegHook(BaseHook):
+    def __init__(self,
+                 test_range,
+                 test_res=0.4,
+                 save_result=False,
+                 eval_static=True,
+                 bev_semseg_key='bev_semseg',
+                 gt_bev_key='bevmap',
+                 gt_boxes_key='global_bboxes_3d',
+                 **kwargs):
+        super().__init__(**kwargs)
+        self.test_range = test_range
+        self.test_res = test_res
+        self.save_result = save_result
+        self.eval_static = eval_static
+        self.bev_semseg_key = bev_semseg_key
+        self.gt_bev_key = gt_bev_key
+        self.gt_boxes_key = gt_boxes_key
+        self.thrs = torch.arange(0.1, 1.1, 0.1)
+        self.sx = int(round((self.test_range[3] - self.test_range[0]) / self.test_res))
+        self.sy = int(round((self.test_range[4] - self.test_range[1]) / self.test_res))
+
+        self.res_dict = {
+            'iou_dynamic_all': [],
+            'iou_dynamic_obs': [],
+            'iou_static_all': [],
+            'iou_static_obs': [],
+        }
+
+    def set_logger(self, logger):
+        super().set_logger(logger)
+        logdir = os.path.join(logger.logdir, 'bev_semseg_eval')
+        os.makedirs(logdir, exist_ok=True)
+        self.logdir = logdir
+
+    def post_iter(self, runner, **kwargs):
+        semseg = runner.controller.data_manager.gather_ego_data(self.bev_semseg_key)
+        gt_bevmaps = runner.controller.data_manager.gather_ego_data(self.gt_bev_key)
+        gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_boxes_key)
+        for i, (cav_id, preds) in enumerate(semseg.items()):
+            gt_dynamic_map = self.gt_dynamic_map(gt_boxes[cav_id])
+            self.cal_ious(preds, gt_dynamic_map, 'dynamic')
+            if self.eval_static:
+                gt_static_map = self.crop_map(gt_bevmaps[cav_id])
+                self.cal_ious(preds, gt_static_map, 'static')
+
+    def cal_ious(self, preds, gt_map, tag):
+        conf = self.crop_map(preds[f'conf_map_{tag}'])
+        unc = self.crop_map(preds[f'unc_map_{tag}'])
+        obs_mask = self.crop_map(preds[f'obs_mask_{tag}'])
+        self.res_dict[f'iou_{tag}_all'].append(self.iou(conf, unc, gt_map))
+        self.res_dict[f'iou_{tag}_obs'].append(self.iou(conf, unc, gt_map, obs_mask))
+
+    def iou(self, conf, unc, gt, obs_mask=None):
+        ious = []
+        for thr in self.thrs:
+            if obs_mask is None:
+                pos_mask = torch.argmax(conf, dim=-1).bool()
+                pos_mask = torch.logical_and(pos_mask, unc <= thr)
+                gt_ = gt
+            else:
+                pos_mask = torch.argmax(conf[obs_mask], dim=-1).bool()
+                pos_mask = torch.logical_and(pos_mask, unc[obs_mask] <= thr)
+                gt_ = gt[obs_mask]
+            mi = torch.logical_and(pos_mask, gt_).sum()
+            mu = torch.logical_or(pos_mask, gt_).sum()
+            ious.append(mi / mu)
+        return torch.stack(ious, dim=0)
+
+    def gt_dynamic_map(self, boxes):
+        # filter box range
+        mask = boxes.new_ones((len(boxes),)).bool()
+        dynamic_map = torch.ones((self.sx, self.sy), device=boxes.device)
+        centers = boxes[:, :3]
+        for i in range(3):
+            mask = mask & (centers[:, i] > self.test_range[i]) & (centers[:, i] < self.test_range[i + 3])
+        boxes = boxes[mask]
+        if len(boxes) > 0:
+            indices = torch.stack(torch.where(dynamic_map), dim=1)
+            xy = indices.float()
+            xy = (xy + 0.5) * self.test_res
+            xy[:, 0] += self.test_range[0]
+            xy[:, 1] += self.test_range[1]
+            xyz = F.pad(xy, (1, 1), 'constant', 0.0)
+            boxes = F.pad(boxes, (1, 0), 'constant', 0.0)
+            boxes[:, 3] = 0
+            boxes_decomposed, box_idx_of_pts = points_in_boxes_gpu(
+                xyz, boxes, batch_size=1
+            )
+            inds = indices[box_idx_of_pts >= 0].T
+            dynamic_map[inds[0], inds[1]] = 0
+        dynamic_map = torch.logical_not(dynamic_map)
+        return dynamic_map
+
+    def crop_map(self, bevmap):
+        sx, sy = bevmap.shape[:2]
+        sx_crop = (sx - self.sx) // 2
+        sy_crop = (sy - self.sy) // 2
+        return bevmap[sx_crop:-sx_crop, sy_crop:-sy_crop]
+
+    def post_epoch(self, runner, **kwargs):
+        pass
+
+
 
 
 
