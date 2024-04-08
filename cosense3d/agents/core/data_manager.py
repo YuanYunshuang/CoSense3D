@@ -66,9 +66,27 @@ class DataManager:
         for cavs in self.cav_manager.cavs:
             points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             assert cavs[0].is_ego
-            bev_pts = generate_bev_tgt_pts(points, cavs[0].data, cavs[0].T_aug2g,
+            transform = cavs[0].T_e2g.inverse() @ cavs[0].T_aug2g
+            bev_pts = generate_bev_tgt_pts(points, cavs[0].data, transform,
                                            sam_res, map_res, range, max_num_pts, discrete)
             cavs[0].data['global_bev_tgt_pts'] = bev_pts
+
+            # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+            # lidar = points.cpu().numpy()
+            # pts = bev_pts.cpu().numpy()
+            # pos = pts[:, 2] == 1
+            # neg = pts[:, 2] == 0
+            #
+            # ax = draw_points_boxes_plt(
+            #     pc_range=50,
+            #     points=pts[pos, :],
+            #     points_c='r',
+            #     return_ax=True
+            # )
+            # ax.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
+            # ax.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
+            # plt.savefig("/home/yuan/Downloads/tmp.png")
+            # plt.close()
 
     def distribute_to_seq_list(self, batch_dict, seq_len):
         result = []

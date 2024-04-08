@@ -42,8 +42,8 @@ def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
         LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
     )
     if load_bev_map:
-        pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
-        pipeline_cpu_test['LoadOPV2VBevMaps'] = dict(use_global_map=True, range=50)
+        pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=False, range=50, keys=['bev'])
+        pipeline_cpu_test['LoadOPV2VBevMaps'] = dict(use_global_map=False, range=50, keys=['bev'])
         inference_pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=True)
 
     return dict(

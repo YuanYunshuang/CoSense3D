@@ -26,7 +26,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0):
             scatter_keys=['bev_feat'],
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
-            height_compression=True
+            height_compression=[2, 8]
         ),
 
         backbone_neck = dict(

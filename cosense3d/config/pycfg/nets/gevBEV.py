@@ -98,7 +98,8 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
 ######################################################
 #                     OPV2V
 ######################################################
-test_hooks_opv2v = hooks.get_test_bev_semseg_hooks(opv2v.point_cloud_range_bev)
+test_hooks_opv2v = (hooks.get_test_bev_semseg_hooks(opv2v.point_cloud_range_bev)
+                    + hooks.get_test_nms_eval_hooks(opv2v.point_cloud_range_test))
 plots_opv2v = [hooks.get_detection_plot(opv2v.point_cloud_range_test)]
 shared_modules_gevbev_opv2v = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=False)
 shared_modules_gevbev_with_det_opv2v = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=True)

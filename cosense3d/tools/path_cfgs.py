@@ -36,8 +36,8 @@ def parse_opv2vt_paths(cfgs):
     import socket
     path_map = {
         "ISI": {
-            "data": "/home/yuan/data/OPV2V/temporal",
-            "meta": "/home/yuan/data/cosense3d/opv2vt"
+            "data": "/home/yuan/data/OPV2Vt",
+            "meta": "/home/yuan/data/OPV2Vt/meta"
         },
         "mars": {
             "data": "/koko/OPV2V/temporal",
@@ -71,8 +71,8 @@ def parse_dairv2xt_paths(cfgs):
     import socket
     path_map = {
         "ISI": {
-            "data": "/home/yuan/data/DAIR-V2X",
-            "meta": "/home/yuan/data/DAIR-V2X/meta_with_pred"
+            "data": "/home/yuan/data/DairV2Xt",
+            "meta": "/home/yuan/data/DairV2Xt/meta"
         },
         "mars": {
             "data": "/koko/DAIR-V2X",
@@ -105,6 +105,6 @@ def parse_paths(cfgs):
         cfgs = parse_opv2v_paths(cfgs)
     elif 'opv2vt' == cfgs['DATASET']['data_path'].lower():
         cfgs = parse_opv2vt_paths(cfgs)
-    elif 'dair' == cfgs['DATASET']['data_path'].lower():
+    elif 'dairv2xt' == cfgs['DATASET']['data_path'].lower():
         cfgs = parse_dairv2xt_paths(cfgs)
     return cfgs

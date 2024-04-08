@@ -16,7 +16,7 @@ from torch.utils.data import Dataset
 
 
 from scipy.spatial.transform import Rotation as R
-from cosense3d.utils.misc import load_yaml, save_json
+from cosense3d.utils.misc import load_yaml, save_json, load_json
 from cosense3d.dataset.toolkit import register_pcds
 from cosense3d.dataset.toolkit.cosense import CoSenseDataConverter as cs
 from cosense3d.utils.box_utils import boxes_to_corners_3d
@@ -578,11 +578,69 @@ def update_global_bboxes_num_pts(data_dir, meta_path):
         save_json(meta, jf.replace('opv2v', 'opv2v_full_'))
 
 
+def generate_bevmaps(data_dir, meta_path):
+    assets_path = f"{os.path.dirname(__file__)}/../../carla/assets"
+    map_path = f"{assets_path}/maps"
+    map_files = glob(os.path.join(map_path, '*.png'))
+    scene_maps = load_json(os.path.join(assets_path, 'scenario_town_map.json'))
+    map_bounds = load_json(os.path.join(assets_path, 'map_bounds.json'))
+    bevmaps = {}
+    for mf in map_files:
+        town = os.path.basename(mf).split('.')[0]
+        bevmap = cv2.imread(mf)
+        # bevmap = np.pad(bevmap, ((pad, pad), (pad, pad), (0, 0)), 'constant', constant_values=0)
+        bevmaps[town] = bevmap
+
+    T_corr = np.array([[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1], [0, 0, 0, 1]])
+
+    json_files = glob(meta_path + '/*.json')
+    grid = np.ones((500, 500))
+    inds = np.stack(np.where(grid))
+    xy = inds * 0.2 - 50 + 0.1
+    xy_pad = np.concatenate([xy, np.zeros_like(xy[:1]), np.ones_like(xy[:1])], axis=0)
+    for jf in tqdm.tqdm(json_files):
+        scene = os.path.basename(jf).split('.')[0]
+        town = scene_maps[scene]
+        cur_map = bevmaps[town]
+        sx, sy = cur_map.shape[:2]
+        meta = load_json(jf)
+        for f, fdict in meta.items():
+            for ai, adict in fdict['agents'].items():
+                lidar_pose = adict['lidar']['0']['pose']
+                transform = T_corr @ pose_to_transformation(lidar_pose)
+                xy_tf = transform @ xy_pad
+                # xy_tf = xy_pad
+                # xy_tf[0] = xy_tf[0] - lidar_pose[0]
+                # xy_tf[1] = xy_tf[1] - lidar_pose[1]
+                xy_tf[0] -= map_bounds[town][0]
+                xy_tf[1] -= map_bounds[town][1]
+                map_inds = np.floor(xy_tf[:2] / 0.2)
+                xs = np.clip(map_inds[0], 0, sx - 1).astype(int)
+                ys = np.clip(map_inds[1], 0, sy - 1).astype(int)
+                bevmap = cur_map[xs, ys].reshape(500, 500, 3)[::-1, ::-1]
+
+                filename = os.path.join(data_dir, 'train', scene, ai, f'{f}_bev.png')
+                if not os.path.exists(filename):
+                    filename = os.path.join(data_dir, 'test', scene, ai, f'{f}_bev.png')
+                gt_bev = cv2.imread(filename)
+
+                img = np.zeros((500, 1050, 3))
+                img[:, :500] = bevmap[:, ::-1]
+                img[:, 550:] = gt_bev
+                cv2.imwrite('/home/yuan/Downloads/tmp.png', img)
+                print(filename)
+
+
 if __name__=="__main__":
-    opv2v_to_cosense(
+    # opv2v_to_cosense(
+    #     "/home/yuan/data/OPV2Va",
+    #     "/home/yuan/data/OPV2Va/meta",
+    #     isSim=True,
+    #     pcd_ext='bin'
+    # )
+
+    generate_bevmaps(
         "/home/yuan/data/OPV2Va",
         "/home/yuan/data/OPV2Va/meta",
-        isSim=True,
-        pcd_ext='bin'
     )
 

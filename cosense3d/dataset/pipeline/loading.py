@@ -428,6 +428,7 @@ class LoadOPV2VBevMaps:
         self.ego_only = ego_only
         self.range = range
         self.map_res = 0.2
+        pad = int(range / self.map_res)
         if self.use_global_map:
             self.keys = ['bevmap', 'bevmap_coor']
             assets_path = f"{os.path.dirname(__file__)}/../../carla/assets"
@@ -438,23 +439,28 @@ class LoadOPV2VBevMaps:
             self.bevmaps = {}
             for mf in map_files:
                 town = os.path.basename(mf).split('.')[0]
-                self.bevmaps[town] = cv2.imread(mf) / 255.
+                bevmap = cv2.imread(mf) / 255.
+                # bevmap = np.pad(bevmap, ((pad, pad), (pad, pad), (0, 0)), 'constant', constant_values=0)
+                self.bevmaps[town] = bevmap
         else:
             assert keys is not None and len(keys) > 0
 
     def __call__(self, data_dict):
         path = os.path.join(data_dict['data_path'], data_dict['scenario'])
-        load_dict = {k: [] for k in self.keys}
         ego_id = data_dict['sample_info']['meta']['ego_id']
+        load_dict = {}
 
         agents = data_dict['valid_agent_ids']
         for ai in agents:
             if self.ego_only and ego_id == ai:
                 out = self.load_single(path, ai, data_dict)
+                for k in out.keys():
+                    if k not in load_dict:
+                        load_dict[k] = []
+                    load_dict[k].append(out[k])
             else:
-                out = {k: None for k in self.keys}
-            for k in self.keys:
-                load_dict[k].append(out[k])
+                for k in load_dict.keys():
+                    load_dict[k].append(None)
 
         data_dict.update(load_dict)
         return data_dict
@@ -467,11 +473,12 @@ class LoadOPV2VBevMaps:
             frame = data_dict['frame']
             for k in self.keys:
                 filename = os.path.join(path, ai, f"{frame}_{k}.png")
-                bev_map = cv2.imread(filename)
-                bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
+                bev_map = cv2.imread(filename)[..., 0]
+                # bev_map = cv2.cvtColor(bev_map, cv2.COLOR_BGR2GRAY)
                 bev_map = np.array(bev_map, dtype=float) / 255.
                 bev_map[bev_map > 0] = 1
-                out[k] = bev_map
+                out[f'{k}map'] = np.flip(bev_map, 0).copy()
+                out[f'{k}map_coor'] = [-self.range, - self.range]
         return out
 
     def crop_map_for_pose(self, data_dict, ai):
@@ -479,10 +486,12 @@ class LoadOPV2VBevMaps:
         town = self.scene_maps[scenario]
         lidar_pose = data_dict['sample_info']['agents'][ai]['lidar']['0']['pose']
         bevmap = self.bevmaps[town]
-        bound = self.map_bounds[town]
-        offset_x = int((lidar_pose[0] - self.range - bound[0]) // self.map_res)
-        offset_y = int((lidar_pose[1] - self.range - bound[1]) // self.map_res)
         size = int(self.range * 2 / self.map_res)
+        bound = self.map_bounds[town]
+        # bound[0] -= self.range
+        # bound[1] -= self.range
+        offset_x = int((lidar_pose[0] - self.range - bound[0]) / self.map_res)
+        offset_y = int((lidar_pose[1] - self.range - bound[1]) / self.map_res)
 
         xmin = max(offset_x, 0)
         xmax = min(offset_x + size, bevmap.shape[0] - 1)
@@ -492,7 +501,7 @@ class LoadOPV2VBevMaps:
         bevmap_coor = [bound[0] + xmin * self.map_res, bound[1] + ymin * self.map_res]
 
         if data_dict['sample_info']['agents'][ai]['pose'][2] > 0.5:
-            bevmap_crop = bevmap_crop[..., :2].any(dim=1).float()
+            bevmap_crop = bevmap_crop[..., :2].any(1)
         else:
             bevmap_crop = bevmap_crop[..., 0]
 

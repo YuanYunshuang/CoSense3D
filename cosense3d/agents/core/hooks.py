@@ -464,22 +464,32 @@ class EvalBEVSemsegHook(BaseHook):
         self.logdir = logdir
 
     def post_iter(self, runner, **kwargs):
+        scene_tokens = runner.controller.data_manager.gather_ego_data('scene_tokens')
+        frame = runner.controller.data_manager.gather_ego_data('frame')
         semseg = runner.controller.data_manager.gather_ego_data(self.bev_semseg_key)
         gt_bevmaps = runner.controller.data_manager.gather_ego_data(self.gt_bev_key)
         gt_boxes = runner.controller.data_manager.gather_ego_data(self.gt_boxes_key)
         for i, (cav_id, preds) in enumerate(semseg.items()):
+            token = f'{scene_tokens[cav_id]}.{frame[cav_id]}'
             gt_dynamic_map = self.gt_dynamic_map(gt_boxes[cav_id])
-            self.cal_ious(preds, gt_dynamic_map, 'dynamic')
+            self.cal_ious(preds, gt_dynamic_map, 'dynamic', token)
             if self.eval_static:
-                gt_static_map = self.crop_map(gt_bevmaps[cav_id])
-                self.cal_ious(preds, gt_static_map, 'static')
+                gt_static_map = self.gt_static_map(gt_bevmaps[cav_id])
+                self.cal_ious(preds, gt_static_map, 'static', token)
 
-    def cal_ious(self, preds, gt_map, tag):
+    def cal_ious(self, preds, gt_map, tag, token=None):
         conf = self.crop_map(preds[f'conf_map_{tag}'])
         unc = self.crop_map(preds[f'unc_map_{tag}'])
         obs_mask = self.crop_map(preds[f'obs_mask_{tag}'])
         self.res_dict[f'iou_{tag}_all'].append(self.iou(conf, unc, gt_map))
         self.res_dict[f'iou_{tag}_obs'].append(self.iou(conf, unc, gt_map, obs_mask))
+
+        if self.save_result:
+            img = torch.cat([gt_map, unc, conf[..., 1]], dim=0).detach().cpu().numpy()
+            import matplotlib.pyplot as plt
+            plt.imshow(img.T)
+            plt.savefig(os.path.join(self.logdir, f'{token}.{tag}.jpg'))
+            plt.close()
 
     def iou(self, conf, unc, gt, obs_mask=None):
         ious = []
@@ -522,6 +532,11 @@ class EvalBEVSemsegHook(BaseHook):
         dynamic_map = torch.logical_not(dynamic_map)
         return dynamic_map
 
+    def gt_static_map(self, bevmap):
+        # map has higher resolution, downsample 2x
+        # bevmap = torch.flip(bevmap, [0])
+        return bevmap[::2, ::2]
+
     def crop_map(self, bevmap):
         sx, sy = bevmap.shape[:2]
         sx_crop = (sx - self.sx) // 2
@@ -529,7 +544,23 @@ class EvalBEVSemsegHook(BaseHook):
         return bevmap[sx_crop:-sx_crop, sy_crop:-sy_crop]
 
     def post_epoch(self, runner, **kwargs):
-        pass
+        fmt_str = ("#################\n"
+                   "BEV SEMSEG RESULT\n"
+                   "#################\n")
+        fmt_str += f"{'thr':18s} |  " + "  ".join([f"{v:4.1f} " for v in self.thrs]) + "\n"
+        fmt_str += "-" * (23 + 70) + "\n"
+        for k, vs in self.res_dict.items():
+            vs = torch.stack(vs, dim=0).mean(dim=0) * 100
+            if isinstance(vs, int):
+                continue
+            s1 = f"{k:18s} |  "
+            if isinstance(vs, float):
+                s2 = f"{vs:4.1f} \n"
+            else:
+                s2 = "  ".join([f"{v:4.1f} " for v in vs]) + "\n"
+            fmt_str += s1 + s2
+        print(fmt_str)
+        self.logger.log(fmt_str)
 
 
 

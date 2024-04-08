@@ -15,7 +15,7 @@ def get_test_nms_eval_hooks(point_cloud_range_test):
 
 
 def get_test_bev_semseg_hooks(point_cloud_range_test):
-    return [dict(type='EvalBEVSemsegHook', test_range=point_cloud_range_test)]
+    return [dict(type='EvalBEVSemsegHook', test_range=point_cloud_range_test, save_result=True)]
 
 
 def get_detection_plot(point_cloud_range_test, data_keys=['detection', 'global_labels']):

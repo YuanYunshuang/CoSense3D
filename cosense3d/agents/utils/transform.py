@@ -130,16 +130,17 @@ def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2,
         points2d = points2d + torch.randn_like(points2d)
 
     # transform points to global coordinates
-    if transform is None:
-        transform = data['lidar_poses']
-    points3d = torch.cat([points2d,
-                          torch.zeros_like(points2d[:, :1]),
-                          torch.ones_like(points2d[:, :1])],
-                         dim=-1)
-    points3d = transform @ points3d.T
+    if transform is not None:
+        points = torch.cat([points2d,
+                              torch.zeros_like(points2d[:, :1]),
+                              torch.ones_like(points2d[:, :1])],
+                             dim=-1)
+        points = transform @ points.T
+    else:
+        points = points2d.T
 
-    xs = torch.floor((points3d[0] - bevmap_coor[0]) / map_res).int()
-    ys = torch.floor((points3d[1] - bevmap_coor[1]) / map_res).int()
+    xs = torch.floor((points[0] - bevmap_coor[0]) / map_res).int()
+    ys = torch.floor((points[1] - bevmap_coor[1]) / map_res).int()
     xs = torch.clamp(xs, 0, sx - 1).long()
     ys = torch.clamp(ys, 0, sy - 1).long()
     road_mask = bevmap[xs, ys]
@@ -148,9 +149,7 @@ def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2,
     return bev_pts[torch.randperm(len(bev_pts))[:max_num_pts]]
 
 
-
 class DataOnlineProcessor:
-
     @staticmethod
     def update_transform_with_aug(transform, aug_params):
         if 'rot' in aug_params:
@@ -296,25 +295,35 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def generate_sparse_target_bev_points(data: dict, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
+    def generate_sparse_target_bev_points(data: dict,
+                                          transform=None,
+                                          sam_res=0.4,
+                                          map_res=0.2,
+                                          range=50,
+                                          max_num_pts=5000,
+                                          discrete=False):
         bevmap = data['bevmap']
 
         if bevmap is not None:
             data['bev_tgt_pts'] = generate_bev_tgt_pts(
                 data['points'], data,
-                None, sam_res, map_res, range, max_num_pts, discrete
+                transform, sam_res, map_res, range, max_num_pts, discrete
             )
 
-            # import matplotlib.pyplot as plt
+            # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
             # lidar = data['points'].cpu().numpy()
             # pts = data['bev_tgt_pts'].cpu().numpy()
             # pos = pts[:, 2] == 1
             # neg = pts[:, 2] == 0
             #
-            # fig = plt.figure(figsize=(16, 10))
-            # plt.plot(pts[pos, 0], pts[pos, 1], '.', c='r', markersize=1)
-            # plt.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
-            # plt.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
+            # ax = draw_points_boxes_plt(
+            #     pc_range=50,
+            #     points=pts[pos, :],
+            #     points_c='r',
+            #     return_ax=True
+            # )
+            # ax.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
+            # ax.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
             # plt.savefig("/home/yuan/Downloads/tmp.png")
             # plt.close()
 

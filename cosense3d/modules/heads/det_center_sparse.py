@@ -254,7 +254,6 @@ class DetCenterSparse(BaseModule):
             # labels = pos_mask.new_full((len(pos_mask),), self.num_classes, dtype=torch.long)
             # labels[pos_mask] = 0
 
-
             lcenter = self.loss_cls(
                 cur_cls_src,
                 cur_labels,
