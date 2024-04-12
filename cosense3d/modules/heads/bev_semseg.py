@@ -51,6 +51,18 @@ class SemsegHead(BaseModule):
             if not self.training:
                 out.update(self.tgt_assigner.get_predictions(out, B, 'dynamic'))
 
+        # import matplotlib.pyplot as plt
+        # from cosense3d.modules.utils.edl_utils import logit_to_edl
+        # fig = plt.figure(figsize=(14, 5))
+        # mask = coor[:, 0] == 0
+        # xy = ctr[mask].cpu().numpy()
+        # conf, unc = logit_to_edl(out['reg_static'][mask, :2])
+        # colors = conf[:, 1].cpu().numpy()
+        # neg = colors <= 0.5
+        # plt.scatter(xy[neg, 0], xy[neg, 1], cmap='jet', c=colors[neg], edgecolors=None, marker='.', s=1, vmin=0, vmax=1)
+        # plt.show()
+        # plt.close()
+
         return self.format_output(out, B)
 
     def format_input(self, stensor_list):

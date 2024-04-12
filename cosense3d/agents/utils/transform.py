@@ -181,7 +181,7 @@ class DataOnlineProcessor:
 
     @staticmethod
     @torch.no_grad()
-    def free_space_augmentation(data, d=10, h=1.5, step=1.5):
+    def free_space_augmentation(data, d: float=10.0, h: float=-1.5, step: float=1.5, res=0.25):
         lidar = data['points']
         # get point lower than z_min=1.5m
         m = lidar[:, 2] < h
@@ -201,7 +201,7 @@ class DataOnlineProcessor:
         xyz_new = xyz_new[tmp > 0]
         xyz_new = xyz_new[(xyz_new[..., 2] < h)]
         xyz_new = xyz_new[torch.randperm(len(xyz_new))]
-        selected = torch.unique(torch.floor(xyz_new / 2).long(), return_inverse=True, dim=0)[1]
+        selected = torch.unique(torch.floor(xyz_new * res).long(), return_inverse=True, dim=0)[1]
         xyz_new = scatter_mean(src=xyz_new, index=selected, dim=0)
 
         # pad free space point intensity as -1
@@ -211,7 +211,7 @@ class DataOnlineProcessor:
     @staticmethod
     @torch.no_grad()
     def adaptive_free_space_augmentation(data: dict, min_h: float=-1.5, steps: int=20,
-                                         alpha: float=0.05, time_idx: int=None):
+                                         alpha: float=0.05, res: float=0.5, time_idx: int=None):
         r"""
         Add free space points according to the distance of points to the origin.
 
@@ -240,24 +240,14 @@ class DataOnlineProcessor:
         we sample free space points in the ground distance of :math:`\delta_d` relative to each ring
         with the given 'step' distance.
 
-        Parameters
-        ----------
-        data : dict
-            Input data dict containing 'points'.
-        min_h : float, optional
-            Minimum sample height relative to lidar origin. Default is -1.5.
-        steps : int, optional
-            Number of points to be sampled for each lidar ray. Default is 20.
-        alpha : float, optional
-            Average angle offset between two neighboring lidar casting rays. Default is 0.05.
-        time_idx : int, optional
-            If provided, time will be copied from the original points to free space points.
-
-        Returns
-        -------
-        dict
-            Updated data.
-
+        :param data: input data dict containing 'points'.
+        :param min_h: minimum sample height relative to lidar origin. Default is -1.5.
+        :param steps: number of points to be sampled for each lidar ray. Default is 20.
+        :param alpha: average angle offset between two neighboring lidar casting rays. Default is 0.05.
+        :param res: resolution for down-sampling the free space points. Default is 0.5.
+        :param time_idx: if provided, time will be copied from the original points to free space points.
+        :return:
+            updated data.
         """
 
         lidar = data['points']
@@ -282,7 +272,7 @@ class DataOnlineProcessor:
         xyz_new = xyz_new[tmp > 0]
         # xyz_new = xyz_new[(xyz_new[..., 2] < min_h)]
         xyz_new = xyz_new[torch.randperm(len(xyz_new))]
-        uniq, selected = torch.unique(torch.floor(xyz_new[..., :3] / 2).long(), return_inverse=True, dim=0)
+        uniq, selected = torch.unique(torch.floor(xyz_new[..., :3] * res).long(), return_inverse=True, dim=0)
         # xyz = torch.zeros_like(xyz_new[:len(uniq)])
         tmin = xyz_new[:, -1].min()
         xyz_new[:, -1] -= tmin

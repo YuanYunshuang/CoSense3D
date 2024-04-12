@@ -153,7 +153,7 @@ class MinkUnet(BaseModule):
                 res[f'p{stride}'] = out_tensor
             else:
                 ctr = indices2metric(out_tensor.C, self.voxel_size)
-                res[f'p{stride}'] = {'coor': out_tensor.C, 'feat': out_tensor.F, 'ctr': ctr[:, 1:]}
+                res[f'p{stride}'] = {'coor': out_tensor.C[:, :3], 'feat': out_tensor.F, 'ctr': ctr[:, 1:3]}
         return res
 
     def format_output(self, res, N):

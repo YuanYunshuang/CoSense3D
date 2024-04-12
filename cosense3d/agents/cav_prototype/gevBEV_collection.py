@@ -61,7 +61,7 @@ class BEVSemsegCAV(BaseCAV):
             self.T_aug2g = T_c2aug
 
     def prepare_data(self):
-        DOP.adaptive_free_space_augmentation(self.data)
+        DOP.adaptive_free_space_augmentation(self.data, res=0.5, min_h=0)
         DOP.generate_sparse_target_bev_points(self.data)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
@@ -83,12 +83,12 @@ class BEVSemsegCAV(BaseCAV):
         else:
             grad_mode = 'no_grad'
         tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
-        tasks[grad_mode].append((self.id, '02:backbone_neck', {}))
         tasks[grad_mode].append((self.id, '03:semseg_head_local', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
             tasks['with_grad'].append((self.id, '11:spatial_fusion', {}))
+            tasks['with_grad'].append((self.id, '12:fusion_neck', {}))
         return tasks
 
     def forward_head(self, tasks, training_mode):

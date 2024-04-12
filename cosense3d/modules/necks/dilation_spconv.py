@@ -6,12 +6,13 @@ from cosense3d.modules.utils.me_utils import mink_coor_limit, minkconv_conv_bloc
 
 
 class DilationSpconv(BaseModule):
-    def __init__(self, data_info, convs, d=2, **kwargs):
+    def __init__(self, data_info, convs, d=2, n_layers=None, **kwargs):
         super(DilationSpconv, self).__init__(**kwargs)
         self.det_r = data_info.get('det_r', False)
         self.lidar_range = data_info.get('lidar_range', False)
         self.voxel_size = data_info['voxel_size']
         self.d = d
+        self.n_layers = n_layers
         self.conv_args = convs
         self.convs = []
         for k, conv_args in convs.items():
@@ -75,4 +76,8 @@ class DilationSpconv(BaseModule):
         for ks in args['kernels'][1:]:
             layers.append(minkconv_layer(out_dim, out_dim, ks, 1,
                                          expand_coordinates=True))
+        if self.n_layers is not None and self.n_layers > len(args['kernels']):
+            for _ in range(self.n_layers - len(args['kernels'])):
+                layers.append(minkconv_layer(out_dim, out_dim, 3, 1,
+                                             expand_coordinates=False))
         return nn.Sequential(*layers)

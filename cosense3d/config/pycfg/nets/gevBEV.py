@@ -43,15 +43,6 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             cache_strides=strides
         ),
 
-        backbone_neck = dict(
-            type='necks.dilation_spconv.DilationSpconv',
-            gather_keys=['bev_feat'],
-            scatter_keys=['bev_feat'],
-            data_info=data_info,
-            d=2,
-            convs=dconvs
-        ),
-
         semseg_head_local=get_bev_semseg_head_cfg(
             gather_keys=['bev_feat'],
             scatter_keys=['bev_semseg_local'],
@@ -59,6 +50,7 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             semseg_head_type=semseg_head_type,
             data_info=data_info,
             stride=out_stride,
+            in_dim=384,
             tgt_assigner_type=tgt_assigner_type,
         ),
 
@@ -69,6 +61,16 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             stride=strides
         ),
 
+        fusion_neck=dict(
+            type='necks.dilation_spconv.DilationSpconv',
+            gather_keys=['spatial_fusion_feat'],
+            scatter_keys=['spatial_fusion_feat'],
+            data_info=data_info,
+            d=2,
+            convs=dconvs,
+            n_layers=6,
+        ),
+
         semseg_head=get_bev_semseg_head_cfg(
             gather_keys=['spatial_fusion_feat'],
             scatter_keys=['bev_semseg'],
@@ -76,6 +78,7 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             semseg_head_type=semseg_head_type,
             data_info=data_info,
             stride=out_stride,
+            in_dim=256,
             tgt_assigner_type=tgt_assigner_type,
         ),
 

@@ -330,7 +330,7 @@ def plot_model_efficiency():
 if __name__=="__main__":
     # compare_detection(
     #     "/media/yuan/luna/streamLTS/LTS_opv2v/epoch3/detection_eval",
-    #     "/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch50/detection_eval",
+    #     "/media/yuan/luna/streamLTS/LTS_opv2v_no_reg/epoch50_v1/detection_eval",
     #     "/media/yuan/luna/images/opv2v",
     #     [-20, -38.4, -3.0, 80, 38.4, 1.0]
     # )
