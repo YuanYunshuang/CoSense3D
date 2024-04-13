@@ -58,8 +58,8 @@ class SemsegHead(BaseModule):
         # xy = ctr[mask].cpu().numpy()
         # conf, unc = logit_to_edl(out['reg_static'][mask, :2])
         # colors = conf[:, 1].cpu().numpy()
-        # neg = colors <= 0.5
-        # plt.scatter(xy[neg, 0], xy[neg, 1], cmap='jet', c=colors[neg], edgecolors=None, marker='.', s=1, vmin=0, vmax=1)
+        # # neg = colors <= 0.5
+        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='.', s=1, vmin=0, vmax=1)
         # plt.show()
         # plt.close()
 

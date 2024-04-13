@@ -290,7 +290,7 @@ class DataOnlineProcessor:
                                           sam_res=0.4,
                                           map_res=0.2,
                                           range=50,
-                                          max_num_pts=5000,
+                                          max_num_pts=3000,
                                           discrete=False):
         bevmap = data['bevmap']
 

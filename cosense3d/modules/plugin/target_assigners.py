@@ -1113,7 +1113,7 @@ class BEVSemsegAssigner(BaseAssigner):
 
     @staticmethod
     def down_sample_pred_pts(ctr_pts):
-        keep = torch.rand_like(ctr_pts['coor'][:, 0]) > 0.5
+        keep = torch.rand_like(ctr_pts['ctr'][:, 0]) > 0.5
         for k in ctr_pts.keys():
             ctr_pts[k] = ctr_pts[k][keep]
 
@@ -1239,22 +1239,23 @@ class ContiBEVAssigner(BEVSemsegAssigner):
                 ctr_pts, tgt_pts, 'dynamic', self.res[0], self.distr_r, lr, B, self.var0)
             tgt['lbl_dynamic'] = tgt_label
 
-        # import matplotlib.pyplot as plt
-        # from cosense3d.modules.utils.edl_utils import logit_to_edl
-        # fig = plt.figure(figsize=(10, 10))
-        # coor = ctr_pts['coor']
-        # ctr = ctr_pts['ctr']
-        # sams = samples[samples[:, 0]==0][:, 1:].cpu().numpy()
-        # mask = coor[:, 0] == 0
-        # xy = ctr[mask].cpu().numpy()
-        # conf, unc = logit_to_edl(ctr_pts['reg_static'][mask, :2])
-        # colors = conf[:, 1].detach().cpu().numpy()
-        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='.', s=1, vmin=0, vmax=1)
-        # pos = sams[:, -1] == 1
-        # plt.scatter(sams[:, 0], sams[:, 1], c='k', edgecolors=None, marker='.', s=1)
-        # plt.scatter(sams[pos, 0], sams[pos, 1], c='r', edgecolors=None, marker='.', s=1)
-        # plt.show()
-        # plt.close()
+        # if kwargs['itr'] % 50 == 2:
+        #     import matplotlib.pyplot as plt
+        #     from cosense3d.modules.utils.edl_utils import logit_to_edl
+        #     fig = plt.figure(figsize=(10, 10))
+        #     coor = ctr_pts['coor']
+        #     ctr = ctr_pts['ctr']
+        #     sams = samples[samples[:, 0]==0][:, 1:].cpu().numpy()
+        #     mask = coor[:, 0] == 0
+        #     xy = ctr[mask].cpu().numpy()
+        #     conf, unc = logit_to_edl(ctr_pts['reg_static'][mask, :2])
+        #     colors = conf[:, 1].detach().cpu().numpy()
+        #     plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='.', s=1, vmin=0, vmax=1)
+        #     pos = sams[:, -1] == 1
+        #     plt.scatter(sams[:, 0], sams[:, 1], c='k', edgecolors=None, marker='.', s=1)
+        #     plt.scatter(sams[pos, 0], sams[pos, 1], c='magenta', edgecolors=None, marker='.', s=1)
+        #     plt.show()
+        #     plt.close()
         #
         # fig = plt.figure(figsize=(10, 10))
         # mask = tgt_pts[:, 0] == 0
