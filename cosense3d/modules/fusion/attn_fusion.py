@@ -10,36 +10,50 @@ from cosense3d.modules.utils.common import cat_coor_with_idx
 
 
 class SparseAttentionFusion(BaseModule):
-    def __init__(self, data_info, stride, in_channels, **kwargs):
+    def __init__(self, stride, in_channels, **kwargs):
         super(SparseAttentionFusion, self).__init__(**kwargs)
-        update_me_essentials(self, data_info, stride=stride)
-        self.d = len(self.voxel_size)
+        if isinstance(stride, int):
+            self.stride = [stride]
+        else:
+            self.stride = stride
         self.attn = ScaledDotProductAttention(in_channels)
 
     def forward(self, ego_feats, coop_feats=None, **kwargs):
         fused_feat = []
+        fuse_key = self.gather_keys[0]
         for ego_feat, coop_feat in zip(ego_feats, coop_feats):
-            coor = [ego_feat[f'p{self.stride}']['coor']]
-            feat = [ego_feat[f'p{self.stride}']['feat']]
-            if len(coop_feat) == 0:
-                fused_feat.append({
-                    f'p{self.stride}': {
-                        'coor': coor[0],
-                        'feat': feat[0]
-                    }
-                })
-                continue
+            batch_feat = {}
+            for stride in self.stride:
+                coor, feat, ctr = self.fuse_feature_at_stride(ego_feat, coop_feat, stride, fuse_key)
+                batch_feat[f'p{stride}'] = {'coor': coor, 'feat': feat, 'ctr': ctr}
+            fused_feat.append(batch_feat)
+        return self.format_output(fused_feat)
 
+    def format_output(self, output):
+        return {self.scatter_keys[0]: output}
+
+    def fuse_feature_at_stride(self, ego_feat, coop_feat, stride, fuse_key):
+        coor = [ego_feat[f'p{stride}']['coor']]
+        feat = [ego_feat[f'p{stride}']['feat']]
+        ctr = [ego_feat[f'p{stride}']['ctr']]
+        if len(coop_feat) == 0:
+            return coor[0], feat[0], ctr[0]
+        else:
             # fuse coop to ego
             for cpfeat in coop_feat.values():
-                if 'pts_feat' not in cpfeat:
+                if fuse_key not in cpfeat:
                     continue
-                coor.append(cpfeat['pts_feat'][f'p{self.stride}']['coor'])
-                feat.append(cpfeat['pts_feat'][f'p{self.stride}']['feat'])
+                cpm = cpfeat[fuse_key][f'p{stride}']
+                coor.append(cpm['coor'])
+                feat.append(cpm['feat'])
+                ctr.append(cpm['ctr'])
+
             coor_cat = cat_coor_with_idx(coor)
             feat_cat = torch.cat(feat, dim=0)
+            ctr_cat = torch.cat(ctr, dim=0)
             uniq_coor, reverse_inds = torch.unique(coor_cat[:, 1:], dim=0,
                                                    return_inverse=True)
+            uniq_ctr = ctr_cat[reverse_inds.unique()]
 
             feats_pad = []
             for i, c in enumerate(coor):
@@ -48,17 +62,8 @@ class SparseAttentionFusion(BaseModule):
                 feats_pad.append(feat_pad)
             q = feats_pad[0].unsqueeze(1)  # num_pts, 1, d
             kv = torch.stack(feats_pad[1:], dim=1)  # num_pts, num_coop_cav, d
-            out = self.attn(q, kv, kv).squeeze(1)
-            fused_feat.append({
-                f'p{self.stride}': {
-                    'coor': uniq_coor,
-                    'feat': out
-                }
-            })
-        return self.format_output(fused_feat)
-
-    def format_output(self, output):
-        return {self.scatter_keys[0]: output}
+            feat_out = self.attn(q, kv, kv).squeeze(1)
+            return uniq_coor, feat_out, uniq_ctr
 
 
 class DenseAttentionFusion(BaseModule):

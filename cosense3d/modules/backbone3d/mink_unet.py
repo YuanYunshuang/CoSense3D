@@ -16,6 +16,7 @@ class MinkUnet(BaseModule):
                  cache_strides=None,
                  floor_height=0,
                  height_compression=None,
+                 compression_kernel_size_xy=1,
                  to_dense=False,
                  dist=False,
                  **kwargs):
@@ -26,6 +27,7 @@ class MinkUnet(BaseModule):
         self.floor_height = floor_height
         self.to_dense = to_dense
         self.height_compression = height_compression
+        self.compression_kernel_size_xy = compression_kernel_size_xy
         self.d = d
         self.lidar_range_tensor = nn.Parameter(torch.Tensor(self.lidar_range), requires_grad=False)
         # For determine batchnorm type: if the model is trained on multiple GPUs with ME.MinkowskiBatchNorm,
@@ -77,7 +79,7 @@ class MinkUnet(BaseModule):
             steps = v['steps']
             channels = v['channels']
             for i, s in enumerate(steps):
-                step = [1] * self.d
+                step = [self.compression_kernel_size_xy] * self.d
                 step[2] = s
                 layers.append(
                     minkconv_conv_block(channels[i], channels[i+1],

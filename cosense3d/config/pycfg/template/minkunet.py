@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 def get_minkunet_cfg(gather_keys, scatter_keys, voxel_size, point_cloud_range,
                      in_dim=4, dim=3, out_stride=2, height_compression=[2, 8],
-                     cache_strides=[2, 8]):
+                     compression_kernel_size_xy=1, cache_strides=[2, 8]):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     if len(height_compression) > 0:
         hc = OrderedDict()
@@ -28,5 +28,6 @@ def get_minkunet_cfg(gather_keys, scatter_keys, voxel_size, point_cloud_range,
         stride=out_stride,
         floor_height=point_cloud_range[2],
         data_info=data_info,
-        height_compression=hc
+        height_compression=hc,
+        compression_kernel_size_xy=compression_kernel_size_xy
     )

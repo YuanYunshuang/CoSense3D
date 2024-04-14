@@ -1191,18 +1191,24 @@ class ContiBEVAssigner(BEVSemsegAssigner):
         tgt_pts = tgt_pts[mask]
         inds = inds.T[mask]
 
-        boxes = gt_boxes.clone()
-        boxes[:, 3] = 0
-        pts = pad_r(tgt_pts)
-        _, box_idx_of_pts = points_in_boxes_gpu(
-            pts, boxes, batch_size=B
-        )
-        boxes[:, 4:6] *= 4
-        _, box_idx_of_pts2 = points_in_boxes_gpu(
-            pts, boxes, batch_size=B
-        )
-        tgt_label = - (box_idx_of_pts2 >= 0).int()
-        tgt_label[box_idx_of_pts >= 0] = 1
+        if len(gt_boxes) == 0:
+            tgt_label = torch.zeros_like(tgt_pts[:, 0]).int()
+        else:
+            boxes = gt_boxes.clone()
+            boxes[:, 3] = 0
+            pts = pad_r(tgt_pts)
+            try:
+                _, box_idx_of_pts = points_in_boxes_gpu(
+                    pts, boxes, batch_size=B
+                )
+                boxes[:, 4:6] *= 4
+                _, box_idx_of_pts2 = points_in_boxes_gpu(
+                    pts, boxes, batch_size=B
+                )
+                tgt_label = - (box_idx_of_pts2 >= 0).int()
+                tgt_label[box_idx_of_pts >= 0] = 1
+            except:
+                print('d')
 
         n_sam = len(gt_boxes) * 50
         mask = self.downsample_tgt_pts(tgt_label, max_sam=n_sam)

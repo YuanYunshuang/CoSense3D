@@ -18,6 +18,10 @@ def parse_opv2v_paths(cfgs):
             "data": "/koko/OPV2V",
             "meta": "/koko/cosense3d/opv2v_full",
         },
+        "docker": {
+            "data": "/data/OPV2Va",
+            "meta": "/data/OPV2Va/meta",
+        },
         "default": {
             "data": "/data/OPV2Vt",
             "meta": "/data/OPV2Vt/opv2vt"

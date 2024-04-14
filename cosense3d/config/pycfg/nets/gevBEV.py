@@ -40,6 +40,7 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
             height_compression=strides,
+            compression_kernel_size_xy=3,
             cache_strides=strides
         ),
 
@@ -108,6 +109,12 @@ shared_modules_gevbev_opv2v = get_shared_modules(opv2v.point_cloud_range, versio
 shared_modules_gevbev_with_det_opv2v = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=True)
 shared_modules_evibev_opv2v = get_shared_modules(opv2v.point_cloud_range, version='evibev')
 
-#--------- Ablation 1 : No RoI regression-------------
+#--------- Ablation 1 : Attention fusion-------------
 shared_modules_gevbev_with_det_opv2v_attn = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=True)
-shared_modules_gevbev_with_det_opv2v_attn['spatial_fusion']['type'] = "fusion.attn?_fusion"
+shared_modules_gevbev_with_det_opv2v_attn['spatial_fusion'] = dict(
+            type='fusion.attn_fusion.SparseAttentionFusion',
+            gather_keys=['bev_feat', 'received_response'],
+            scatter_keys=['spatial_fusion_feat'],
+            stride=[2, 4],
+            in_channels=348,
+        )
