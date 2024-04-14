@@ -109,3 +109,5 @@ shared_modules_gevbev_with_det_opv2v = get_shared_modules(opv2v.point_cloud_rang
 shared_modules_evibev_opv2v = get_shared_modules(opv2v.point_cloud_range, version='evibev')
 
 #--------- Ablation 1 : No RoI regression-------------
+shared_modules_gevbev_with_det_opv2v_attn = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=True)
+shared_modules_gevbev_with_det_opv2v_attn['spatial_fusion']['type'] = "fusion.attn?_fusion"
