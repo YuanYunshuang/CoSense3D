@@ -62,13 +62,17 @@ class BEVSemsegCAV(BaseCAV):
 
     def prepare_data(self):
         DOP.adaptive_free_space_augmentation(self.data, res=0.5, min_h=0)
-        DOP.generate_sparse_target_bev_points(self.data)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+        if self.require_grad:
+            if not self.is_ego:
+                self.data['bevmap'] = self.data['received_request']['bevmap']
+                self.data['bevmap_coor'] = self.data['received_request']['bevmap_coor']
+            DOP.generate_sparse_target_bev_points(self.data)
         # self.vis_data('transformed', 4)
 
     def get_request_cpm(self):
-        return {'lidar_pose': self.lidar_pose}
+        return {'lidar_pose': self.lidar_pose, 'bevmap': self.data['bevmap'], 'bevmap_coor': self.data['bevmap_coor']}
 
     def get_response_cpm(self):
         cpm = {}

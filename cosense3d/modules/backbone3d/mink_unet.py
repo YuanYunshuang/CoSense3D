@@ -79,11 +79,11 @@ class MinkUnet(BaseModule):
             steps = v['steps']
             channels = v['channels']
             for i, s in enumerate(steps):
-                step = [self.compression_kernel_size_xy] * self.d
-                step[2] = s
+                kernel = [self.compression_kernel_size_xy] * 2 + [s]
+                stride = [1] * 2 + [s]
                 layers.append(
                     minkconv_conv_block(channels[i], channels[i+1],
-                                        step, step, self.d, 0.1)
+                                        kernel, stride, self.d, 0.1)
                 )
             layers = nn.Sequential(*layers)
             setattr(self, f'{k}_compression', layers)

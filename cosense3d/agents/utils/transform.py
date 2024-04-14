@@ -292,30 +292,27 @@ class DataOnlineProcessor:
                                           range=50,
                                           max_num_pts=3000,
                                           discrete=False):
-        bevmap = data['bevmap']
+        data['bev_tgt_pts'] = generate_bev_tgt_pts(
+            data['points'], data,
+            transform, sam_res, map_res, range, max_num_pts, discrete
+        )
 
-        if bevmap is not None:
-            data['bev_tgt_pts'] = generate_bev_tgt_pts(
-                data['points'], data,
-                transform, sam_res, map_res, range, max_num_pts, discrete
-            )
-
-            # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
-            # lidar = data['points'].cpu().numpy()
-            # pts = data['bev_tgt_pts'].cpu().numpy()
-            # pos = pts[:, 2] == 1
-            # neg = pts[:, 2] == 0
-            #
-            # ax = draw_points_boxes_plt(
-            #     pc_range=50,
-            #     points=pts[pos, :],
-            #     points_c='r',
-            #     return_ax=True
-            # )
-            # ax.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
-            # ax.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
-            # plt.savefig("/home/yuan/Downloads/tmp.png")
-            # plt.close()
+        # from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        # lidar = data['points'].cpu().numpy()
+        # pts = data['bev_tgt_pts'].cpu().numpy()
+        # pos = pts[:, 2] == 1
+        # neg = pts[:, 2] == 0
+        #
+        # ax = draw_points_boxes_plt(
+        #     pc_range=50,
+        #     points=pts[pos, :],
+        #     points_c='r',
+        #     return_ax=True
+        # )
+        # ax.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
+        # ax.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
+        # plt.savefig("/home/yuan/Downloads/tmp.png")
+        # plt.close()
 
 
 
