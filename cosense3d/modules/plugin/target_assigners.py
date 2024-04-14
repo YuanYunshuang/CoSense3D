@@ -1232,8 +1232,11 @@ class ContiBEVAssigner(BEVSemsegAssigner):
 
         tgt = {}
         if 'reg_static' in ctr_pts:
-            tgt['evi_static'] = draw_sample_evis(
-                ctr_pts, samples, 'static',self.res[0], self.distr_r, lr, B, self.var0)
+            try:
+                tgt['evi_static'] = draw_sample_evis(
+                    ctr_pts, samples, 'static',self.res[0], self.distr_r, lr, B, self.var0)
+            except:
+                print('d')
             tgt['lbl_static'] = samples[:, -1]
         if 'reg_dynamic' in ctr_pts:
             assert gt_boxes is not None

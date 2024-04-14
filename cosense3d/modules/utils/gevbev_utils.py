@@ -50,7 +50,11 @@ def draw_sample_evis(ctr_pts: dict, samples: torch.Tensor, tag: str,
     -------
     Evidences for the given samples.
     """
+    if len(samples) == 0:
+        return torch.empty((0, 2), device=ctr_pts[f'reg_{tag}'].device)
     mask = (ctr_pts['ctr'].abs() < lr[3]).all(1)
+    if mask.sum() == 0:
+        return torch.zeros_like(samples[:, :2])
     reg = ctr_pts[f'reg_{tag}'][mask].relu()
     ctr = ctr_pts['ctr'][mask]
     coor = ctr_pts['coor'][mask]
