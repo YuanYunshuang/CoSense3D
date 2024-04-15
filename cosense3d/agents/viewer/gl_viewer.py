@@ -22,6 +22,16 @@ from cosense3d.agents.viewer.items.graph_items import LineBoxItem
 SIZE_OF_FLOAT = ctypes.sizeof(ctypes.c_float)
 TRANSLATION_FACTOR = 0.03
 jet = colormaps['jet']
+cav_colors = np.array([
+    [0.745, 0.039, 1.000, 1.000],
+    [0.039, 0.937, 1.000, 1.000],
+    [0.078, 0.490, 0.961, 1.000],
+    [0.039, 1.000, 0.600, 1.000],
+    [1.000, 0.529, 0.000, 1.000],
+    [0.345, 0.039, 1.000, 1.000],
+    [0.631, 1.000, 0.039, 1.000],
+    [1.000, 0.827, 0.000, 1.000],
+])
 
 
 # Main widget for presenting the point cloud and bounding boxes
@@ -93,14 +103,14 @@ class GLViewer(gl.GLViewWidget):
             global_min = None
             global_max = None
 
-        for lidar_id, pcd in pcds.items():
+        for i, (lidar_id, pcd)in enumerate(pcds.items()):
             if color_mode == 'united':
                 colors = [1.0, 1.0, 1.0, 1.0]
             elif color_mode == 'height':
                 height_norm = (pcd[:, 2] - global_min) / (global_max - global_min)
                 colors = jet(height_norm)
             elif color_mode == 'cav':
-                colors = np.random.random(4)
+                colors = cav_colors[i]
                 colors[-1] = 0.5
                 colors = colors.reshape(1, 4).repeat(len(pcd), 0)
             elif color_mode == 'time':
