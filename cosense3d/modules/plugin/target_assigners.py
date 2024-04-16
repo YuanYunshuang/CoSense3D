@@ -1253,10 +1253,10 @@ class ContiBEVAssigner(BEVSemsegAssigner):
         # xy = ctr[mask].cpu().numpy()
         # conf, unc = logit_to_edl(ctr_pts['reg_static'][mask, :2])
         # colors = conf[:, 1].detach().cpu().numpy()
-        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='o', s=2, vmin=0, vmax=1)
+        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='.', s=2, vmin=0, vmax=1)
         # pos = sams[:, -1] == 1
-        # plt.scatter(sams[:, 0], sams[:, 1], c='k', edgecolors=None, marker='.', s=1)
-        # plt.scatter(sams[pos, 0], sams[pos, 1], c='magenta', edgecolors=None, marker='.', s=1)
+        # plt.scatter(sams[:, 0], sams[:, 1], c='k', facecolors=None, marker='o', s=5)
+        # plt.scatter(sams[pos, 0], sams[pos, 1], c='r', facecolors=None, marker='o', s=5)
         # plt.show()
         # plt.close()
         #
@@ -1268,9 +1268,9 @@ class ContiBEVAssigner(BEVSemsegAssigner):
         # xy = ctr[mask].cpu().numpy()
         # conf, unc = logit_to_edl(ctr_pts['reg_dynamic'][mask, :2])
         # colors = conf[:, 1].detach().cpu().numpy()
-        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='o', s=2, vmin=0, vmax=1)
-        # plt.scatter(sams[:, 0], sams[:, 1], c='k', edgecolors=None, marker='.', s=1)
-        # plt.scatter(sams[pos, 0], sams[pos, 1], c='r', edgecolors=None, marker='.', s=1)
+        # plt.scatter(xy[:, 0], xy[:, 1], cmap='jet', c=colors, edgecolors=None, marker='.', s=2, vmin=0, vmax=1)
+        # plt.scatter(sams[:, 0], sams[:, 1], c='k', facecolors=None, marker='o', s=5)
+        # plt.scatter(sams[pos, 0], sams[pos, 1], c='r', facecolors=None, marker='o', s=5)
         # plt.show()
         # plt.close()
 

@@ -64,15 +64,16 @@ class BEVSemsegCAV(BaseCAV):
         DOP.adaptive_free_space_augmentation(self.data, res=0.5, min_h=0)
         self.apply_transform()
         DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
-        if self.require_grad:
-            if not self.is_ego:
-                self.data['bevmap'] = self.data['received_request']['bevmap']
-                self.data['bevmap_coor'] = self.data['received_request']['bevmap_coor']
-            DOP.generate_sparse_target_bev_points(self.data)
+        # if self.require_grad:
+        #     if not self.is_ego:
+        #         self.data['bevmap'] = self.data['received_request']['bevmap']
+        #         self.data['bevmap_coor'] = self.data['received_request']['bevmap_coor']
+        #     DOP.generate_sparse_target_bev_points(self.data)
         # self.vis_data('transformed', 4)
 
     def get_request_cpm(self):
-        return {'lidar_pose': self.lidar_pose, 'bevmap': self.data['bevmap'], 'bevmap_coor': self.data['bevmap_coor']}
+        return {'lidar_pose': self.lidar_pose}
+        # return {'lidar_pose': self.lidar_pose, 'bevmap': self.data['bevmap'], 'bevmap_coor': self.data['bevmap_coor']}
 
     def get_response_cpm(self):
         cpm = {}
@@ -87,7 +88,7 @@ class BEVSemsegCAV(BaseCAV):
         else:
             grad_mode = 'no_grad'
         tasks[grad_mode].append((self.id, '01:pts_backbone', {}))
-        tasks[grad_mode].append((self.id, '03:semseg_head_local', {}))
+        # tasks[grad_mode].append((self.id, '03:semseg_head_local', {}))
 
     def forward_fusion(self, tasks, training_mode):
         if self.is_ego:
@@ -103,7 +104,7 @@ class BEVSemsegCAV(BaseCAV):
 
     def loss(self, tasks):
         if self.is_ego:
-            tasks['loss'].append((self.id, '21:semseg_head_local', {}))
+            # tasks['loss'].append((self.id, '21:semseg_head_local', {}))
             # tasks['loss'].append((self.id, '22:det_head', {}))
             tasks['loss'].append((self.id, '23:semseg_head', {}))
         return tasks
@@ -123,7 +124,7 @@ class GevBEVwDet(BEVSemsegCAV):
 
     def loss(self, tasks):
         if self.is_ego:
-            tasks['loss'].append((self.id, '21:semseg_head_local', {}))
+            # tasks['loss'].append((self.id, '21:semseg_head_local', {}))
             tasks['loss'].append((self.id, '22:det_head', {}))
             tasks['loss'].append((self.id, '23:semseg_head', {}))
         return tasks
