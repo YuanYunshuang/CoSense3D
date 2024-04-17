@@ -10,7 +10,7 @@ voxel_size = [0.2, 0.2, 0.2]
 out_stride = 2
 
 
-def get_shared_modules(point_cloud_range, version='gevbev', det=True):
+def get_shared_modules(point_cloud_range, in_dim=4, version='gevbev', det=True):
     """
     gather_keys: 
         keys to gather data from cavs, key order is important, should match the forward input arguments order.
@@ -41,7 +41,8 @@ def get_shared_modules(point_cloud_range, version='gevbev', det=True):
             point_cloud_range=point_cloud_range,
             height_compression=strides,
             compression_kernel_size_xy=3,
-            cache_strides=strides
+            cache_strides=strides,
+            in_dim=in_dim,
         ),
 
         semseg_head_local=get_bev_semseg_head_cfg(
@@ -118,3 +119,5 @@ shared_modules_gevbev_with_det_opv2v_attn['spatial_fusion'] = dict(
             stride=[2, 4],
             in_channels=348,
         )
+
+shared_modules_gevbev_opv2v_naive_in7 = get_shared_modules(opv2v.point_cloud_range, version='gevbev', in_dim=7)

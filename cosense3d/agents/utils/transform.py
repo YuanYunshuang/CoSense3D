@@ -123,7 +123,7 @@ def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2,
     device = points2d.device
 
     # sample random points
-    offsets = torch.randn((len(points2d), 5, 2), device=device) * 3
+    offsets = torch.randn((len(points2d), 10, 2), device=device) * 3
     points2d = (points2d.reshape(-1, 1, 2) + offsets).reshape(-1, 2)
     points2d = torch.unique(torch.floor(points2d / sam_res).int(), dim=0) * sam_res
     if not discrete:

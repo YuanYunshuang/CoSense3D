@@ -105,6 +105,12 @@ class LoadLidarPoints:
                 lidar_dict['time'] -= self.time_offset
             else:
                 lidar_dict['time'] = np.zeros_like(lidar_dict['xyz'][:, :1]) + (timestamp - self.time_offset)
+        if 'distance' in self.load_attributes:
+            lidar_dict['distance'] = np.linalg.norm(lidar_dict['xyz'][:, :2], axis=1, keepdims=True)
+        if 'cosine' in self.load_attributes:
+            lidar_dict['cosine'] = np.cos(np.arctan2(lidar_dict['xyz'][:, 1:2], lidar_dict['xyz'][:, 0:1]))
+        if 'sine' in self.load_attributes:
+            lidar_dict['sine'] = np.sin(np.arctan2(lidar_dict['xyz'][:, 1:2], lidar_dict['xyz'][:, 0:1]))
 
         points = np.concatenate(
             [lidar_dict[attri] for attri in self.load_attributes], axis=-1)
