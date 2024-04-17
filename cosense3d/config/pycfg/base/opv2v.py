@@ -1,10 +1,9 @@
 from collections import OrderedDict
 
 point_cloud_range = [-144, -51.2, -3.0, 144, 51.2, 1.0]
-point_cloud_range_bev = [-50, -50, -3.0, 50, 50, 1.0]
-# point_cloud_range_bev = [-51.2, -51.2, -3.0, 51.2, 51.2, 1.0]
+point_cloud_range_bev_test = [-50, -50, -3.0, 50, 50, 1.0]
+point_cloud_range_bev = [-51.2, -51.2, -3.0, 51.2, 51.2, 1.0]
 point_cloud_range_test = [-140.8, -38.4, -3.0, 140.8, 38.4, 1.0]
-global_ref_time = 0.05
 
 
 data_manager = dict(
@@ -26,20 +25,20 @@ data_manager = dict(
 )
 
 
-def get_opv2v_cfg(seq_len, voxel_size, load_bev_map=False):
+def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], load_bev_map=False):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     pipeline_cpu = OrderedDict(
-        LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
+        LoadLidarPoints=dict(load_attributes=load_attributes),
         LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
     )
 
     pipeline_cpu_test = OrderedDict(
-        LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
+        LoadLidarPoints=dict(load_attributes=load_attributes),
         LoadAnnotations=dict(load3d_global=True, load3d_local=True, min_num_pts=3),
     )
 
     inference_pipeline_cpu = OrderedDict(
-        LoadLidarPoints=dict(load_attributes=['xyz', 'intensity']),
+        LoadLidarPoints=dict(load_attributes=load_attributes),
     )
     if load_bev_map:
         pipeline_cpu['LoadOPV2VBevMaps'] = dict(use_global_map=False, range=50, keys=['bev'])
@@ -71,6 +70,8 @@ seq4_pillar04 = get_opv2v_cfg(4, [0.4, 0.4, 4])
 seq4_vox04 = get_opv2v_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox01 = get_opv2v_cfg(4, [0.1, 0.1, 0.1])
 
-seq4_pillar04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 4], True)
-seq4_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2], True)
-seq4_vox01_bevmap = get_opv2v_cfg(4, [0.1, 0.1, 0.1], True)
+seq4_pillar04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 4], load_bev_map=True)
+seq4_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2],
+                                  load_attributes=['xyz', 'intensity', 'distance', 'cosine', 'sine'],
+                                  load_bev_map=True)
+seq4_vox01_bevmap = get_opv2v_cfg(4, [0.1, 0.1, 0.1], load_bev_map=True)

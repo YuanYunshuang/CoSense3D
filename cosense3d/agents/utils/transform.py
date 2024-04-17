@@ -281,6 +281,9 @@ class DataOnlineProcessor:
 
         # pad free space point intensity as -1
         xyz_new = torch.cat([xyz_new[:, :3], - torch.ones_like(xyz_new[:, :1]), xyz_new[:, 3:]], dim=-1)
+        pad_dim = lidar.shape[-1] - xyz_new.shape[-1]
+        if pad_dim > 0:
+            xyz_new = torch.cat([xyz_new, torch.zeros_like(xyz_new[:, :1]).repeat(1, pad_dim)], dim=-1)
         data['points'] = torch.cat([lidar, xyz_new], dim=0)
 
     @staticmethod

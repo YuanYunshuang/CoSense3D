@@ -17,7 +17,7 @@ TRAIN:
     gamma: 0.1
 
 TEST:
-  hooks: 'pycfg.nets.gevBEV.test_hooks_opv2v'
+  hooks: 'pycfg.nets.gevBEV.test_hooks_opv2v_bev'
 
 
 CONTROLLER:

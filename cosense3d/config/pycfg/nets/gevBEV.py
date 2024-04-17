@@ -103,8 +103,8 @@ def get_shared_modules(point_cloud_range, in_dim=4, version='gevbev', det=True):
 ######################################################
 #                     OPV2V
 ######################################################
-test_hooks_opv2v = (hooks.get_test_bev_semseg_hooks(opv2v.point_cloud_range_bev)
-                    + hooks.get_test_nms_eval_hooks(opv2v.point_cloud_range_test))
+test_hooks_opv2v_bev_det = (hooks.get_test_bev_semseg_hooks(opv2v.point_cloud_range_bev_test)
+                            + hooks.get_test_nms_eval_hooks(opv2v.point_cloud_range_test))
 plots_opv2v = [hooks.get_detection_plot(opv2v.point_cloud_range_test)]
 shared_modules_gevbev_opv2v = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=False)
 shared_modules_gevbev_with_det_opv2v = get_shared_modules(opv2v.point_cloud_range, version='gevbev', det=True)
@@ -120,4 +120,5 @@ shared_modules_gevbev_with_det_opv2v_attn['spatial_fusion'] = dict(
             in_channels=348,
         )
 
-shared_modules_gevbev_opv2v_naive_in7 = get_shared_modules(opv2v.point_cloud_range, version='gevbev', in_dim=7)
+shared_modules_gevbev_opv2v_naive_in7 = get_shared_modules(opv2v.point_cloud_range_bev, version='gevbev', in_dim=7)
+test_hooks_opv2v_bev = (hooks.get_test_bev_semseg_hooks(opv2v.point_cloud_range_bev_test))

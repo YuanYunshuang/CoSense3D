@@ -1242,7 +1242,7 @@ class ContiBEVAssigner(BEVSemsegAssigner):
                 ctr_pts, tgt_pts, 'dynamic', self.res[0], self.distr_r, lr, B, self.var0)
             tgt['lbl_dynamic'] = tgt_label
 
-
+        #
         # import matplotlib.pyplot as plt
         # from cosense3d.modules.utils.edl_utils import logit_to_edl
         # fig = plt.figure(figsize=(10, 10))
