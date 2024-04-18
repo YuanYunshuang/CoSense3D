@@ -222,7 +222,7 @@ def project_world_objects(object_dict,
         center = object_content['center']
         extent = object_content['extent']
 
-        if 'ass_id' not in object_content:
+        if 'ass_id' not in object_content or object_content['ass_id'] == -1:
             ass_id = object_id
         else:
             ass_id = object_content['ass_id']
@@ -434,7 +434,8 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False, pcd_ex
                 for i, cav_id in enumerate(cavs):
                     yaml_file = os.path.join(spath, cav_id, f'{f}.yaml')
                     params = load_yaml(yaml_file)
-                    cs.update_agent(fdict, cav_id, agent_type='cav', agent_pose=params['true_ego_pos'])
+                    cs.update_agent(fdict, cav_id, agent_type='cav',
+                                    agent_pose=opv2v_pose_to_cosense(params['true_ego_pos']))
                     update_cam_params(params, fdict, cav_id, s, f)
                     
                     if cav_id == ego_id:
@@ -501,7 +502,8 @@ def opv2v_to_cosense(path_in, path_out, isSim=True, correct_transf=False, pcd_ex
                 cosense_bbx_center[:, 2:8] = object_stack[:, :6]
                 cosense_bbx_center[:, 10] = object_stack[:, 6]
                 cs.update_frame_bbx(fdict, cosense_bbx_center.tolist())
-                fdict['agents'].pop('0')  # remove template agent
+                if '0' not in cavs:
+                    fdict['agents'].pop('0')  # remove template agent
 
                 fdict['meta']['ego_id'] = ego_id
                 fdict['meta']['ego_lidar_pose'] = opv2v_pose_to_cosense(ego_lidar_pose)
@@ -632,15 +634,15 @@ def generate_bevmaps(data_dir, meta_path):
 
 
 if __name__=="__main__":
-    # opv2v_to_cosense(
+    opv2v_to_cosense(
+        "/home/data/v2vreal",
+        "/home/data/v2vreal/meta",
+        isSim=False,
+        pcd_ext='pcd'
+    )
+
+    # generate_bevmaps(
     #     "/home/yuan/data/OPV2Va",
     #     "/home/yuan/data/OPV2Va/meta",
-    #     isSim=True,
-    #     pcd_ext='bin'
     # )
-
-    generate_bevmaps(
-        "/home/yuan/data/OPV2Va",
-        "/home/yuan/data/OPV2Va/meta",
-    )
 
