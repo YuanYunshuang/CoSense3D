@@ -13,6 +13,7 @@ class MinkUnet(BaseModule):
                  in_dim,
                  d=3,
                  kernel_size_layer1=3,
+                 enc_dim=32,
                  cache_strides=None,
                  floor_height=0,
                  height_compression=None,
@@ -24,6 +25,7 @@ class MinkUnet(BaseModule):
         update_me_essentials(self, data_info)
         self.stride = stride
         self.in_dim = in_dim
+        self.enc_dim = enc_dim
         self.floor_height = floor_height
         self.to_dense = to_dense
         self.height_compression = height_compression
@@ -43,13 +45,13 @@ class MinkUnet(BaseModule):
         else:
             self.max_resolution = min(cache_strides)
             self.cache_strides = cache_strides
-        self._init_unet_layers()
+        self._init_unet_layers(kernel_size_layer1)
         if height_compression is not None:
             self._init_height_compression_layers(height_compression)
         self.init_weights()
 
     def _init_unet_layers(self, kernel_size_layer1=3):
-        self.enc_mlp = linear_layers([self.in_dim * 2, 16, 32], norm='LN')
+        self.enc_mlp = linear_layers([self.in_dim * 2, 16, self.enc_dim], norm='LN')
         kernel_conv1 = [kernel_size_layer1,] * min(self.d, 3)
         kernel = [3,] * min(self.d, 3)
         if self.d == 4:
@@ -57,19 +59,19 @@ class MinkUnet(BaseModule):
             kernel_conv1 = kernel + [1,]
 
         kwargs = {'d': self.d, 'bn_momentum': 0.1}
-        self.conv1 = minkconv_conv_block(32, 32, kernel_conv1,
+        self.conv1 = minkconv_conv_block(self.enc_dim, self.enc_dim, kernel_conv1,
                                          1, **kwargs)
-        self.conv2 = get_conv_block([32, 32, 32], kernel, **kwargs)
-        self.conv3 = get_conv_block([32, 64, 64], kernel, **kwargs)
-        self.conv4 = get_conv_block([64, 128, 128], kernel, **kwargs)
+        self.conv2 = get_conv_block([self.enc_dim, self.enc_dim, self.enc_dim], kernel, **kwargs)
+        self.conv3 = get_conv_block([self.enc_dim, self.enc_dim * 2, self.enc_dim * 2], kernel, **kwargs)
+        self.conv4 = get_conv_block([self.enc_dim * 2, self.enc_dim * 4, self.enc_dim * 4], kernel, **kwargs)
 
         if self.max_resolution <= 4:
-            self.trconv4 = get_conv_block([128, 64, 64], kernel, tr=True, **kwargs)
+            self.trconv4 = get_conv_block([self.enc_dim * 4, self.enc_dim * 2, self.enc_dim * 2], kernel, tr=True, **kwargs)
         if self.max_resolution <= 2:
-            self.trconv3 = get_conv_block([128, 64, 64], kernel, tr=True, **kwargs)
+            self.trconv3 = get_conv_block([self.enc_dim * 4, self.enc_dim * 2, self.enc_dim * 2], kernel, tr=True, **kwargs)
         if self.max_resolution <= 1:
-            self.trconv2 = get_conv_block([96, 64, 32], kernel, tr=True, **kwargs)
-            self.out_layer = minkconv_layer(64, 32, kernel, 1, d=self.d)
+            self.trconv2 = get_conv_block([self.enc_dim * 3, self.enc_dim * 2, self.enc_dim], kernel, tr=True, **kwargs)
+            self.out_layer = minkconv_layer(self.enc_dim * 2, self.enc_dim, kernel, 1, d=self.d)
 
     def _init_height_compression_layers(self, planes):
         self.stride_size_dict = {}
@@ -130,7 +132,7 @@ class MinkUnet(BaseModule):
             p4_cat = ME.cat(x4, p4)
         if self.max_resolution <= 2:
             p2 = self.trconv3(p4_cat)
-            p2_cat = ME.cat(p2, p2)
+            p2_cat = ME.cat(x2, p2)
         if self.max_resolution <= 1:
             p1 = self.trconv2(p2_cat)
             p1_cat = self.out_layer(ME.cat(x1, p1))

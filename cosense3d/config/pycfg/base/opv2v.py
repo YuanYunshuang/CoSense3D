@@ -71,7 +71,7 @@ seq4_vox04 = get_opv2v_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox01 = get_opv2v_cfg(4, [0.1, 0.1, 0.1])
 
 seq4_pillar04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 4], load_bev_map=True)
-seq4_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2],
+seq1_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2],
                                   load_attributes=['xyz', 'intensity', 'distance', 'cosine', 'sine'],
                                   load_bev_map=True)
-seq4_vox01_bevmap = get_opv2v_cfg(4, [0.1, 0.1, 0.1], load_bev_map=True)
+seq1_vox04_bevmap = get_opv2v_cfg(1, [0.4, 0.4, 0.4], load_bev_map=True)

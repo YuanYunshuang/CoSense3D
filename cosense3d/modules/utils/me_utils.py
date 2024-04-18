@@ -100,8 +100,11 @@ def bev_sparse_to_dense(self, preds):
     return conf_map, unc_map
 
 
-def minkconv_layer(in_dim, out_dim, kernel_size, stride, d, tr=False):
-    kernel = [kernel_size] * d
+def minkconv_layer(in_dim, out_dim, kernel, stride, d, tr=False):
+    if not isinstance(kernel, list):
+        kernel = [kernel] * d
+    else:
+        assert len(kernel) == d
     if tr:
         conv = getattr(ME, 'MinkowskiConvolutionTranspose')
     else:
