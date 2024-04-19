@@ -12,7 +12,7 @@ voxel_size = [0.4, 0.4, 0.4]
 out_stride = 2
 
 
-def get_shared_modules(point_cloud_range, global_ref_time=0):
+def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
     """
     gather_keys: 
         keys to gather data from cavs, key order is important, should match the forward input arguments order.
@@ -26,7 +26,9 @@ def get_shared_modules(point_cloud_range, global_ref_time=0):
             scatter_keys=['bev_feat'],
             voxel_size=voxel_size,
             point_cloud_range=point_cloud_range,
-            height_compression=[2, 8]
+            kernel_size_layer1=3,
+            height_compression=[2, 8],
+            enc_dim=enc_dim,
         ),
 
         backbone_neck = dict(
@@ -73,6 +75,8 @@ def get_shared_modules(point_cloud_range, global_ref_time=0):
             lidar_range=point_cloud_range,
             transformer=get_petr_transformer_cfg(use_flash_attn)
         ),
+
+        spatial_alignment={},
 
         spatial_fusion=dict(
             type='fusion.spatial_query_fusion.SpatialQueryFusion',
@@ -156,6 +160,13 @@ shared_modules_opv2vt_no_global_attn['roi_head'] = dict(
             losses=[True],
         )
 
+#--------- Comparative 1 : Location error ------------
+shared_modules_opv2vt_fcl_locerr = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 32)
+shared_modules_opv2vt_fcl_locerr['spatial_alignment'] = dict(
+    type='fusion.spatial_alignment.SpatialAlignment',
+    gather_keys=['detection_local', 'received_response'],
+    scatter_keys=['received_response'],
+)
 
 ######################################################
 #                     DairV2Xt
@@ -232,3 +243,4 @@ shared_modules_dairv2xt_roi_focal_loss_gaussian['roi_head']['heads'][0] = get_de
 )
 shared_modules_dairv2xt_roi_focal_loss_gaussian['roi_head']['heads'][0]['cls_head_cfg'] = (
     dict(name='UnitedClsHead', one_hot_encoding=False))
+

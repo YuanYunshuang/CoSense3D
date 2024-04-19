@@ -908,6 +908,9 @@ class BoxCenterAssigner(BaseAssigner, torch.nn.Module):
 
 
 class BEVCenternessAssigner(BaseAssigner):
+    """
+    Assign center points in the BEV maps to positve if the point is in the range 'min_radius' of any gt box center.
+    """
     def __init__(self,
                  n_cls,
                  min_radius=1.0,
@@ -990,6 +993,9 @@ class BEVCenternessAssigner(BaseAssigner):
 
 
 class BEVPointAssigner(BaseAssigner):
+    """
+    Assign target points to BEV boxes and down-sample the target points with buffered-based method.
+    """
     def __init__(self,
                  down_sample=True,
                  sample_mining_thr=0.,
@@ -1040,17 +1046,13 @@ class BEVPointAssigner(BaseAssigner):
             tgt_label[box_idx_of_pts >= 0] = 1
             return tgt_pts, tgt_label, None
 
-        try:
-            _, box_idx_of_pts = points_in_boxes_gpu(
-                pts, boxes, batch_size=B
-            )
-            boxes[:, 4:6] *= 2
-            _, enlarged_box_idx_of_pts = points_in_boxes_gpu(
-                pts, boxes, batch_size=B
-            )
-        except:
-            print(boxes.shape)
-            print(pts.shape)
+        _, box_idx_of_pts = points_in_boxes_gpu(
+            pts, boxes, batch_size=B
+        )
+        boxes[:, 4:6] *= 2
+        _, enlarged_box_idx_of_pts = points_in_boxes_gpu(
+            pts, boxes, batch_size=B
+        )
 
         pos_mask = box_idx_of_pts >= 0
         buffer_mask = (box_idx_of_pts < 0) & (enlarged_box_idx_of_pts >= 0)

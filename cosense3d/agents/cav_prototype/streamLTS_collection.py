@@ -461,6 +461,23 @@ class slcCIASSD(StreamLidarCAV):
             self.T_aug2g = T_c2aug
 
 
+class StreamLidarCAVLocCorr(StreamLidarCAV):
+    def get_response_cpm(self):
+        cpm = {}
+        cpm['coop_det_ctr'] = self.data['detection_local']['preds']['box'][:, :3]
+        for k in ['temp_fusion_feat']:
+            if k in self.data:
+                cpm[k] = self.data[k]
+        return cpm
+
+    def forward_fusion(self, tasks, training_mode):
+        if self.is_ego:
+            tasks['with_grad'].append((self.id, '11:spatial_alignment', {}))
+            tasks['with_grad'].append((self.id, '12:spatial_fusion', {}))
+        return tasks
+
+
+
 
 
 

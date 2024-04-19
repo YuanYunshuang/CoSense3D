@@ -133,6 +133,7 @@ class MinkUnet(BaseModule):
         if self.max_resolution <= 2:
             p2 = self.trconv3(p4_cat)
             p2_cat = ME.cat(x2, p2)
+            p2_cat = ME.cat(p2, p2)
         if self.max_resolution <= 1:
             p1 = self.trconv2(p2_cat)
             p1_cat = self.out_layer(ME.cat(x1, p1))

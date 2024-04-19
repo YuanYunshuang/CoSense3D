@@ -18,6 +18,8 @@ class ForwardRunner(nn.Module):
         module_dict = {}
         self.module_keys = []
         for k, v in shared_modules.items():
+            if 'type' not in v:
+                continue
             v['dist'] = dist
             module_dict[k] = build_module(v)
             self.module_keys.append(k)

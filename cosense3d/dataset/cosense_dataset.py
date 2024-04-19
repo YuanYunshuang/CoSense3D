@@ -1,3 +1,4 @@
+import copy
 import glob
 import os
 import logging
@@ -27,6 +28,7 @@ class CosenseDataset(Dataset):
         self.cfgs = cfgs
         self.mode = mode
         self.COM_RANGE = self.cfgs.get('com_range', 70)
+        self.latency = cfgs.get('latency', 0)
         if cfgs.get('enable_split_sub_folder', True):
             self.data_path = os.path.join(self.cfgs['data_path'], self.mode)
         else:
@@ -120,7 +122,7 @@ class CosenseDataset(Dataset):
         """
         # load meta info
         scenario, frame = self.samples[item]
-        sample_info = self.meta_dict[scenario][frame]
+        sample_info = copy.deepcopy(self.meta_dict[scenario][frame])
 
         if prev_item is None:
             prev_item = max(item - 1, 0)
@@ -136,6 +138,22 @@ class CosenseDataset(Dataset):
 
         # previous agents might not in current frame when load sequential data
         scenario_tokens = [f'{scenario}.{ai}' for ai in valid_agent_ids if ai in sample_info['agents']]
+
+        # if latency > 0, set the sample info of coop. cavs to previous frame at -latency
+        if self.latency > 0:
+            latent_item = max(item - self.latency, 0)
+            latent_scenario, latent_frame = self.samples[latent_item]
+            if latent_scenario != scenario:
+                # make sure the scenario is the same as the current frame
+                latent_scenario = scenario
+                latent_frame = frame
+            latent_info = copy.deepcopy(self.meta_dict[latent_scenario][latent_frame])
+            # update coope agent info to latent frame
+            for cav_id in valid_agent_ids:
+                if cav_id == sample_info['meta']['ego_id']:
+                    continue
+                if cav_id in latent_info['agents']:
+                    sample_info['agents'][cav_id] = latent_info['agents'][cav_id]
 
         return {
             'scenario': scenario,

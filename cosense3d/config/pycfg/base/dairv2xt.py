@@ -30,7 +30,7 @@ data_manager = dict(
 )
 
 
-def get_dairv2xt_cfg(seq_len, voxel_size):
+def get_dairv2xt_cfg(seq_len, voxel_size, latency=0):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
         name='dairv2xt',
@@ -47,6 +47,7 @@ def get_dairv2xt_cfg(seq_len, voxel_size):
         n_workers=4,
         max_num_cavs=2,
         com_range=200,
+        latency=latency,
         seq_len=seq_len,
         train_pipeline=pipeline_cpu,
         test_pipeline=pipeline_cpu,
@@ -55,4 +56,5 @@ def get_dairv2xt_cfg(seq_len, voxel_size):
 
 seq4_pillar04 = get_dairv2xt_cfg(4, [0.4, 0.4, 4])
 seq4_vox04 = get_dairv2xt_cfg(4, [0.4, 0.4, 0.4])
+seq4_vox04_lat1 = get_dairv2xt_cfg(4, [0.4, 0.4, 0.4], 1)
 seq4_vox01 = get_dairv2xt_cfg(4, [0.1, 0.1, 0.1])
