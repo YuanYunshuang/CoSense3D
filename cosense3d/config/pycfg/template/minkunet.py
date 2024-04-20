@@ -10,8 +10,8 @@ def get_minkunet_cfg(gather_keys, scatter_keys, voxel_size, point_cloud_range,
     if len(height_compression) > 0:
         hc = OrderedDict()
         height = (point_cloud_range[5] - point_cloud_range[2]) / voxel_size[2]
-        # dims = {1: enc_dim, 2: enc_dim * 3, 4: enc_dim * 4, 8: enc_dim * 4}
-        dims = {1: enc_dim, 2: enc_dim * 4, 4: enc_dim * 4, 8: enc_dim * 4}
+        dims = {1: enc_dim, 2: enc_dim * 3, 4: enc_dim * 4, 8: enc_dim * 4}
+        # dims = {1: enc_dim, 2: enc_dim * 4, 4: enc_dim * 4, 8: enc_dim * 4}
         for stride in height_compression:
             downx = math.ceil(height / stride)
             dim = dims[stride]
