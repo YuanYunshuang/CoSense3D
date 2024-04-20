@@ -160,13 +160,16 @@ shared_modules_opv2vt_no_global_attn['roi_head'] = dict(
             losses=[True],
         )
 
-#--------- Comparative 1 : Location error ------------
+#--------- Comparative 1 : Pose error ------------
 shared_modules_opv2vt_fcl_locerr = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 32)
 shared_modules_opv2vt_fcl_locerr['spatial_alignment'] = dict(
     type='fusion.spatial_alignment.SpatialAlignment',
     gather_keys=['detection_local', 'received_response'],
     scatter_keys=['received_response'],
 )
+
+#--------- Comparative 2 : Latency ------------
+shared_modules_opv2vt_fcl_lat = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 64)
 
 ######################################################
 #                     DairV2Xt
