@@ -211,6 +211,18 @@ class DetCenterSparse(BaseModule):
             pred_scores = [pred_to_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
         cls_tgt = multi_apply(self.cls_assigner.assign,
                               centers, gt_boxes, gt_labels, pred_scores, **kwargs)
+
+        # import matplotlib.pyplot as plt
+        # ctrs_vis = centers[0].detach().cpu().numpy().T
+        # scrs_vis = pred_cls_list[0][0].softmax(dim=-1).detach().cpu().numpy().T
+        # gt_vis = (cls_tgt[0] == 1).squeeze().detach().cpu().numpy()
+        # fig = plt.figure()
+        # ax = fig.add_subplot()
+        # ax.scatter(ctrs_vis[0], ctrs_vis[1], c=scrs_vis[1], edgecolors='none', marker='.', vmin=0, vmax=1, cmap='jet')
+        # ax.scatter(ctrs_vis[0][gt_vis], ctrs_vis[1][gt_vis], c='g', edgecolors='none', marker='.', alpha=0.5)
+        # plt.show()
+        # plt.close()
+
         cls_tgt = torch.cat(cls_tgt, dim=0)
 
         n_classes = [len(n) for n in self.class_names_each_head]

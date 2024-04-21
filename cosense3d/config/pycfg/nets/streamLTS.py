@@ -181,7 +181,7 @@ shared_modules_opv2vt_fcl_locerr['spatial_alignment'] = dict(
 )
 
 #--------- Comparative 2 : Latency ------------
-shared_modules_opv2vt_fcl_lat = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 64)
+shared_modules_opv2vt_fcl_lat = shared_modules_opv2vt_roi_focal_loss
 
 ######################################################
 #                     DairV2Xt
