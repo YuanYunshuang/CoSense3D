@@ -25,7 +25,7 @@ data_manager = dict(
 )
 
 
-def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], load_bev_map=False):
+def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], load_bev_map=False, max_num_cavs=7):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     pipeline_cpu = OrderedDict(
         LoadLidarPoints=dict(load_attributes=load_attributes),
@@ -58,7 +58,7 @@ def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], loa
         batch_size_train=4,
         batch_size_test=1,
         n_workers=4,
-        max_num_cavs=7,
+        max_num_cavs=max_num_cavs,
         com_range=70,
         seq_len=seq_len,
         train_pipeline=pipeline_cpu,
@@ -75,3 +75,4 @@ seq1_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2],
                                   load_attributes=['xyz', 'intensity', 'distance', 'cosine', 'sine'],
                                   load_bev_map=True)
 seq1_vox04_bevmap = get_opv2v_cfg(1, [0.4, 0.4, 0.4], load_bev_map=True)
+seq1_vox04_bevmap_ego_only = get_opv2v_cfg(1, [0.4, 0.4, 0.4], load_bev_map=True, max_num_cavs=1)

@@ -1526,4 +1526,41 @@ class RoIBox3DAssigner(BaseAssigner):
         }
 
 
+class RoadLineAssigner(BaseAssigner):
+    def __init__(self,
+                 res,
+                 range):
+        super().__init__()
+        self.res = res
+        self.range = range
+        self.size = int(round(range / res * 2))
+
+    def assign(self, coor, tgt_pts, B, **kwargs):
+        valid = (coor[:, 1:3].abs() < self.size / 2).all(dim=-1)
+        ctr_coor = coor[valid]
+        ctr_coor[:, 1:] = ctr_coor[:, 1:] + self.size / 2
+        ctr_coor = ctr_coor.long()
+        roadline_maps = torch.zeros((B, self.size, self.size), device=tgt_pts.device)
+        mask = (tgt_pts[:, 1:3].abs() < self.range).all(dim=-1)
+        tgt_pts = tgt_pts[mask]
+
+        tgt_coor = torch.floor((tgt_pts[:, 1:3] + self.range) / self.res).long()
+        roadline_maps[tgt_pts[:, 0].long(), tgt_coor[:, 0], tgt_coor[:, 1]] = tgt_pts[:, -1]
+
+        labels = roadline_maps[ctr_coor[:, 0], ctr_coor[:, 1], ctr_coor[:, 2]]
+
+        # import matplotlib.pyplot as plt
+        # pts_vis = ctr_coor[ctr_coor[:, 0] == 0, 1:].detach().cpu().numpy()
+        # lbl_vis = labels.detach().cpu().numpy()
+        # fig = plt.figure(figsize=(8, 8))
+        # ax = fig.add_subplot()
+        # ax.scatter(pts_vis[:, 0], pts_vis[:, 1], c=lbl_vis, marker='.')
+        # plt.show()
+        # plt.close()
+        return labels, valid
+
+
+
+
+
 

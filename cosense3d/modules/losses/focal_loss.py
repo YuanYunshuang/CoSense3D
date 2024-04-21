@@ -297,7 +297,10 @@ class FocalLoss(BaseLoss):
                 calculate_loss_func = py_focal_loss_with_prob
             else:
                 num_classes = pred.size(1)
-                target = F.one_hot(target, num_classes=num_classes + 1)
+                if isinstance(target, torch.cuda.FloatTensor) and target.ndim == 1:
+                    target = torch.stack([1 - target, target], dim=1)
+                else:
+                    target = F.one_hot(target, num_classes=num_classes + 1)
                 if self.bg_idx is None:
                     target = target[:, :num_classes]
                 else:

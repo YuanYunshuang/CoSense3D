@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
+import cv2
+
 
 def calibration_plot():
     # Data for plots
@@ -39,3 +42,13 @@ def calibration_plot():
 
     plt.savefig('/home/yuan/Pictures/calibration_plot.pdf')
     plt.close()
+
+
+
+
+
+
+
+if __name__=="__main__":
+    bevmap = cv2.imread("/cosense3d/carla/assets/maps/png/Town10HD_Opt.png")
+    bev_roadmap_to_roadline(bevmap[..., 0] / 255)

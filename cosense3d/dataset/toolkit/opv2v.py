@@ -6,6 +6,7 @@ from glob import glob
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 import tqdm
 import open3d as o3d
 import os.path as osp
@@ -633,16 +634,72 @@ def generate_bevmaps(data_dir, meta_path):
                 print(filename)
 
 
+def generate_roadline(map_dir, map_bounds_file):
+    """
+    Convert global BEV semantic maps to 2d road line points.
+
+    :param map_dir: directory for images of BEV semantic maps
+    :param map_bounds_file: json file that describe the world coordinates of the BEV map origin (image[0, 0])
+    :return: Nx2 array, 2d world coordinates of road line points in meters.
+    """
+    bounds = load_json(map_bounds_file)
+    map_files = glob(map_dir)
+    for mf in map_files:
+        roadmap = cv2.imread(mf)[..., ]
+
+
+def convert_bev_semantic_map_to_road_height_map(map_dir, map_bounds_file, scenario_town_map_file, meta_dir):
+    import torch
+    bounds = load_json(map_bounds_file)
+    scenario_town_map = load_json(scenario_town_map_file)
+    map_files = os.listdir(map_dir)
+    bevmaps = {mf.split('.')[0]: cv2.imread(os.path.join(map_dir, mf))[..., :2] for mf in map_files}
+    trajectory = {mf.split('.')[0]: [] for mf in map_files}
+    meta_files = glob(os.path.join(meta_dir, "*.json"))
+    for mf in meta_files:
+        scenario = os.path.basename(mf).split('.')[0]
+        sdict = load_json(mf)
+        ego_poses = []
+        for f, fdict in sdict.items():
+            # gt_boxes = {f"{int(x[0]):d}": x[1:] for x in ego_dict['gt_boxes']}
+            # ego_box = gt_boxes[fdict['meta']['ego_id']]
+            ego_poses.append(fdict['agents'][fdict['meta']['ego_id']]['pose'][:3])
+        trajectory[scenario_town_map[scenario]].extend(ego_poses)
+
+    for town, bevmap in bevmaps.items():
+        inds = np.where(bevmap[..., 1])
+        coords = np.stack(inds, axis=1) * 0.2
+        coords = torch.from_numpy(coords).cuda()
+        bound = bounds[town]
+        coords[:, 0] += bound[0]
+        coords[:, 1] += bound[1]
+        traj_pts = torch.tensor(trajectory[town]).cuda()
+
+        for i in range(0, len(coords), 10000):
+            i1 = i*10000
+            i2 = (i+1)*10000
+            dists = torch.norm(coords[i1:i2, None, :2] - traj_pts[None, :, :2], dim=-1)
+            min_dist, min_idx = dists.min(dim=-1)
+            heights = traj_pts[min_idx][:, -1]
+
+
 if __name__=="__main__":
-    opv2v_to_cosense(
-        "/home/data/v2vreal",
-        "/home/data/v2vreal/meta",
-        isSim=False,
-        pcd_ext='pcd'
-    )
+    # opv2v_to_cosense(
+    #     "/home/data/v2vreal",
+    #     "/home/data/v2vreal/meta",
+    #     isSim=False,
+    #     pcd_ext='pcd'
+    # )
 
     # generate_bevmaps(
     #     "/home/yuan/data/OPV2Va",
     #     "/home/yuan/data/OPV2Va/meta",
     # )
+
+    convert_bev_semantic_map_to_road_height_map(
+        "/code/CoSense3d/cosense3d/carla/assets/maps",
+        "/code/CoSense3d/cosense3d/carla/assets/map_bounds.json",
+        "/code/CoSense3d/cosense3d/carla/assets/scenario_town_map.json",
+        "/home/data/OPV2Va/meta"
+    )
 

@@ -37,7 +37,7 @@ class SimulationRunner:
 
     def run(self):
         if self.mode == 'map':
-            maps = os.listdir('../carla/assets/maps')
+            maps = os.listdir('../carla/assets/maps/png')
             bound_dict = {}
             for m in maps:
                 town = m.split('.')[0]
@@ -47,6 +47,14 @@ class SimulationRunner:
                 bound_dict[town] = map_manager.global_bounds
                 print(town, map_manager.global_bounds)
             save_json(bound_dict, '../carla/assets/map_bounds.json')
+        elif self.mode == 'open_drive_map':
+            maps = os.listdir('../carla/assets/maps/png')
+            for m in maps:
+                town = m.split('.')[0]
+                self.client.load_world(town)
+                open_drive_map = self.world.get_map().to_opendrive()
+                with open(f'../carla/assets/maps/xodr/{town}.xodr', 'w') as fh:
+                    fh.write(open_drive_map)
         else:
             raise NotImplementedError
 
@@ -54,8 +62,8 @@ class SimulationRunner:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="../config/carla.yaml")
-    parser.add_argument("--mode", type=str, default="map",
-                        help="data | sim | map")
+    parser.add_argument("--mode", type=str, default="open_drive_map",
+                        help="data | sim | map_meta | open_drive_map")
     parser.add_argument("--visualize", action="store_true")
     args = parser.parse_args()
 

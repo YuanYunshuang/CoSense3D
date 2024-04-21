@@ -82,6 +82,12 @@ def apply_transform(data, transform, key):
         points = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
         points = (transform @ points).T
         data['bev_tgt_pts'][:, :2] = points[:, :2]
+    elif key == 'roadline_tgts' and key in data:
+        points = data['roadline_tgts'][:, :2].clone()
+        points = torch.cat([points, torch.ones_like(points)], dim=-1).T
+        points[2] = 0
+        points = (transform @ points).T
+        data['roadline_tgts'][:, :2] = points[:, :2]
 
 
 def filter_range(data, lidar_range, key):
@@ -315,6 +321,34 @@ class DataOnlineProcessor:
         # ax.plot(pts[neg, 0], pts[neg, 1], '.', c='b', markersize=1)
         # ax.plot(lidar[:, 0], lidar[:, 1], '.', c='gray', markersize=1)
         # plt.savefig("/home/yuan/Downloads/tmp.png")
+        # plt.close()
+
+    @staticmethod
+    @torch.no_grad()
+    def generate_sparse_target_roadline_points(data: dict,
+                                               transform=None,
+                                               map_res=0.2,
+                                               range=50,
+                                               max_num_pts=3000):
+        bevmap = data['bevmap'].clone()
+        bevmap[bevmap==0] = -1
+        bevmap_coor = data['bevmap_coor']
+        sx, sy = bevmap.shape[:2]
+        filters = torch.ones(1, 1, 3, 3, device=bevmap.device) / 18
+        road = torch.conv2d(bevmap[None, None], filters).squeeze()
+        mask = (road < 0.5) & (road > -0.5)
+        inds = torch.where(mask)
+        scores = 1 - road[mask].abs()
+        coords = torch.stack(inds).T * map_res + 1.5 * map_res - range
+
+        data['roadline_tgts'] = torch.cat([coords, scores.unsqueeze(1)], dim=1)
+
+        # roadline = torch.zeros_like(bevmap)
+        # roadline[inds[0], inds[1]] = scores
+        #
+        # import matplotlib.pyplot as plt
+        # plt.imshow(roadline.cpu().numpy())
+        # plt.show()
         # plt.close()
 
 
