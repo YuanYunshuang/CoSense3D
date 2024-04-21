@@ -160,6 +160,18 @@ shared_modules_opv2vt_no_global_attn['roi_head'] = dict(
             losses=[True],
         )
 
+#--------- Ablation 4 : Focal loss for RoI ------------
+shared_modules_opv2vt_roi_focal_loss = copy.deepcopy(shared_modules_opv2vt)
+shared_modules_opv2vt_roi_focal_loss['roi_head']['heads'][0] = get_det_center_sparse_cfg(
+    voxel_size=voxel_size,
+    point_cloud_range=opv2vt.point_cloud_range,
+    in_channels=256,
+    generate_roi_scr=True,
+    cls_loss="FocalLoss"
+)
+shared_modules_opv2vt_roi_focal_loss['roi_head']['heads'][0]['cls_head_cfg'] = (
+    dict(name='UnitedClsHead', one_hot_encoding=False))
+
 #--------- Comparative 1 : Pose error ------------
 shared_modules_opv2vt_fcl_locerr = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 32)
 shared_modules_opv2vt_fcl_locerr['spatial_alignment'] = dict(
