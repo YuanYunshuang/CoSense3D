@@ -114,7 +114,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
 ######################################################
 test_hooks_opv2vt = hooks.get_test_nms_eval_hooks(opv2vt.point_cloud_range_test)
 plots_opv2vt = [hooks.get_detection_plot(opv2vt.point_cloud_range_test)]
-shared_modules_opv2vt = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time)
+shared_modules_opv2vt = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, enc_dim=64)
 
 #--------- Ablation 1 : No RoI regression-------------
 shared_modules_opv2vt_no_roi_reg = copy.deepcopy(shared_modules_opv2vt)
