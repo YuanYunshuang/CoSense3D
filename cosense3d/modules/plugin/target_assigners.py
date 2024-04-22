@@ -1536,8 +1536,7 @@ class RoadLineAssigner(BaseAssigner):
         self.size = int(round(range / res * 2))
 
     def assign(self, coor, tgt_pts, B, **kwargs):
-        valid = (coor[:, 1:3].abs() < self.size // 2).all(dim=-1)
-        ctr_coor = coor[valid]
+        ctr_coor = coor.clone()
         ctr_coor[:, 1:] = ctr_coor[:, 1:] + self.size / 2
         ctr_coor = ctr_coor.long()
         roadline_maps = torch.zeros((B, self.size, self.size), device=tgt_pts.device)
@@ -1548,8 +1547,8 @@ class RoadLineAssigner(BaseAssigner):
         mask = torch.logical_and((tgt_coor >= 0).all(dim=-1), (tgt_coor < self.size).all(dim=-1))
         roadline_maps[tgt_pts[mask, 0].long(), tgt_coor[mask, 0], tgt_coor[mask, 1]] = tgt_pts[mask, -1]
 
-        mask = torch.logical_and((ctr_coor[:, 1:3] >= 0).all(dim=-1), (ctr_coor[:, 1:3] < self.size).all(dim=-1))
-        labels = roadline_maps[ctr_coor[mask, 0], ctr_coor[mask, 1], ctr_coor[mask, 2]]
+        valid = torch.logical_and((ctr_coor[:, 1:3] >= 0).all(dim=-1), (ctr_coor[:, 1:3] < self.size).all(dim=-1))
+        labels = roadline_maps[ctr_coor[valid, 0], ctr_coor[valid, 1], ctr_coor[valid, 2]]
 
         # import matplotlib.pyplot as plt
         # pts_vis = ctr_coor[ctr_coor[:, 0] == 0, 1:].detach().cpu().numpy()
