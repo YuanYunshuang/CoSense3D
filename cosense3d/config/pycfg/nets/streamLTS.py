@@ -171,6 +171,7 @@ shared_modules_opv2vt_roi_focal_loss['roi_head']['heads'][0] = get_det_center_sp
 )
 shared_modules_opv2vt_roi_focal_loss['roi_head']['heads'][0]['cls_head_cfg'] = (
     dict(name='UnitedClsHead', one_hot_encoding=False))
+shared_modules_opv2vt_roi_focal_loss['temporal_fusion']['norm_fusion'] = True
 
 #--------- Comparative 1 : Pose error ------------
 shared_modules_opv2vt_fcl_locerr = get_shared_modules(opv2vt.point_cloud_range, opv2vt.global_ref_time, 32)

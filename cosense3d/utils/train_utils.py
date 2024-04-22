@@ -123,5 +123,6 @@ def clip_grads(params, max_norm=35, norm_type=2):
     params = list(
         filter(lambda p: p.requires_grad and p.grad is not None, params))
     if len(params) > 0:
-        return clip_grad_norm_(params, max_norm=max_norm, norm_type=norm_type)
+        total_norm = clip_grad_norm_(params, max_norm=max_norm, norm_type=norm_type)
+        return total_norm
 
