@@ -70,6 +70,20 @@ class BEVRoadLine(BaseModule):
         epoch_num = kwargs.get('epoch', 0)
         cls = self.cat_data_from_list(batch_list, 'cls')
 
+        # import matplotlib.pyplot as plt
+        # bmsk = coor[:, 0] == 0
+        # pts_vis = coor[bmsk][valid[bmsk]]
+        # pts_vis = pts_vis[:, 1:].detach().cpu().numpy()
+        # lbl_vis = tgt_label[bmsk[valid]].detach().cpu().numpy()
+        # scr_vis = cls[bmsk][valid[bmsk]].detach().cpu().numpy().squeeze()
+        #
+        # fig = plt.figure(figsize=(10, 5))
+        # axs = fig.subplots(1, 2)
+        # axs[0].scatter(pts_vis[:, 0], pts_vis[:, 1], c=lbl_vis, marker='.', vmin=0, vmax=1, s=1)
+        # axs[1].scatter(pts_vis[:, 0], pts_vis[:, 1], c=scr_vis, marker='.', vmin=0, vmax=1, s=1)
+        # plt.show()
+        # plt.close()
+
         # targets are not down-sampled
         avg_factor = max(tgt_label.bool().sum(), 1)
         loss_cls = self.loss_cls(
