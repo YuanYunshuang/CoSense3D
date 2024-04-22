@@ -1536,7 +1536,7 @@ class RoadLineAssigner(BaseAssigner):
         self.size = int(round(range / res * 2))
 
     def assign(self, coor, tgt_pts, B, **kwargs):
-        valid = (coor[:, 1:3].abs() < self.size / 2).all(dim=-1)
+        valid = (coor[:, 1:3].abs() < self.size // 2).all(dim=-1)
         ctr_coor = coor[valid]
         ctr_coor[:, 1:] = ctr_coor[:, 1:] + self.size / 2
         ctr_coor = ctr_coor.long()
@@ -1548,7 +1548,10 @@ class RoadLineAssigner(BaseAssigner):
         roadline_maps[tgt_pts[:, 0].long(), tgt_coor[:, 0], tgt_coor[:, 1]] = tgt_pts[:, -1]
 
         labels = roadline_maps[ctr_coor[:, 0], ctr_coor[:, 1], ctr_coor[:, 2]]
-
+        try:
+            tmp = labels.bool().sum()
+        except:
+            print('d')
         # import matplotlib.pyplot as plt
         # pts_vis = ctr_coor[ctr_coor[:, 0] == 0, 1:].detach().cpu().numpy()
         # lbl_vis = labels.detach().cpu().numpy()
