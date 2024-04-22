@@ -1545,13 +1545,12 @@ class RoadLineAssigner(BaseAssigner):
         tgt_pts = tgt_pts[mask]
 
         tgt_coor = torch.floor((tgt_pts[:, 1:3] + self.range) / self.res).long()
-        roadline_maps[tgt_pts[:, 0].long(), tgt_coor[:, 0], tgt_coor[:, 1]] = tgt_pts[:, -1]
+        mask = torch.logical_and((tgt_coor >= 0).all(dim=-1), (tgt_coor < self.size).all(dim=-1))
+        roadline_maps[tgt_pts[mask, 0].long(), tgt_coor[mask, 0], tgt_coor[mask, 1]] = tgt_pts[mask, -1]
 
-        labels = roadline_maps[ctr_coor[:, 0], ctr_coor[:, 1], ctr_coor[:, 2]]
-        try:
-            tmp = labels.bool().sum()
-        except:
-            print('d')
+        mask = torch.logical_and((ctr_coor[:, 1:3] >= 0).all(dim=-1), (ctr_coor[:, 1:3] < self.size).all(dim=-1))
+        labels = roadline_maps[ctr_coor[mask, 0], ctr_coor[mask, 1], ctr_coor[mask, 2]]
+
         # import matplotlib.pyplot as plt
         # pts_vis = ctr_coor[ctr_coor[:, 0] == 0, 1:].detach().cpu().numpy()
         # lbl_vis = labels.detach().cpu().numpy()
