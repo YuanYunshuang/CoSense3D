@@ -34,7 +34,8 @@ CONTROLLER:
     memory_emb_dims: 256
     memory_num_propagated: 256
     ref_pts_dim: 3
-    all_grad: false
+    all_grad: flase
+    num_grad_cav: 2
 
 VISUALIZATION:
   output_viewer:
