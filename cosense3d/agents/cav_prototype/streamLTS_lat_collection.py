@@ -181,7 +181,7 @@ class StreamLidarCAV(BaseCAV):
                  min(x['all_cls_scores'][-1].shape[-1] - 1, 1):].topk(1, dim=-1).values[..., 0]
         topk = torch.topk(scores, k=self.memory_num_propagated).indices
 
-        ref_pts = x['ref_pts'][-1][:, :self.ref_pts_dim]
+        ref_pts = x['ref_pts'][:, :self.ref_pts_dim]
         velo = x['all_bbox_preds'][-1][:, -2:]
         embeddings = self.data['temp_fusion_feat']['outs_dec'][-1]
 
