@@ -33,8 +33,10 @@ class BaseCAV:
         self.data = {} # memory FIFO
         self.prepare_data_keys = ['img', 'points', 'annos_global', 'annos_local']
 
-    def update(self, lidar_pose):
+    def update(self, lidar_pose, is_ego, require_grad):
         self.lidar_pose = lidar_pose
+        self.is_ego = is_ego
+        self.require_grad = require_grad
 
     def __repr__(self):
         repr_str = self.__class__.__name__

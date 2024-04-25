@@ -289,3 +289,135 @@ class CenterBoxCoder(object):
             ret = (ret,  pred)
 
         return ret
+
+
+class BoxPredCoder(object):
+    def __init__(self, with_velo=False):
+        self.with_velo = with_velo
+
+    def encode(self, centers, gt_boxes, meter_per_pixel, gt_preds):
+        """
+
+        Args:
+            centers: (N, 3)
+            gt_boxes: (N, 8) [batch_idx, x, y, z, l, w, h, r]
+            meter_per_pixel: tuple with 2 elements
+            gt_preds: (N, 8) [batch_idx, x, y, z, l, w, h, r], gt boxes to be predicted
+
+        Returns:
+
+        """
+        if isinstance(meter_per_pixel, list):
+            assert meter_per_pixel[0] == meter_per_pixel[1], 'only support unified pixel size for x and y'
+            # TODO: adapt meter per pixel
+            meter_per_pixel = meter_per_pixel[0]
+        if len(gt_boxes) == 0:
+            valid = torch.zeros_like(centers[:, 0]).bool()
+            res = None, None, None, valid
+            if self.with_velo:
+                res = res + (None,)
+            return res
+
+        # match centers and gt_boxes
+        dist_ctr_to_box = torch.norm(centers[:, 1:3].unsqueeze(1)
+                                     - gt_boxes[:, 1:3].unsqueeze(0), dim=-1)
+        cc, bb = torch.meshgrid(centers[:, 0], gt_boxes[:, 0], indexing='ij')
+        dist_ctr_to_box[cc != bb] = 1000
+        min_dists, box_idx_of_pts = dist_ctr_to_box.min(dim=1)
+        diagnal = torch.norm(gt_boxes[:, 4:6].mean(dim=0) / 2)
+        valid = min_dists < max(diagnal, meter_per_pixel[0])
+        # valid = min_dists < self.reg_radius
+        valid_center = centers[valid]
+        valid_box = gt_preds[box_idx_of_pts[valid]]
+
+        xc, yc = torch.split(valid_center[:, 1:3], 1, dim=-1)
+        xg, yg, zg, lg, wg, hg, rg = torch.split(valid_box[:, 1:8], 1, dim=-1)
+
+        xt = xg - xc
+        yt = yg - yc
+        zt = zg # + self.z_offset
+
+        lt = torch.log(lg)
+        wt = torch.log(wg)
+        ht = torch.log(hg)
+
+        # encode box directions
+        rgx = torch.cos(rg).view(-1, 1)  # N 1
+        rgy = torch.sin(rg).view(-1, 1)  # N 1
+        ra = torch.arange(0, 2, 0.5).to(xc.device) * math.pi
+        ra_ext = torch.ones_like(valid_box[:, :4]) * ra.view(-1, 4)  # N 4
+        rax = torch.cos(ra_ext)  # N 4
+        ray = torch.sin(ra_ext)  # N 4
+        # cos(a - b) = cos(a)cos(b) + sin(a)sin(b)
+        # we use arccos instead of a-b to control the difference in 0-pi
+        diff_angle = torch.arccos(rax * rgx + ray * rgy)  # N 4
+        dir_score = 1 - diff_angle / math.pi  # N 4
+        rtx = rgx - rax  # N 4
+        rty = rgy - ray  # N 4
+
+        reg_box = torch.cat([xt, yt, zt, lt, wt, ht], dim=1)  # N 6
+        reg_dir = torch.cat([rtx, rty], dim=1)  # N 8
+        # reg_box[..., :3] /= self.reg_radius
+
+        res = (reg_box, reg_dir, dir_score, valid)
+
+        if self.with_velo:
+            res = res + (valid_box[:, 8:10],)
+        elif valid_box.shape[-1] > 8:
+            res = res + (valid_box[:, 8:10],)
+        return res
+
+    def decode(self, centers, reg):
+        """
+
+        Parameters
+        ----------
+        centers: Tensor (N, 3) or (B, N, 2+),
+        reg: dict,
+            box - (N, 6) or (B, N, 6)
+            dir - (N, 8) or (B, N, 8)
+            scr - (N, 4) or (B, N, 4)
+            vel - (N, 2) or (B, N, 2), optional
+            pred - (N, 5) or (B, N, 5), optional
+        meter_per_pixel: float
+
+        Returns
+        -------
+
+        """
+        if centers.ndim > 2:
+            xc, yc = torch.split(centers[..., 0:2], 1, dim=-1)
+        else:
+            xc, yc = torch.split(centers[..., 1:3], 1, dim=-1)
+        # reg['box'][..., :3] *= self.reg_radius
+        xt, yt, zt, lt, wt, ht = torch.split(reg['box'], 1, dim=-1)
+
+        xo = xt + xc
+        yo = yt + yc
+        zo = zt #- self.z_offset
+
+        lo = torch.exp(lt)
+        wo = torch.exp(wt)
+        ho = torch.exp(ht)
+
+        # decode box directions
+        scr_max, max_idx = reg['scr'].max(dim=-1)
+        shape = max_idx.shape
+        max_idx = max_idx.view(-1)
+        ii = torch.arange(len(max_idx))
+        ra = max_idx.float() * 0.5 * math.pi
+        ct = reg['dir'][..., :4].view(-1, 4)[ii, max_idx] + torch.cos(ra)
+        st = reg['dir'][..., 4:].view(-1, 4)[ii, max_idx] + torch.sin(ra)
+        ro = torch.atan2(st.view(*shape), ct.view(*shape)).unsqueeze(-1)
+
+        if centers.ndim > 2:
+            # dense tensor
+            ret = torch.cat([xo, yo, zo, lo, wo, ho, ro], dim=-1)
+        else:
+            # sparse tensor with batch indices
+            ret = torch.cat([centers[..., :1], xo, yo, zo, lo, wo, ho, ro], dim=-1)
+
+        if self.with_velo:
+            ret = torch.cat([ret, reg['vel']], dim=-1)
+
+        return ret

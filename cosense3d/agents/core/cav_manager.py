@@ -47,7 +47,7 @@ class CAVManager:
                                          require_grad=require_grad,
                                          **self.kwargs)
                 else:
-                    cav.update(lidar_poses[b][i])
+                    cav.update(lidar_poses[b][i], is_ego, require_grad)
                 batch_cavs.append(cav)
                 cav_dict[cav_id] = (b, i)
             cavs.append(batch_cavs)

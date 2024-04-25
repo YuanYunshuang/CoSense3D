@@ -108,6 +108,7 @@ def filter_range(data, lidar_range, key):
         mask = filter_range_mask(data[f'{coor}_bboxes_3d'][:, :3], lidar_range)
         data[f'{coor}_bboxes_3d'] = data[f'{coor}_bboxes_3d'][mask]
         data[f'{coor}_labels_3d'] = data[f'{coor}_labels_3d'][mask]
+        data[f'{coor}_bboxes_id'] = data[f'{coor}_bboxes_id'][mask]
         data[f'{coor}_names'] = [data[f'{coor}_names'][i] for i, m in enumerate(mask) if m]
         if coor == 'global' and 'bboxes_3d_pred' in data:
             data['bboxes_3d_pred'] = data['bboxes_3d_pred'][:, mask]

@@ -7,7 +7,7 @@ global_ref_time = 0.05
 pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
     LoadAnnotations=dict(load3d_global=True, load3d_local=True,
-                         load_global_time=True, with_velocity=True, min_num_pts=3),
+                         load_global_time=True, with_velocity=True, min_num_pts=0),
 )
 
 inference_pipeline_cpu = OrderedDict(
@@ -21,8 +21,8 @@ data_manager = dict(
             flip='xy',
             scale_ratio_range=[0.95, 1.05],
         ),
-        pre_process=['remove_local_empty_boxes',
-                     'remove_global_empty_boxes']
+        pre_process=['generate_local_non_empty_mask',
+                     'generate_global_non_empty_mask']
     ),
     test=dict(
         aug=dict()

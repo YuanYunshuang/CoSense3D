@@ -162,7 +162,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         return {self.scatter_keys[0]: outs}
 
-    def loss(self, petr_out, gt_boxes, gt_labels, *args, **kwargs):
+    def loss(self, petr_out, gt_boxes_global, gt_labels_global, *args, **kwargs):
         aux_dict = {self.gt_keys[2:][i]: x for i, x in enumerate(args)}
         epoch = kwargs.get('epoch', 0)
         if self.sparse:
@@ -174,9 +174,9 @@ class QueryGuidedPETRHead(BaseModule):
             bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
             ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
                 1, self.num_pred, 1, 1).flatten(0, 1)
-        gt_boxes = [x for x in gt_boxes for _ in range(self.num_pred)]
+        gt_boxes_global = [x for x in gt_boxes_global for _ in range(self.num_pred)]
         # gt_velos = [x[:, 7:] for x in gt_boxes for _ in range(self.num_pred)]
-        gt_labels = [x for x in gt_labels for _ in range(self.num_pred)]
+        gt_labels_global = [x for x in gt_labels_global for _ in range(self.num_pred)]
         if 'gt_preds' in aux_dict:
             gt_preds = [x.transpose(1, 0) for x in aux_dict['gt_preds'] for _ in range(self.num_pred)]
         else:
@@ -184,7 +184,7 @@ class QueryGuidedPETRHead(BaseModule):
 
         # cls loss
         cls_tgt = multi_apply(self.cls_assigner.assign,
-                              ref_pts, gt_boxes, gt_labels, **kwargs)
+                              ref_pts, gt_boxes_global, gt_labels_global, **kwargs)
         cls_src = cls_scores.view(-1, self.num_classes)
 
         # if kwargs['itr'] % 1 == 0:
@@ -241,8 +241,8 @@ class QueryGuidedPETRHead(BaseModule):
             gt_preds = self.cat_data_from_list(gt_preds)
         box_tgt = self.box_assigner.assign(
             self.cat_data_from_list(ref_pts, pad_idx=True),
-            self.cat_data_from_list(gt_boxes, pad_idx=True),
-            self.cat_data_from_list(gt_labels),
+            self.cat_data_from_list(gt_boxes_global, pad_idx=True),
+            self.cat_data_from_list(gt_labels_global),
             gt_preds
         )
         ind = box_tgt['idx'][0]  # only one head
@@ -326,3 +326,136 @@ class QueryGuidedPETRHead(BaseModule):
         return dets
 
 
+class QueryGuidedPredHead(QueryGuidedPETRHead):
+    def loss(self,
+             petr_out,
+             *args,
+             **kwargs):
+        gt_dict = {self.gt_keys[i]: x for i, x in enumerate(args)}
+        epoch = kwargs.get('epoch', 0)
+        if self.sparse:
+            cls_scores = torch.cat([x for out in petr_out for x in out['all_cls_logits']], dim=0)
+            bbox_reg = torch.cat([x for out in petr_out for x in out['all_bbox_reg']], dim=0)
+            ref_pts = [x['ref_pts'] for x in petr_out for _ in range(self.num_pred)]
+        else:
+            cls_scores = self.stack_data_from_list(petr_out, 'all_cls_logits').flatten(0, 1)
+            bbox_reg = self.stack_data_from_list(petr_out, 'all_bbox_reg').flatten(0, 1)
+            ref_pts = self.stack_data_from_list(petr_out, 'ref_pts').unsqueeze(1).repeat(
+                1, self.num_pred, 1, 1).flatten(0, 1)
+
+        for k, v in gt_dict.items():
+            gt_dict[k] = [x for x in v for _ in range(self.num_pred)]
+
+        gt_boxes, gt_labels, pred_boxes = [], [], []
+        if 'local_bboxes_mask' in gt_dict:
+            # for local prediction
+            for i, m in enumerate(gt_dict['local_bboxes_mask']):
+                gt_ids = gt_dict['local_bboxes_id'][i][m]
+                pred_ids = gt_dict['global_bboxes_id'][i]
+                id_map = torch.where(gt_ids[:, None] == pred_ids[None])
+                gt_boxes.append(gt_dict['local_bboxes_3d'][i][m][id_map[0]])
+                gt_labels.append(gt_dict['local_labels_3d'][i][m][id_map[0]])
+                pred_boxes.append(gt_dict['global_bboxes_3d'][i][id_map[1]])
+        else:
+            # for global fused prediction
+            # gt_boxes = gt_dict['global_bboxes_3d']
+            # gt_labels = gt_dict['global_labels_3d']
+            # pred_boxes = gt_dict['global_bboxes_3d']
+            for i, m in enumerate(gt_dict['global_bboxes_mask']):
+                if len(m) != len(gt_dict['global_bboxes_3d'][i]):
+                    print('d')
+                gt_boxes.append(gt_dict['global_bboxes_3d'][i][m])
+                gt_labels.append(gt_dict['global_labels_3d'][i][m])
+                pred_boxes.append(gt_dict['global_bboxes_3d'][i][m])
+
+        # cls loss
+        cls_tgt = multi_apply(self.cls_assigner.assign,
+                              ref_pts, gt_boxes, gt_labels, **kwargs)
+        cls_src = cls_scores.view(-1, self.num_classes)
+
+        # if kwargs['itr'] % 1 == 0:
+        #     from cosense3d.utils.vislib import draw_points_boxes_plt, plt
+        #     points = ref_pts[0].detach().cpu().numpy()
+        #     boxes = gt_boxes[0][:, :7].detach().cpu().numpy()
+        #     scores = pred_to_conf_unc(
+        #         cls_scores[0], getattr(self.loss_cls, 'activation'), edl=self.is_edl)[0]
+        #     scores = scores[:, self.num_classes - 1:].squeeze().detach().cpu().numpy()
+        #     ax = draw_points_boxes_plt(
+        #         pc_range=self.pc_range.tolist(),
+        #         boxes_gt=boxes,
+        #         return_ax=True
+        #     )
+        #     ax.scatter(points[:, 0], points[:, 1], c=scores, cmap='jet', s=3, marker='s', vmin=0.0, vmax=1.0)
+        #     # ax = draw_points_boxes_plt(
+        #     #     pc_range=self.pc_range.tolist(),
+        #     #     points=points[cls_tgt[0].squeeze().detach().cpu().numpy() > 0],
+        #     #     points_c="green",
+        #     #     ax=ax,
+        #     #     return_ax=True
+        #     # )
+        #     # ax = draw_points_boxes_plt(
+        #     #     pc_range=self.pc_range.tolist(),
+        #     #     points=points[scores > 0.5],
+        #     #     points_c="magenta",
+        #     #     ax=ax,
+        #     #     return_ax=True
+        #     # )
+        #     plt.savefig(f"{os.environ['HOME']}/Downloads/tmp.jpg")
+        #     plt.close()
+
+        cls_tgt = torch.cat(cls_tgt, dim=0)
+        cared = (cls_tgt >= 0).any(dim=-1)
+        cls_src = cls_src[cared]
+        cls_tgt = cls_tgt[cared]
+
+        # convert one-hot to labels
+        cur_labels = torch.zeros_like(cls_tgt[..., 0]).long()
+        lbl_inds, cls_inds = torch.where(cls_tgt)
+        cur_labels[lbl_inds] = cls_inds + 1
+
+        avg_factor = max((cur_labels > 0).sum(), 1)
+        loss_cls = self.loss_cls(
+            cls_src,
+            cur_labels,
+            temp=epoch,
+            avg_factor=avg_factor
+        )
+
+        # box loss
+        # pad ref pts with batch index
+        box_tgt = self.box_assigner.assign(
+            self.cat_data_from_list(ref_pts, pad_idx=True),
+            self.cat_data_from_list(gt_boxes, pad_idx=True),
+            self.cat_data_from_list(gt_labels),
+            self.cat_data_from_list(pred_boxes, pad_idx=True),
+        )
+        ind = box_tgt['idx'][0]  # only one head
+        loss_box = 0
+        bbox_reg = bbox_reg.view(-1, self.code_size)
+        if ind.shape[1] > 0:
+            ptr = 0
+            for reg_name, reg_dim in self.reg_channels.items():
+                pred_reg = bbox_reg[:, ptr:ptr + reg_dim].contiguous()
+                if reg_name == 'scr':
+                    pred_reg = pred_reg.sigmoid()
+                cur_reg_src = pred_reg[box_tgt['valid_mask'][0]]
+                if reg_name == 'vel':
+                    cur_reg_tgt = box_tgt['vel'][0] * 0.1
+                elif reg_name == 'pred':
+                    cur_reg_tgt = box_tgt[reg_name][0]
+                    mask = cur_reg_tgt[..., 0].bool()
+                    cur_reg_src = cur_reg_src[mask]
+                    cur_reg_tgt = cur_reg_tgt[mask, 1:]
+                else:
+                    cur_reg_tgt = box_tgt[reg_name][0]  # N, C
+                cur_loss = self.loss_box(cur_reg_src, cur_reg_tgt)
+
+                loss_box = loss_box + cur_loss
+                ptr += reg_dim
+
+        return {
+            'cls_loss': loss_cls,
+            'box_loss': loss_box,
+            'cls_max': pred_to_conf_unc(
+                cls_src, self.loss_cls.activation, self.is_edl)[0][..., self.num_classes - 1:].max()
+        }

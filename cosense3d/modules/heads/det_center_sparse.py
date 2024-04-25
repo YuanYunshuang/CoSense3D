@@ -201,7 +201,7 @@ class DetCenterSparse(BaseModule):
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
-    def loss(self, batch_list, gt_boxes, gt_labels, **kwargs):
+    def loss(self, batch_list, gt_boxes, gt_labels, gt_mask=None, **kwargs):
         epoch = kwargs.get('epoch', 0)
         centers = [batch['ctr'] for batch in batch_list]
         pred_cls_list = [torch.stack(batch['cls'], dim=0) for batch in batch_list]
@@ -209,6 +209,10 @@ class DetCenterSparse(BaseModule):
             pred_scores = [batch['scr'] for batch in batch_list]
         else:
             pred_scores = [pred_to_conf_unc(x)[0][..., 1:].sum(dim=-1) for x in pred_cls_list]
+        if gt_mask is not None:
+            for i, m in enumerate(gt_mask):
+                gt_boxes[i] = gt_boxes[i][m]
+                gt_labels[i] = gt_labels[i][m]
         cls_tgt = multi_apply(self.cls_assigner.assign,
                               centers, gt_boxes, gt_labels, pred_scores, **kwargs)
 

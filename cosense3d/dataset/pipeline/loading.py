@@ -329,6 +329,7 @@ class LoadAnnotations:
     def _load_anno3d_local(self, data_dict):
         local_bboxes_3d = []
         local_labels_3d = []
+        local_boxes_3d_id = []
         local_names = []
         agents = data_dict['sample_info']['agents']
         for ai in data_dict['valid_agent_ids']:
@@ -346,6 +347,7 @@ class LoadAnnotations:
                 mask = np.ones_like(boxes[..., 0]).astype(bool)
             boxes = boxes[mask]
             local_boxes = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
+            local_boxes_id = boxes[:, 0].astype(int)
             if self.class_agnostic_3d:
                 local_labels = np.zeros(len(boxes), dtype=int)
             else:
@@ -359,12 +361,14 @@ class LoadAnnotations:
                     local_boxes = np.concatenate([local_boxes, velos], axis=-1)
             local_bboxes_3d.append(local_boxes)
             local_labels_3d.append(local_labels)
+            local_boxes_3d_id.append(local_boxes_id)
             assert np.all(local_labels == 0), "Num. cls > 1 not implemented."
             local_names.append(['car' for _ in local_labels])
 
         data_dict.update({
             'local_bboxes_3d': local_bboxes_3d,
             'local_labels_3d': local_labels_3d,
+            'local_bboxes_id': local_boxes_3d_id,
             'local_names': local_names,
         })
 
@@ -374,6 +378,7 @@ class LoadAnnotations:
         frame_meta = data_dict['sample_info']['meta']
         boxes = np.array(frame_meta['bbx_center_global'])
         global_bboxes_3d = boxes[:, [2, 3, 4, 5, 6, 7, 10]].astype(np.float32)
+        global_bboxes_id = boxes[:, 0].astype(int)
         if self.class_agnostic_3d:
             global_labels_3d = np.zeros(len(boxes), dtype=int)
         else:
@@ -391,12 +396,14 @@ class LoadAnnotations:
             mask = global_box_num_pts > self.min_num_pts
             global_bboxes_3d = global_bboxes_3d[mask]
             global_labels_3d = global_labels_3d[mask]
+            global_bboxes_id = global_bboxes_id[mask]
 
         # TODO: currently only support car
         global_names = ['car' for _ in global_labels_3d]
         data_dict.update({
             'global_bboxes_3d': global_bboxes_3d,
             'global_labels_3d': global_labels_3d,
+            'global_bboxes_id': global_bboxes_id,
             'global_names': global_names,
         })
         return data_dict
