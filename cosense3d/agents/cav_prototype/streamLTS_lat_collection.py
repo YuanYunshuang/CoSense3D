@@ -66,7 +66,11 @@ class StreamLidarCAV(BaseCAV):
             T_c2aug = T_e2aug @ T_c2e
             T_g2aug = T_e2aug @ T_g2e
 
-            DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            if self.is_ego:
+                DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            else:
+                DOP.apply_transform(self.data, T_c2aug, apply_to=['points', 'annos_local'])
+                DOP.apply_transform(self.data, T_e2aug, apply_to=['annos_global'])
             if self.data['prev_exists']:
                 self.data['memory']['pose_no_aug'] = T_g2e @ self.data['memory']['pose_no_aug']
                 self.data['memory']['ref_pts'] = self.transform_ref_pts(
@@ -203,6 +207,8 @@ class StreamLidarCAV(BaseCAV):
             self.data['memory']['ref_pts'], self.T_aug2g)
         self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
+
+        self.vis_local_detection()
 
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(

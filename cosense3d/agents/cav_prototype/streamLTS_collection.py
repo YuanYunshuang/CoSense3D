@@ -65,8 +65,11 @@ class StreamLidarCAV(BaseCAV):
 
             T_c2aug = T_e2aug @ T_c2e
             T_g2aug = T_e2aug @ T_g2e
-
-            DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            if self.is_ego:
+                DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            else:
+                DOP.apply_transform(self.data, T_c2aug, apply_to=['points', 'annos_local'])
+                DOP.apply_transform(self.data, T_e2aug, apply_to=['annos_global'])
             if self.data['prev_exists']:
                 self.data['memory']['pose_no_aug'] = T_g2e @ self.data['memory']['pose_no_aug']
                 self.data['memory']['ref_pts'] = self.transform_ref_pts(
@@ -87,7 +90,7 @@ class StreamLidarCAV(BaseCAV):
                 transform = request['lidar_pose'].inverse() @ self.lidar_pose
 
             T_c2aug = DOP.update_transform_with_aug(transform, self.data['augment_params'])
-            DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
+            DOP.apply_transform(self.data, T_c2aug, apply_to=['points', 'annos_local'])
             self.T_aug2g = T_c2aug
 
     def prepare_data(self):
@@ -204,6 +207,10 @@ class StreamLidarCAV(BaseCAV):
         self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
+        # self.vis_local_detection()
+        # self.vis_local_pred()
+        # print('d')
+
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(
             [reference_points, torch.ones_like(reference_points[..., 0:1])], dim=-1)
@@ -271,6 +278,42 @@ class StreamLidarCAV(BaseCAV):
             ax.plot([p0[i, 0], p1[i, 0]], [p0[i, 1], p1[i, 1]], markers[i])
             ax.plot([p0[i, 0], p2[i, 0]], [p0[i, 1], p2[i, 1]], markers[i])
         return ax
+
+    def vis_local_detection(self):
+        import matplotlib.pyplot as plt
+        from cosense3d.utils.vislib import draw_points_boxes_plt
+        points = self.data['points'][:, :3].detach().cpu().numpy()
+        pred_boxes = self.data['det_local']['preds']['box'].detach().cpu().numpy()
+        gt_boxes = self.data['local_bboxes_3d'][:, :7].detach().cpu().numpy()
+        ax = draw_points_boxes_plt(
+            pc_range=self.lidar_range.tolist(),
+            boxes_gt=gt_boxes[:, :7],
+            boxes_pred=pred_boxes,
+            points=points,
+            return_ax=True
+        )
+
+        ax.set_title('ego' if self.is_ego else 'coop')
+        plt.savefig("/home/yuan/Pictures/local_det.png")
+        plt.close()
+
+    def vis_local_pred(self):
+        import matplotlib.pyplot as plt
+        from cosense3d.utils.vislib import draw_points_boxes_plt
+        points = self.data['points'][:, :3].detach().cpu().numpy()
+        pred_boxes = self.data['detection_local']['preds']['box'].detach().cpu().numpy()
+        gt_boxes = self.data['global_bboxes_3d'][:, :7].detach().cpu().numpy()
+        ax = draw_points_boxes_plt(
+            pc_range=self.lidar_range.tolist(),
+            boxes_gt=gt_boxes[:, :7],
+            boxes_pred=pred_boxes,
+            points=points,
+            return_ax=True
+        )
+
+        ax.set_title('ego' if self.is_ego else 'coop')
+        plt.savefig("/home/yuan/Pictures/local_pred.png")
+        plt.close()
 
 
 class slcDenseToSparse(StreamLidarCAV):
