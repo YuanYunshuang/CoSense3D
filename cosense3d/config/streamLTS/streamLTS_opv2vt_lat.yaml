@@ -20,7 +20,7 @@ TRAIN:
 #    gamma: 0.1
 
 TEST:
-  hooks: 'pycfg.nets.streamLTS_net.test_hooks_opv2vt'
+  hooks: 'pycfg.nets.streamLTS_lat.test_hooks_opv2vt'
 
 
 CONTROLLER:
