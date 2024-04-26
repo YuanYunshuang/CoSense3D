@@ -69,7 +69,7 @@ class StreamLidarCAV(BaseCAV):
                 DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
             else:
                 DOP.apply_transform(self.data, T_c2aug, apply_to=['points', 'annos_local'])
-                DOP.apply_transform(self.data, T_e2aug, apply_to=['annos_global'])
+                # DOP.apply_transform(self.data, T_e2aug, apply_to=['annos_global'])
             if self.data['prev_exists']:
                 self.data['memory']['pose_no_aug'] = T_g2e @ self.data['memory']['pose_no_aug']
                 self.data['memory']['ref_pts'] = self.transform_ref_pts(
@@ -207,9 +207,10 @@ class StreamLidarCAV(BaseCAV):
         self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
-        # self.vis_local_detection()
-        # self.vis_local_pred()
-        # print('d')
+        # if self.require_grad:
+        #     self.vis_local_detection()
+        #     self.vis_local_pred()
+        #     print('d')
 
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(
@@ -283,12 +284,12 @@ class StreamLidarCAV(BaseCAV):
         import matplotlib.pyplot as plt
         from cosense3d.utils.vislib import draw_points_boxes_plt
         points = self.data['points'][:, :3].detach().cpu().numpy()
-        pred_boxes = self.data['det_local']['preds']['box'].detach().cpu().numpy()
+        # pred_boxes = self.data['det_local']['preds']['box'].detach().cpu().numpy()
         gt_boxes = self.data['local_bboxes_3d'][:, :7].detach().cpu().numpy()
         ax = draw_points_boxes_plt(
             pc_range=self.lidar_range.tolist(),
             boxes_gt=gt_boxes[:, :7],
-            boxes_pred=pred_boxes,
+            # boxes_pred=pred_boxes,
             points=points,
             return_ax=True
         )
@@ -301,12 +302,12 @@ class StreamLidarCAV(BaseCAV):
         import matplotlib.pyplot as plt
         from cosense3d.utils.vislib import draw_points_boxes_plt
         points = self.data['points'][:, :3].detach().cpu().numpy()
-        pred_boxes = self.data['detection_local']['preds']['box'].detach().cpu().numpy()
+        # pred_boxes = self.data['detection_local']['preds']['box'].detach().cpu().numpy()
         gt_boxes = self.data['global_bboxes_3d'][:, :7].detach().cpu().numpy()
         ax = draw_points_boxes_plt(
             pc_range=self.lidar_range.tolist(),
             boxes_gt=gt_boxes[:, :7],
-            boxes_pred=pred_boxes,
+            # boxes_pred=pred_boxes,
             points=points,
             return_ax=True
         )

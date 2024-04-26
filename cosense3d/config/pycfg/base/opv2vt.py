@@ -21,8 +21,8 @@ data_manager = dict(
             flip='xy',
             scale_ratio_range=[0.95, 1.05],
         ),
-        pre_process=['generate_local_non_empty_mask',
-                     'generate_global_non_empty_mask']
+        pre_process=['remove_local_empty_boxes',
+                     'remove_global_empty_boxes']
     ),
     test=dict(
         aug=dict()
