@@ -20,7 +20,7 @@ TRAIN:
 #    gamma: 0.1
 
 TEST:
-  hooks: 'pycfg.nets.streamLTS.test_hooks_opv2vt'
+  hooks: 'pycfg.nets.streamLTS_net.test_hooks_opv2vt'
 
 
 CONTROLLER:
@@ -32,7 +32,7 @@ CONTROLLER:
     dataset: opv2vt
     memory_len: 4
     memory_emb_dims: 256
-    memory_num_propagated: 256
+    memory_num_propagated: 1024
     ref_pts_dim: 3
     all_grad: false
     num_grad_cav: 2

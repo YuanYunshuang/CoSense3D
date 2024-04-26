@@ -64,7 +64,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
         ),
 
         temporal_fusion = dict(
-            type='fusion.temporal_fusion.LocalTemporalFusion',
+            type='fusion.temporal_fusion.LocalTemporalFusionV3',
             gather_keys=['det_local', 'bev_local', 'bev_feat', 'memory'],
             scatter_keys=['temp_fusion_feat'],
             in_channels=256,
