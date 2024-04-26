@@ -208,8 +208,6 @@ class StreamLidarCAV(BaseCAV):
         self.data['memory']['timestamp'][1:] -= self.timestamp
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
-        self.vis_local_detection()
-
     def transform_ref_pts(self, reference_points, matrix):
         reference_points = torch.cat(
             [reference_points, torch.ones_like(reference_points[..., 0:1])], dim=-1)
