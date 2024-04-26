@@ -26,7 +26,7 @@ TEST:
 CONTROLLER:
   num_loss_frame: 1
   data_manager: 'pycfg.base.opv2vt.data_manager'
-  shared_modules: 'pycfg.nets.streamLTS_lat.shared_modules_opv2vt_fcl_lat'
+  shared_modules: 'pycfg.nets.streamLTS.shared_modules_opv2vt_fcl_lat'
   cav_manager:
     prototype: streamLTS_collection.StreamLidarCAV
     dataset: opv2vt
