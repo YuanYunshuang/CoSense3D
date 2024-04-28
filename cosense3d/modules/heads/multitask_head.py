@@ -20,7 +20,7 @@ class MultiTaskHead(BaseModule):
                 stride=strides[i],
                 gather_keys=self.gather_keys,
                 scatter_keys=[self.scatter_keys[i]],
-                gt_keys=self.gt_keys,
+                gt_keys=self.gt_keys if len(h.get('gt_keys', [])) == 0 else h['gt_keys'],
             ))
             modules.append(build_module(h))
         self.heads = nn.ModuleList(modules)

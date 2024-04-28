@@ -1,5 +1,6 @@
 from cosense3d.config import add_cfg_keys
 
+@add_cfg_keys
 def get_roadline_head_cfg(data_info, stride, in_dim=256, range=50):
     res = data_info['voxel_size'][0] * stride
     return dict(
