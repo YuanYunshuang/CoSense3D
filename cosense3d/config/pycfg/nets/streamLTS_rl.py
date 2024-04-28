@@ -62,7 +62,9 @@ def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
                     voxel_size=voxel_size,
                     point_cloud_range=point_cloud_range,
                     in_channels=256,
-                    generate_roi_scr=True
+                    generate_roi_scr=True,
+                    cls_assigner='BEVBoxAssigner',
+                    cls_loss="FocalLoss"
                 ),
                 get_bev_head_cfg(
                     data_info, out_stride, in_dim=256, n_cls=2
@@ -82,7 +84,8 @@ def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
             transformer_itrs=1,
             global_ref_time=global_ref_time,
             lidar_range=point_cloud_range,
-            transformer=get_petr_transformer_cfg(use_flash_attn)
+            transformer=get_petr_transformer_cfg(use_flash_attn),
+            norm_fusion=False,
         ),
 
         spatial_alignment={},
