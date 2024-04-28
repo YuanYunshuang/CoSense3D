@@ -69,6 +69,7 @@ class StreamLidarCAV(BaseCAV):
                 DOP.apply_transform(self.data, T_c2aug, apply_to=self.prepare_data_keys)
             else:
                 DOP.apply_transform(self.data, T_c2aug, apply_to=['points', 'annos_local'])
+                # global bboxes share the same memory with the ego cav, therefore it is already transformed to the aug coor
                 # DOP.apply_transform(self.data, T_e2aug, apply_to=['annos_global'])
             if self.data['prev_exists']:
                 self.data['memory']['pose_no_aug'] = T_g2e @ self.data['memory']['pose_no_aug']
@@ -208,7 +209,7 @@ class StreamLidarCAV(BaseCAV):
         self.data['memory']['pose_no_aug'] = self.T_e2g[(None,) * 2] @ self.data['memory']['pose_no_aug'] # aug -->global
 
         # if self.require_grad:
-        #     self.vis_local_detection()
+        #     # self.vis_local_detection()
         #     self.vis_local_pred()
         #     print('d')
 
@@ -303,6 +304,8 @@ class StreamLidarCAV(BaseCAV):
         from cosense3d.utils.vislib import draw_points_boxes_plt
         points = self.data['points'][:, :3].detach().cpu().numpy()
         # pred_boxes = self.data['detection_local']['preds']['box'].detach().cpu().numpy()
+        ref_pts = self.data['temp_fusion_feat']['ref_pts'].cpu() * (self.lidar_range[3:] - self.lidar_range[:3]) + self.lidar_range[:3]
+        ref_pts = ref_pts.detach().numpy()
         gt_boxes = self.data['global_bboxes_3d'][:, :7].detach().cpu().numpy()
         ax = draw_points_boxes_plt(
             pc_range=self.lidar_range.tolist(),
@@ -311,6 +314,7 @@ class StreamLidarCAV(BaseCAV):
             points=points,
             return_ax=True
         )
+        ax.plot(ref_pts[:, 0], ref_pts[:, 1], '.r', markersize=1)
 
         ax.set_title('ego' if self.is_ego else 'coop')
         plt.savefig("/home/yuan/Pictures/local_pred.png")
