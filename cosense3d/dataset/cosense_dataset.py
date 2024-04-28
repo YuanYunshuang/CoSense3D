@@ -140,15 +140,17 @@ class CosenseDataset(Dataset):
         scenario_tokens = [f'{scenario}.{ai}' for ai in valid_agent_ids if ai in sample_info['agents']]
 
         # if latency > 0, set the sample info of coop. cavs to previous frame at -latency
-        if self.latency > 0:
-            latent_item = max(item - self.latency, 0)
+        if self.latency != 0:
+            # get random latency if latency flag is -1
+            latency = np.random.randint(3) if self.latency == -1 else self.latency
+            latent_item = max(item - latency, 0)
             latent_scenario, latent_frame = self.samples[latent_item]
             if latent_scenario != scenario:
                 # make sure the scenario is the same as the current frame
                 latent_scenario = scenario
                 latent_frame = frame
             latent_info = copy.deepcopy(self.meta_dict[latent_scenario][latent_frame])
-            # update coope agent info to latent frame
+            # update coop agent info to latent frame
             for cav_id in valid_agent_ids:
                 if cav_id == sample_info['meta']['ego_id']:
                     continue

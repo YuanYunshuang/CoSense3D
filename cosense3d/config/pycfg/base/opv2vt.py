@@ -57,4 +57,6 @@ def get_opv2vt_cfg(seq_len, voxel_size, latency=0):
 seq4_pillar04 = get_opv2vt_cfg(4, [0.4, 0.4, 4])
 seq4_vox04 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox04_lat1 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], 1)
+seq4_vox04_lat2 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], 2)
+seq4_vox04_randlat = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], -1)
 seq4_vox01 = get_opv2vt_cfg(4, [0.1, 0.1, 0.1])
