@@ -1,4 +1,4 @@
-DATASET: 'pycfg.base.opv2vt.seq4_vox04'
+DATASET: 'pycfg.base.opv2vt.seq4_vox04_randlat_rl'
 
 TRAIN:
 #  project_name: 'centernet'
@@ -28,7 +28,7 @@ CONTROLLER:
   data_manager: 'pycfg.base.opv2vt.data_manager'
   shared_modules: 'pycfg.nets.streamLTS_rl.shared_modules_opv2vt'
   cav_manager:
-    prototype: streamLTS_collection.StreamLidarCAV
+    prototype: streamLTS_collection.LTSCAVLocCorr
     dataset: opv2vt
     memory_len: 4
     memory_emb_dims: 256

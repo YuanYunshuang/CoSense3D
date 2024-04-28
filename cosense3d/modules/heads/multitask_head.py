@@ -15,15 +15,22 @@ class MultiTaskHead(BaseModule):
         super().__init__(**kwargs)
         self.losses = losses
         modules = []
+        gt_keys = set(self.gt_keys)
         for i, h in enumerate(heads):
+            if len(h.get('gt_keys', [])) == 0:
+                cur_gt_keys = self.gt_keys
+            else:
+                cur_gt_keys = h['gt_keys']
+                gt_keys.update(set(cur_gt_keys))
             h.update(dict(
                 stride=strides[i],
                 gather_keys=self.gather_keys,
                 scatter_keys=[self.scatter_keys[i]],
-                gt_keys=self.gt_keys if len(h.get('gt_keys', [])) == 0 else h['gt_keys'],
+                gt_keys=cur_gt_keys,
             ))
             modules.append(build_module(h))
         self.heads = nn.ModuleList(modules)
+        self.gt_keys = list(gt_keys)
         if formatting is None:
             self.formatting = [None] * len(self.heads)
         else:
@@ -46,9 +53,10 @@ class MultiTaskHead(BaseModule):
     def loss(self, *args, **kwargs):
         kl = len(self.scatter_keys)
         heads_out = args[:kl]
-        gt_boxes, gt_labels = args[kl:kl + 2]
+        gt_dict = {k:args[kl+i] for i, k in enumerate(self.gt_keys)}
         loss_dict = {}
         for i, h in enumerate(self.heads):
             if self.losses[i]:
-                loss_dict.update(h.loss(heads_out[i], gt_boxes, gt_labels, **kwargs))
+                gt_list = [gt_dict[k] for k in h.gt_keys]
+                loss_dict.update(h.loss(heads_out[i], *gt_list, **kwargs))
         return loss_dict

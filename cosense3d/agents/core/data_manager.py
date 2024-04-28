@@ -29,8 +29,10 @@ class DataManager:
 
     def remove_global_empty_boxes(self):
         for cavs in self.cav_manager.cavs:
-            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
+            if cavs[0].data.get('global_bboxes_3d', None) is None:
+                continue
             assert cavs[0].is_ego
+            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             global_boxes = cavs[0].data['global_bboxes_3d']
             box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3],
                                           global_boxes.unsqueeze(0)[..., :7])[0]
@@ -45,8 +47,10 @@ class DataManager:
 
     def generate_global_non_empty_mask(self):
         for cavs in self.cav_manager.cavs:
-            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
+            if cavs[0].data.get('global_bboxes_3d', None) is None:
+                continue
             assert cavs[0].is_ego
+            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             global_boxes = cavs[0].data['global_bboxes_3d']
             box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3],
                                           global_boxes.unsqueeze(0)[..., :7])[0]
@@ -60,6 +64,8 @@ class DataManager:
         for cavs in self.cav_manager.cavs:
             for cav in cavs:
                 if not cav.is_ego and ego_only:
+                    continue
+                if cav.data.get('local_bboxes_3d', None) is None:
                     continue
                 points = cav.data['points']
                 local_boxes = cav.data['local_bboxes_3d']
@@ -77,6 +83,8 @@ class DataManager:
             for cav in cavs:
                 if not cav.is_ego and ego_only:
                     continue
+                if cav.data.get('local_bboxes_3d', None) is None:
+                    continue
                 points = cav.data['points']
                 local_boxes = cav.data['local_bboxes_3d']
                 box_idx = points_in_boxes_gpu(points.unsqueeze(0)[..., :3],
@@ -89,8 +97,8 @@ class DataManager:
 
     def sample_global_bev_tgt_pts(self, sam_res=0.4, map_res=0.2, range=50, max_num_pts=5000, discrete=False):
         for cavs in self.cav_manager.cavs:
-            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             assert cavs[0].is_ego
+            points = torch.cat([cav.data['points'] for cav in cavs], dim=0)
             transform = cavs[0].T_e2g.inverse() @ cavs[0].T_aug2g
             bev_pts = generate_bev_tgt_pts(points, cavs[0].data, transform,
                                            sam_res, map_res, range, max_num_pts, discrete)

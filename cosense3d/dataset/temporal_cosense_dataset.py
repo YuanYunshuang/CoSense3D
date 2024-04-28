@@ -8,6 +8,7 @@ class TemporalCosenseDataset(CosenseDataset):
     def __init__(self, cfgs, mode):
         super().__init__(cfgs, mode)
         self.seq_len = cfgs['seq_len']
+        self.n_loss_frame = cfgs.get('n_loss_frame', 1)
         self.rand_len = cfgs.get('rand_len', 0)
         self.seq_mode = cfgs.get('seq_mode', False)
         self.clean_seq = cfgs.get('clean_seq', False)
@@ -22,11 +23,12 @@ class TemporalCosenseDataset(CosenseDataset):
         prev_agents = None
         prev_i = None
         num_cav = None
+        omit_gt = [True] * (len(index_list) - self.n_loss_frame) + [False] * self.n_loss_frame
 
-        for i in index_list:
-            i = max(0, i)
-            input_dict = self.load_frame_data(i, prev_agents, prev_i)
-            prev_i = i
+        for i, idx in enumerate(index_list):
+            idx = max(0, idx)
+            input_dict = self.load_frame_data(idx, prev_agents, prev_i, omit_gt=omit_gt[i])
+            prev_i = idx
 
             if not self.seq_mode:  # for sliding window only
                 prev_exists = []
@@ -47,10 +49,10 @@ class TemporalCosenseDataset(CosenseDataset):
         valid_idx_start = 0
         if self.clean_seq:
             ego_id = queue[-1]['valid_agent_ids'][0]
-            for i in range(len(queue)):
-                if queue[i]['valid_agent_ids'][0] != ego_id:
-                    valid_idx_start = i + 1
-        queue = {k: [q[k] for q in queue[valid_idx_start:]] for k in queue[0].keys()}
+            for idx in range(len(queue)):
+                if queue[idx]['valid_agent_ids'][0] != ego_id:
+                    valid_idx_start = idx + 1
+        queue = {k: [q[k] if k in q else None for q in queue[valid_idx_start:]] for k in queue[-1].keys()}
         return queue
 
 

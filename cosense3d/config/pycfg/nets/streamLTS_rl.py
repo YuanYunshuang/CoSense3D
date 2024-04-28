@@ -29,6 +29,7 @@ def get_shared_modules(point_cloud_range, global_ref_time=0, enc_dim=32):
             point_cloud_range=point_cloud_range,
             kernel_size_layer1=3,
             height_compression=[1, 2, 8],
+            cache_strides=[1, 2, 8],
             enc_dim=enc_dim,
         ),
 

@@ -61,7 +61,7 @@ def apply_transform(data, transform, key):
             data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         box_key = f"{key.split('_')[1]}_bboxes_3d"
-        if box_key not in data:
+        if box_key not in data or data[box_key] is None:
             return
         boxes = data[box_key]
         data[box_key][:, :7] = box_utils.transform_boxes_3d(boxes[:, :7], transform, mode=7)
@@ -77,12 +77,16 @@ def apply_transform(data, transform, key):
             data['extrinsics'][i] = data['extrinsics'][i] @ transform.inverse()
             data['lidar2img'][i] = data['intrinsics'][i] @ data['extrinsics'][i]
     elif key == 'bev_tgt_pts' and key in data:
+        if key not in data or data[key] is None:
+            return
         points = data['bev_tgt_pts'].clone()
         points[:, 2] = 0
         points = torch.cat([points, torch.ones_like(points[:, :1])], dim=-1).T
         points = (transform @ points).T
         data['bev_tgt_pts'][:, :2] = points[:, :2]
     elif key == 'roadline_tgts' and key in data:
+        if key not in data or data[key] is None:
+            return
         points = data['roadline_tgts'][:, :2].clone()
         points = torch.cat([points, torch.ones_like(points)], dim=-1).T
         points[2] = 0
@@ -103,7 +107,7 @@ def filter_range(data, lidar_range, key):
         data['points'] = points
     elif 'annos_global' == key or 'annos_local' == key:
         coor = key.split('_')[1]
-        if f'{coor}_bboxes_3d' not in data:
+        if f'{coor}_bboxes_3d' not in data or data[f'{coor}_bboxes_3d'] is None:
             return
         mask = filter_range_mask(data[f'{coor}_bboxes_3d'][:, :3], lidar_range)
         data[f'{coor}_bboxes_3d'] = data[f'{coor}_bboxes_3d'][mask]
@@ -122,6 +126,8 @@ def filter_range_mask(points, lidar_range, eps=1e-4):
 
 def generate_bev_tgt_pts(points, data, transform=None, sam_res=0.4, map_res=0.2, range=50,
                          max_num_pts=5000, discrete=False):
+    if 'bevmap' not in data or data['bevmap'] is None:
+        return None
     bevmap = data['bevmap']
     bevmap_coor = data['bevmap_coor']
     sx, sy = bevmap.shape[:2]
@@ -331,7 +337,9 @@ class DataOnlineProcessor:
                                                map_res=0.2,
                                                range=50,
                                                max_num_pts=3000):
-        bevmap = data['bevmap'].clone()
+        if 'bevmap' not in data or data['bevmap'] is None:
+            return
+        bevmap = data['bevmap'].clone().float()
         bevmap[bevmap==0] = -1
         bevmap_coor = data['bevmap_coor']
         sx, sy = bevmap.shape[:2]
@@ -344,13 +352,7 @@ class DataOnlineProcessor:
 
         data['roadline_tgts'] = torch.cat([coords, scores.unsqueeze(1)], dim=1)
 
-        # roadline = torch.zeros_like(bevmap)
-        # roadline[inds[0], inds[1]] = scores
-        #
-        # import matplotlib.pyplot as plt
-        # plt.imshow(roadline.cpu().numpy())
-        # plt.show()
-        # plt.close()
+
 
 
 

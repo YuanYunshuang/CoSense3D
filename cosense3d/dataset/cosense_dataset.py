@@ -39,6 +39,11 @@ class CosenseDataset(Dataset):
         self.init_dataset()
 
         self.pipeline = Pipeline(cfgs[f'{mode}_pipeline'])
+        # for frames that do not need loss calculation, omit gt-loading to save time
+        if 'inf_pipeline' in cfgs:
+            self.inf_pipeline = Pipeline(cfgs['inf_pipeline'])
+        else:
+            self.inf_pipeline = self.pipeline
 
     def __len__(self):
         return len(self.samples)
@@ -46,7 +51,11 @@ class CosenseDataset(Dataset):
     def __getitem__(self, item):
         return self.load_frame_data(item)
 
-    def load_frame_data(self, item: int, prev_agents: Optional[List] = None, prev_item: Optional[int] = None) -> dict:
+    def load_frame_data(self,
+                        item: int,
+                        prev_agents: Optional[List] = None,
+                        prev_item: Optional[int] = None,
+                        omit_gt: Optional[bool] = False) -> dict:
         """
         Load all data and annotations from one frame to standard CoSense format.
 
@@ -61,7 +70,10 @@ class CosenseDataset(Dataset):
         data_dict:
         """
         sample_info = self.load_sample_info(item, prev_agents, prev_item)
-        data_dict = self.pipeline(sample_info)
+        if omit_gt:
+            data_dict = self.inf_pipeline(sample_info)
+        else:
+            data_dict = self.pipeline(sample_info)
         data_dict.pop('sample_info')
         data_dict.pop('data_path')
         return data_dict

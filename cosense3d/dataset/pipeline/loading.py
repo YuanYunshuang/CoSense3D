@@ -441,11 +441,12 @@ class LoadOPV2VBevMaps:
         self.ego_only = ego_only
         self.range = range
         self.map_res = 0.2
+        self.map_size = int(self.range * 2 / self.map_res)
         pad = int(range / self.map_res)
         if self.use_global_map:
             self.keys = ['bevmap', 'bevmap_coor']
             assets_path = f"{os.path.dirname(__file__)}/../../carla/assets"
-            map_path = f"{assets_path}/maps"
+            map_path = f"{assets_path}/maps/png"
             map_files = glob.glob(os.path.join(map_path, '*.png'))
             self.scene_maps = load_json(os.path.join(assets_path, 'scenario_town_map.json'))
             self.map_bounds = load_json(os.path.join(assets_path, 'map_bounds.json'))
@@ -455,6 +456,14 @@ class LoadOPV2VBevMaps:
                 bevmap = cv2.imread(mf) / 255.
                 # bevmap = np.pad(bevmap, ((pad, pad), (pad, pad), (0, 0)), 'constant', constant_values=0)
                 self.bevmaps[town] = bevmap
+
+            # grid coor template
+            grid = np.ones((self.map_size, self.map_size))
+            inds = np.stack(np.where(grid))
+            xy = inds * 0.2 - self.range + 0.1
+            self.xy_pad = np.concatenate([xy, np.zeros_like(xy[:1]), np.ones_like(xy[:1])], axis=0)
+            # carla has different coor system as cosense3d, T_corr: carla -> cosense3d
+            self.T_corr = np.array([[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1], [0, 0, 0, 1]])
         else:
             assert keys is not None and len(keys) > 0
 
@@ -498,27 +507,48 @@ class LoadOPV2VBevMaps:
         scenario = data_dict['scenario']
         town = self.scene_maps[scenario]
         lidar_pose = data_dict['sample_info']['agents'][ai]['lidar']['0']['pose']
-        bevmap = self.bevmaps[town]
-        size = int(self.range * 2 / self.map_res)
+        cur_map = self.bevmaps[town]
+        sx, sy = cur_map.shape[:2]
         bound = self.map_bounds[town]
-        # bound[0] -= self.range
-        # bound[1] -= self.range
-        offset_x = int((lidar_pose[0] - self.range - bound[0]) / self.map_res)
-        offset_y = int((lidar_pose[1] - self.range - bound[1]) / self.map_res)
 
-        xmin = max(offset_x, 0)
-        xmax = min(offset_x + size, bevmap.shape[0] - 1)
-        ymin = max(offset_y, 0)
-        ymax = min(offset_y + size, bevmap.shape[1] - 1)
-        bevmap_crop = bevmap[xmin:xmax, ymin:ymax]
-        bevmap_coor = [bound[0] + xmin * self.map_res, bound[1] + ymin * self.map_res]
+        # transform template bev points to world coordinates
+        transform = self.T_corr @ pose_to_transformation(lidar_pose)
+        xy_tf = transform @ self.xy_pad
+        # calculate map indices of bev points
+        xy_tf[0] -= bound[0]
+        xy_tf[1] -= bound[1]
+        map_inds = np.floor(xy_tf[:2] / 0.2)
+        xs = np.clip(map_inds[0], 0, sx - 1).astype(int)
+        ys = np.clip(map_inds[1], 0, sy - 1).astype(int)
+        # retrieve cropped bev map from global map
+        bevmap = cur_map[xs, ys].reshape(self.map_size, self.map_size, 3) # [::-1, ::-1]
 
-        if data_dict['sample_info']['agents'][ai]['pose'][2] > 0.5:
-            bevmap_crop = bevmap_crop[..., :2].any(1)
+        # # bound[0] -= self.range
+        # # bound[1] -= self.range
+        # offset_x = int((lidar_pose[0] - self.range - bound[0]) / self.map_res)
+        # offset_y = int((lidar_pose[1] - self.range - bound[1]) / self.map_res)
+        #
+        # xmin = max(offset_x, 0)
+        # xmax = min(offset_x + size, bevmap.shape[0] - 1)
+        # ymin = max(offset_y, 0)
+        # ymax = min(offset_y + size, bevmap.shape[1] - 1)
+        # bevmap_crop = bevmap[xmin:xmax, ymin:ymax]
+        # bevmap_coor = [bound[0] + xmin * self.map_res, bound[1] + ymin * self.map_res]
+
+        if data_dict['sample_info']['agents'][ai]['pose'][2] > 2:
+            bevmap = bevmap[..., 1].astype(bool)
         else:
-            bevmap_crop = bevmap_crop[..., 0]
+            bevmap = bevmap[..., :2].any(-1)
 
-        return bevmap_crop, bevmap_coor
+        # import matplotlib.pyplot as plt
+        # points = data_dict['points'][0]
+        # mask = bevmap.reshape(-1).astype(bool)
+        # plt.plot(self.xy_pad[0, mask], self.xy_pad[1, mask], 'g.', markersize=1)
+        # plt.plot(points[:, 0], points[:, 1], 'b.', markersize=1)
+        # plt.show()
+        # plt.close()
+
+        return bevmap, [-self.range, - self.range]
 
 
 class LoadSparseBevTargetPoints:

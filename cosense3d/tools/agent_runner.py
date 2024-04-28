@@ -99,6 +99,10 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--gpus", type=int, default=0)
     parser.add_argument("--data-path", type=str)
+    parser.add_argument("--data-latency", type=int, default=0,
+                        help="-1: random latency selected from (0, 1, 2)*100ms;\n"
+                             " 0: coop. data has no additional latency relative to ego frame;\n"
+                             " n>0: coop. data has n*100ms latency relative to ego frame.")
     parser.add_argument("--meta-path", type=str)
     parser.add_argument("--batch-size", type=int)
     parser.add_argument("--n-workers", type=int)

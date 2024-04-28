@@ -12,6 +12,7 @@ pipeline_cpu = OrderedDict(
 
 inference_pipeline_cpu = OrderedDict(
     LoadLidarPoints=dict(load_attributes=['xyz', 'intensity', 'time']),
+    LoadAnnotations=dict(),
 )
 
 data_manager = dict(
@@ -30,7 +31,9 @@ data_manager = dict(
 )
 
 
-def get_opv2vt_cfg(seq_len, voxel_size, latency=0):
+def get_opv2vt_cfg(seq_len, voxel_size, latency=0, load_bevmap=False):
+    if load_bevmap:
+        pipeline_cpu['LoadOPV2VBevMaps'] = dict()
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
         name='opv2vt',
@@ -49,8 +52,10 @@ def get_opv2vt_cfg(seq_len, voxel_size, latency=0):
         com_range=70,
         latency=latency,
         seq_len=seq_len,
+        n_loss_frame=1,
         train_pipeline=pipeline_cpu,
         test_pipeline=pipeline_cpu,
+        inf_pipeline=inference_pipeline_cpu
     )
 
 
@@ -59,4 +64,6 @@ seq4_vox04 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox04_lat1 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], 1)
 seq4_vox04_lat2 = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], 2)
 seq4_vox04_randlat = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], -1)
+seq4_vox04_randlat_rl = get_opv2vt_cfg(4, [0.4, 0.4, 0.4], -1, load_bevmap=True)
+seq1_vox04_randlat_rl = get_opv2vt_cfg(1, [0.4, 0.4, 0.4], -1, load_bevmap=True)
 seq4_vox01 = get_opv2vt_cfg(4, [0.1, 0.1, 0.1])

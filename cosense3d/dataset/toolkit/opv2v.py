@@ -645,7 +645,8 @@ def generate_roadline(map_dir, map_bounds_file):
     bounds = load_json(map_bounds_file)
     map_files = glob(map_dir)
     for mf in map_files:
-        roadmap = cv2.imread(mf)[..., ]
+        roadmap = cv2.imread(mf)
+    # TODO
 
 
 def convert_bev_semantic_map_to_road_height_map(map_dir, map_bounds_file, scenario_town_map_file, meta_dir):
@@ -681,6 +682,7 @@ def convert_bev_semantic_map_to_road_height_map(map_dir, map_bounds_file, scenar
             dists = torch.norm(coords[i1:i2, None, :2] - traj_pts[None, :, :2], dim=-1)
             min_dist, min_idx = dists.min(dim=-1)
             heights = traj_pts[min_idx][:, -1]
+    # TODO
 
 
 if __name__=="__main__":

@@ -517,19 +517,32 @@ class slcCIASSD(StreamLidarCAV):
 
 
 class LTSCAVLocCorr(StreamLidarCAV):
-    def get_response_cpm(self):
-        cpm = {}
-        cpm['coop_det_ctr'] = self.data['detection_local']['preds']['box'][:, :3]
-        for k in ['temp_fusion_feat']:
-            if k in self.data:
-                cpm[k] = self.data[k]
-        return cpm
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prepare_data_keys = ['points', 'annos_local', 'roadline_tgts', 'annos_global']
 
-    def forward_fusion(self, tasks, training_mode):
+    def prepare_data(self):
+        self.prepare_time_scale()
+        DOP.adaptive_free_space_augmentation(self.data, time_idx=-1)
+        # DOP.adaptive_free_space_augmentation(self.data, res=0.5, min_h=0)
         if self.is_ego:
-            tasks['with_grad'].append((self.id, '11:spatial_alignment', {}))
-            tasks['with_grad'].append((self.id, '12:spatial_fusion', {}))
-        return tasks
+            DOP.generate_sparse_target_roadline_points(self.data, range=75)
+        self.apply_transform()
+        DOP.filter_range(self.data, self.lidar_range, apply_to=self.prepare_data_keys)
+
+    # def get_response_cpm(self):
+    #     cpm = {}
+    #     cpm['coop_det_ctr'] = self.data['detection_local']['preds']['box'][:, :3]
+    #     for k in ['temp_fusion_feat']:
+    #         if k in self.data:
+    #             cpm[k] = self.data[k]
+    #     return cpm
+    #
+    # def forward_fusion(self, tasks, training_mode):
+    #     if self.is_ego:
+    #         tasks['with_grad'].append((self.id, '11:spatial_alignment', {}))
+    #         tasks['with_grad'].append((self.id, '12:spatial_fusion', {}))
+    #     return tasks
 
 
 
