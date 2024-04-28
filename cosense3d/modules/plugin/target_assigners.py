@@ -21,7 +21,7 @@ from cosense3d.modules.utils.me_utils import metric2indices, update_me_essential
 from cosense3d.modules.utils.box_coder import build_box_coder
 from cosense3d.ops.iou3d_nms_utils import boxes_iou3d_gpu
 from cosense3d.dataset.const import CoSenseBenchmarks as csb
-from cosense3d.modules.utils.common import pad_r, meshgrid
+from cosense3d.modules.utils.common import pad_r, pad_l, meshgrid
 from cosense3d.ops.utils import points_in_boxes_gpu
 from cosense3d.modules.losses import pred_to_conf_unc
 from cosense3d.utils.misc import PI
@@ -954,6 +954,75 @@ class BEVCenternessAssigner(BaseAssigner):
                                    dists_min,
                                    self.sample_mining_thr,
                                    self.max_mining_ratio)
+
+        return labels
+
+    @torch.no_grad()
+    def assign(self, centers, gt_boxes, gt_labels, pred_scores=None, **kwargs):
+        if len(gt_boxes) == 0:
+            labels = torch.zeros_like(centers[:, :1])
+            return labels
+        if self.merge_all_classes:
+            labels = self.get_labels_single_head(centers, gt_boxes).unsqueeze(-1)
+        else:
+            labels = []
+            for n in range(self.n_cls):
+                cur_boxes = gt_boxes[gt_labels == n]
+                cur_scores = None if pred_scores is None else pred_scores[n]
+                labels.append(self.get_labels_single_head(centers, cur_boxes, cur_scores, **kwargs))
+            labels = torch.stack(labels, dim=-1)
+
+        # import matplotlib.pyplot as plt
+        #
+        # from cosense3d.utils import vislib
+        # pc_range = [-100, -41.6, -3.0, 100, 41.6, 3.0]
+        # label = labels.detach().cpu().numpy()
+        # label = label[:, 0]
+        # points = centers.detach().cpu().numpy()
+        # boxes = gt_boxes.cpu().numpy()
+        # ax = vislib.draw_points_boxes_plt(
+        #     pc_range=pc_range,
+        #     boxes_gt=boxes,
+        #     return_ax=True
+        # )
+        # ax.scatter(points[:, 0], points[:, 1], cmap='jet', c=label, s=1)
+        # plt.savefig("/home/yuan/Downloads/tmp.png")
+        # plt.close()
+
+        return labels
+
+
+class BEVBoxAssigner(BaseAssigner):
+    """
+    Assign center points in the BEV maps to positve if the point is in the range 'min_radius' of any gt box center.
+    """
+    def __init__(self,
+                 n_cls,
+                 pos_neg_ratio=5,
+                 mining_thr=0,
+                 max_mining_ratio=3,
+                 mining_start_epoch=5,
+                 merge_all_classes=False,
+                 ):
+        super().__init__()
+        self.n_cls = n_cls
+        self.pos_neg_ratio = pos_neg_ratio
+        self.sample_mining_thr = mining_thr
+        self.max_mining_ratio = max_mining_ratio
+        self.mining_start_epoch = mining_start_epoch
+        self.merge_all_classes = merge_all_classes
+
+    def get_labels_single_head(self, centers, gt_boxes, pred_scores=None, **kwargs):
+        boxes = pad_l(gt_boxes[:, :7]).clone()
+        boxes[:, 3] = 0
+        pts = pad_r(pad_l(centers))
+
+        _, box_idx_of_pts = points_in_boxes_gpu(
+            pts, boxes, batch_size=1
+        )
+        labels = (box_idx_of_pts >= 0).float()
+        if self.pos_neg_ratio:
+            labels = pos_neg_sampling(labels, self.pos_neg_ratio)
 
         return labels
 

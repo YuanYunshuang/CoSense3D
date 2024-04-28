@@ -181,10 +181,23 @@ shared_modules_opv2vt_fcl_locerr['spatial_alignment'] = dict(
     scatter_keys=['received_response'],
 )
 
-#--------- Comparative 2 : Latency ------------
+#--------- Comparative 2 : Latency with centerness roi ------------
 shared_modules_opv2vt_fcl_lat = shared_modules_opv2vt_roi_focal_loss
 shared_modules_opv2vt_roi_focal_loss['temporal_fusion']['norm_fusion'] = False
 
+#--------- Comparative 3 : Latency with box roi ------------
+shared_modules_opv2vt_bev_fcl_lat = copy.deepcopy(shared_modules_opv2vt_roi_focal_loss)
+shared_modules_opv2vt_bev_fcl_lat['temporal_fusion']['norm_fusion'] = False
+shared_modules_opv2vt_bev_fcl_lat['roi_head']['heads'][0] = get_det_center_sparse_cfg(
+    voxel_size=voxel_size,
+    point_cloud_range=opv2vt.point_cloud_range,
+    in_channels=256,
+    generate_roi_scr=True,
+    cls_assigner='BEVBoxAssigner',
+    cls_loss="FocalLoss"
+)
+shared_modules_opv2vt_bev_fcl_lat['roi_head']['heads'][0]['cls_head_cfg'] = (
+    dict(name='UnitedClsHead', one_hot_encoding=False))
 ######################################################
 #                     DairV2Xt
 ######################################################

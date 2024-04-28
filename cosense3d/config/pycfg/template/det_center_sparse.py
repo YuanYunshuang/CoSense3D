@@ -1,11 +1,33 @@
 from cosense3d.config import add_cfg_keys
+from cosense3d.modules.plugin.target_assigners import BEVCenternessAssigner
 
 
 @add_cfg_keys
 def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                               in_channels=256, stride=2,
-                              generate_roi_scr=False, cls_loss="EDLLoss",
+                              generate_roi_scr=False,
+                              cls_assigner="BEVCenternessAssigner",
+                              cls_loss="EDLLoss",
                               use_gaussian=False, sigma=1.0):
+    if cls_assigner == "BEVCenternessAssigner":
+        cls_assigner = dict(
+                    type='target_assigners.BEVCenternessAssigner',
+                    n_cls=1,
+                    min_radius=1.0,
+                    pos_neg_ratio=0,
+                    max_mining_ratio=0,
+                    use_gaussian=use_gaussian,
+                    sigma=sigma
+                )
+    elif cls_assigner == "BEVBoxAssigner":
+        cls_assigner = dict(
+            type='target_assigners.BEVBoxAssigner',
+            n_cls=1,
+            pos_neg_ratio=0,
+            max_mining_ratio=0,
+        )
+    else:
+        raise NotImplementedError
     scr_activation = "relu" # default
     edl = True
     if cls_loss == "EDLLoss":
@@ -17,6 +39,7 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
         scr_activation = "sigmoid"
         edl = False
         one_hot_encoding = False
+
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     return dict(
                 type='heads.det_center_sparse.DetCenterSparse',
@@ -30,15 +53,7 @@ def get_det_center_sparse_cfg(voxel_size, point_cloud_range,
                 reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
                 class_names_each_head=[['vehicle.car']],
                 reg_channels=['box:6', 'dir:8', 'scr:4'],
-                cls_assigner=dict(
-                    type='target_assigners.BEVCenternessAssigner',
-                    n_cls=1,
-                    min_radius=1.0,
-                    pos_neg_ratio=0,
-                    max_mining_ratio=0,
-                    use_gaussian=use_gaussian,
-                    sigma=sigma
-                ),
+                cls_assigner=cls_assigner,
                 box_assigner=dict(
                     type='target_assigners.BoxCenterAssigner',
                     voxel_size=voxel_size,
