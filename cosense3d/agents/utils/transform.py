@@ -343,12 +343,12 @@ class DataOnlineProcessor:
         bevmap[bevmap==0] = -1
         bevmap_coor = data['bevmap_coor']
         sx, sy = bevmap.shape[:2]
-        filters = torch.ones(1, 1, 3, 3, device=bevmap.device) / 18
+        filters = torch.ones(1, 1, 5, 5, device=bevmap.device) / 50
         road = torch.conv2d(bevmap[None, None], filters).squeeze()
         mask = (road < 0.5) & (road > -0.5)
         inds = torch.where(mask)
         scores = 1 - road[mask].abs()
-        coords = torch.stack(inds).T * map_res + 1.5 * map_res - range
+        coords = torch.stack(inds).T * map_res + 2.5 * map_res - range
 
         data['roadline_tgts'] = torch.cat([coords, scores.unsqueeze(1)], dim=1)
 
