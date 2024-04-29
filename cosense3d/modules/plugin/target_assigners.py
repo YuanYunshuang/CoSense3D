@@ -1598,11 +1598,13 @@ class RoIBox3DAssigner(BaseAssigner):
 class RoadLineAssigner(BaseAssigner):
     def __init__(self,
                  res,
-                 range):
+                 range,
+                 pos_neg_ratio=2):
         super().__init__()
         self.res = res
         self.range = range
         self.size = int(round(range / res * 2))
+        self.pos_neg_ratio = pos_neg_ratio
 
     def assign(self, coor, tgt_pts, B, **kwargs):
         ctr_coor = coor.clone()
@@ -1618,6 +1620,9 @@ class RoadLineAssigner(BaseAssigner):
 
         valid = torch.logical_and((ctr_coor[:, 1:3] >= 0).all(dim=-1), (ctr_coor[:, 1:3] < self.size).all(dim=-1))
         labels = roadline_maps[ctr_coor[valid, 0], ctr_coor[valid, 1], ctr_coor[valid, 2]]
+
+        if self.pos_neg_ratio:
+            labels = pos_neg_sampling(labels, self.pos_neg_ratio)
 
         # import matplotlib.pyplot as plt
         # pts_vis = ctr_coor[ctr_coor[:, 0] == 0, 1:].detach().cpu().numpy()
