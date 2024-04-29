@@ -85,10 +85,15 @@ class BEVRoadLine(BaseModule):
         # plt.close()
 
         # targets are not down-sampled
-        avg_factor = max(tgt_label.bool().sum(), 1)
+        cared = tgt_label >= 0
+        n_cared = cared.sum()
+        if n_cared == len(tgt_label):
+            avg_factor = max(tgt_label.bool().sum(), 1)
+        else:
+            avg_factor = n_cared
         loss_cls = self.loss_cls(
-            cls[valid],
-            tgt_label,
+            cls[valid][cared],
+            tgt_label[cared],
             temp=epoch_num,
             avg_factor=avg_factor
         )
