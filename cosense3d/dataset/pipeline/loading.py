@@ -488,6 +488,19 @@ class LoadOPV2VBevMaps:
         return data_dict
 
     def load_single(self, path, ai, data_dict):
+        # map1 = self.crop_map_for_pose(data_dict, ai)[0]
+        # map2 = cv2.imread(os.path.join(path, ai, f"{data_dict['frame']}_bev.png"))[..., 0]
+        # map2 = np.array(map2, dtype=float) / 255.
+        # map2[map2 > 0] = 1
+        # map2 = np.flip(map2, 0).copy()
+        # bevmap = np.zeros((500, 500, 3))
+        # bevmap[..., 0] = map1
+        # bevmap[..., 1] = map2
+        # import matplotlib.pyplot as plt
+        # plt.imshow(bevmap)
+        # plt.show()
+        # plt.close()
+
         out = {}
         if self.use_global_map:
             out['bevmap'], out['bevmap_coor'] = self.crop_map_for_pose(data_dict, ai)
@@ -515,8 +528,8 @@ class LoadOPV2VBevMaps:
         transform = self.T_corr @ pose_to_transformation(lidar_pose)
         xy_tf = transform @ self.xy_pad
         # calculate map indices of bev points
-        xy_tf[0] -= bound[0]
-        xy_tf[1] -= bound[1]
+        xy_tf[0] -= bound[0] + 1.0
+        xy_tf[1] -= bound[1] + 1.0
         map_inds = np.floor(xy_tf[:2] / 0.2)
         xs = np.clip(map_inds[0], 0, sx - 1).astype(int)
         ys = np.clip(map_inds[1], 0, sy - 1).astype(int)
