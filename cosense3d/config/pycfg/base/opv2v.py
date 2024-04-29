@@ -25,6 +25,23 @@ data_manager = dict(
 )
 
 
+data_manager_no_bev_tgt = dict(
+    train=dict(
+        aug=dict(
+            rot_range=[-1.57, 1.57],
+            flip='xy',
+            scale_ratio_range=[0.95, 1.05],
+        ),
+        pre_process=OrderedDict(
+            remove_local_empty_boxes=dict(),
+            remove_global_empty_boxes=dict(),
+        )
+    ),
+    test=dict(
+        aug=dict()
+    )
+)
+
 def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], load_bev_map=False, max_num_cavs=7):
     data_info = dict(lidar_range=point_cloud_range, voxel_size=voxel_size)
     pipeline_cpu = OrderedDict(
@@ -68,7 +85,12 @@ def get_opv2v_cfg(seq_len, voxel_size, load_attributes=['xyz', 'intensity'], loa
 
 seq4_pillar04 = get_opv2v_cfg(4, [0.4, 0.4, 4])
 seq4_vox04 = get_opv2v_cfg(4, [0.4, 0.4, 0.4])
+seq4_vox02 = get_opv2v_cfg(4, [0.4, 0.4, 0.4])
 seq4_vox01 = get_opv2v_cfg(4, [0.1, 0.1, 0.1])
+seq1_vox04 = get_opv2v_cfg(1, [0.4, 0.4, 0.4])
+seq1_vox02 = get_opv2v_cfg(1, [0.2, 0.2, 0.2])
+seq1_vox01 = get_opv2v_cfg(1, [0.1, 0.1, 0.1])
+seq1_vox040460 = get_opv2v_cfg(1, [0.4, 0.4, 6.0])
 
 seq4_pillar04_bevmap = get_opv2v_cfg(4, [0.4, 0.4, 4], load_bev_map=True)
 seq1_vox02_bevmap = get_opv2v_cfg(1, [0.2, 0.2, 0.2],
