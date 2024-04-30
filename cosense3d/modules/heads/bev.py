@@ -55,7 +55,6 @@ class BEV(BaseModule):
             'reg': reg,
             'conf': conf,
             'unc': unc,
-            'feat_max': [feat.max()] * len(stensor_list)
         }
         if self.generate_roi_scr:
             out['scr'] = conf.max(dim=-1).values
@@ -76,7 +75,6 @@ class BEV(BaseModule):
             output_new['unc'].append(output['unc'][mask])
             if 'scr' in output_new:
                 output_new['scr'].append(output['scr'][mask])
-        output_new['feat_max'] = output['feat_max']
         output = {self.scatter_keys[0]: self.compose_result_list(output_new, B)}
         return output
 
@@ -130,7 +128,6 @@ class BEV(BaseModule):
                 temp=epoch_num,
             )
         loss_dict = {'bev_loss': loss_cls}
-        loss_dict['bev_feat_max'] = batch_list[0]['feat_max']
         return loss_dict
 
 

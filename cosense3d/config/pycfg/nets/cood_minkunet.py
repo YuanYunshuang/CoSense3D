@@ -70,7 +70,7 @@ def get_shared_modules(point_cloud_range):
         shared_conv_channel=128,
         get_predictions=True,
         stride=out_stride,
-        cls_head_cfg=dict(name='UnitedClsHead'),
+        cls_head_cfg=dict(name='UnitedClsHead', one_hot_encoding=True),
         reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
         class_names_each_head=[['vehicle.car']],
         reg_channels=['box:6', 'dir:8', 'scr:4'],
@@ -79,9 +79,7 @@ def get_shared_modules(point_cloud_range):
             n_cls=1,
             min_radius=1.0,
             pos_neg_ratio=0,
-            mining_thr=0,
-            max_mining_ratio=0.1,
-            mining_start_epoch=10,
+            max_mining_ratio=0,
         ),
         box_assigner=dict(
             type='target_assigners.BoxCenterAssigner',
@@ -92,8 +90,10 @@ def get_shared_modules(point_cloud_range):
             class_names_each_head=[['vehicle.car']],
             center_threshold=0.5,
             box_coder=dict(type='CenterBoxCoder'),
+            activation='sigmoid',
+            edl=False
         ),
-        loss_cls=dict(type='EDLLoss', activation='exp', annealing_step=20, n_cls=2, loss_weight=1.0),
+        loss_cls=dict(type='FocalLoss', use_sigmoid=True, gamma=2.0, alpha=0.25, loss_weight=1.0),
         loss_box=dict(type='SmoothL1Loss', loss_weight=1.0),
     ),
 )
