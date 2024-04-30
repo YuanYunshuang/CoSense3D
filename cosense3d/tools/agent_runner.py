@@ -12,7 +12,6 @@ from cosense3d.agents.center_controller import CenterController
 from cosense3d.agents.core.train_runner import TrainRunner
 from cosense3d.agents.core.test_runner import TestRunner
 from cosense3d.agents.core.vis_runner import VisRunner
-from cosense3d.tools.path_cfgs import parse_paths
 
 
 def ddp_setup():
@@ -122,7 +121,11 @@ if __name__ == "__main__":
         cfgs['DATASET']['batch_size_train'] = args.batch_size
     if args.n_workers is not None:
         cfgs['DATASET']['n_workers'] = args.n_workers
-    parse_paths(cfgs)
+    if args.data_path is not None:
+        cfgs['DATASET']['data_path'] = args.data_path
+    if args.meta_path is not None:
+        cfgs['DATASET']['meta_path'] = args.meta_path
+
     agent_runner = AgentRunner(args, cfgs)
     if args.mode == "train":
         save_config(cfgs, agent_runner.runner.logdir)
