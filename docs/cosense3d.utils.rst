@@ -92,6 +92,14 @@ cosense3d.utils.pclib module
    :undoc-members:
    :show-inheritance:
 
+cosense3d.utils.plot\_dirichlet module
+--------------------------------------
+
+.. automodule:: cosense3d.utils.plot_dirichlet
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cosense3d.utils.tensor\_utils module
 ------------------------------------
 

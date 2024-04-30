@@ -13,9 +13,9 @@ sys.path.insert(0, os.path.abspath(f"{cur_path}/.."))
 sys.path.append(f'{cur_path}/../cosense3d')
 
 
-project = 'OpenCosense3D'
-copyright = '2024, Anonymous Author'
-author = 'Anonymous'
+project = 'Cosense3D'
+copyright = '2024, Yunshuang Yuan'
+author = 'Yunshuang Yuan'
 release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------

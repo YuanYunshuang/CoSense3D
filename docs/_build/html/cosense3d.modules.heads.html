@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cosense3d.modules.heads package &mdash; OpenCosense3D 1.0.0 documentation</title>
+  <title>cosense3d.modules.heads package &mdash; Cosense3D 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -22,7 +22,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="cosense3d.modules.losses package" href="cosense3d.modules.losses.html" />
-    <link rel="prev" title="cosense3d.modules.fusion package" href="cosense3d.modules.fusion.html" /> 
+    <link rel="prev" title="cosense3d.modules.backbone3d package" href="cosense3d.modules.backbone3d.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            OpenCosense3D
+            Cosense3D
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -49,21 +49,20 @@
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3D</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.tools.html">cosense3d.tools package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">setup module</a></li>
 </ul>
 </li>
 </ul>
@@ -74,7 +73,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">OpenCosense3D</a>
+          <a href="index.html">Cosense3D</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -82,7 +81,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3D</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.heads package</li>
@@ -474,7 +473,7 @@ registered hooks while the latter silently ignores them.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.heads.det_center_sparse.DetCenterSparse.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/det_center_sparse.html#DetCenterSparse.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.loss" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/det_center_sparse.html#DetCenterSparse.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.det_center_sparse.DetCenterSparse.loss" title="Permalink to this definition"></a></dt>
 <dd><p>This must be implemented in head module.</p>
 </dd></dl>
 
@@ -667,114 +666,6 @@ target_dict : dict</p>
 </dd></dl>
 
 </section>
-<section id="module-cosense3d.modules.heads.img_focal">
-<span id="cosense3d-modules-heads-img-focal-module"></span><h2>cosense3d.modules.heads.img_focal module<a class="headerlink" href="#module-cosense3d.modules.heads.img_focal" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.heads.img_focal.</span></span><span class="sig-name descname"><span class="pre">ImgFocal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">embed_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_assigner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_assigner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_cls2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_centerness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_bbox2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_iou2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_centers2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.apply_center_offset">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">apply_center_offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_offset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal.apply_center_offset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.apply_center_offset" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>locations</strong> – (1, H, W, 2)</p></li>
-<li><p><strong>pred_ltrb</strong> – (N, H, W, 4)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.apply_ltrb">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">apply_ltrb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_ltrb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal.apply_ltrb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.apply_ltrb" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>locations</strong> – (1, H, W, 2)</p></li>
-<li><p><strong>pred_ltrb</strong> – (N, H, W, 4)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.format_output">
-<span class="sig-name descname"><span class="pre">format_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_feat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal.format_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.format_output" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_feat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_coor</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">centers2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bboxes2d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/img_focal.html#ImgFocal.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.loss" title="Permalink to this definition"></a></dt>
-<dd><p>This must be implemented in head module.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.img_focal.ImgFocal.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.heads.img_focal.ImgFocal.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-cosense3d.modules.heads.lidar_petr_head">
-<span id="cosense3d-modules-heads-lidar-petr-head-module"></span><h2>cosense3d.modules.heads.lidar_petr_head module<a class="headerlink" href="#module-cosense3d.modules.heads.lidar_petr_head" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.heads.lidar_petr_head.</span></span><span class="sig-name descname"><span class="pre">LidarPETRHead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_stride</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lidar_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">644</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/lidar_petr_head.html#LidarPETRHead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.format_input">
-<span class="sig-name descname"><span class="pre">format_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/lidar_petr_head.html#LidarPETRHead.format_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.format_input" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rois</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bev_feat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/lidar_petr_head.html#LidarPETRHead.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.gather_topk">
-<span class="sig-name descname"><span class="pre">gather_topk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rois</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bev_feats</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/lidar_petr_head.html#LidarPETRHead.gather_topk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.gather_topk" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.init_weights">
-<span class="sig-name descname"><span class="pre">init_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/lidar_petr_head.html#LidarPETRHead.init_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.init_weights" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.heads.lidar_petr_head.LidarPETRHead.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
 <section id="module-cosense3d.modules.heads.multitask_head">
 <span id="cosense3d-modules-heads-multitask-head-module"></span><h2>cosense3d.modules.heads.multitask_head module<a class="headerlink" href="#module-cosense3d.modules.heads.multitask_head" title="Permalink to this heading"></a></h2>
 <dl class="py class">
@@ -809,153 +700,6 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 </section>
-<section id="module-cosense3d.modules.heads.nbr_attn_bev">
-<span id="cosense3d-modules-heads-nbr-attn-bev-module"></span><h2>cosense3d.modules.heads.nbr_attn_bev module<a class="headerlink" href="#module-cosense3d.modules.heads.nbr_attn_bev" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.heads.nbr_attn_bev.</span></span><span class="sig-name descname"><span class="pre">NbrAttentionBEV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annealing_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_assigner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_names_each_head</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.downsample_tgt_pts">
-<span class="sig-name descname"><span class="pre">downsample_tgt_pts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tgt_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sam</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.downsample_tgt_pts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.downsample_tgt_pts" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_input">
-<span class="sig-name descname"><span class="pre">format_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stensor_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.format_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_input" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_output">
-<span class="sig-name descname"><span class="pre">format_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.format_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.format_output" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stensor_list</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.generate_reference_points">
-<span class="sig-name descname"><span class="pre">generate_reference_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.generate_reference_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.generate_reference_points" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.get_tgt">
-<span class="sig-name descname"><span class="pre">get_tgt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.get_tgt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.get_tgt" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/nbr_attn_bev.html#NbrAttentionBEV.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.loss" title="Permalink to this definition"></a></dt>
-<dd><p>This must be implemented in head module.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.heads.nbr_attn_bev.NbrAttentionBEV.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-cosense3d.modules.heads.petr_head">
-<span id="cosense3d-modules-heads-petr-head-module"></span><h2>cosense3d.modules.heads.petr_head module<a class="headerlink" href="#module-cosense3d.modules.heads.petr_head" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.petr_head.PETRHead">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.heads.petr_head.</span></span><span class="sig-name descname"><span class="pre">PETRHead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pc_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_assigner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_bbox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_iou</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_reg_fcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/petr_head.html#PETRHead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.petr_head.PETRHead" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.petr_head.PETRHead.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feat_in</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/petr_head.html#PETRHead.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.petr_head.PETRHead.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.petr_head.PETRHead.init_weights">
-<span class="sig-name descname"><span class="pre">init_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/petr_head.html#PETRHead.init_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.petr_head.PETRHead.init_weights" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.petr_head.PETRHead.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">petr_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/petr_head.html#PETRHead.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.petr_head.PETRHead.loss" title="Permalink to this definition"></a></dt>
-<dd><p>This must be implemented in head module.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.petr_head.PETRHead.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.heads.petr_head.PETRHead.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-cosense3d.modules.heads.query_guided_petr_head">
-<span id="cosense3d-modules-heads-query-guided-petr-head-module"></span><h2>cosense3d.modules.heads.query_guided_petr_head module<a class="headerlink" href="#module-cosense3d.modules.heads.query_guided_petr_head" title="Permalink to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.heads.query_guided_petr_head.</span></span><span class="sig-name descname"><span class="pre">QueryGuidedPETRHead</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embed_dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pc_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cls_assigner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_assigner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_box</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_reg_fcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pred</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_logits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="cosense3d.modules.html#cosense3d.modules.BaseModule" title="cosense3d.modules.BaseModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModule</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feat_in</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.forward" title="Permalink to this definition"></a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_pred_boxes">
-<span class="sig-name descname"><span class="pre">get_pred_boxes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bbox_preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_pts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead.get_pred_boxes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_pred_boxes" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_predictions">
-<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_inds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.get_predictions" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.init_weights">
-<span class="sig-name descname"><span class="pre">init_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead.init_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.init_weights" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.loss">
-<span class="sig-name descname"><span class="pre">loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">petr_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/heads/query_guided_petr_head.html#QueryGuidedPETRHead.loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.loss" title="Permalink to this definition"></a></dt>
-<dd><p>This must be implemented in head module.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.training">
-<span class="sig-name descname"><span class="pre">training</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#cosense3d.modules.heads.query_guided_petr_head.QueryGuidedPETRHead.training" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
 <section id="module-cosense3d.modules.heads">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-cosense3d.modules.heads" title="Permalink to this heading"></a></h2>
 </section>
@@ -965,14 +709,14 @@ registered hooks while the latter silently ignores them.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="cosense3d.modules.fusion.html" class="btn btn-neutral float-left" title="cosense3d.modules.fusion package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.modules.backbone3d.html" class="btn btn-neutral float-left" title="cosense3d.modules.backbone3d package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="cosense3d.modules.losses.html" class="btn btn-neutral float-right" title="cosense3d.modules.losses package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anonymous Author.</p>
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

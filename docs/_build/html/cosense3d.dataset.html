@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cosense3d.dataset package &mdash; OpenCosense3D 1.0.0 documentation</title>
+  <title>cosense3d.dataset package &mdash; Cosense3D 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -22,7 +22,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="cosense3d.dataset.pipeline package" href="cosense3d.dataset.pipeline.html" />
-    <link rel="prev" title="cosense3d.config.pycfg.template package" href="cosense3d.config.pycfg.template.html" /> 
+    <link rel="prev" title="cosense3d.agents.viewer.items package" href="cosense3d.agents.viewer.items.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            OpenCosense3D
+            Cosense3D
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -49,21 +49,20 @@
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3D</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">cosense3d.dataset package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.tools.html">cosense3d.tools package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">setup module</a></li>
 </ul>
 </li>
 </ul>
@@ -74,7 +73,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">OpenCosense3D</a>
+          <a href="index.html">Cosense3D</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -82,7 +81,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3D</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
       <li class="breadcrumb-item active">cosense3d.dataset package</li>
       <li class="wy-breadcrumbs-aside">
@@ -171,8 +170,11 @@
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d-dataset-toolkit-dairv2x-module">cosense3d.dataset.toolkit.dairv2x module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cosense3d.dataset.toolkit.html#module-cosense3d.dataset.toolkit.opv2v">cosense3d.dataset.toolkit.opv2v module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.boxes_3d_to_2d"><code class="docutils literal notranslate"><span class="pre">boxes_3d_to_2d()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.convert_bev_semantic_map_to_road_height_map"><code class="docutils literal notranslate"><span class="pre">convert_bev_semantic_map_to_road_height_map()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.corner_to_center"><code class="docutils literal notranslate"><span class="pre">corner_to_center()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.create_bbx"><code class="docutils literal notranslate"><span class="pre">create_bbx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.generate_bevmaps"><code class="docutils literal notranslate"><span class="pre">generate_bevmaps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.generate_roadline"><code class="docutils literal notranslate"><span class="pre">generate_roadline()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.opv2v_pose_to_cosense"><code class="docutils literal notranslate"><span class="pre">opv2v_pose_to_cosense()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.opv2v_to_cosense"><code class="docutils literal notranslate"><span class="pre">opv2v_to_cosense()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.dataset.toolkit.html#cosense3d.dataset.toolkit.opv2v.pose_to_transformation"><code class="docutils literal notranslate"><span class="pre">pose_to_transformation()</span></code></a></li>
@@ -273,7 +275,7 @@ prev_agents: list of the agent ids loader last time.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.dataset.cosense_dataset.CosenseDataset.load_frame_data">
-<span class="sig-name descname"><span class="pre">load_frame_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_agents</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/cosense3d/dataset/cosense_dataset.html#CosenseDataset.load_frame_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.dataset.cosense_dataset.CosenseDataset.load_frame_data" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">load_frame_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_agents</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omit_gt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/cosense3d/dataset/cosense_dataset.html#CosenseDataset.load_frame_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.dataset.cosense_dataset.CosenseDataset.load_frame_data" title="Permalink to this definition"></a></dt>
 <dd><p>Load all data and annotations from one frame to standard CoSense format.</p>
 <section id="id1">
 <h3>Parameters<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
@@ -348,14 +350,14 @@ batch_dict: dict</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="cosense3d.config.pycfg.template.html" class="btn btn-neutral float-left" title="cosense3d.config.pycfg.template package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cosense3d.agents.viewer.items.html" class="btn btn-neutral float-left" title="cosense3d.agents.viewer.items package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="cosense3d.dataset.pipeline.html" class="btn btn-neutral float-right" title="cosense3d.dataset.pipeline package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anonymous Author.</p>
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -12,14 +12,6 @@ cosense3d.modules.projection.fax module
    :undoc-members:
    :show-inheritance:
 
-cosense3d.modules.projection.petr module
-----------------------------------------
-
-.. automodule:: cosense3d.modules.projection.petr
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cosense3d.modules.projection.spatial\_transform module
 ------------------------------------------------------
 

@@ -12,10 +12,10 @@ cosense3d.agents.cav\_prototype.base\_cav module
    :undoc-members:
    :show-inheritance:
 
-cosense3d.agents.cav\_prototype.streamLTS\_collection module
-------------------------------------------------------------
+cosense3d.agents.cav\_prototype.cood\_collection module
+-------------------------------------------------------
 
-.. automodule:: cosense3d.agents.cav_prototype.streamLTS_collection
+.. automodule:: cosense3d.agents.cav_prototype.cood_collection
    :members:
    :undoc-members:
    :show-inheritance:

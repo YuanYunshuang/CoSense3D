@@ -41,14 +41,8 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
-</ul>
-
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
         </div>
       </div>
     </nav>
@@ -110,8 +104,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># memory FIFO</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prepare_data_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;img&#39;</span><span class="p">,</span> <span class="s1">&#39;points&#39;</span><span class="p">,</span> <span class="s1">&#39;annos_global&#39;</span><span class="p">,</span> <span class="s1">&#39;annos_local&#39;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="BaseCAV.update"><a class="viewcode-back" href="../../../../cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseCAV.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lidar_pose</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lidar_pose</span> <span class="o">=</span> <span class="n">lidar_pose</span></div>
+<div class="viewcode-block" id="BaseCAV.update"><a class="viewcode-back" href="../../../../cosense3d.agents.cav_prototype.html#cosense3d.agents.cav_prototype.base_cav.BaseCAV.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lidar_pose</span><span class="p">,</span> <span class="n">is_ego</span><span class="p">,</span> <span class="n">require_grad</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lidar_pose</span> <span class="o">=</span> <span class="n">lidar_pose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_ego</span> <span class="o">=</span> <span class="n">is_ego</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">require_grad</span> <span class="o">=</span> <span class="n">require_grad</span></div>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">repr_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>

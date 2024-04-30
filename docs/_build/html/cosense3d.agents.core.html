@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cosense3d.agents.core package &mdash; OpenCosense3D 1.0.0 documentation</title>
+  <title>cosense3d.agents.core package &mdash; Cosense3D 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -34,7 +34,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            OpenCosense3D
+            Cosense3D
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -49,21 +49,20 @@
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3D</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.tools.html">cosense3d.tools package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">setup module</a></li>
 </ul>
 </li>
 </ul>
@@ -74,7 +73,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">OpenCosense3D</a>
+          <a href="index.html">Cosense3D</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -82,7 +81,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3D</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.agents.html">cosense3d.agents package</a></li>
       <li class="breadcrumb-item active">cosense3d.agents.core package</li>
@@ -265,6 +264,16 @@
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.data_manager.DataManager.generate_global_non_empty_mask">
+<span class="sig-name descname"><span class="pre">generate_global_non_empty_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/data_manager.html#DataManager.generate_global_non_empty_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.data_manager.DataManager.generate_global_non_empty_mask" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.data_manager.DataManager.generate_local_non_empty_mask">
+<span class="sig-name descname"><span class="pre">generate_local_non_empty_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ego_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/data_manager.html#DataManager.generate_local_non_empty_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.data_manager.DataManager.generate_local_non_empty_mask" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.agents.core.data_manager.DataManager.get_gt_boxes_as_vis_format">
 <span class="sig-name descname"><span class="pre">get_gt_boxes_as_vis_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">successors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/data_manager.html#DataManager.get_gt_boxes_as_vis_format"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.data_manager.DataManager.get_gt_boxes_as_vis_format" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
@@ -307,11 +316,6 @@ key: additional gt keys that are not standarlized in consense3d data API</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.agents.core.data_manager.DataManager.get_vis_data_meta">
 <span class="sig-name descname"><span class="pre">get_vis_data_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/data_manager.html#DataManager.get_vis_data_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.data_manager.DataManager.get_vis_data_meta" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="cosense3d.agents.core.data_manager.DataManager.remove_empty_boxes">
-<span class="sig-name descname"><span class="pre">remove_empty_boxes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/data_manager.html#DataManager.remove_empty_boxes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.data_manager.DataManager.remove_empty_boxes" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -530,6 +534,52 @@ registered hooks while the latter silently ignores them.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.agents.core.hooks.</span></span><span class="sig-name descname"><span class="pre">EvalBEVSemsegHook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_res</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_static</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bev_semseg_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bev_semseg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_bev_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bevmap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global_bboxes_3d'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cosense3d.agents.core.hooks.BaseHook" title="cosense3d.agents.core.hooks.BaseHook"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseHook</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.cal_ious">
+<span class="sig-name descname"><span class="pre">cal_ious</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.cal_ious"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.cal_ious" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.crop_map">
+<span class="sig-name descname"><span class="pre">crop_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bevmap</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.crop_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.crop_map" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.gt_dynamic_map">
+<span class="sig-name descname"><span class="pre">gt_dynamic_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boxes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.gt_dynamic_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.gt_dynamic_map" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.gt_static_map">
+<span class="sig-name descname"><span class="pre">gt_static_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bevmap</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.gt_static_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.gt_static_map" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.iou">
+<span class="sig-name descname"><span class="pre">iou</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.iou"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.iou" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.post_epoch">
+<span class="sig-name descname"><span class="pre">post_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runner</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.post_epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.post_epoch" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.post_iter">
+<span class="sig-name descname"><span class="pre">post_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runner</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.post_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.post_iter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalBEVSemsegHook.set_logger">
+<span class="sig-name descname"><span class="pre">set_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalBEVSemsegHook.set_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalBEVSemsegHook.set_logger" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionBEVHook">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.agents.core.hooks.</span></span><span class="sig-name descname"><span class="pre">EvalDetectionBEVHook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pc_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.7]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detection'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global_bboxes_3d'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionBEVHook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionBEVHook" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cosense3d.agents.core.hooks.BaseHook" title="cosense3d.agents.core.hooks.BaseHook"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseHook</span></code></a></p>
@@ -556,6 +606,42 @@ registered hooks while the latter silently ignores them.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionBEVHook.set_logger">
 <span class="sig-name descname"><span class="pre">set_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionBEVHook.set_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionBEVHook.set_logger" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.agents.core.hooks.</span></span><span class="sig-name descname"><span class="pre">EvalDetectionHook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pc_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.7]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CoSense3D']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">det_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'detection'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global_bboxes_3d'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cosense3d.agents.core.hooks.BaseHook" title="cosense3d.agents.core.hooks.BaseHook"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseHook</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.eval_cosense3d_final">
+<span class="sig-name descname"><span class="pre">eval_cosense3d_final</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.eval_cosense3d_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.eval_cosense3d_final" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.filter_box_ranges">
+<span class="sig-name descname"><span class="pre">filter_box_ranges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.filter_box_ranges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.filter_box_ranges" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.format_final_result">
+<span class="sig-name descname"><span class="pre">format_final_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.format_final_result"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.format_final_result" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.post_epoch">
+<span class="sig-name descname"><span class="pre">post_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runner</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.post_epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.post_epoch" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.post_iter">
+<span class="sig-name descname"><span class="pre">post_iter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runner</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.post_iter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.post_iter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.agents.core.hooks.EvalDetectionHook.set_logger">
+<span class="sig-name descname"><span class="pre">set_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/agents/core/hooks.html#EvalDetectionHook.set_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.agents.core.hooks.EvalDetectionHook.set_logger" title="Permalink to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -746,7 +832,7 @@ registered hooks while the latter silently ignores them.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anonymous Author.</p>
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

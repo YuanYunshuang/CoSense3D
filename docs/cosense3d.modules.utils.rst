@@ -60,6 +60,14 @@ cosense3d.modules.utils.gaussian\_utils module
    :undoc-members:
    :show-inheritance:
 
+cosense3d.modules.utils.gevbev\_utils module
+--------------------------------------------
+
+.. automodule:: cosense3d.modules.utils.gevbev_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 cosense3d.modules.utils.init module
 -----------------------------------
 

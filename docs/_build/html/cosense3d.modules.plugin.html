@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>cosense3d.modules.plugin package &mdash; OpenCosense3D 1.0.0 documentation</title>
+  <title>cosense3d.modules.plugin package &mdash; Cosense3D 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -35,7 +35,7 @@
           
           
           <a href="index.html" class="icon icon-home">
-            OpenCosense3D
+            Cosense3D
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -50,21 +50,20 @@
 <li class="toctree-l1"><a class="reference internal" href="md/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/prepare_data.html">Prepare Datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3d</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">CoSense3D</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="cosense3d.html">cosense3d package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="cosense3d.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.agents.html">cosense3d.agents package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.config.html">cosense3d.config package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.dataset.html">cosense3d.dataset package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.doc.html">cosense3d.doc package</a></li>
 <li class="toctree-l4 current"><a class="reference internal" href="cosense3d.modules.html">cosense3d.modules package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="cosense3d.ops.html">cosense3d.ops package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cosense3d.tools.html">cosense3d.tools package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="cosense3d.utils.html">cosense3d.utils package</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="cosense3d.html#module-cosense3d">Module contents</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">setup module</a></li>
 </ul>
 </li>
 </ul>
@@ -75,7 +74,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">OpenCosense3D</a>
+          <a href="index.html">Cosense3D</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -83,7 +82,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">CoSense3d</a></li>
+          <li class="breadcrumb-item"><a href="modules.html">CoSense3D</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.html">cosense3d package</a></li>
           <li class="breadcrumb-item"><a href="cosense3d.modules.html">cosense3d.modules package</a></li>
       <li class="breadcrumb-item active">cosense3d.modules.plugin package</li>
@@ -1093,9 +1092,28 @@ registered hooks while the latter silently ignores them.</p>
 <section id="module-cosense3d.modules.plugin.target_assigners">
 <span id="cosense3d-modules-plugin-target-assigners-module"></span><h2>cosense3d.modules.plugin.target_assigners module<a class="headerlink" href="#module-cosense3d.modules.plugin.target_assigners" title="Permalink to this heading"></a></h2>
 <dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVBoxAssigner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.plugin.target_assigners.</span></span><span class="sig-name descname"><span class="pre">BEVBoxAssigner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_neg_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mining_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_mining_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mining_start_epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_all_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVBoxAssigner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVBoxAssigner" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cosense3d.modules.plugin.target_assigners.BaseAssigner" title="cosense3d.modules.plugin.target_assigners.BaseAssigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAssigner</span></code></a></p>
+<p>Assign center points in the BEV maps to positve if the point is in the range ‘min_radius’ of any gt box center.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVBoxAssigner.assign">
+<span class="sig-name descname"><span class="pre">assign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVBoxAssigner.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVBoxAssigner.assign" title="Permalink to this definition"></a></dt>
+<dd><p>Assign preds to targets.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVBoxAssigner.get_labels_single_head">
+<span class="sig-name descname"><span class="pre">get_labels_single_head</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVBoxAssigner.get_labels_single_head"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVBoxAssigner.get_labels_single_head" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.plugin.target_assigners.</span></span><span class="sig-name descname"><span class="pre">BEVCenternessAssigner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_neg_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mining_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_mining_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mining_start_epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_all_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_gaussian</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVCenternessAssigner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cosense3d.modules.plugin.target_assigners.BaseAssigner" title="cosense3d.modules.plugin.target_assigners.BaseAssigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAssigner</span></code></a></p>
+<p>Assign center points in the BEV maps to positve if the point is in the range ‘min_radius’ of any gt box center.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner.assign">
 <span class="sig-name descname"><span class="pre">assign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVCenternessAssigner.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVCenternessAssigner.assign" title="Permalink to this definition"></a></dt>
@@ -1113,6 +1131,7 @@ registered hooks while the latter silently ignores them.</p>
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVPointAssigner">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.plugin.target_assigners.</span></span><span class="sig-name descname"><span class="pre">BEVPointAssigner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">down_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_mining_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_mining_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annealing_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topk_sampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annealing_sampling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVPointAssigner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVPointAssigner" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#cosense3d.modules.plugin.target_assigners.BaseAssigner" title="cosense3d.modules.plugin.target_assigners.BaseAssigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAssigner</span></code></a></p>
+<p>Assign target points to BEV boxes and down-sample the target points with buffered-based method.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.BEVPointAssigner.assign">
 <span class="sig-name descname"><span class="pre">assign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tgt_pts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gt_boxes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">down_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#BEVPointAssigner.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.BEVPointAssigner.assign" title="Permalink to this definition"></a></dt>
@@ -1362,21 +1381,27 @@ dir_score Tensor(N, num_anchors, 4) or None: direction score target</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.get_predictions">
-<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctr_pts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#ContiBEVAssigner.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.get_predictions" title="Permalink to this definition"></a></dt>
-<dd><p>Given center points and its corresponding regressions, generate the dense bev segseg maps
+<span class="sig-name descname"><span class="pre">get_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctr_pts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#ContiBEVAssigner.get_predictions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.ContiBEVAssigner.get_predictions" title="Permalink to this definition"></a></dt>
+<dd><p>Given center points and its corresponding regressions, generate the dense bev semseg maps
 and its uncertainty and observation mask.</p>
-<section id="id11">
-<h3>Parameters<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h3>
-<p>ctr_pts: center points of bev maps, including indices, metric centers and regression results.
-B: batch size.
-kwargs: keyword arguments</p>
-</section>
-<section id="id12">
-<h3>Returns<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h3>
-<p>conf: confidence bev map.
-unc: uncertainty bev map.
-obs_mask: observation mask of the bev map.</p>
-</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctr_pts</strong> – center points of bev maps, including indices, metric centers and regression results.</p></li>
+<li><p><strong>B</strong> – batch size.</p></li>
+<li><p><strong>tag</strong> – tag for regression key “static | dynamic”.</p></li>
+<li><p><strong>kwargs</strong> – keyword arguments</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>conf: confidence bev map.</p></li>
+<li><p>unc: uncertainty bev map.</p></li>
+<li><p>obs_mask: observation mask of the bev map.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1391,7 +1416,7 @@ in the following image:</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>ctr_pts</strong> – center points of bev maps, including indices, metric centers and regression results.</p></li>
 <li><p><strong>gt_boxes</strong> – ground truth BBoxes.</p></li>
-<li><p><strong>B</strong> (<em>int</em>) – batch size.</p></li>
+<li><p><strong>B</strong> – batch size.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1633,17 +1658,29 @@ weight (int | float, optional): loss_weight.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.RoadLineAssigner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.modules.plugin.target_assigners.</span></span><span class="sig-name descname"><span class="pre">RoadLineAssigner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">res</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_neg_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#RoadLineAssigner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.RoadLineAssigner" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#cosense3d.modules.plugin.target_assigners.BaseAssigner" title="cosense3d.modules.plugin.target_assigners.BaseAssigner"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseAssigner</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.RoadLineAssigner.assign">
+<span class="sig-name descname"><span class="pre">assign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tgt_pts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">B</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#RoadLineAssigner.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.RoadLineAssigner.assign" title="Permalink to this definition"></a></dt>
+<dd><p>Assign preds to targets.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.target_assigners.pos_neg_sampling">
 <span class="sig-prename descclassname"><span class="pre">cosense3d.modules.plugin.target_assigners.</span></span><span class="sig-name descname"><span class="pre">pos_neg_sampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_neg_ratio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/target_assigners.html#pos_neg_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.target_assigners.pos_neg_sampling" title="Permalink to this definition"></a></dt>
 <dd><p>Downsample negative targets.</p>
-<section id="id13">
-<h3>Parameters<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h3>
+<section id="id11">
+<h3>Parameters<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h3>
 <p>labels Tensor: class labels.
 pos_neg_ratio Float: ratio = num_neg_samples / num_pos_samples.</p>
 </section>
-<section id="id14">
-<h3>Returns<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h3>
+<section id="id12">
+<h3>Returns<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h3>
 <p>labels Tensor: class labels with -1 labels to be ignored during training.</p>
 </section>
 </dd></dl>
@@ -1658,8 +1695,8 @@ weaken the model to learn from these hard negative targets and generate
 a lot of false positives.
 Therefore, this function mines the samples that have high predictive
 scores as training targets. This function should be used after ‘pos_neg_sampling’.</p>
-<section id="id15">
-<h3>Parameters<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h3>
+<section id="id13">
+<h3>Parameters<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h3>
 <dl class="simple">
 <dt>scores  Tensor(N1, …Nk): classification scores/confidences that the</dt><dd><p>sample belong to foreground.</p>
 </dd>
@@ -1669,8 +1706,8 @@ scores as training targets. This function should be used after ‘pos_neg_sampli
 <p>sample_mining_thr Float: score threshold for sampling
 max_sample_ratio Float: <cite>n_sample</cite> / <cite>n_pos_sample</cite></p>
 </section>
-<section id="id16">
-<h3>Returns<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h3>
+<section id="id14">
+<h3>Returns<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h3>
 <p>labels Tensor(N1, …Nk): class labels, or one-hot class labels.</p>
 </section>
 </dd></dl>
@@ -1842,7 +1879,7 @@ attn_drop (float): A Dropout layer on attn_output_weights.</p>
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.transformer.MultiheadAttention.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attn_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/transformer.html#MultiheadAttention.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.transformer.MultiheadAttention.forward" title="Permalink to this definition"></a></dt>
 <dd><p>Forward function for <cite>MultiheadAttention</cite>.
-<a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs allow passing a more general data flow when combining
+<a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs allow passing a more general data flow when combining
 with other operations in <cite>transformerlayer</cite>.
 Args:</p>
 <blockquote>
@@ -1924,7 +1961,7 @@ attn_drop (float): A Dropout layer on attn_output_weights.</p>
 <dt class="sig sig-object py" id="cosense3d.modules.plugin.transformer.MultiheadFlashAttention.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attn_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_padding_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/modules/plugin/transformer.html#MultiheadFlashAttention.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.modules.plugin.transformer.MultiheadFlashAttention.forward" title="Permalink to this definition"></a></dt>
 <dd><p>Forward function for <cite>MultiheadAttention</cite>.
-<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs allow passing a more general data flow when combining
+<a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs allow passing a more general data flow when combining
 with other operations in <cite>transformerlayer</cite>.
 Args:</p>
 <blockquote>
@@ -2476,7 +2513,7 @@ name, e.g. the abbreviation of <code class="docutils literal notranslate"><span 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Anonymous Author.</p>
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

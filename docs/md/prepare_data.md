@@ -1,7 +1,7 @@
 # Prepare Datasets
-> **Note:**
->  Since the dataset link is related to the authors' affiliation and personal accounts,  violating the anonymity of the reviewing process.
-Therefore, they will be accessible after the publication of this paper.
+## OPV2V
+Please download the official OPV2V dataset and the reformatted meta files. 
+To train or test your models, you can either set the corresponding `data_path` and `meta_path` in 
 
 ## OPV2Vt
 >  Coming soon!

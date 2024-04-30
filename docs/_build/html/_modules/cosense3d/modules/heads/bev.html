@@ -41,14 +41,8 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3d</a></li>
-</ul>
-
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
         </div>
       </div>
     </nav>
@@ -132,7 +126,6 @@
             <span class="s1">&#39;reg&#39;</span><span class="p">:</span> <span class="n">reg</span><span class="p">,</span>
             <span class="s1">&#39;conf&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="p">,</span>
             <span class="s1">&#39;unc&#39;</span><span class="p">:</span> <span class="n">unc</span><span class="p">,</span>
-            <span class="s1">&#39;feat_max&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">max</span><span class="p">()]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">stensor_list</span><span class="p">)</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_roi_scr</span><span class="p">:</span>
             <span class="n">out</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conf</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -153,7 +146,6 @@
             <span class="n">output_new</span><span class="p">[</span><span class="s1">&#39;unc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;unc&#39;</span><span class="p">][</span><span class="n">mask</span><span class="p">])</span>
             <span class="k">if</span> <span class="s1">&#39;scr&#39;</span> <span class="ow">in</span> <span class="n">output_new</span><span class="p">:</span>
                 <span class="n">output_new</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">][</span><span class="n">mask</span><span class="p">])</span>
-        <span class="n">output_new</span><span class="p">[</span><span class="s1">&#39;feat_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="s1">&#39;feat_max&#39;</span><span class="p">]</span>
         <span class="n">output</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scatter_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">self</span><span class="o">.</span><span class="n">compose_result_list</span><span class="p">(</span><span class="n">output_new</span><span class="p">,</span> <span class="n">B</span><span class="p">)}</span>
         <span class="k">return</span> <span class="n">output</span></div>
 
@@ -207,7 +199,6 @@
                 <span class="n">temp</span><span class="o">=</span><span class="n">epoch_num</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">loss_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;bev_loss&#39;</span><span class="p">:</span> <span class="n">loss_cls</span><span class="p">}</span>
-        <span class="n">loss_dict</span><span class="p">[</span><span class="s1">&#39;bev_feat_max&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;feat_max&#39;</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">loss_dict</span></div></div>
 
 

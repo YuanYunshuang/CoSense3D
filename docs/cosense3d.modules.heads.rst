@@ -52,50 +52,10 @@ cosense3d.modules.heads.det\_roi\_refine module
    :undoc-members:
    :show-inheritance:
 
-cosense3d.modules.heads.img\_focal module
------------------------------------------
-
-.. automodule:: cosense3d.modules.heads.img_focal
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cosense3d.modules.heads.lidar\_petr\_head module
-------------------------------------------------
-
-.. automodule:: cosense3d.modules.heads.lidar_petr_head
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 cosense3d.modules.heads.multitask\_head module
 ----------------------------------------------
 
 .. automodule:: cosense3d.modules.heads.multitask_head
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cosense3d.modules.heads.nbr\_attn\_bev module
----------------------------------------------
-
-.. automodule:: cosense3d.modules.heads.nbr_attn_bev
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cosense3d.modules.heads.petr\_head module
------------------------------------------
-
-.. automodule:: cosense3d.modules.heads.petr_head
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-cosense3d.modules.heads.query\_guided\_petr\_head module
---------------------------------------------------------
-
-.. automodule:: cosense3d.modules.heads.query_guided_petr_head
    :members:
    :undoc-members:
    :show-inheritance:
