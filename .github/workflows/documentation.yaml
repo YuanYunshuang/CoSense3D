@@ -103,7 +103,7 @@ jobs:
       - name: Copy deployment data to _gh-pages/
         if: ${{ github.event_name == 'push' }}
         run:
-          rsync -a _build/html/ _gh-pages/
+          rsync -a docs/_build/html/ _gh-pages/
 
       # Use gh-pages-multibranch to multiplex different branches into
       # one deployment. See
