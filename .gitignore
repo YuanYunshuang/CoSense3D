@@ -7,5 +7,6 @@ wandb
 dataset/metas/
 data
 *.so
-*/build/
+build
 cosense3d/ops/build
+dist
