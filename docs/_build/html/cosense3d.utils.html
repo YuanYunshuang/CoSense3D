@@ -1570,8 +1570,49 @@ tf_np (np.ndarray): 4x4 transformation matrix</p>
 <dd></dd></dl>
 
 </section>
-<section id="cosense3d-utils-plot-dirichlet-module">
-<h2>cosense3d.utils.plot_dirichlet module<a class="headerlink" href="#cosense3d-utils-plot-dirichlet-module" title="Permalink to this heading"></a></h2>
+<section id="module-cosense3d.utils.plot_dirichlet">
+<span id="cosense3d-utils-plot-dirichlet-module"></span><h2>cosense3d.utils.plot_dirichlet module<a class="headerlink" href="#module-cosense3d.utils.plot_dirichlet" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.Dirichlet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.utils.plot_dirichlet.</span></span><span class="sig-name descname"><span class="pre">Dirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#Dirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.Dirichlet" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Define the Dirichlet distribution with vector parameter alpha.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.Dirichlet.pdf">
+<span class="sig-name descname"><span class="pre">pdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#Dirichlet.pdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.Dirichlet.pdf" title="Permalink to this definition"></a></dt>
+<dd><p>Returns pdf value for <cite>x</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.PlotDirichlet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cosense3d.utils.plot_dirichlet.</span></span><span class="sig-name descname"><span class="pre">PlotDirichlet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corners</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#PlotDirichlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.PlotDirichlet" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Plot the Dirichlet distribution as a contour plot on a 2-Simplex.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.PlotDirichlet.draw_pdf_contours">
+<span class="sig-name descname"><span class="pre">draw_pdf_contours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlevels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdiv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#PlotDirichlet.draw_pdf_contours"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.PlotDirichlet.draw_pdf_contours" title="Permalink to this definition"></a></dt>
+<dd><p>Draw pdf contours for a Dirichlet distribution</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.PlotDirichlet.xy2bc">
+<span class="sig-name descname"><span class="pre">xy2bc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#PlotDirichlet.xy2bc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.PlotDirichlet.xy2bc" title="Permalink to this definition"></a></dt>
+<dd><p>Map the x-y coordinates of the mesh vertices to the simplex coordinate space (aka barycentric coordinates).
+Here we use a simple method that uses vector algebra. For some values of alpha, calculation of the Dirichlet pdf
+can become numerically unstable at the boundaries of the simplex so our conversion function will take an optional
+tolerance that will avoid barycentric coordinate values directly on the simplex boundary.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cosense3d.utils.plot_dirichlet.plot_mesh">
+<span class="sig-prename descclassname"><span class="pre">cosense3d.utils.plot_dirichlet.</span></span><span class="sig-name descname"><span class="pre">plot_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corners</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cosense3d/utils/plot_dirichlet.html#plot_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cosense3d.utils.plot_dirichlet.plot_mesh" title="Permalink to this definition"></a></dt>
+<dd><p>Subdivide the triangle into a triangular mesh and plot the original and subdivided triangles.</p>
+</dd></dl>
+
 </section>
 <section id="module-cosense3d.utils.tensor_utils">
 <span id="cosense3d-utils-tensor-utils-module"></span><h2>cosense3d.utils.tensor_utils module<a class="headerlink" href="#module-cosense3d.utils.tensor_utils" title="Permalink to this heading"></a></h2>
