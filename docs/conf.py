@@ -7,6 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
 import sys
+# import mock
 
 cur_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath(f"{cur_path}/.."))
@@ -39,3 +40,7 @@ html_static_path = ['_static']
 html_context = {
     'image_path': '_static/imgs'  # Relative to html_static_path
 }
+
+# MOCK_MODULES = ['numpy', 'matplotlib', 'matplotlib.pyplot', 'torch', 'M']
+# for mod_name in MOCK_MODULES:
+#     sys.modules[mod_name] = mock.Mock()

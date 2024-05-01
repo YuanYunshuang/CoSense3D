@@ -35,10 +35,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install sphinx sphinx_rtd_theme recommonmark ghp-import
           pip install torch numpy
-      - name: Build HTML
-        run: | 
-          cd docs/
-          make html
+#      - name: Build HTML
+#        run: |
+#          cd docs/
+#          make html
       - name: Run ghp-import
         run: | 
           ghp-import -n -p -f docs/_build/html
