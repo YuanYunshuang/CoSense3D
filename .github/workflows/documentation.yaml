@@ -34,6 +34,7 @@ jobs:
         run: | 
           python -m pip install --upgrade pip
           pip install sphinx sphinx_rtd_theme recommonmark ghp-import
+          pip install torch numpy
       - name: Build HTML
         run: | 
           cd docs/
