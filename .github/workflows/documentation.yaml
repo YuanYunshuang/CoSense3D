@@ -76,10 +76,10 @@ jobs:
 
       # Build
       - uses: ammaraskar/sphinx-problem-matcher@master
-      - name: Build Sphinx docs (dirhtml)
+      - name: Build Sphinx docs (html)
         # SPHINXOPTS used via environment variables
         run: |
-          make dirhtml
+          make html
           # This fixes broken copy button icons, as explained in
           #   https://github.com/coderefinery/sphinx-lesson/issues/50
           #   https://github.com/executablebooks/sphinx-copybutton/issues/110
@@ -87,21 +87,21 @@ jobs:
           # fixes also need to propagate to other themes):
           #   https://github.com/sphinx-doc/sphinx/pull/8524
           #   https://github.com/readthedocs/sphinx_rtd_theme/pull/1025
-          sed -i 's/url_root="#"/url_root=""/' _build/dirhtml/index.html || true
+          sed -i 's/url_root="#"/url_root=""/' _build/html/index.html || true
 
       # singlehtml
       - name: Generate singlehtml
         if: ${{ env.GENERATE_SINGLEHTML == 'true' }}
         run: |
           make singlehtml
-          mv _build/singlehtml/ _build/dirhtml/singlehtml/
+          mv _build/singlehtml/ _build/html/singlehtml/
 
       # Stage all deployed assets in _gh-pages/ for simplicity, and to
       # prepare to do a multi-branch deployment.
       - name: Copy deployment data to _gh-pages/
         if: ${{ github.event_name == 'push' }}
         run:
-          rsync -a _build/dirhtml/ _gh-pages/
+          rsync -a _build/html/ _gh-pages/
 
       # Use gh-pages-multibranch to multiplex different branches into
       # one deployment. See
