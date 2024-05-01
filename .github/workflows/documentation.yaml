@@ -94,7 +94,7 @@ jobs:
       - name: Generate singlehtml
         if: ${{ env.GENERATE_SINGLEHTML == 'true' }}
         run: |
-          ls
+          cd docs
           make singlehtml
           mv docs/_build/singlehtml/ docs/_build/html/singlehtml/
 
