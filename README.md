@@ -10,7 +10,7 @@ more efficient and flexible data loading and distributing process, as well as th
 
 ## Installation
 Quick installation scripts are provided to install the environment with the following commands. 
-For more detailed information about the installation, please refer to [Installation](docs/md/installation.md) page.
+For more detailed information about the installation, please refer to [Installation](https://yuanyunshuang.github.io/CoSense3D/md/installation.html) page.
 ```bash
 conda create -n consense3d python=3.8
 conda activate cosense3d
@@ -30,7 +30,7 @@ the media files are kept with its original folder structure. Currently, the supp
 - V2Vreal
 - DairV2X
 
-For more details about downloading the datasets, please refer to [Datasets](docs/md/prepare_data.md) page.
+For more details about downloading the datasets, please refer to [Datasets](https://yuanyunshuang.github.io/CoSense3D/md/prepare_data.html) page.
 
 ## Quick start
 The main entry of this project is at ```cosense3d/tools/agent_runner.py```. 
@@ -110,7 +110,6 @@ PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./path/to/config/fi
 | EviBEV     | 1     | 79.5         | 89.1         | [<img src="./docs/_static/imgs/download.png" alt="drawing" width="20"/>](https://seafile.cloud.uni-hannover.de/d/2d0f6488241244de9d9f/)  |
 | AttnFusion | all   | 87.6         | 92.3         | [<img src="./docs/_static/imgs/download.png" alt="drawing" width="20"/>](https://seafile.cloud.uni-hannover.de/d/a80c24c303854fa9b382/)  |
 | AttnFusion | 1     | 87.1         | 92.6         | [<img src="./docs/_static/imgs/download.png" alt="drawing" width="20"/>](https://seafile.cloud.uni-hannover.de/d/3ae798d04a8742ac8661/)  |
-
 
 
 ## Citation
