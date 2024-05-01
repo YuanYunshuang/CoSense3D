@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cosense3d.tools.agent_runner &mdash; Cosense3D 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=af2ce170"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Cosense3D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">CoSense3D</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Cosense3D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cosense3d.tools.agent_runner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cosense3d.tools.agent_runner</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="kn">from</span> <span class="nn">cosense3d.dataset</span> <span class="kn">import</span> <span class="n">get_dataloader</span>
+<span class="kn">from</span> <span class="nn">cosense3d.utils.misc</span> <span class="kn">import</span> <span class="n">setup_logger</span>
+<span class="kn">from</span> <span class="nn">cosense3d.config</span> <span class="kn">import</span> <span class="n">load_config</span><span class="p">,</span> <span class="n">save_config</span>
+<span class="kn">from</span> <span class="nn">cosense3d.utils.train_utils</span> <span class="kn">import</span> <span class="n">seed_everything</span>
+<span class="kn">from</span> <span class="nn">cosense3d.agents.center_controller</span> <span class="kn">import</span> <span class="n">CenterController</span>
+<span class="kn">from</span> <span class="nn">cosense3d.agents.core.train_runner</span> <span class="kn">import</span> <span class="n">TrainRunner</span>
+<span class="kn">from</span> <span class="nn">cosense3d.agents.core.test_runner</span> <span class="kn">import</span> <span class="n">TestRunner</span>
+<span class="kn">from</span> <span class="nn">cosense3d.agents.core.vis_runner</span> <span class="kn">import</span> <span class="n">VisRunner</span>
+
+
+<div class="viewcode-block" id="ddp_setup"><a class="viewcode-back" href="../../../cosense3d.tools.html#cosense3d.tools.agent_runner.ddp_setup">[docs]</a><span class="k">def</span> <span class="nf">ddp_setup</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">torch.distributed</span> <span class="kn">import</span> <span class="n">init_process_group</span>
+    <span class="n">init_process_group</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;nccl&quot;</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">set_device</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;LOCAL_RANK&quot;</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="AgentRunner"><a class="viewcode-back" href="../../../cosense3d.tools.html#cosense3d.tools.agent_runner.AgentRunner">[docs]</a><span class="k">class</span> <span class="nc">AgentRunner</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">cfgs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visualize</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">visualize</span> <span class="ow">or</span> <span class="s1">&#39;vis&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gpus</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">ddp_setup</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dist</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">visualize</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">cosense3d.agents.core.gui</span> <span class="kn">import</span> <span class="n">GUI</span>
+            <span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QApplication</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gui</span> <span class="o">=</span> <span class="n">GUI</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;VISUALIZATION&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_runner</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">cfgs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AgentRunner.build_runner"><a class="viewcode-back" href="../../../cosense3d.tools.html#cosense3d.tools.agent_runner.AgentRunner.build_runner">[docs]</a>    <span class="k">def</span> <span class="nf">build_runner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">cfgs</span><span class="p">):</span>
+        <span class="n">dataloader</span> <span class="o">=</span> <span class="n">get_dataloader</span><span class="p">(</span><span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;DATASET&#39;</span><span class="p">],</span>
+                                    <span class="n">args</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;vis_&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="p">)</span>
+        <span class="n">center_controller</span> <span class="o">=</span> <span class="n">CenterController</span><span class="p">(</span><span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;CONTROLLER&#39;</span><span class="p">],</span> <span class="n">dataloader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;train&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runner</span> <span class="o">=</span> <span class="n">TrainRunner</span><span class="p">(</span><span class="n">dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                                      <span class="n">controller</span><span class="o">=</span><span class="n">center_controller</span><span class="p">,</span>
+                                      <span class="o">**</span><span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;TRAIN&#39;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;test&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runner</span> <span class="o">=</span> <span class="n">TestRunner</span><span class="p">(</span><span class="n">dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                                     <span class="n">controller</span><span class="o">=</span><span class="n">center_controller</span><span class="p">,</span>
+                                     <span class="o">**</span><span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;TEST&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runner</span> <span class="o">=</span> <span class="n">VisRunner</span><span class="p">(</span><span class="n">dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+                                    <span class="n">controller</span><span class="o">=</span><span class="n">center_controller</span><span class="p">,)</span></div>
+
+<div class="viewcode-block" id="AgentRunner.visible_run"><a class="viewcode-back" href="../../../cosense3d.tools.html#cosense3d.tools.agent_runner.AgentRunner.visible_run">[docs]</a>    <span class="k">def</span> <span class="nf">visible_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">setRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">installEventFilter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="p">)</span>
+
+        <span class="c1"># self.app.setStyle(&quot;Fusion&quot;)</span>
+        <span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QDesktopWidget</span>
+        <span class="n">desktop</span> <span class="o">=</span> <span class="n">QDesktopWidget</span><span class="p">()</span><span class="o">.</span><span class="n">availableGeometry</span><span class="p">()</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="p">(</span><span class="n">desktop</span><span class="o">.</span><span class="n">width</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">width</span><span class="p">())</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="p">(</span><span class="n">desktop</span><span class="o">.</span><span class="n">height</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">height</span><span class="p">())</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">height</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">initGUI</span><span class="p">()</span>
+        <span class="c1"># Start GUI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Showing GUI...&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="AgentRunner.run"><a class="viewcode-back" href="../../../cosense3d.tools.html#cosense3d.tools.agent_runner.AgentRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">visualize</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">visible_run</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dist</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">torch.distributed</span> <span class="kn">import</span> <span class="n">destroy_process_group</span>
+                <span class="n">destroy_process_group</span><span class="p">()</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;./config/config.yaml&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--mode&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;train | test | vis_train | vis_test&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--visualize&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--resume-from&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--load-from&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--log-dir&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="si">}</span><span class="s2">/../../logs&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--run-name&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--seed&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--debug&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--gpus&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--data-path&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--data-latency&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;-1: random latency selected from (0, 1, 2)*100ms;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                             <span class="s2">&quot; 0: coop. data has no additional latency relative to ego frame;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                             <span class="s2">&quot; n&gt;0: coop. data has n*100ms latency relative to ego frame.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--meta-path&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--batch-size&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n-workers&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">setup_logger</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">run_name</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">)</span>
+    <span class="c1"># for ME</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;OMP_NUM_THREADS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;16&quot;</span>
+    <span class="c1"># if &#39;vis&#39; in args.mode:</span>
+    <span class="c1">#     args.config = &quot;./config/defaults/base_cav.yaml&quot;</span>
+
+    <span class="n">seed_everything</span><span class="p">(</span><span class="mi">2023</span><span class="p">)</span>
+    <span class="n">cfgs</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gpus</span><span class="p">:</span>
+        <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;TRAIN&#39;</span><span class="p">][</span><span class="s1">&#39;gpus&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gpus</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;DATASET&#39;</span><span class="p">][</span><span class="s1">&#39;batch_size_train&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">batch_size</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">n_workers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;DATASET&#39;</span><span class="p">][</span><span class="s1">&#39;n_workers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">n_workers</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">data_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;DATASET&#39;</span><span class="p">][</span><span class="s1">&#39;data_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">data_path</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">meta_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cfgs</span><span class="p">[</span><span class="s1">&#39;DATASET&#39;</span><span class="p">][</span><span class="s1">&#39;meta_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">meta_path</span>
+
+    <span class="n">agent_runner</span> <span class="o">=</span> <span class="n">AgentRunner</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">cfgs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;train&quot;</span><span class="p">:</span>
+        <span class="n">save_config</span><span class="p">(</span><span class="n">cfgs</span><span class="p">,</span> <span class="n">agent_runner</span><span class="o">.</span><span class="n">runner</span><span class="o">.</span><span class="n">logdir</span><span class="p">)</span>
+    <span class="n">agent_runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
