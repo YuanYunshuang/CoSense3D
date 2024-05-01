@@ -102,7 +102,7 @@ jobs:
       # prepare to do a multi-branch deployment.
       - name: Copy deployment data to _gh-pages/
         if: ${{ github.event_name == 'push' }}
-        run:
+        run: |
           rsync -a docs/_build/html/ _gh-pages/
           pwd
           ls _gh-pages/
