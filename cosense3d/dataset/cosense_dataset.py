@@ -120,14 +120,10 @@ class CosenseDataset(Dataset):
         """
         Load meta info of the ```item```'th sample.
 
-        Parameters
-        ----------
-        item: sample index.
-        prev_agents: only load data the previous agents if given, this is used for temporal data loading.
-        prev_item: the index of the previous loaded sample.
-        Returns
-        -------
-        batch_dict: dict
+        :param item: sample index.
+        :param prev_agents: only load data the previous agents if given, this is used for temporal data loading.
+        :param prev_item: the index of the previous loaded sample.
+        :return: batch_dict: dict(scenario: str, frame: str, sample_info: dict)
             - scenario: str
             - frame: str
             - sample_info: dict

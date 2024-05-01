@@ -577,12 +577,10 @@ class CoSenseDataConverter:
     @staticmethod
     def draw_sample_distributions(meta_path):
         """
-        Draw distribution of the number of observation points for each sample category
+        Draw distribution of the number of observation points for each sample category.
 
-        Parameters
-        ----------
-        meta_path: contains pickle files of object samples
-        -------
+        :param meta_path: path contains pickle files of object samples
+        :return:
         """
         import matplotlib.pyplot as plt
         files = glob.glob(os.path.join(meta_path, '*.pickle'))
