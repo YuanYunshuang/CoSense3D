@@ -35,6 +35,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install sphinx sphinx_rtd_theme recommonmark ghp-import
 #          pip install torch numpy
+
+      # Building html requires all necessary dependencies be installed.
+      # For cosense3d, the installation requires a lot of time,
+      # therefore it is temporally built locally and copy the built html files to the gh-pages branch.
+
 #      - name: Build HTML
 #        run: |
 #          cd docs/
