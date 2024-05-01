@@ -104,6 +104,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         run:
           rsync -a docs/_build/html/ _gh-pages/
+          pwd
+          ls _gh-pages/
 
       # Use gh-pages-multibranch to multiplex different branches into
       # one deployment. See
