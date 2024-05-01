@@ -79,6 +79,8 @@ jobs:
       - name: Build Sphinx docs (html)
         # SPHINXOPTS used via environment variables
         run: |
+          pwd
+          ls
           make html
           # This fixes broken copy button icons, as explained in
           #   https://github.com/coderefinery/sphinx-lesson/issues/50
