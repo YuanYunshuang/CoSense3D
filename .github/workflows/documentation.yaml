@@ -96,7 +96,7 @@ jobs:
         run: |
           cd docs
           make singlehtml
-          mv docs/_build/singlehtml/ docs/_build/html/singlehtml/
+          mv _build/singlehtml/ _build/html/singlehtml/
 
       # Stage all deployed assets in _gh-pages/ for simplicity, and to
       # prepare to do a multi-branch deployment.
