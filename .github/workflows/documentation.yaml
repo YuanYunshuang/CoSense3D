@@ -12,13 +12,6 @@ on: [push, pull_request]
 
 env:
   DEFAULT_BRANCH: "main"
-  # If these SPHINXOPTS are enabled, then be strict about the
-  # builds and fail on any warnings.
-  #SPHINXOPTS: "-W --keep-going -T"
-  GENERATE_PDF: true          # to enable, must be 'true' lowercase
-  GENERATE_SINGLEHTML: true   # to enable, must be 'true' lowercase
-  PDF_FILENAME: lesson.pdf
-  MULTIBRANCH: true    # to enable, must be 'true' lowercase
 
 
 jobs:
@@ -50,30 +43,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install sphinx sphinx_rtd_theme myst_parser recommonmark
 
-        # Debug
-      - name: Debugging information
-        env:
-          ref: ${{github.ref}}
-          event_name: ${{github.event_name}}
-          head_ref: ${{github.head_ref}}
-          base_ref: ${{github.base_ref}}
-        run: |
-          echo "github.ref: ${ref}"
-          echo "github.event_name: ${event_name}"
-          echo "github.head_ref: ${head_ref}"
-          echo "github.base_ref: ${base_ref}"
-          echo "GENERATE_PDF: ${GENERATE_PDF}"
-          echo "GENERATE_SINGLEHTML: ${GENERATE_SINGLEHTML}"
-          set -x
-          git rev-parse --abbrev-ref HEAD
-          git branch
-          git branch -a
-          git remote -v
-          python -V
-          pip list --not-required
-          pip list
-
-
       # Build
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Build Sphinx docs (html)
@@ -90,33 +59,12 @@ jobs:
           #   https://github.com/readthedocs/sphinx_rtd_theme/pull/1025
           sed -i 's/url_root="#"/url_root=""/' docs/_build/html/index.html || true
 
-      # singlehtml
-      - name: Generate singlehtml
-        if: ${{ env.GENERATE_SINGLEHTML == 'true' }}
-        run: |
-          cd docs
-          make singlehtml
-          mv _build/singlehtml/ _build/html/singlehtml/
-
       # Stage all deployed assets in _gh-pages/ for simplicity, and to
       # prepare to do a multi-branch deployment.
       - name: Copy deployment data to _gh-pages/
         if: ${{ github.event_name == 'push' }}
         run: |
           rsync -a docs/_build/html/ _gh-pages/
-          pwd
-          ls _gh-pages/
-
-      # Use gh-pages-multibranch to multiplex different branches into
-      # one deployment. See
-      # https://github.com/coderefinery/gh-pages-multibranch
-      - name: gh-pages multibranch
-        uses: coderefinery/gh-pages-multibranch@main
-        if: ${{ github.event_name == 'push' && env.MULTIBRANCH == 'true' }}
-        with:
-          directory: _gh-pages/
-          default_branch: ${{ env.DEFAULT_BRANCH }}
-          publish_branch: gh-pages
 
       # Add the .nojekyll file
       - name: nojekyll
@@ -144,21 +92,16 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'push' && ( env.MULTIBRANCH == 'true' || github.ref == format('refs/heads/{0}', env.DEFAULT_BRANCH )) }}
+        if: ${{ github.event_name == 'push' && ( github.ref == format('refs/heads/{0}', env.DEFAULT_BRANCH )) }}
         with:
           name: gh-pages-build
           path: _gh-pages/
-
-      # As of 2023, we could publish to pages via a Deployment.  This
-      # isn't done yet to give it time to stabilize (out of beta), and
-      # also having a gh-pages branch to check out is rather
-      # convenient.
 
       # Deploy
       # https://github.com/peaceiris/actions-gh-pages
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && ( env.MULTIBRANCH == 'true' || github.ref == format('refs/heads/{0}', env.DEFAULT_BRANCH )) }}
+        if: ${{ github.event_name == 'push' && ( github.ref == format('refs/heads/{0}', env.DEFAULT_BRANCH )) }}
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
