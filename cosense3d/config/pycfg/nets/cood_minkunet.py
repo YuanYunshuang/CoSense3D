@@ -70,7 +70,7 @@ def get_shared_modules(point_cloud_range):
         shared_conv_channel=128,
         get_predictions=True,
         stride=out_stride,
-        cls_head_cfg=dict(name='UnitedClsHead', one_hot_encoding=True),
+        cls_head_cfg=dict(name='UnitedClsHead', one_hot_encoding=False),
         reg_head_cfg=dict(name='UnitedRegHead', combine_channels=True, sigmoid_keys=['scr']),
         class_names_each_head=[['vehicle.car']],
         reg_channels=['box:6', 'dir:8', 'scr:4'],
