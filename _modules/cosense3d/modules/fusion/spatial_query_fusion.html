@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cosense3d.modules.fusion.spatial_query_fusion &mdash; Cosense3D 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js?v=af2ce170"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Cosense3D
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/prepare_data.html">Prepare Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../md/structure.html">The Structure of the framework</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">CoSense3D</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Cosense3D</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">cosense3d.modules</a></li>
+      <li class="breadcrumb-item active">cosense3d.modules.fusion.spatial_query_fusion</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cosense3d.modules.fusion.spatial_query_fusion</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">from</span> <span class="nn">cosense3d.modules</span> <span class="kn">import</span> <span class="n">BaseModule</span><span class="p">,</span> <span class="n">plugin</span>
+<span class="kn">from</span> <span class="nn">cosense3d.modules.utils.common</span> <span class="kn">import</span> <span class="n">cat_coor_with_idx</span>
+<span class="kn">from</span> <span class="nn">cosense3d.modules.plugin.attn</span> <span class="kn">import</span> <span class="n">ScaledDotProductAttention</span>
+<span class="kn">from</span> <span class="nn">cosense3d.modules.utils.localization_utils</span> <span class="kn">import</span> <span class="n">register_points</span>
+<span class="kn">from</span> <span class="nn">cosense3d.modules.utils.common</span> <span class="kn">import</span> <span class="n">pad_r</span>
+<span class="kn">from</span> <span class="nn">cosense3d.modules.utils.misc</span> <span class="kn">import</span> <span class="n">MLN</span>
+<span class="kn">import</span> <span class="nn">cosense3d.modules.utils.positional_encoding</span> <span class="k">as</span> <span class="nn">PE</span>
+
+
+<div class="viewcode-block" id="SpatialQueryFusion"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion">[docs]</a><span class="k">class</span> <span class="nc">SpatialQueryFusion</span><span class="p">(</span><span class="n">BaseModule</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">in_channels</span><span class="p">,</span>
+                 <span class="n">pc_range</span><span class="p">,</span>
+                 <span class="n">resolution</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">pc_range</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="n">resolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">ScaledDotProductAttention</span><span class="p">(</span><span class="n">in_channels</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SpatialQueryFusion.forward"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ego_feats</span><span class="p">,</span> <span class="n">coop_feats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">fused_feat</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ego_feat</span><span class="p">,</span> <span class="n">coop_feat</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ego_feats</span><span class="p">,</span> <span class="n">coop_feats</span><span class="p">):</span>
+            <span class="n">coor</span> <span class="o">=</span> <span class="p">[</span><span class="n">ego_feat</span><span class="p">[</span><span class="s1">&#39;ref_pts&#39;</span><span class="p">]]</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="p">[</span><span class="n">ego_feat</span><span class="p">[</span><span class="s1">&#39;outs_dec&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coop_feat</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fused_feat</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s1">&#39;ref_pts&#39;</span><span class="p">:</span> <span class="n">coor</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="s1">&#39;outs_dec&#39;</span><span class="p">:</span> <span class="n">feat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">})</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># fuse coop to ego</span>
+            <span class="k">for</span> <span class="n">cpfeat</span> <span class="ow">in</span> <span class="n">coop_feat</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">coor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gather_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;ref_pts&#39;</span><span class="p">])</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gather_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;outs_dec&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">coor_cat</span> <span class="o">=</span> <span class="n">cat_coor_with_idx</span><span class="p">(</span><span class="n">coor</span><span class="p">)</span>
+            <span class="n">feat_cat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># coor_int = coor_cat[:, 1:] * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]</span>
+            <span class="c1"># coor_int = (coor_int * (1 / self.resolution)).int()</span>
+            <span class="n">uniq_coor</span><span class="p">,</span> <span class="n">reverse_inds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">coor_cat</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                                   <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">feats_pad</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coor</span><span class="p">):</span>
+                <span class="n">feat_pad</span> <span class="o">=</span> <span class="n">feat_cat</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniq_coor</span><span class="p">),</span> <span class="n">feat_cat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">feat_pad</span><span class="p">[</span><span class="n">reverse_inds</span><span class="p">[</span><span class="n">coor_cat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">feats_pad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat_pad</span><span class="p">)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">feats_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># num_pts, 1, d</span>
+            <span class="n">kv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">feats_pad</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># num_pts, num_coop_cav, d</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">kv</span><span class="p">,</span> <span class="n">kv</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">fused_feat</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;ref_pts&#39;</span><span class="p">:</span> <span class="n">uniq_coor</span><span class="p">,</span>
+                <span class="s1">&#39;outs_dec&#39;</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_output</span><span class="p">(</span><span class="n">fused_feat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpatialQueryFusion.format_output"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryFusion.format_output">[docs]</a>    <span class="k">def</span> <span class="nf">format_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scatter_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">output</span><span class="p">}</span></div></div>
+
+
+<div class="viewcode-block" id="SpatialQueryAlignFusionRL"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryAlignFusionRL">[docs]</a><span class="k">class</span> <span class="nc">SpatialQueryAlignFusionRL</span><span class="p">(</span><span class="n">BaseModule</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">in_channels</span><span class="p">,</span>
+                 <span class="n">pc_range</span><span class="p">,</span>
+                 <span class="n">resolution</span><span class="p">,</span>
+                 <span class="n">num_pose_feat</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">pc_range</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="n">resolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span> <span class="o">=</span> <span class="n">in_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attn</span> <span class="o">=</span> <span class="n">ScaledDotProductAttention</span><span class="p">(</span><span class="n">in_channels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pose_pe</span> <span class="o">=</span> <span class="n">MLN</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">12</span><span class="p">,</span> <span class="n">f_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_pose_feat</span> <span class="o">=</span> <span class="n">num_pose_feat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pose_feat</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query_embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pose_feat</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">emb_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SpatialQueryAlignFusionRL.forward"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryAlignFusionRL.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">det_local</span><span class="p">,</span> <span class="n">roadline</span><span class="p">,</span> <span class="n">roadline_preds</span><span class="p">,</span> <span class="n">ego_queries</span><span class="p">,</span>
+                <span class="n">ego_pose_corrected</span><span class="p">,</span> <span class="n">ego_poses</span><span class="p">,</span> <span class="n">ego_poses_aug</span><span class="p">,</span>
+                <span class="n">cpms</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">fused_feat</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cpm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cpms</span><span class="p">):</span>
+            <span class="n">det</span> <span class="o">=</span> <span class="n">det_local</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">ego_rl</span><span class="p">,</span> <span class="n">ego_rl_pred</span><span class="p">,</span> <span class="n">ego_query</span> <span class="o">=</span> <span class="n">roadline</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">roadline_preds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ego_queries</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">ego_pose_corr</span><span class="p">,</span> <span class="n">ego_pose</span><span class="p">,</span> <span class="n">pose_aug2g</span> <span class="o">=</span> <span class="n">ego_pose_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ego_poses</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ego_poses_aug</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="c1"># augment-frame to ego-aligned-world frame</span>
+            <span class="n">Taug2eaw</span> <span class="o">=</span> <span class="n">ego_pose_corr</span> <span class="o">@</span> <span class="n">ego_pose</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span> <span class="o">@</span> <span class="n">pose_aug2g</span>
+            <span class="n">ego_bctr</span> <span class="o">=</span> <span class="n">det</span><span class="p">[</span><span class="s1">&#39;preds&#39;</span><span class="p">][</span><span class="s1">&#39;box&#39;</span><span class="p">][:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">ego_coor</span> <span class="o">=</span> <span class="n">ego_query</span><span class="p">[</span><span class="s1">&#39;ref_pts&#39;</span><span class="p">]</span>
+            <span class="n">ego_coor_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_embedding</span><span class="p">(</span><span class="n">PE</span><span class="o">.</span><span class="n">pos2posemb2d</span><span class="p">(</span><span class="n">ego_coor</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pose_feat</span><span class="p">))</span>
+            <span class="n">ego_feat</span> <span class="o">=</span> <span class="n">ego_query</span><span class="p">[</span><span class="s1">&#39;outs_dec&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">ego_coor_emb</span>
+            <span class="n">ego_coor</span> <span class="o">=</span> <span class="n">ego_coor</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">coor</span> <span class="o">=</span> <span class="p">[</span><span class="n">ego_coor</span><span class="p">]</span> <span class="c1"># in augment-frame</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="p">[</span><span class="n">ego_feat</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpm</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fused_feat</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s1">&#39;ref_pts&#39;</span><span class="p">:</span> <span class="n">coor</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="s1">&#39;outs_dec&#39;</span><span class="p">:</span> <span class="n">feat</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">})</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># fuse coop to ego</span>
+            <span class="k">for</span> <span class="n">cpfeat</span> <span class="ow">in</span> <span class="n">cpm</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;box_ctrs&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># transformation matrix coop-aligned-world frame to ego-aligned-world frame</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
+                    <span class="c1"># during training, ground-truth poses are used, caw-frame==eaw-frame</span>
+                    <span class="n">Tcaw2aug</span> <span class="o">=</span> <span class="n">Taug2eaw</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">Tcaw2eaw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">align_coordinates</span><span class="p">(</span><span class="n">ego_bctr</span><span class="p">,</span> <span class="n">ego_rl</span><span class="p">,</span> <span class="n">ego_rl_pred</span><span class="p">,</span> <span class="n">Taug2eaw</span><span class="p">,</span> <span class="n">cpfeat</span><span class="p">)</span>
+                    <span class="n">Tcaw2aug</span> <span class="o">=</span> <span class="n">Taug2eaw</span><span class="o">.</span><span class="n">inverse</span><span class="p">()</span> <span class="o">@</span> <span class="n">Tcaw2eaw</span>
+                <span class="n">T</span> <span class="o">=</span> <span class="n">Tcaw2aug</span> <span class="o">@</span> <span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;Taug2caw&#39;</span><span class="p">]</span>
+
+                <span class="c1"># encode the transformation matrix that transforms feature points</span>
+                <span class="c1"># from erroneous ego-frame to the corrected ego-frame</span>
+                <span class="n">ref_pts</span> <span class="o">=</span> <span class="p">(</span><span class="n">T</span> <span class="o">@</span> <span class="n">pad_r</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;ref_pts&#39;</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+                <span class="n">ref_pts_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">ref_pts</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+                <span class="n">rot_emb</span> <span class="o">=</span> <span class="n">PE</span><span class="o">.</span><span class="n">nerf_positional_encoding</span><span class="p">(</span><span class="n">T</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_pts</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">pos_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_embedding</span><span class="p">(</span><span class="n">PE</span><span class="o">.</span><span class="n">pos2posemb2d</span><span class="p">(</span><span class="n">ref_pts_norm</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pose_feat</span><span class="p">))</span>
+                <span class="n">transform_emb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pose_pe</span><span class="p">(</span><span class="n">pos_emb</span><span class="p">,</span> <span class="n">rot_emb</span><span class="p">)</span>
+                <span class="n">coor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ref_pts</span><span class="p">)</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;feat&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">transform_emb</span><span class="p">)</span>
+
+                <span class="c1"># inplace transformation for coop point cloud: only for visualization in GLViewer</span>
+                <span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;points&#39;</span><span class="p">][:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">T</span> <span class="o">@</span> <span class="n">pad_r</span><span class="p">(</span><span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;points&#39;</span><span class="p">][:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="n">coor_cat</span> <span class="o">=</span> <span class="n">cat_coor_with_idx</span><span class="p">(</span><span class="n">coor</span><span class="p">)</span>
+            <span class="n">feat_cat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># coor_int = coor_cat[:, 1:] * (self.pc_range[3:] - self.pc_range[:3]) + self.pc_range[:3]</span>
+            <span class="n">coor_int</span> <span class="o">=</span> <span class="p">(</span><span class="n">coor_cat</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="p">))</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>
+            <span class="n">uniq_coor</span><span class="p">,</span> <span class="n">reverse_inds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">coor_int</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">uniq_coor</span> <span class="o">=</span> <span class="p">(</span><span class="n">uniq_coor</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pc_range</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+
+            <span class="n">feats_pad</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coor</span><span class="p">):</span>
+                <span class="n">feat_pad</span> <span class="o">=</span> <span class="n">feat_cat</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniq_coor</span><span class="p">),</span> <span class="n">feat_cat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">feat_pad</span><span class="p">[</span><span class="n">reverse_inds</span><span class="p">[</span><span class="n">coor_cat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">feats_pad</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat_pad</span><span class="p">)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">feats_pad</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># num_pts, 1, d</span>
+            <span class="n">kv</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">feats_pad</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># num_pts, num_coop_cav, d</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attn</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">kv</span><span class="p">,</span> <span class="n">kv</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">fused_feat</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;ref_pts&#39;</span><span class="p">:</span> <span class="n">uniq_coor</span><span class="p">,</span>
+                <span class="s1">&#39;outs_dec&#39;</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">})</span>
+
+            <span class="c1"># from cosense3d.utils.vislib import draw_points_boxes_plt, plt</span>
+            <span class="c1"># ax = draw_points_boxes_plt(pc_range=self.pc_range.tolist(), return_ax=True)</span>
+            <span class="c1"># for pts in coor:</span>
+            <span class="c1">#     pts = pts.detach().cpu().numpy()</span>
+            <span class="c1">#     ax.plot(pts[:, 0], pts[:, 1], &#39;.&#39;, markersize=1)</span>
+            <span class="c1"># plt.savefig(&quot;/home/yuan/Downloads/tmp.png&quot;)</span>
+            <span class="c1"># plt.close()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_output</span><span class="p">(</span><span class="n">fused_feat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SpatialQueryAlignFusionRL.format_output"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryAlignFusionRL.format_output">[docs]</a>    <span class="k">def</span> <span class="nf">format_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scatter_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">output</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="SpatialQueryAlignFusionRL.align_coordinates"><a class="viewcode-back" href="../../../../cosense3d.modules.fusion.html#cosense3d.modules.fusion.spatial_query_fusion.SpatialQueryAlignFusionRL.align_coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">align_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ego_bctr</span><span class="p">,</span> <span class="n">ego_rl</span><span class="p">,</span> <span class="n">ego_rl_pred</span><span class="p">,</span> <span class="n">ego_pose</span><span class="p">,</span> <span class="n">cpfeat</span><span class="p">):</span>
+        <span class="n">coop_bctr</span> <span class="o">=</span> <span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;box_ctrs&#39;</span><span class="p">]</span>
+        <span class="n">coop_rl</span> <span class="o">=</span> <span class="n">cpfeat</span><span class="p">[</span><span class="s1">&#39;roadline&#39;</span><span class="p">]</span>
+
+        <span class="c1"># transform ego points from aug-frame to ego-aligned world-frame</span>
+        <span class="n">ego_bctr</span> <span class="o">=</span> <span class="p">(</span><span class="n">ego_pose</span> <span class="o">@</span> <span class="n">pad_r</span><span class="p">(</span><span class="n">pad_r</span><span class="p">(</span><span class="n">ego_bctr</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">ego_rl_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">ego_pose</span> <span class="o">@</span> <span class="n">pad_r</span><span class="p">(</span><span class="n">pad_r</span><span class="p">(</span><span class="n">ego_rl_pred</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">coop_pts</span> <span class="o">=</span> <span class="n">pad_r</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">coop_rl</span><span class="p">,</span> <span class="n">coop_bctr</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">ego_pts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">pad_r</span><span class="p">(</span><span class="n">ego_rl</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]),</span> <span class="n">ego_bctr</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">transform</span><span class="p">,</span> <span class="n">coop_pts_tf</span> <span class="o">=</span> <span class="n">register_points</span><span class="p">(</span><span class="n">coop_pts</span><span class="p">,</span> <span class="n">ego_pts</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="c1"># import matplotlib.pyplot as plt</span>
+        <span class="c1"># ego_bctr_vis = ego_bctr.detach().cpu().numpy()</span>
+        <span class="c1"># ego_rl_pred_vis = ego_rl_pred.detach().cpu().numpy()</span>
+        <span class="c1"># ego_rl_vis = ego_rl.detach().cpu().numpy()</span>
+        <span class="c1"># coop_bctr_vis = coop_bctr.detach().cpu().numpy()</span>
+        <span class="c1"># coop_rl_vis = coop_rl.detach().cpu().numpy()</span>
+        <span class="c1">#</span>
+        <span class="c1"># plt.plot(ego_rl_vis[:, 0], ego_rl_vis[:, 1], &#39;g.&#39;, markersize=1)</span>
+        <span class="c1"># plt.plot(ego_rl_pred_vis[:, 0], ego_rl_pred_vis[:, 1], &#39;y.&#39;, markersize=1)</span>
+        <span class="c1"># plt.plot(ego_bctr_vis[:, 0], ego_bctr_vis[:, 1], &#39;yo&#39;, markersize=5, markerfacecolor=&#39;none&#39;)</span>
+        <span class="c1"># plt.plot(coop_rl_vis[:, 0], coop_rl_vis[:, 1], &#39;r.&#39;, markersize=1)</span>
+        <span class="c1"># plt.plot(coop_bctr_vis[:, 0], coop_bctr_vis[:, 1], &#39;ro&#39;, markersize=5, markerfacecolor=&#39;none&#39;, alpha=0.5)</span>
+        <span class="c1"># # plt.plot(coop_pts_tf[:, 0], coop_pts_tf[:, 1], &#39;b.&#39;, markersize=1)</span>
+        <span class="c1"># plt.savefig(&quot;/home/yys/Downloads/tmp.png&quot;)</span>
+        <span class="c1"># plt.close()</span>
+
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">ego_pose</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Yunshuang Yuan.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
