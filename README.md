@@ -4,7 +4,7 @@
 </p>
 
 
-Welcome to [CoSense3D](yuanyunshuang.github.io/CoSense3D/ )! This is an agent-oriented framework specially designed for cooperative perception for autonomous driving.
+Welcome to [CoSense3D](yuanyunshuang.github.io/CoSense3D/)! This is an agent-oriented framework specially designed for cooperative perception for autonomous driving.
 The agent-based structure of this framework aims to accelerate the development process of cooperative perception models by 
 more efficient and flexible data loading and distributing process, as well as the forward and gradient calculation scheduling.
 
@@ -143,4 +143,3 @@ PYTHONPATH=. python cosense3d/tools/agent_runner.py --config ./path/to/config/fi
   year={2024},
   keywords={Collective Perception, Point Cloud, Data Fusion}}
 
-```# CoSense3D
